@@ -109,7 +109,7 @@ The [Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/esp32-s3-audio-bo
 
 ## Basic ESPHome Configuration
 
-This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a voice assistant with wake word detection. For a full-featured configuration with LED animations for each voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
+This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly; the `on_end`, `on_error`, and `on_client_connected` handlers restart `micro_wake_word` after the speaker finishes to avoid audio conflicts. For a full-featured configuration with LED animations for each voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
 ```yaml
 esphome:
@@ -214,6 +214,15 @@ media_player:
     name: "Audio Player"
     announcement_pipeline:
       speaker: spkr
+    on_announcement:
+      - micro_wake_word.stop:
+      - delay: 500ms
+      - wait_until:
+          not:
+            media_player.is_announcing:
+      - delay: 500ms
+      - lambda: id(va).set_use_wake_word(false);
+      - micro_wake_word.start:
 
 # --- Buttons via TCA9555 ---
 binary_sensor:
@@ -268,8 +277,30 @@ voice_assistant:
   microphone: mic
   speaker: spkr
   micro_wake_word: mww
+  use_wake_word: false
   noise_suppression_level: 2
   volume_multiplier: 2.0
+
+  on_client_connected:
+    - delay: 2s
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  on_end:
+    - delay: 2s
+    - wait_until:
+        not:
+          speaker.is_playing:
+    - delay: 500ms
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  on_error:
+    - wait_until:
+        not:
+          speaker.is_playing:
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
 ```
 
 ## Links
