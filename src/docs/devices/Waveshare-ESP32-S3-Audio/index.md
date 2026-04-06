@@ -260,6 +260,28 @@ light:
     chipset: ws2812
     rgb_order: RGB
 
+# --- Fallback script: restarts wake word after silent commands ---
+# When a voice command produces no TTS response, on_tts_stream_end never
+# fires, so the wake word engine stays stopped. This script is called from
+# on_end as a safety net: it waits 5 s (giving on_tts_stream_end time to
+# act first), then restarts wake word only if it is not already running.
+script:
+  - id: restart_mww_fallback
+    mode: restart
+    then:
+      - delay: 5s
+      - if:
+          condition:
+            not:
+              micro_wake_word.is_running:
+          then:
+            - wait_until:
+                not:
+                  speaker.is_playing:
+            - delay: 500ms
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start:
+
 # --- Wake word + voice assistant ---
 micro_wake_word:
   id: mww
@@ -296,6 +318,7 @@ voice_assistant:
 
   on_end:
     - light.turn_off: rgb_ring
+    - script.execute: restart_mww_fallback
 
   on_error:
     - wait_until:
