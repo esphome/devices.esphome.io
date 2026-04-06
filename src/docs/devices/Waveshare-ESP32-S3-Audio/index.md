@@ -109,7 +109,7 @@ The [Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/esp32-s3-audio-bo
 
 ## Basic ESPHome Configuration
 
-This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly; the `on_end`, `on_error`, and `on_client_connected` handlers restart `micro_wake_word` after the speaker finishes to avoid audio conflicts. For a full-featured configuration with LED animations for each voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
+This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Wake word restart happens in `on_tts_stream_end` (after the speaker finishes playing TTS audio) rather than `on_end`, which avoids an I2S bus conflict where restarting the microphone in `on_end` would preempt the speaker. For a full-featured configuration with LED animations for each voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
 ```yaml
 esphome:
@@ -286,14 +286,16 @@ voice_assistant:
     - lambda: id(va).set_use_wake_word(false);
     - micro_wake_word.start:
 
-  on_end:
-    - delay: 2s
+  on_tts_stream_end:
     - wait_until:
         not:
           speaker.is_playing:
     - delay: 500ms
     - lambda: id(va).set_use_wake_word(false);
     - micro_wake_word.start:
+
+  on_end:
+    - light.turn_off: rgb_ring
 
   on_error:
     - wait_until:
