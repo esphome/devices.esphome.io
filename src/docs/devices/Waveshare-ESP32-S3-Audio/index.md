@@ -7,7 +7,7 @@ board: esp32
 project-url: https://github.com/jensenbox/waveshare-esp32-s3-audio
 ---
 
-![Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/media/catalog/product/cache/1/image/800x800/9df78eab33525d08d6e5fb8d27136e95/e/s/esp32-s3-audio-board-1.jpg "Waveshare ESP32-S3 Audio Board")
+![Waveshare ESP32-S3 Audio Board](./esp32-s3-audio-board-1.jpg "Waveshare ESP32-S3 Audio Board")
 
 ## Product Description
 
@@ -289,7 +289,7 @@ micro_wake_word:
   vad:
     model: github://esphome/micro-wake-word-models/models/v2/vad.json
   models:
-    - model: okay_nabu
+    - okay_nabu
   on_wake_word_detected:
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
