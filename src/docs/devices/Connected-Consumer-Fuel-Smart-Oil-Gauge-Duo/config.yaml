@@ -8,10 +8,12 @@ debug:
 wifi:
   ap:
 
+esp8266:
+  board: esp_wroom_02
 
 substitutions:
   device_name: esp8266-dev
-  friendly_name: ESP8266_Dev
+  friendly_name: 'Smart Oil Gauge Simulator'  # 'ESP8266_Dev'
   Samples_Before_Sleep: '6'
   Auto_Sleep_On_dc: '2.5%'
   Auto_Sleep_Off_dc: '87%'
@@ -23,14 +25,6 @@ substitutions:
   volume_calc_method: '1'  # 1 = Geometric, 2 = Table
   oil_depth_offset: '0.0'  # inches
 
-
-### Tank Chart Sources ###
-# https://www.fuelsnap.com/heating_oil_tank_charts.php
-# https://www.highlandtank.com/wp-content/uploads/2018/10/highland_gauge_chart_book.pdf
-# https://www.granbyindustries.com/wp-content/uploads/2017/04/GranbyInd_Capacity-Chart_VerticalTanks_USA_v1.pdf
-# https://allamericanenviro.com/determine-residential-heating-oil-tank-size-home-oil-tank-size-chart/
-
-
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
@@ -40,6 +34,7 @@ esphome:
         - switch.turn_off: ultrasonic_pwr
     - priority: -100
       then:
+        - script.execute: set_tank_dimensions
         - output.turn_on: LED_pwm
         - output.set_level:
             id: LED_pwm
@@ -55,11 +50,6 @@ esphome:
             then:
               - lambda: 'delay(50);'
               - switch.turn_on: Done
-
-esp8266:
-  # board: huzzah
-  board: esp_wroom_02
-
 
 deep_sleep:
   id: my_deep_sleep
@@ -144,6 +134,10 @@ globals:
     initial_value: '0'
 
   - id: Oil_Depth_in  # inches
+    type: float
+    initial_value: '0'
+
+  - id: Raw_Oil_Depth_in  # inches
     type: float
     initial_value: '0'
 
@@ -318,10 +312,13 @@ sensor:
 
       - lambda: |-
 
-          ESP_LOGD("VarCheck", "TempC %.15g", id(TempC));
-          ESP_LOGD("VarCheck", "BattV %.15g", id(BattV));
-          ESP_LOGD("VarCheck", "Speed_of_Sound %.15g", id(Speed_of_Sound));
-          ESP_LOGD("VarCheck", "Auto Sleep Disable %i", id(Auto_Sleep_Disable));
+          static const char *const TAG = "ADC Input";
+
+          ESP_LOGD(TAG,
+                  "Status:\n"
+                  " TempC: %.4g C\n"
+                  " BattV: %.4g V\n",
+                  id(TempC), id(BattV));
 
           if (id(TempSens_EN).state){
             return id(TempC);
@@ -350,6 +347,7 @@ sensor:
     accuracy_decimals: 4
     unit_of_measurement: 'gal'
     device_class: volume_storage
+    icon: mdi:storage-tank
     disabled_by_default: false
     entity_category: ''
     filters:
@@ -374,6 +372,8 @@ sensor:
 
           id(Time_of_Flight) = time_ms;
 
+          static const char *const TAG = "Ultrasonic";
+          ESP_LOGD(TAG, "Time of Flight %.4g ms", id(Time_of_Flight));
 
           // Calc Distance to Oil Surface
           // double time_s = id(Time_of_Flight) / 1000.0;
@@ -384,6 +384,10 @@ sensor:
           id(Distance_to_Oil) = (total_dist_m / 2.0) * 100.0;  // cm
 
           return id(Distance_to_Oil);  // cm
+
+      - lambda: |-
+          id(Sleep_Check).execute();
+          return id(Distance_to_Oil);
 
       - sliding_window_moving_average:
           window_size: ${Samples_Before_Sleep}
@@ -403,14 +407,16 @@ sensor:
             Oil_Depth = id(Tank_Width) - Oil_Distance;
           }
 
-          id(Oil_Depth_in) = Oil_Depth;  // inches
+          id(Raw_Oil_Depth_in) = Oil_Depth;  // inches
 
           return Oil_Depth;  // inches
+
       - offset: ${oil_depth_offset}
 
       - lambda: |-
           // Calculate the Oil Area
 
+          id(Oil_Depth_in) = x;  // inches
 
           // Calculate Rectangle and Arc Heights
 
@@ -468,19 +474,28 @@ sensor:
             Rectangle_Area = Rectangle_Height * (id(Tank_Height) - id(Tank_Width));
           }
 
-          //ESP_LOGD("VarCheck", "Tank_Orientation %.15g", id(Tank_Orientation));
-          //ESP_LOGD("VarCheck", "Tank_Size %.15g", id(Tank_Size));
-          //ESP_LOGD("VarCheck", "Tank_Width %.15g", id(Tank_Width));
-          //ESP_LOGD("VarCheck", "Tank_Height %.15g", id(Tank_Height));
-          //ESP_LOGD("VarCheck", "Tank_Length %.15g", id(Tank_Length));
-          //ESP_LOGD("VarCheck", "Tank_Radius %.15g", id(Tank_Radius));
-          //ESP_LOGD("VarCheck", "Oil_Height %.15g", Oil_Height);
-          //ESP_LOGD("VarCheck", "Arc_Height %.15g", Arc_Height);
-          //ESP_LOGD("VarCheck", "Rectangle_Height %.15g", Rectangle_Height);
-          //ESP_LOGD("VarCheck", "Arc_Area %.15g", Arc_Area);
-          //ESP_LOGD("VarCheck", "Rectangle_Area %.15g", Rectangle_Area);
-
           id(Oil_Area_Geo) = Rectangle_Area + Arc_Area;  // Total Area in²
+
+          static const char *const TAG = "Ultrasonic";
+          ESP_LOGV(TAG,
+                  "Calculations:\n"
+                  " Tank Orientation %g\n"
+                  " Tank Size %g\n"
+                  " Tank Width %.4g\n"
+                  " Tank Height %.4g\n"
+                  " Tank Length %.4g\n"
+                  " Tank Radius %.4g\n"
+                  " Oil Height %.4g\n"
+                  " Arc Height %.4g\n"
+                  " Rectangle Height %.4g\n"
+                  " Arc Area %.4g\n"
+                  " Rectangle Area %.4g\n"
+                  " Oil Area Geo %.4g\n",
+                  id(Tank_Orientation), id(Tank_Size), id(Tank_Width),
+                  id(Tank_Height), id(Tank_Length), id(Tank_Radius),
+                  Oil_Height, Arc_Height, Rectangle_Height, Arc_Area,
+                  Rectangle_Area, id(Oil_Area_Geo));
+
           return id(Oil_Area_Geo);
 
       - lambda: |-
@@ -488,11 +503,16 @@ sensor:
           // x = Total Area in²
 
           id(Oil_Volume_Geo) = x * id(Tank_Length) / 231; // gallons
-          return id(Oil_Volume_Geo);
 
-    on_value:
-      then:
-        - script.execute: Sleep_Check
+          static const char *const TAG = "Ultrasonic Output";
+          ESP_LOGD(TAG,
+                    "Results:\n"
+                    " Raw Oil Depth %.5g inches\n"
+                    " Oil Depth %.5g inches\n"
+                    " Oil in Tank %.5g gallons\n",
+                    id(Raw_Oil_Depth_in), id(Oil_Depth_in), id(Oil_Volume_Geo));
+
+          return id(Oil_Volume_Geo);
 
 script:
 
@@ -522,10 +542,17 @@ script:
                 value: !lambda 'return id(Measure_Count) += 1;'
             - if:
                 condition:
-                  - lambda: 'return id(Measure_Count) > id(Samples_Before_Sleep);'
+                  - lambda: 'return id(Measure_Count) > (id(Samples_Before_Sleep));'
                 then:
                   - script.execute: Sleep_Trigger
-      - lambda: 'ESP_LOGD("MeasureCount", "%i", id(Measure_Count));'
+      - lambda: |-
+
+          static const char *const TAG = "Sleep Check";
+          ESP_LOGD(TAG,
+                    " Auto Sleep Disable %i\n"
+                    " MeasureCount %i\n",
+                    id(Auto_Sleep_Disable),id(Measure_Count));
+
 
   - id: Sleep_Trigger
     then:
