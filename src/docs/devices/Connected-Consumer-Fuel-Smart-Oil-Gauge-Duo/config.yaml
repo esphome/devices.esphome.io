@@ -211,13 +211,11 @@ binary_sensor:
                     id: LED_pwm
                     level: ${Auto_Sleep_On_dc}
                 - lambda: '(id(Auto_Sleep_Disable) = 0);'
-                - switch.turn_on: ultrasonic_pwr
               else:
                 - output.set_level:
                     id: LED_pwm
                     level: ${Auto_Sleep_Off_dc}
                 - lambda: '(id(Auto_Sleep_Disable) = 1);'
-                - switch.turn_off: ultrasonic_pwr
       - timing:  # Single Click
           - ON for at most 1s
           - OFF for at least 0.5s
