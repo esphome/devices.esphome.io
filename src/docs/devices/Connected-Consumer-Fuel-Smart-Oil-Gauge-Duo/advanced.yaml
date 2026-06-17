@@ -68,10 +68,6 @@ globals:
     type: int
     initial_value: '0'
 
-#  - id: Auto_Sleep_Disable
-#    type: int
-#    initial_value: '0'
-
   - id: Tank_Width
     type: float
     initial_value: '0'
@@ -112,52 +108,6 @@ globals:
     type: int
     initial_value: ${volume_calc_method}
 
-  #- id: TempC
-  #  type: float
-  #  initial_value: '0'
-    # restore_value: true
-
-  #- id: BattV
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: Speed_of_Sound  # m/s
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: VP_Oil
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: MW_Total_kg_p_mol
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: Time_of_Flight  # ms
-  #  type: double
-  #  initial_value: '0'
-
-  #- id: Distance_to_Oil  # cm
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: Oil_Depth_in  # inches
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: Raw_Oil_Depth_in  # inches
-  #  type: float
-  #  initial_value: '0'
-
-  #- id: Oil_Area_Geo  # in²
-  #  type: double
-  #  initial_value: '0'
-
-  #- id: Oil_Volume_Geo  # gallons
-  #  type: double
-  #  initial_value: '0'
-
-
 switch:
 
   - platform: restart
@@ -191,7 +141,7 @@ switch:
   - platform: template
     name: "Deep Sleep Trigger"
     id: deep_sleep_trig
-    optimistic: True
+    optimistic: true
     on_turn_on:
       then:
         - script.stop: ultrasonic_loop
@@ -200,12 +150,10 @@ switch:
         - deep_sleep.enter:
             id: my_deep_sleep
 
-
-
   - platform: template
     name: "Auto Sleep Disable"
     id: Auto_Sleep_Disable
-    optimistic: True
+    optimistic: true
     on_turn_on:
       - output.set_level:
           id: LED_pwm
@@ -351,7 +299,6 @@ sensor:
     on_value:
       then:
         - component.update: Speed_of_Sound
-  
 
   - platform: template
     id: Speed_of_Sound
@@ -361,23 +308,23 @@ sensor:
     update_interval: never
     entity_category: "diagnostic"
     lambda: |-
-          
+
           // Calc Molecular Weight of Vapor above Oil
 
-          double MW_Oil = 167.31102; // g_Oil/mol_Oil  (C12H23)
-          double MW_Air = 28.9639475; // g_Air/mol_Air
-          
-          double P_Total = 101.325; // kPa (Could use a measured pressure here)
-          double P_Oil = id(VP_Oil).state; // Partial Pressure of Oil kPa
-          double P_Air = P_Total - P_Oil; // Partial Pressure Of Air kPa
+          double MW_Oil = 167.31102;  // g_Oil/mol_Oil  (C12H23)
+          double MW_Air = 28.9639475;  // g_Air/mol_Air
 
-          double nOil_per_nTotal = P_Oil / P_Total; // mol_Oil/mol_Total
-          double nAir_per_nTotal = P_Air / P_Total; // mol_Air/mol_Total
+          double P_Total = 101.325;  // kPa (Could use a measured pressure here)
+          double P_Oil = id(VP_Oil).state;  // Partial Pressure of Oil kPa
+          double P_Air = P_Total - P_Oil;  // Partial Pressure Of Air kPa
 
-          double g_Oil_per_nTotal = nOil_per_nTotal * MW_Oil; // g_Oil/mol_Total
-          double g_Air_per_nTotal = nAir_per_nTotal * MW_Air; // g_Air/mol_Total
+          double nOil_per_nTotal = P_Oil / P_Total;  // mol_Oil/mol_Total
+          double nAir_per_nTotal = P_Air / P_Total;  // mol_Air/mol_Total
 
-          double MW_Total = g_Oil_per_nTotal + g_Air_per_nTotal; // g_Total/mol_Total
+          double g_Oil_per_nTotal = nOil_per_nTotal * MW_Oil;  // g_Oil/mol_Total
+          double g_Air_per_nTotal = nAir_per_nTotal * MW_Air;  // g_Air/mol_Total
+
+          double MW_Total = g_Oil_per_nTotal + g_Air_per_nTotal;  // g_Total/mol_Total
           MW_Total = MW_Total / 1000.0; // kg_Total/mol_Total
 
 
@@ -386,11 +333,9 @@ sensor:
           double gamma = 1.4; // Oil is small enough fraction that large change in gamma is not expected
           double R = 8.31446261815324;
           double Sc = sqrt(gamma * R * 273.15 / MW_Total);
-          double speed_sound_m_per_s = Sc * sqrt(1+(id(TempC).state/273.15)); // ideal diatomic gas
-          
+          double speed_sound_m_per_s = Sc * sqrt(1+(id(TempC).state/273.15));  // ideal diatomic gas
+
           return speed_sound_m_per_s;
-
-
 
   - platform: ultrasonic
     trigger_pin:
@@ -502,7 +447,7 @@ sensor:
                   state: !lambda 'return x;'
         - if:
             condition:
-              - lambda: 'return (id(Volume_Calc_Method) == 2);' # Table
+              - lambda: 'return (id(Volume_Calc_Method) == 2);'  # Table
             then:
               - if:
                   condition:
@@ -527,14 +472,14 @@ sensor:
                         state: !lambda 'return x;'
               - if:
                   condition:
-                    - lambda: 'return id(Tank_Orientation) == 1;' # Vertical
+                    - lambda: 'return id(Tank_Orientation) == 1;'  # Vertical
                   then:
                     - if:
                         condition:
                           - lambda: 'return (id(Tank_Size) == 330);'
                         then:
                           - sensor.template.publish:
-                              id: Oil_Volume_Table_330V_Granby # Granby Table
+                              id: Oil_Volume_Table_330V_Granby  # Granby Table
                               state: !lambda 'return x;'
                     - if:
                         condition:
@@ -544,20 +489,20 @@ sensor:
                               id: Oil_Volume_Table_275V
                               state: !lambda 'return x;'
                   else: # Horizontal
-                      - if:
-                          condition:
-                            - lambda: 'return (id(Tank_Size) == 330);'
-                          then:
-                            - sensor.template.publish:
-                                id: Oil_Volume_Table_330H
-                                state: !lambda 'return x;'
-                      - if:
-                          condition:
-                            - lambda: 'return (id(Tank_Size) == 275);'
-                          then:
-                            - sensor.template.publish:
-                                id: Oil_Volume_Table_275H
-                                state: !lambda 'return x;'      
+                    - if:
+                        condition:
+                          - lambda: 'return (id(Tank_Size) == 330);'
+                        then:
+                          - sensor.template.publish:
+                              id: Oil_Volume_Table_330H
+                              state: !lambda 'return x;'
+                    - if:
+                        condition:
+                          - lambda: 'return (id(Tank_Size) == 275);'
+                        then:
+                          - sensor.template.publish:
+                              id: Oil_Volume_Table_275H
+                              state: !lambda 'return x;'
 
   - platform: template
     id: Oil_Volume_Geo
@@ -566,7 +511,7 @@ sensor:
     update_interval: never
     device_class: volume_storage
     entity_category: "diagnostic"
-    internal: True
+    internal: true
     filters:
       - lambda: |-
           // Calculate the Oil Area
@@ -655,7 +600,7 @@ sensor:
 
           return Oil_Area_Geo * id(Tank_Length) / 231; // gallons
 
-    on_value: 
+    on_value:
       then:
         - sensor.template.publish:
             id: Oil_Volume
@@ -667,10 +612,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
-    filters: 
-      - calibrate_linear: # inches to Gallons
+    filters:
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -733,10 +678,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.highlandtank.com/wp-content/uploads/2018/10/highland_gauge_chart_book.pdf
@@ -799,10 +744,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://allamericanenviro.com/determine-residential-heating-oil-tank-size-home-oil-tank-size-chart/
@@ -864,10 +809,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -930,10 +875,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.granbyindustries.com/wp-content/uploads/2017/04/GranbyInd_Capacity-Chart_VerticalTanks_USA_v1.pdf
@@ -995,10 +940,10 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
-    filters: 
-      - calibrate_linear: # inches to Gallons
+    filters:
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -1044,7 +989,7 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
       - calibrate_linear: # inches to Gallons
@@ -1093,7 +1038,7 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
       - calibrate_linear: # inches to Gallons
@@ -1162,7 +1107,7 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
       - calibrate_linear: # inches to Gallons
@@ -1231,7 +1176,7 @@ sensor:
     unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
-    internal: True
+    internal: true
     accuracy_decimals: 4
     filters:
       - calibrate_linear: # inches to Gallons
