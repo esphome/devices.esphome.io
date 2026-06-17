@@ -212,7 +212,6 @@ sensor:
     icon: mdi:current-dc
     filters:
       - lambda: |-
-          
           // Battery Voltage Divider R Values
           int R1 = 10.0;  // MOhm
           int R2 = 1.0;   // MOhm
@@ -249,7 +248,7 @@ sensor:
     state_class: measurement
     accuracy_decimals: 3
     unit_of_measurement: '°C'
-    on_value: 
+    on_value:
       then:
         - component.update: VP_Oil
 
@@ -262,7 +261,7 @@ sensor:
     accuracy_decimals: 3
     unit_of_measurement: 'V'
     icon: mdi:current-dc
-    on_value: 
+    on_value:
       then:
         - lambda: |-
             static const char *const TAG = "ADC Input";
@@ -270,7 +269,7 @@ sensor:
                   "Measurements:\n"
                   " TempC: %.4g C\n"
                   " BattV: %.4g V\n",
-                  id(TempC).state, id(BattV).state); 
+                  id(TempC).state, id(BattV).state);
 
   - platform: template
     name: 'Vapor Pressure Oil'
@@ -349,7 +348,6 @@ sensor:
     unit_of_measurement: 'in'
     device_class: distance
     state_class: measurement
-    #icon: mdi:storage-tank
     disabled_by_default: false
     entity_category: "diagnostic"
     filters:
@@ -488,7 +486,7 @@ sensor:
                           - sensor.template.publish:
                               id: Oil_Volume_Table_275V
                               state: !lambda 'return x;'
-                  else: # Horizontal
+                  else:  # Horizontal
                     - if:
                         condition:
                           - lambda: 'return (id(Tank_Size) == 330);'
@@ -687,10 +685,10 @@ sensor:
             # https://www.highlandtank.com/wp-content/uploads/2018/10/highland_gauge_chart_book.pdf
             # Map 0.0 (from sensor) to 1.0 (true value)
             # inches to gallons
-            - 0	-> 0
-            - 1	-> 3
-            - 2	-> 6
-            - 3	-> 11
+            - 0 -> 0
+            - 1 -> 3
+            - 2 -> 6
+            - 3 -> 11
             - 4	-> 17
             - 5	-> 23
             - 6	-> 30
