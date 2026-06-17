@@ -370,14 +370,20 @@ sensor:
           double time_s = total_dist / ESP_speed_sound_m_per_s;
           double time_ms = time_s * 1000.0;
 
-          static const char *const TAG = "Ultrasonic";
-          ESP_LOGD(TAG, "Time of Flight %.4g ms", time_ms);
-
           // Calc Distance to Oil Surface
           double total_dist_m = time_s * id(Speed_of_Sound).state;
-          double Oil_Distance = (total_dist_m / 2.0) * 100.0;  // cm to inches
+          double Oil_Distance = (total_dist_m / 2.0) * 100.0;  // cm
+          
+          Oil_Distance = Oil_Distance * 10 /25.4; // cm to inches
 
-          return Oil_Distance;  // inches
+          static const char *const TAG = "Ultrasonic";
+          ESP_LOGD(TAG, 
+                    "Speed Corrected:\n"
+                    " Time of Flight %.4g ms\n"
+                    " Distance to Oil %.4g inches\n",
+                    time_ms, Oil_Distance);
+
+          return Oil_Distance;
 
     on_value:
       then:
@@ -575,7 +581,7 @@ sensor:
           double Oil_Area_Geo =  Rectangle_Area + Arc_Area;  // Total Area in²
 
           const char* TAG = "Geometric Oil Area";
-          ESP_LOGV(TAG,
+          ESP_LOGD(TAG,
                   "Calculations:\n"
                   " Tank Orientation %g\n"
                   " Tank Size %g\n"
