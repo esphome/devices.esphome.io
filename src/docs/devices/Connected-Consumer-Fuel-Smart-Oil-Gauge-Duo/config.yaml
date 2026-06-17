@@ -31,7 +31,7 @@ esphome:
   on_boot:
     - priority: 800
       then:
-        - switch.turn_off: ultrasonic_pwr
+        - switch.turn_off: ultrasonic_en
     - priority: -100
       then:
         - script.execute: set_tank_dimensions
@@ -164,8 +164,8 @@ switch:
 
   - platform: gpio
     pin: GPIO14
-    id: ultrasonic_pwr
-    name: "Ultrasonic Pwr"
+    id: ultrasonic_en
+    name: "Ultrasonic EN"
     entity_category: "config"
     disabled_by_default: false
     on_turn_on:
@@ -332,7 +332,7 @@ sensor:
             then:
               - switch.turn_off: TempSens_EN
               - delay: 1s
-              - switch.turn_on: ultrasonic_pwr
+              - switch.turn_on: ultrasonic_en
 
   - platform: ultrasonic
     trigger_pin:
@@ -520,7 +520,7 @@ script:
       - delay: ${ultrasonic_interval}
       - while:
           condition:
-            switch.is_on: ultrasonic_pwr
+            switch.is_on: ultrasonic_en
           then:
             - component.update: Ultrasonic_Distance  # Oil_In_Tank
             - delay: ${ultrasonic_interval}
@@ -555,7 +555,7 @@ script:
   - id: Sleep_Trigger
     then:
       - script.stop: ultrasonic_loop
-      - switch.turn_off: ultrasonic_pwr
+      - switch.turn_off: ultrasonic_en
       - output.turn_off: LED_pwm
       - lambda: '(id(Deep_Sleep) = 1);'  # Turn ON Deep_Sleep
       - deep_sleep.enter:
