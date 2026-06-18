@@ -33,6 +33,5 @@ It is available on aliexpress.
 
 ## Basic Config
 
-```yaml file=config.yaml
-```
+```yaml file=config.yaml ```
 
