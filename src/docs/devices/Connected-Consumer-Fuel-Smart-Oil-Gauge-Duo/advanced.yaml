@@ -373,11 +373,11 @@ sensor:
           // Calc Distance to Oil Surface
           double total_dist_m = time_s * id(Speed_of_Sound).state;
           double Oil_Distance = (total_dist_m / 2.0) * 100.0;  // cm
-          
+
           Oil_Distance = Oil_Distance * 10 /25.4; // cm to inches
 
           static const char *const TAG = "Ultrasonic";
-          ESP_LOGD(TAG, 
+          ESP_LOGD(TAG,
                     "Speed Corrected:\n"
                     " Time of Flight %.4g ms\n"
                     " Distance to Oil %.4g inches\n",
@@ -483,7 +483,7 @@ sensor:
                           - lambda: 'return (id(Tank_Size) == 330);'
                         then:
                           - sensor.template.publish:
-                              id: Oil_Volume_Table_330V_Granby  # Granby Table
+                              id: Oil_Volume_Table_330V
                               state: !lambda 'return x;'
                     - if:
                         condition:
@@ -996,7 +996,7 @@ sensor:
     internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -1045,7 +1045,7 @@ sensor:
     internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -1114,7 +1114,7 @@ sensor:
     internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
@@ -1183,7 +1183,7 @@ sensor:
     internal: true
     accuracy_decimals: 4
     filters:
-      - calibrate_linear: # inches to Gallons
+      - calibrate_linear:  # inches to Gallons
           method: exact
           datapoints:
             # https://www.fuelsnap.com/heating_oil_tank_charts.php
