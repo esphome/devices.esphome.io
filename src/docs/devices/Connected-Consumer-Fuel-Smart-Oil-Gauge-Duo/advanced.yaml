@@ -528,7 +528,7 @@ sensor:
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
 
-          if (id(Tank_Orientation) == 0){  // Horizontal
+          if (id(Tank_Orientation) == 2){  // Horizontal
 
             Rectangle_Height = Oil_Height;
             Arc_Height = Oil_Height;
