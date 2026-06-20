@@ -100,6 +100,10 @@ binary_sensor:
       then:
         - switch.toggle: relay_1
 
+# Note: GPIO0 reported for some hardware revisions. On revision v0.1.2
+# (printed on the PCB) the status LED is on GPIO15. If GPIO0 does not
+# produce LED activity, try GPIO15 instead.
+
 status_led:
   pin:
     number: 0
