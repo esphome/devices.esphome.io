@@ -37,30 +37,5 @@ following configuration through the ESPHome Kickstart interface, or adopt it int
 
 ## Configuration
 
-```yaml
-bk72xx:
-  board: cb3s
-
-remote_receiver:
-  pin:
-    number: P7
-    inverted: true
-    mode: INPUT_PULLUP
-
-remote_transmitter:
-  pin: P26
-  carrier_duty_percent: 50%
-
-light:
-  - platform: status_led
-    pin: P8
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: P6
-      inverted: true
-      mode:
-        input: true
-        pullup: true
+```yaml file=config.yaml
 ```
