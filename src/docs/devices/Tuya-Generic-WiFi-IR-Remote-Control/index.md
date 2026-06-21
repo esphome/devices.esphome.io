@@ -8,12 +8,14 @@ board: bk72xx
 
 ## General Notes
 
-This devices has a CB3S board. It can be bought [on Aliexpress](https://www.aliexpress.com/item/1005007804859733.html)
+This device has a CB3S board. It can be bought [on Aliexpress](https://www.aliexpress.com/item/1005007804859733.html)
 (February 2025).
 
 Despite appearing outwardly identical to the [Tuya Generic IRC03 IR Blaster](/devices/Tuya-Generic-IRC03-IR-Blaster),
 the IRC03 has a custom PCB with the BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts
-between the two devices differ as a result.
+between the two devices differ as a result. You can determine which board you have by shining a flashlight through the
+casing; on this model, there's a rectangular cutout on the PCB opposite the USB port through which you can see the 
+underside of the CB3S module. 
 
 ![IRRemote](tuya-generic-wifi-ir-remote-control.jpg)
 
@@ -29,7 +31,8 @@ between the two devices differ as a result.
 ## Flashing
 
 This device can be flashed using [Tuya Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) using device
-profile _tuya-generic-universal-ir-remote-control-cb3s-v2.0.0_.
+profile _tuya-generic-universal-ir-remote-control-cb3s-v2.0.0_. Once flashed, you can upload a custom firmware with the
+following configuration through the ESPHome Kickstart interface, or adopt it into your ESPHome dashboard. 
 
 ## Configuration
 
