@@ -14,7 +14,8 @@ There's detailed teardown info at [Elektroda](https://www.elektroda.com/rtvforum
 Despite appearing outwardly identical to the
 [Tuya Generic IR Remote Control](/devices/Tuya-Generic-WiFi-IR-Remote-Control), the IRC03 has a custom PCB with the
 BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts between the two devices differ as a
-result.
+result. You can determine which board you have by shining a flashlight through the casing; on this model, the PCB is a
+single solid board with no cutouts.
 
 ![IRC03](IRC03.jpg)
 
