@@ -4,6 +4,7 @@ date-published: 2025-02-22
 type: misc
 standard: global
 board: bk72xx
+difficulty: 2
 ---
 
 ## General Notes
@@ -14,8 +15,8 @@ This device has a CB3S board. It can be bought [on Aliexpress](https://www.aliex
 Despite appearing outwardly identical to the [Tuya Generic IRC03 IR Blaster](/devices/Tuya-Generic-IRC03-IR-Blaster),
 the IRC03 has a custom PCB with the BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts
 between the two devices differ as a result. You can determine which board you have by shining a flashlight through the
-casing; on this model, there's a rectangular cutout on the PCB opposite the USB port through which you can see the 
-underside of the CB3S module. 
+casing; on this model, there's a rectangular cutout on the PCB opposite the USB port through which you can see the
+underside of the CB3S module.
 
 ![IRRemote](tuya-generic-wifi-ir-remote-control.jpg)
 
