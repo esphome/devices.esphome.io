@@ -33,7 +33,7 @@ underside of the CB3S module.
 
 This device can be flashed using [Tuya Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) using device
 profile _tuya-generic-universal-ir-remote-control-cb3s-v2.0.0_. Once flashed, you can upload a custom firmware with the
-following configuration through the ESPHome Kickstart interface, or adopt it into your ESPHome dashboard. 
+following configuration through the ESPHome Kickstart interface, or adopt it into your ESPHome dashboard.
 
 ## Configuration
 
