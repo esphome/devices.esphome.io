@@ -23,7 +23,7 @@
     "@astrojs/starlight": "^0.39.3",
     "astro": "^6.4.5",
     "gray-matter": "^4.0.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.2"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
