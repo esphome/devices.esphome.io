@@ -104,7 +104,6 @@ The controller then powers down for another hour waiting for the TPL5111 to powe
 On the 6th Time-of-Flight measurement (`Samples_Before_Sleep`),
 the controller calculates and sends the averaged Volume of Oil in the tank.
 
-
 Pressing the control button once will either wake up the controller, or power it back down.
 
 Double pressing the control button while powered on will toggle between allowing and not allowing the automatic power
