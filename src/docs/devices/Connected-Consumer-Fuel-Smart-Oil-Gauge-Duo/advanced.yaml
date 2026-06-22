@@ -22,7 +22,7 @@ substitutions:
   skip_initial_count: '1'
   tank_size: "330"  # 275, 330, 500, 550, or 1000
   tank_orientation: '1'   # 1 = Vertical,  2 = Horizontal
-  volume_calc_method: '1'  # 1 = Geometric, 2 = Table
+  volume_calc_method: ''  # 1 = Geometric, 2 = Table
   oil_depth_offset: '0.0'  # inches
 
 
