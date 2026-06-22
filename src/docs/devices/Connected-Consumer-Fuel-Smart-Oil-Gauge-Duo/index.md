@@ -64,9 +64,9 @@ drilled into the top cap.
 
 The oil gauge must be fully reassembled with all gaskets in place in order for the vapor seal to be maintained.
 
-## Features of the Advanced Configuration
+## Setup and Configuration
 
-### Setup and Configuration Notes
+### Notes
 
 Be sure to modify the substitution section of the code for your specific setup: `tank_size`, `tank_orientation`,
 `oil_depth_offset`, `volume_calc_method`.
@@ -81,7 +81,7 @@ oil_depth_offset, using units of inches, subtract the oil depth reported by the
 sensor from the directly measured oil depth:\
 `oil_depth_offset = (Oil Depth by Stick Measurement) - (Oil Depth reported by the sensor)`
 
-#### Volume Calculation Method
+#### Volume Calculation Method (Advanced Confguration)
 
 Calculating the oil volume in the tank from the oil depth can be performed either geometrically, or using a look-up table.
 
@@ -94,10 +94,16 @@ their chart data and using the table method. The Basic Configuration below has c
 [Fuel Snap](https://www.fuelsnap.com/heating_oil_tank_charts.php) for all configurable tank sizes. There are also links
 to other published oil volume charts.
 
-### Operation
+## Operation
 
-The controller wakes every hour, sends six distance measurements and one oil volume measurement to Home Assistant,
-andthen powers down for another hour waiting for the TPL5111 to power it back up.
+The controller wakes every hour by the TPL5111.
+While the controller is awake,
+it calculates the Time-of-Flight to the oil 7 times (`Samples_Before_Sleep + 1`)
+15 seconds apart(`throttle_average_duration`).
+The controller then powers down for another hour waiting for the TPL5111 to power it back up.
+On the 6th Time-of-Flight measurement (`Samples_Before_Sleep`),
+the controller calculates and sends the averaged Volume of Oil in the tank.
+
 
 Pressing the control button once will either wake up the controller, or power it back down.
 
