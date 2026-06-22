@@ -71,8 +71,9 @@ The oil gauge must be fully reassembled with all gaskets in place in order for t
 Be sure to modify the substitution section of the code for your specific setup: `tank_size`, `tank_orientation`,
 `oil_depth_offset`, `volume_calc_method`.
 
-#### Oil Depth Offset (inches)
+#### Oil Depth Offset
 
+(units: inches)\
 Used to correct the distance offset between the ultrasonic sensor's zero point and the top of the oil tank.
 
 The removable electronics module design of the Smart Oil Gauge Duo allows for easy access to directly measure the
@@ -81,7 +82,7 @@ oil_depth_offset, using units of inches, subtract the raw oil depth reported by 
 sensor from the directly measured oil depth:\
 `oil_depth_offset = (Oil Depth by Stick Measurement) - (Raw Oil Depth reported by the sensor)`
 
-The `Raw Oil Depth` is reported in the uart debug log when the controller calculates the `Oil In Tank`
+The `Raw Oil Depth` is reported in the debug level of the logger when the controller calculates the `Oil In Tank`
 
 #### Volume Calculation Method (Advanced Confguration)
 
@@ -184,14 +185,14 @@ and fill in your local credentials separately.
 
 The Advanced Configuration below adds more calculations and functionality.
 This Advanced Configuration would completely replace the Basic Configuration above.
-Added template sensors include: `Oil Depth`, `Max Fill`, Seperate `Temperature` and `Battery Voltage`.
+Added template sensors include: `Raw Oil Depth`, `Oil Depth`, `Max Fill`,
+Seperate `Temperature` and `Battery Voltage`.
 Added `Auto Sleep Disable` control.
 Multiple additional Diagnostic sensors.
-Includes a built in otion to use a look-up table to convert directly from `Oil Depth` to gallons.
+Includes a built in option to use a look-up table to convert directly from `Oil Depth` to gallons.
 Add your own `wifi:`, `api:`, and `ota:` sections before flashing.
 The example also leaves out passwords and `!secret` references so you can merge it into your own setup
-and fill in your local
-credentials separately.
+and fill in your local credentials separately.
 
 ```yaml file=advanced.yaml
 ```
