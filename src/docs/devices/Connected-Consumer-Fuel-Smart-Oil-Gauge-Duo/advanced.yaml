@@ -572,7 +572,7 @@ sensor:
           double Oil_Area_Geo =  Rectangle_Area + Arc_Area;  // Total Area in²
 
           const char* TAG = "Geometric Oil Area";
-          ESP_LOGD(TAG,
+          ESP_LOGV(TAG,
                   "Calculations:\n"
                   " Tank Orientation %g\n"
                   " Tank Size %g\n"
