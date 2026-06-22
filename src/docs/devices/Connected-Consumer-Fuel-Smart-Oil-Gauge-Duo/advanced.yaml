@@ -2,9 +2,6 @@
 logger:
   level: DEBUG
 
-debug:
-  update_interval: 5s
-
 wifi:
   ap:
 
@@ -195,12 +192,6 @@ binary_sensor:
 
 
 sensor:
-
-  - platform: debug
-    loop_time:
-      name: "loop Time"
-    free:
-      name: "Heep Free"
 
   - platform: adc
     pin: A0
