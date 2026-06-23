@@ -84,11 +84,11 @@ sensor from the directly measured oil depth:\
 
 The `Raw Oil Depth` is reported in the debug level of the logger when the controller calculates the `Oil In Tank`
 
-#### Volume Calculation Method (Advanced Configuration)
+#### Volume Calculation Method (Advanced Configuration Only)
 
 Calculating the oil volume in the tank from the oil depth can be performed either geometrically or using a look-up table.
 
-The Basic Configuration below does not include the option to use look-up tables for the Volume Calculation.
+The Basic Configuration below does not include the option to use a look-up table for the Volume Calculation.
 
 The Geometric Method uses geometry to calculate the volume of oil to fill an oil tank of somewhat standard dimensions up
 to the level of the measured oil depth.
