@@ -121,7 +121,7 @@ code updates.
 
 | LED Behavior                 | Controller State (Double Press Control Button to switch states)                                           |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Short Blink ON every Second  | Controller is awake, after sending 3 oil volume measurements, will power down for 1 hour. (Default State) |
+| Short Blink ON every Second  | Controller is awake, after sending 1 averaged oil volume measurement, will power down for 1 hour. (Default State) |
 | Short Blink OFF every Second | Controller is awake, will continue to stay awake until restarted. Useful for reprogramming.               |
 
 ## Ultrasonic DYP-A22 with PWM Control
@@ -185,9 +185,9 @@ and fill in your local credentials separately.
 
 The Advanced Configuration below adds more calculations and functionality.
 This Advanced Configuration would completely replace the Basic Configuration above.
-Added template sensors include: `Raw Oil Depth`, `Oil Depth`, `Max Fill`,
-Separate `Temperature` and `Battery Voltage`.
-Added `Auto Sleep Disable` control.
+Added template sensors include: `Raw Oil Depth`, `Oil Depth`, `Max Fill`, and
+separate `Temperature` and `Battery Voltage`.
+Added `Auto Sleep Disable` template switch for remote Auto Sleep Disabling.
 Multiple additional Diagnostic sensors.
 Includes a built-in option to use a look-up table to convert directly from `Oil Depth` to gallons.
 Add your own `wifi:`, `api:`, and `ota:` sections before flashing.
