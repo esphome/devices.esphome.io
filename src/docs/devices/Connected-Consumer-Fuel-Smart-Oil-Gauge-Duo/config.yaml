@@ -12,8 +12,8 @@ substitutions:
   device_name: smart-oil-gauge-duo
   friendly_name: 'Smart Oil Gauge Duo'
   Samples_Before_Sleep: '6'  # Number of TOF measurements before calculating Volume, Sleeps at n+1
-  Auto_Sleep_On_dc: '2.5%'  # LED Dutycycle when Auto Sleep is On
-  Auto_Sleep_Off_dc: '87%'  # LED Dutycycle when Auto Sleep is Off
+  Auto_Sleep_On_dc: '2.5%'  # LED duty cycle when Auto Sleep is On
+  Auto_Sleep_Off_dc: '87%'  # LED duty cycle when Auto Sleep is Off
   ultrasonic_interval: '70ms'  # Time between ultrasonic trigger pulses
   throttle_average_duration: '15s'  # Time between TOF measurements
   skip_initial_count: '1'  # Number of initial TOF measurements to skip
