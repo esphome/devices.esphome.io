@@ -84,18 +84,18 @@ sensor from the directly measured oil depth:\
 
 The `Raw Oil Depth` is reported in the debug level of the logger when the controller calculates the `Oil In Tank`
 
-#### Volume Calculation Method (Advanced Configuration Only)
+#### Volume Calculation Method
 
 Calculating the oil volume in the tank from the oil depth can be performed either geometrically or using a look-up table.
 
-The Basic Configuration below does not include the option to use a look-up table for the Volume Calculation.
+The Basic Configuration below does not include the option to use look-up tables for the Volume Calculation.
 
 The Geometric Method uses geometry to calculate the volume of oil to fill an oil tank of somewhat standard dimensions up
-to the level of the measured oil depth.
+to the level of the measured oil depth. This is the only method used in the Basic Configuration below.
 
 The Table Method uses ESPHome's Calibrate Linear Filter to go directly from oil depth to oil volume. If the manufacturer
 of your tank provides an oil volume chart, it may be possible to get a more accurate oil volume measurement by inputting
-their chart data and using the table method. The Basic Configuration below has chart data as published by
+their chart data and using the table method. The Advanced Configuration below has chart data as published by
 [Fuel Snap](https://www.fuelsnap.com/heating_oil_tank_charts.php) for all configurable tank sizes. There are also links
 to other published oil volume charts.
 
