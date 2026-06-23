@@ -62,7 +62,7 @@ drilled into the top cap.
 
 ### Assembly
 
-The oil gauge must be fully reassembled with all gaskets in place in order for the vapor seal to be maintained.
+The oil gauge must be fully reassembled with all gaskets in place for the vapor seal to be maintained.
 
 ## Setup and Configuration
 
@@ -84,9 +84,9 @@ sensor from the directly measured oil depth:\
 
 The `Raw Oil Depth` is reported in the debug level of the logger when the controller calculates the `Oil In Tank`
 
-#### Volume Calculation Method (Advanced Confguration)
+#### Volume Calculation Method (Advanced Configuration)
 
-Calculating the oil volume in the tank from the oil depth can be performed either geometrically, or using a look-up table.
+Calculating the oil volume in the tank from the oil depth can be performed either geometrically or using a look-up table.
 
 The Basic Configuration below does not include the option to use look-up tables for the Volume Calculation.
 
@@ -171,8 +171,8 @@ Datasheet:
 
 ## Basic Configuration
 
-The Basic Configuration below will give a basic functioning Smart Oil Gauge.
-It will operate as descibed in the Operation Section.
+The Basic Configuration below will make a basic functioning Smart Oil Gauge.
+It will operate as described in the Operation Section.
 It will let you monitor the geometrically calculated number of gallons in the tank and the supply voltage.
 Add your own `wifi:`, `api:`, and `ota:` sections before flashing.
 The example also leaves out passwords and `!secret` references so you can merge it into your own setup
@@ -186,10 +186,10 @@ and fill in your local credentials separately.
 The Advanced Configuration below adds more calculations and functionality.
 This Advanced Configuration would completely replace the Basic Configuration above.
 Added template sensors include: `Raw Oil Depth`, `Oil Depth`, `Max Fill`,
-Seperate `Temperature` and `Battery Voltage`.
+Separate `Temperature` and `Battery Voltage`.
 Added `Auto Sleep Disable` control.
 Multiple additional Diagnostic sensors.
-Includes a built in option to use a look-up table to convert directly from `Oil Depth` to gallons.
+Includes a built-in option to use a look-up table to convert directly from `Oil Depth` to gallons.
 Add your own `wifi:`, `api:`, and `ota:` sections before flashing.
 The example also leaves out passwords and `!secret` references so you can merge it into your own setup
 and fill in your local credentials separately.
