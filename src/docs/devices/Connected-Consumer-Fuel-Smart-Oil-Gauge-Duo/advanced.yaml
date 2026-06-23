@@ -9,7 +9,7 @@ esp8266:
   board: esp_wroom_02
 
 substitutions:
-  device_name: smart_oil_gauge
+  device_name: smart-oil-gauge-duo
   friendly_name: 'Smart Oil Gauge Duo'
   Samples_Before_Sleep: '6'  # Number of TOF measurements before calculating Volume, Sleeps at n+1
   Auto_Sleep_On_dc: '2.5%'  # LED Dutycycle when Auto Sleep is On
