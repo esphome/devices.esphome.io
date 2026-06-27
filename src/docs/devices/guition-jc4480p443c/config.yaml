@@ -1,4 +1,3 @@
-
 logger:
 
 substitutions:
@@ -27,17 +26,17 @@ esp32:
     type: esp-idf
     advanced:
       execute_from_psram: true
-    
+
 esp_ldo:
   - channel: 3
     voltage: 2.5V
-  
+
 psram:
   speed: 200MHz
 
 preferences:
   flash_write_interval: 5min
-  
+
 http_request:  # Needed by esp32_hosted-update
   buffer_size_rx: 2048
 
@@ -51,7 +50,7 @@ esp32_hosted:
   d1_pin: GPIO15
   d2_pin: GPIO16
   d3_pin: GPIO17
-  
+
 # Firmware update for esp32_hosted ESP32-C6
 update:
   - platform: esp32_hosted
@@ -59,7 +58,7 @@ update:
     icon: mdi:chip
     type: http
     source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
-    update_interval: 6h  
+    update_interval: 6h
 
 output:
   # Backlight LED
