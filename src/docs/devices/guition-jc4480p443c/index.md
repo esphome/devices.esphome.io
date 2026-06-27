@@ -1,0 +1,230 @@
+---
+title: "Guition JC4480P443C"
+date-published: 2026-06-27
+type: misc
+standard: global
+board: esp32
+difficulty: 2
+made-for-esphome: no
+---
+
+An ESP32-P4 based dev-board with the following features:
+
+- 4.3" TFT touchscreen
+- WiFi 6 via a ESP32-C6 co-processor
+- On-board mic
+- Support for driving a small off-board speaker
+- Support for battery charging
+
+A desk stand 3D print is available on [MakerWorld](https://makerworld.com/en/models/2982320-desk-stand-for-4-3-inch-jc4880p443-esp32-screen).
+
+## Basic Configuration
+
+```yaml
+
+logger:
+
+substitutions:
+  screen_height: 800
+  screen_width: 480
+  name: esp-web-tools-example
+  friendly_name: ESP Web Tools Example
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  min_version: 2026.6.0
+  project:
+    name: "Guition.ESP32-P4-JC4880P443"
+    version: "1.0"
+  on_boot:
+    then:
+      # read the RTC time once when the system boots
+      rx8130.read_time:
+
+esp32:
+  board: esp32-p4-evboard
+  variant: esp32p4
+  flash_size: 16MB
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+    advanced:
+      execute_from_psram: true
+
+packages:
+  - !include
+      file: "packages/wifi-esp32.yml"
+    
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+  
+psram:
+  speed: 200MHz
+
+preferences:
+  flash_write_interval: 5min
+  
+http_request:  # Needed by esp32_hosted-update
+  buffer_size_rx: 2048
+
+esp32_hosted:
+  active_high: true
+  variant: ESP32C6
+  reset_pin: GPIO54
+  cmd_pin: GPIO19
+  clk_pin: GPIO18
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  
+# Firmware update for esp32_hosted ESP32-C6
+update:
+  - platform: esp32_hosted
+    name: ESP-Hosted Firmware
+    icon: mdi:chip
+    type: http
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
+    update_interval: 6h  
+
+output:
+  # Backlight LED
+  - platform: ledc
+    pin: GPIO23
+    id: gpio_backlight_pwm
+    inverted: false
+
+light:
+  - platform: monochromatic
+    output: gpio_backlight_pwm
+    name: Display Backlight
+    icon: mdi:lightbulb-on
+    id: display_backlight
+    entity_category: config
+    restore_mode: ALWAYS_ON
+    default_transition_length: 250ms
+
+switch:
+  - platform: gpio
+    id: my_amp
+    name: Speaker Enable
+    icon: "mdi:speaker"
+    entity_category: config
+    pin: GPIO11
+    restore_mode: RESTORE_DEFAULT_ON
+
+i2c:
+  - id: bus_a
+    sda: GPIO7
+    scl: GPIO8
+    scan: true
+    frequency: 400kHz
+
+touchscreen:
+  - platform: gt911
+    i2c_id: bus_a
+    id: my_touchscreen
+    display: device_display
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    interrupt_pin: GPIO21
+    reset_pin: GPIO22
+
+display:
+  - platform: mipi_dsi
+    id: device_display
+    model: JC4880P443
+    update_interval: never
+    auto_clear_enabled: false
+    dimensions:
+      width: 480
+      height: 800
+
+lvgl:
+  byte_order: little_endian
+
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_lrclk_pin: GPIO10
+    i2s_bclk_pin: GPIO12
+    i2s_mclk_pin: GPIO13
+
+audio_dac:
+  - platform: es8311
+    id: my_dac
+    i2c_id: bus_a
+    address: 0x18
+
+microphone:
+  - platform: i2s_audio
+    id: my_microphone
+    i2s_audio_id: i2s_audio_bus
+    i2s_din_pin: GPIO48
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    adc_type: external
+
+speaker:
+  - platform: i2s_audio
+    id: my_speaker
+    i2s_audio_id: i2s_audio_bus
+    i2s_dout_pin: GPIO9
+    audio_dac: my_dac
+    dac_type: external
+    channel: mono
+    buffer_duration: 500ms
+    bits_per_sample: 16bit
+    sample_rate: 48000
+
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: my_speaker
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+api:
+
+time:
+  - platform: rx8130
+    id: rtc
+    i2c_id: bus_a
+    address: 0x14
+    update_interval: never
+  - platform: homeassistant
+    id: homeassistant_time    
+    on_time_sync:
+      then:
+        # ... and update the RTC when the synchronization was successful
+        rx8130.write_time:
+
+ota:
+  - platform: esphome
+
+web_server:
+captive_portal:
+improv_serial:
+wifi:
+  # Set up a wifi access point
+  ap:
+    ssid: "ESP Web Tools"
+
+```
