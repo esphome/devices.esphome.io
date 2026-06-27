@@ -12,11 +12,10 @@ esphome:
   friendly_name: "${friendly_name}"
   min_version: 2026.6.0
   project:
-    name: "Guition.ESP32-P4-JC4880P443"
+    name: "Guition.JC4880P443"
     version: "1.0"
   on_boot:
     then:
-      # read the RTC time once when the system boots
       rx8130.read_time:
 
 esp32:
@@ -178,28 +177,8 @@ speaker:
     sample_rate: 48000
     bits_per_sample: 16
 
-api:
-
 time:
   - platform: rx8130
     id: rtc
     i2c_id: bus_a
     address: 0x14
-    update_interval: never
-  - platform: homeassistant
-    id: homeassistant_time    
-    on_time_sync:
-      then:
-        # ... and update the RTC when the synchronization was successful
-        rx8130.write_time:
-
-ota:
-  - platform: esphome
-
-web_server:
-captive_portal:
-improv_serial:
-wifi:
-  # Set up a wifi access point
-  ap:
-    ssid: "ESP Web Tools"
