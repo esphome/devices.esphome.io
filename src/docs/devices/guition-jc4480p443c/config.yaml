@@ -27,10 +27,6 @@ esp32:
     type: esp-idf
     advanced:
       execute_from_psram: true
-
-packages:
-  - !include
-      file: "packages/wifi-esp32.yml"
     
 esp_ldo:
   - channel: 3
