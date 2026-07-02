@@ -1,5 +1,5 @@
 ---
-title: Neato Target IR
+title: NeatoFx Target IR
 date-published: 2026-05-21
 type: misc
 standard: global
@@ -9,11 +9,11 @@ made-for-esphome: true
 difficulty: 1
 ---
 
-![Neato Target IR](./product.png)
+![NeatoFx Target IR](./product.png)
 
 ## Overview
 
-The Neato Target IR is a self-contained WiFi-enabled infrared hit detector and prop controller.
+The NeatoFx Target IR is a self-contained WiFi-enabled infrared hit detector and prop controller.
 Wire it up, configure it from any browser, and it runs your prop — relay, servo, LEDs, and
 scoring — with no custom coding or external controller required.
 
@@ -34,7 +34,7 @@ or in batch via Home Assistant.
 - 3 debounced digital inputs + 1 analog input (0–3.3 V) for buttons, PIR, pressure pads
 - Browser-based configuration: point value, LED colors/animations, relay hold time, servo angles, IR sensitivity
 - Home Assistant native (ESPHome API) — discovered automatically within 60 seconds of joining WiFi
-- Standalone AP mode — no hub required; hotspot `NEATO-target-1` / `neato123`, web UI at `192.168.4.1`
+- Standalone AP mode — no hub required; hotspot `target-1` / `neato123`, web UI at `192.168.4.1`
 - OTA firmware updates
 - ¼" camera thread mount with CCTV swivel mount included
 
@@ -90,7 +90,7 @@ or in batch via Home Assistant.
 
 ## Quick Start
 
-1. Power on — target broadcasts WiFi hotspot `NEATO-target-1` (password: `neato123`)
+1. Power on — target broadcasts WiFi hotspot `target-1` (password: `neato123`)
 2. Connect phone or laptop to the hotspot — captive portal opens automatically
 3. Select your venue WiFi network and enter credentials
 4. Home Assistant discovers the device within 60 seconds
