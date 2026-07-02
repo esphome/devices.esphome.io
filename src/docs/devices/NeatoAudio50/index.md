@@ -1,5 +1,5 @@
 ---
-title: Neato Audio 50
+title: NeatoFx Audio 50
 date-published: 2026-05-21
 type: misc
 standard: global
@@ -9,11 +9,11 @@ made-for-esphome: true
 difficulty: 1
 ---
 
-![Neato Audio 50](./product.png)
+![NeatoFx Audio 50](./product.png)
 
 ## Overview
 
-The Neato Audio 50 is a WiFi-enabled audio and automation controller for themed attractions,
+The NeatoFx Audio 50 is a WiFi-enabled audio and automation controller for themed attractions,
 escape rooms, haunted houses, and interactive installations. It combines a 50 W amplified MP3
 player, two relay outputs, two dimmable spotlight outputs, and optional 4-channel RF wireless
 inputs in a single pre-flashed networked unit.
