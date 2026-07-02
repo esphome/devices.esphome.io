@@ -1,9 +1,9 @@
 substitutions:
   id: "1"
   name: target-${id}
-  friendly_name: "NEATO Target ${id}"
-  project_name: "CodeMakesItGo.Target"
-  project_version: "1.0.0"
+  friendly_name: "NeatoFx Target ${id}"
 
 packages:
   board: github://CodeMakesItGo/NeatoFx_Public/Targets/NeatoTargetIR/boards/rev3.yaml@main
+  ir_receiver: github://CodeMakesItGo/NeatoFx_Public/Targets/NeatoTargetIR/protocols/ir_nec.yaml@main
+  config: github://CodeMakesItGo/NeatoFx_Public/Targets/NeatoTargetIR/configs/networked.yaml@main
