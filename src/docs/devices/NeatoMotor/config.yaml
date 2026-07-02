@@ -1,9 +1,9 @@
 substitutions:
   id: "1"
   name: motor-${id}
-  friendly_name: "Neato Motor ${id}"
-  project_name: "CodeMakesItGo.Motor"
-  project_version: "1.0.0"
+  friendly_name: "NeatoFx Motor ${id}"
 
 packages:
   board: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/boards/rev3.yaml@main
+  drive: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/boards/common/drive_dc.yaml@main
+  config: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/configs/networked.yaml@main
