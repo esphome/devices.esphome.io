@@ -1,0 +1,74 @@
+substitutions:
+  device_name: kogan_plug_1
+  device_icon: mdi:power-socket-au
+  device_restore: ALWAYS_ON
+
+  # Higher value gives lower watt readout
+  current_res: "0.00225"
+  # Lower value gives lower voltage readout
+  voltage_div: "805"
+
+esphome:
+  name: ${device_name}
+
+esp8266:
+  board: esp8285
+
+logger:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 03
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${device_name}_button"
+    on_press:
+      - switch.toggle: relay
+
+  - platform: status
+    name: "${device_name}_status"
+
+switch:
+  - platform: gpio
+    id: led
+    pin:
+      number: GPIO13
+      inverted: true
+
+  - platform: gpio
+    name: "${device_name}_plug"
+    pin: GPIO14
+    id: relay
+    icon: ${device_icon}
+    restore_mode: ${device_restore}
+    on_turn_on:
+      - switch.turn_on: led
+    on_turn_off:
+      - switch.turn_off: led
+
+sensor:
+  - platform: hlw8012
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO04
+    cf1_pin: GPIO05
+    current:
+      name: "${device_name}_current"
+      unit_of_measurement: A
+    voltage:
+      name: "${device_name}_voltage"
+      unit_of_measurement: V
+    power:
+      id: ${device_name}_wattage
+      name: "${device_name}_wattage"
+      unit_of_measurement: W
+    energy:
+      id: ${device_name}_energy
+      name: "${device_name}_energy"
+      unit_of_measurement: Wh
+    current_resistor: ${current_res}
+    voltage_divider: ${voltage_div}
+    change_mode_every: 8
+    update_interval: 15s
