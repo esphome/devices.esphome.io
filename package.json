@@ -19,9 +19,10 @@
     "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.1",
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/starlight": "^0.39.3",
-    "astro": "^6.4.5",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.0.6",
     "gray-matter": "^4.0.3",
     "sharp": "^0.34.5"
   },
