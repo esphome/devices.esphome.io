@@ -6,6 +6,10 @@
   "author": "",
   "license": "GPL-3.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=9.6.5"
+  },
   "scripts": {
     "dev": "npm run validate-devices && astro dev --host",
     "build": "npm run validate-devices && astro build",
