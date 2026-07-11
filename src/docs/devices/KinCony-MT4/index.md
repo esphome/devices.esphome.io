@@ -18,3 +18,9 @@ Here is an example YAML configuration for the KinCony MT4 ESP32-S3 DC motor driv
 
 ```yaml file=config.yaml
 ```
+
+A more complex configuration using `globals`, `script`, `button`, and `number` entities to control motor directions and
+speed from Home Assistant:
+
+```yaml file=advanced.yaml
+```
