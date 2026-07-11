@@ -442,4 +442,4 @@ sensor:
     name: "Uptime"
 ```
 
-[1]: lsc-battlestron-desk-led-strip-3m-3206528.jpg "LSC Battletron Desk Strip 3 meter - 3206528"
+[1]: ./lsc-battlestron-desk-led-strip-3m-3206528.jpg "LSC Battletron Desk Strip 3 meter - 3206528"

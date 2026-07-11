@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3ACOgKO)
+[Amazon Link](https://www.amazon.com/dp/B08ZN5J2XR)
 
 ## Product Image
 
@@ -19,7 +19,7 @@ Model Reference: AWP02L2
 Manufacturer: [Avatar](https://www.avatarcontrols.com/)
 
 The [Avatar Smart Mini WiFi Plug](https://shop.avatarcontrols.com/smart-mini-wifi-plug.html) is available at
-[Amazon.com](https://amzn.to/3ACOgKO). The product is sold under the Round Arc style.
+[Amazon.com](https://www.amazon.com/dp/B08ZN5J2XR). The product is sold under the Round Arc style.
 
 This plug can be converted using [tuya-convert to flash ESPHome](/devices/tuya-convert) (as of January 2022).
 

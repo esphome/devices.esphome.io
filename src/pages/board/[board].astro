@@ -1,0 +1,46 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import DeviceListing from "@components/DeviceListing.astro";
+import {
+  getAllDevices,
+  matchesFilter,
+  sortDevices,
+} from "../../utils/getDevices";
+
+export async function getStaticPaths() {
+  const labels: Record<string, string> = {
+    bk72xx: "BK72xx Devices",
+    esp32: "ESP32 Devices",
+    esp8266: "ESP8266 Devices",
+    ln882x: "LN882x Devices",
+    rp2040: "RP2040 Devices",
+    rtl87xx: "RTL87xx Devices",
+  };
+
+  return Object.keys(labels).map((slug) => ({
+    params: { board: slug },
+    props: {
+      displayName: labels[slug],
+      description: `Browse ${slug.toUpperCase()} microcontroller devices`,
+    },
+  }));
+}
+
+const { board } = Astro.params;
+const { displayName, description } = Astro.props;
+
+const all = await getAllDevices();
+const filtered = sortDevices(
+  all.filter((d) => matchesFilter(d.data, "board", board!))
+);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: displayName,
+    description,
+    tableOfContents: false,
+  }}
+>
+  <DeviceListing devices={filtered} />
+</StarlightPage>

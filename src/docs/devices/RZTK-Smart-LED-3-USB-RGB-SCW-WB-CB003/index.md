@@ -44,7 +44,7 @@ esphome:
   friendly_name: led-strip
 
 # https://docs.libretiny.eu/boards/cbu/
-# https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
+# https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u
 bk72xx:
   board: cbu
 
@@ -126,13 +126,13 @@ light:
     green: output_green
     blue: output_blue
     effects:
-      # FLicker: https://esphome.io/components/light/index.html#flicker-effect
+      # FLicker: https://esphome.io/components/light/#flicker-effect
       - flicker:
       - flicker:
           name: Flicker Effect With Custom Values
           alpha: 95%
           intensity: 1.5%
-      # Random: https://esphome.io/components/light/index.html#random-effect
+      # Random: https://esphome.io/components/light/#random-effect
       - random:
       - random:
           name: "My Slow Random Effect"
@@ -142,7 +142,7 @@ light:
           name: "My Fast Random Effect"
           transition_length: 4s
           update_interval: 5s
-      # Pulse: https://esphome.io/components/light/index.html#pulse-effect
+      # Pulse: https://esphome.io/components/light/#pulse-effect
       - pulse:
       - pulse:
           name: "Fast Pulse"
@@ -160,7 +160,7 @@ light:
             on_length: 1s
             off_length: 500ms
           update_interval: 1.5s
-      # Strobe: https://esphome.io/components/light/index.html#strobe-effect
+      # Strobe: https://esphome.io/components/light/#strobe-effect
       - strobe:
       - strobe:
           name: Strobe Effect With Custom Values

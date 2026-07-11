@@ -16,7 +16,7 @@ Possibiliity of wireless voice control via Alexa or Google home."
 
 Also known as C152547 WIFI LED Cord Dimmer is a dimmer based on Tuya, with 2 microcontrollers.
 The dimmer side is controlled by stm microcontroller (Tuya MCU), and the Wi-Fi functionality
-by a [**Tuya WR3**](https://developer.tuya.com/en/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
+by a [**Tuya WR3**](https://developer.tuya.com/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
 
 ### Specs
 

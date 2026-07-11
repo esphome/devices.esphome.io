@@ -7,7 +7,7 @@ board: esp8266
 Made-for-esphome: False
 difficulty: 4
 ---
-[Amazon Link](https://amzn.to/436Dyc6)
+[Amazon Link](https://www.amazon.com/dp/B07PP2KNNH)
 
 ## Dewenwils Heavy Duty 40A Outdoor Plug (HOWT01A & TM-050B)
 

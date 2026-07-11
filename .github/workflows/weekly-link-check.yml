@@ -1,0 +1,166 @@
+name: Weekly Link Check
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: weekly-link-check
+  cancel-in-progress: false
+
+jobs:
+  link-check:
+    name: Check all external links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run link checker
+        run: |
+          set +e
+          # --silent suppresses npm's "> pkg@ver script\n> cmd" preamble so
+          # stdout is purely the script's JSON output.
+          npm run --silent check-links -- --all --json > results.json
+          echo "exitcode=$?"
+
+      - name: Update tracking issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const TITLE = 'Broken external links';
+            const LABEL = 'broken-links';
+            const MARKER = '<!-- weekly-link-check -->';
+
+            const { failures } = JSON.parse(
+              fs.readFileSync('results.json', 'utf8'),
+            );
+
+            const { owner, repo } = context.repo;
+            const slug = `${owner}/${repo}`;
+            const date = new Date().toISOString().slice(0, 10);
+            const runUrl = `https://github.com/${slug}/actions/runs/${context.runId}`;
+
+            let body = `${MARKER}\n\n`;
+            body += `_Last checked: **${date}** ` +
+              `([workflow run](${runUrl}))_\n\n`;
+
+            if (failures.length === 0) {
+              body += '✅ No broken external links found across the docs.\n';
+            } else {
+              body += `Found **${failures.length}** broken external ` +
+                `link(s). These URLs did not return a good HTTP status ` +
+                `(2xx/3xx, or 403/429 which we treat as anti-bot ` +
+                `false-positives).\n\n` +
+                `Contributors: pick any link below, edit the affected ` +
+                `file, and either fix or remove the URL. PRs welcome ` +
+                `for any single entry — no need to fix them all at once.\n\n` +
+                `| Status | URL | Found in |\n` +
+                `| ------ | --- | -------- |\n`;
+              for (const f of failures) {
+                const cell = f.locations.map(({ file, line }) => {
+                  const href =
+                    `https://github.com/${slug}/blob/main/${file}#L${line}`;
+                  return `[\`${file}:${line}\`](${href})`;
+                }).join('<br>');
+                // Escape pipe in URL so it doesn't break the markdown table.
+                const safeUrl = f.url.replace(/\|/g, '\\|');
+                const reason = f.status ?? f.error ?? 'no response';
+                body += `| \`${reason}\` | <${safeUrl}> | ${cell} |\n`;
+              }
+            }
+
+            // Find existing tracking issue (by label + marker in body),
+            // grab repo + label IDs in one query. GraphQL throughout
+            // because POST /repos/{owner}/{repo}/issues is deprecated
+            // (scheduled for removal 2028-03-10).
+            const wantedLabels = [LABEL, 'help wanted', 'good first issue'];
+            const lookup = await github.graphql(
+              `query($owner: String!, $name: String!, $label: String!) {
+                repository(owner: $owner, name: $name) {
+                  id
+                  labels(first: 100) { nodes { id name } }
+                  issues(
+                    first: 50,
+                    states: OPEN,
+                    filterBy: { labels: [$label] }
+                  ) {
+                    nodes { id number body }
+                  }
+                }
+              }`,
+              { owner, name: repo, label: LABEL },
+            );
+            const repoId = lookup.repository.id;
+            const labelIds = wantedLabels
+              .map((n) =>
+                lookup.repository.labels.nodes.find((l) => l.name === n)?.id,
+              )
+              .filter(Boolean);
+            const existing = lookup.repository.issues.nodes.find(
+              (i) => i.body && i.body.includes(MARKER),
+            );
+
+            let issue;
+            if (existing) {
+              const result = await github.graphql(
+                `mutation($id: ID!, $title: String!, $body: String!) {
+                  updateIssue(input: { id: $id, title: $title, body: $body }) {
+                    issue { id number }
+                  }
+                }`,
+                { id: existing.id, title: TITLE, body },
+              );
+              issue = result.updateIssue.issue;
+              core.info(`Updated issue #${issue.number}`);
+            } else {
+              const result = await github.graphql(
+                `mutation($input: CreateIssueInput!) {
+                  createIssue(input: $input) {
+                    issue { id number }
+                  }
+                }`,
+                {
+                  input: {
+                    repositoryId: repoId,
+                    title: TITLE,
+                    body,
+                    labelIds,
+                  },
+                },
+              );
+              issue = result.createIssue.issue;
+              core.info(`Created issue #${issue.number}`);
+            }
+
+            // Pin the issue. Fails harmlessly if already pinned or if the
+            // 3-pin limit is reached - log and continue.
+            try {
+              await github.graphql(
+                `mutation Pin($id: ID!) {
+                  pinIssue(input: { issueId: $id }) {
+                    issue { number }
+                  }
+                }`,
+                { id: issue.id },
+              );
+              core.info(`Pinned issue #${issue.number}`);
+            } catch (e) {
+              core.warning(`Could not pin issue #${issue.number}: ${e.message}`);
+            }

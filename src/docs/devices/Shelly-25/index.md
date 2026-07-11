@@ -23,12 +23,12 @@ board: esp8266
 
 ## Basic Configuration As Relay
 
-When integration with home assistant exists, it will appear as 2 Relays with icons and 2 switches (including power,
+When integration with Home Assistant exists, it will appear as 2 Relays with icons and 2 switches (including power,
 current and sensors)
 Use cases for this configuration: Roller / Shutter automation and device swichting and monitoring
 
-Thanks to ["Anaro"](https://community.home-assistant.io/u/anarro/summary) from home assistant forum
-[topic](https://community.home-assistant.io/t/integration-of-new-power-sensor-ade7953-with-shelly-2-5/119235/8)
+Thanks to ["Anaro"](https://community.home-assistant.io/u/anarro/summary) from Home Assistant forum
+[topic](https://community.home-assistant.io/t/119235/8)
 config tested by ["Datux"](https://github.com/dtx3k)
 
 ```yaml
@@ -129,7 +129,7 @@ switch:
     pin: GPIO4
     icon: "mdi:electric-switch"
     restore_mode: RESTORE_DEFAULT_OFF
-    # Ensure only one switch at a time is on (https://esphome.io/components/switch/gpio.html#interlocking)
+    # Ensure only one switch at a time is on (https://esphome.io/components/switch/gpio/#interlocking)
     interlock: &interlock_group [shelly_relay_1, shelly_relay_2]
 
   - platform: gpio
@@ -320,7 +320,7 @@ switch:
     pin: GPIO4
     icon: "mdi:electric-switch"
     restore_mode: RESTORE_DEFAULT_OFF
-    # Ensure only one switch at a time is on (https://esphome.io/components/switch/gpio.html#interlocking)
+    # Ensure only one switch at a time is on (https://esphome.io/components/switch/gpio/#interlocking)
     interlock: &interlock_group [shelly_relay_1, shelly_relay_2]
 
   - platform: gpio

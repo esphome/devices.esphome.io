@@ -9,8 +9,9 @@ board: esp8266
 Dual outlet, dual relay socket with single channel power monitoring. Flashable via tuya-convert.
 
 Multiple versions of this socket exist. The module the 'blue ESP' pinout came from was
-[purchased from this Amazon link](https://amzn.to/3lYqj9A), but no guarantees that one purchased from that link is the
-same. Even more versions of the NX-SP201 outlet also exist, based on pinouts listed on other sites.
+[purchased from this Amazon link](https://www.amazon.com/dp/B074YGV2NK),
+but no guarantees that one purchased from that link is the same.
+Even more versions of the NX-SP201 outlet also exist, based on pinouts listed on other sites.
 
 Flashing the wrong pinout can brick the device! Enabling GPIO9 bricked the 'blue ESP' version of the plug (though GPIO10
 also gave a warning, but did not brick the device). Though it is recoverable with UART/GPIO0 flashing, desoldering the

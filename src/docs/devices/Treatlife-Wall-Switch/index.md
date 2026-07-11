@@ -9,8 +9,8 @@ board: esp8266
 ## Notes
 
 * push button wall switch
-* 2 way bought here: [https://amzn.to/3stsGDw](https://amzn.to/3stsGDw)
-* 3 way bought here: [https://amzn.to/3cs4R9u](https://amzn.to/3cs4R9u)
+* 2 way bought here: [https://www.amazon.com/dp/B07WWYQJFR](https://www.amazon.com/dp/B07WWYQJFR)
+* 3 way bought here: [https://www.amazon.com/dp/B07V3XB1QG](https://www.amazon.com/dp/B07V3XB1QG)
 * this dude shows how to flash it: [https://www.digiblur.com/2020/01/tuya-convert-23-update-flash-tuya.html](https://www.digiblur.com/2020/01/tuya-convert-23-update-flash-tuya.html)
 * unlike the 3 way switch, the 2 way switch does not have a power sense pin. To solve this issue, and allow the smart
   switch to be smart, this code turns the White LED on when the light is off and, led off when the light is on. This

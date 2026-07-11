@@ -8,7 +8,7 @@ board: esp8266
 
 TOPGREENER TGWF500D 3-Way Smart Dimmer Switch![image](Topgreener-TGWF500D.png)
 
-[Amazon Link](https://amzn.to/2SA4lPl)
+[Amazon Link](https://www.amazon.com/dp/B07BSX9SDF)
 
 ## Notes
 

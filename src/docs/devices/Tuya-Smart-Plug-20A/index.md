@@ -12,12 +12,12 @@ difficulty: 4
 
 Bought on Aliexpress, looking similar to [Athom Smart Plug](../Athom-Smart-Plug-PG01V3-EU16A/) but internals turned out much
 different: this one is using
-[Tuya T34 Module](https://developer.tuya.com/en/docs/iot/t34-module-datasheet?id=Ka0l4h5zvg6j8) chip which was already
+[Tuya T34 Module](https://developer.tuya.com/docs/iot/t34-module-datasheet?id=Ka0l4h5zvg6j8) chip which was already
 discussed on [Elektroda Forum](https://www.elektroda.com/rtvforum/topic4036975.html).  
 It is in fact a BK7231N MCU in QFN32 package (aka. LGA36, which is 36 pin if we count in the 4 bottom heatpads).
 
 The power monitoring chip is
-[BL0937](https://developer.tuya.com/en/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc) which is known from
+[BL0937](https://developer.tuya.com/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc) which is known from
 other Tuya designs and does not require further introduction.
 
 ![Tuya Smart Plug Closeup](hardware-closeup.jpg)
@@ -92,7 +92,7 @@ output:
 
 # Energy meter BL0937
 sensor:
-  # https://esphome.io/components/sensor/hlw8012.html
+  # https://esphome.io/components/sensor/hlw8012/
   - platform: hlw8012
     model: BL0937
     cf_pin:

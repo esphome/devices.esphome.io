@@ -17,7 +17,7 @@ Note: you may need to reverse the RX/TX cabling depending on your platform.
 
 ## Connection
 
-Use a RS485 adapter (RS485 to TTL) like [this one](https://esphome.io/_images/rs485.jpg).
+Use a RS485 adapter (RS485 to TTL) like [this one](https://esphome.io/images/rs485.jpg).
 
 ## ESPHome configuration
 

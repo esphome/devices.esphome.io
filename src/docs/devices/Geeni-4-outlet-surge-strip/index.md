@@ -8,7 +8,7 @@ difficulty: 4
 made-for-esphome: False
 ---
 
-[Amazon Link](https://amzn.to/3XcOB2Y)
+[Amazon Link](https://www.amazon.com/dp/B0D4R98V5F)
 
 ## Product Image
 
@@ -18,7 +18,7 @@ made-for-esphome: False
 
 Manufacturer: [Geeni](https://mygeeni.com/)
 
-MCU: [Tuya 2BSC](https://developer.tuya.com/en/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq)
+MCU: [Tuya 2BSC](https://developer.tuya.com/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq)
 
 The toggle switch shuts off everything. It can not be controlled or monitored by esphome.
 

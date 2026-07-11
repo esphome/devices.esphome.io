@@ -14,8 +14,6 @@ board: esp8266
 
 ### Sonoff Dual R2 - PCB version 1.0
 
-based on [https://esphome.io/devices/sonoff.html#sonoff-dual-r2](https://esphome.io/devices/sonoff.html#sonoff-dual-r2)
-
 | Pin    | Function        |
 | ------ | --------------- |
 | GPIO10 | Push Button     |

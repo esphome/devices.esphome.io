@@ -51,7 +51,7 @@ configuration below.
 ### Series 2 (CB3S) GPIO Pinouts
 
 _See
-[Pinouts on CB3S Module Datasheet](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076#title-5-Pin%20definition) for more detail_
+[Pinouts on CB3S Module Datasheet](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076#title-5-Pin%20definition) for more detail_
 
 | Pin | Function                                                                                                                                      |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------- |

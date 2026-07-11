@@ -34,7 +34,7 @@ difficulty: 4
 
 This device has 6 outlets, and a combined blue led button. The button toggles all pins when pressed.
 
-The device is based on the [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076). The device
+The device is based on the [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076). The device
 couldn't be converted with tuya-cloudcutter and required serial flashing.
 
 The CB3S is soldered onto the main board, but is easily accessible and pins are exposed. The device can easily be be
@@ -45,7 +45,7 @@ used before flashing.
 
 ## Serial flashing
 
-The official [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a
+The official [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a
 diagram with the position of each pin on the module. The module has multiple UARTs, UART1 is the one used for flashing.
 
 | Pin | Function |

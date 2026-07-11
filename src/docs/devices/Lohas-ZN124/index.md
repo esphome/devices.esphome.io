@@ -17,7 +17,7 @@ board: esp8266
 ```yaml
 # Basic Config
 # https://www.lohas-led.com/lohas-smart-led-light-bulbs-google-home-siri-and-iftttno-hub-required-e26-daylight-5000k-dimmable-2-pack-p0238-p0238.html
-# https://amzn.to/2Pe5j2m
+# https://www.amazon.com/dp/B07KSB1KHP
 
 esphome:
   name: lightname

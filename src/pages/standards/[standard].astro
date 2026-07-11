@@ -1,0 +1,50 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import DeviceListing from "@components/DeviceListing.astro";
+import {
+  getAllDevices,
+  matchesFilter,
+  sortDevices,
+} from "../../utils/getDevices";
+
+export async function getStaticPaths() {
+  const labels: Record<string, string> = {
+    au: "AU Devices",
+    br: "BR Devices",
+    eu: "EU Devices",
+    global: "Global Devices",
+    in: "IN Devices",
+    uk: "UK Devices",
+    us: "US Devices",
+  };
+
+  return Object.keys(labels).map((slug) => ({
+    params: { standard: slug },
+    props: {
+      displayName: labels[slug],
+      description: `Browse devices for ${labels[slug].replace(
+        " Devices",
+        ""
+      )} electrical standards`,
+    },
+  }));
+}
+
+const { standard } = Astro.params;
+const { displayName, description } = Astro.props;
+
+const all = await getAllDevices();
+const filtered = sortDevices(
+  all.filter((d) => matchesFilter(d.data, "standards", standard!))
+);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: displayName,
+    description,
+    tableOfContents: false,
+  }}
+>
+  <DeviceListing devices={filtered} />
+</StarlightPage>

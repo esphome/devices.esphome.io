@@ -8,28 +8,37 @@ board: esp32
 
 ![Shelly Plus 1PM](shelly_plus_1pm_pinout.jpg "Shelly Plus 1PM")
 
+## Hardware Versions
+
+There are currently 2 known hardware versions of the Shelly Plus 1PM.
+
+- PCB v0.1.9 with ESP32-U4WDH (Single core, 160MHz, 4MB embedded flash) Sold 2021
+- PCB v0.2.0 with ESP32-U4WDH (Dual core,   240MHz, 4MB embedded flash) Sold 2026
+
 ## GPIO Pinout
 
-| Pin    | Function                    |
-| ------ | --------------------------- |
-| GPIO0  | LED (Inverted)              |
-| GPIO4  | Switch input                |
-| GPIO5  | BL0937 CF                   |
-| GPIO18 | BL0937 CF1                  |
-| GPIO19 | Future external sensors?    |
-| GPIO23 | BL0937 SEL (Inverted)       |
-| GPIO25 | Button (Inverted, Pull-up)  |
-| GPIO26 | Relay                       |
-| GPIO32 | NTC                         |
-| GPIO33 | Relay supply voltage sensor |
-
-The Shelly Plus 1PM is based on the ESP32-U4WDH (Single core, 160MHz, 4MB embedded flash)
-
-Please calibrate the NTC and the voltage / power measurements, the values below are just a rough estimate!
+| Pin    | Function                                          |
+| ------ | ------------------------------------------------- |
+| GPIO0  | LED (Inverted), Shelly Plus Add-On: DATA (Output) |
+| GPIO1  | Shelly Plus Add-On: DATA (Input)                  |
+| GPIO3  | Shelly Plus Add-On: ANALOG IN                     |
+| GPIO4  | Switch input                                      |
+| GPIO5  | BL0937 CF                                         |
+| GPIO18 | BL0937 CF1                                        |
+| GPIO19 | Shelly Plus Add-On: DIGITAL IN                    |
+| GPIO23 | BL0937 SEL (Inverted)                             |
+| GPIO25 | Button (Inverted, Pull-up)                        |
+| GPIO26 | Relay                                             |
+| GPIO32 | NTC                                               |
+| GPIO33 | Relay supply voltage sensor                       |
 
 Credit and thanks to
 
 - [https://templates.blakadder.com/shelly_plus_1.html](https://templates.blakadder.com/shelly_plus_1.html)
+
+## Internal Temperature Sensor
+
+Please calibrate the NTC and the voltage / power measurements, the values below are just a rough estimate!
 
 ## Configuration as relay with overpower and overtemperature protection
 
@@ -43,14 +52,14 @@ substitutions:
 
 esphome:
   name: shelly-plus-1pm
-  platformio_options:
+  platformio_options: # Only needed for the single core 160MHz variant
     board_build.f_cpu: 160000000L
 
 esp32:
   variant: esp32
   framework:
     type: esp-idf
-    sdkconfig_options:
+    sdkconfig_options: # Only needed for the single core 160MHz variant
       CONFIG_FREERTOS_UNICORE: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
@@ -63,10 +72,11 @@ logger:
 
 api:
   encryption:
-    key: !secret api_encryption_key
+    key: "" # Add your API encryption key here
 
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    password: "" # Add your OTA password here
 
 time:
   - platform: homeassistant
@@ -132,7 +142,9 @@ sensor:
     sel_pin:
       number: GPIO23
       inverted: true
-    cf_pin: GPIO5
+    cf_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
     cf1_pin: GPIO18
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
@@ -169,4 +181,5 @@ status_led:
   pin:
     number: GPIO0
     inverted: true
+    ignore_strapping_warning: true
 ```

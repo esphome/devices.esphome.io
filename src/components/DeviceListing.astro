@@ -1,0 +1,156 @@
+---
+import DeviceListItem from "./DeviceListItem.astro";
+import type { DeviceEntry } from "../utils/getDevices";
+
+interface Props {
+  devices: DeviceEntry[];
+  emptyMessage?: string;
+}
+
+const { devices, emptyMessage = "No devices found." } = Astro.props;
+
+const initial = devices
+  .slice()
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const devicesJson = JSON.stringify(
+  devices.map((d) => ({
+    id: d.id,
+    title: d.data.title,
+    path: d.path,
+    type: d.data.type ?? null,
+    board: d.data.board ?? null,
+    standard: d.data.standard ?? null,
+    datePublished: d.data["date-published"] ?? null,
+  }))
+);
+---
+
+<div class="pageHeader">
+  <p><strong>{devices.length}</strong> devices</p>
+
+  <div class="sortControls">
+    <span class="sortLabel">Sort by:</span>
+    <div class="sortButtons not-content" role="group">
+      <button type="button" class="sortButton sortButton--active" data-sort="title">
+        Title (A-Z)
+      </button>
+      <button type="button" class="sortButton" data-sort="date">
+        Date Published
+      </button>
+    </div>
+  </div>
+</div>
+
+<ul class="deviceList not-content" data-device-list data-devices={devicesJson}>
+  {initial.map((device) => (
+    <DeviceListItem
+      id={device.id}
+      title={device.data.title}
+      path={device.path}
+      type={device.data.type}
+      board={device.data.board}
+      standard={device.data.standard}
+    />
+  ))}
+</ul>
+
+{devices.length === 0 && (
+  <div class="text-center">
+    <p>{emptyMessage}</p>
+  </div>
+)}
+
+<script>
+  import { splitValues, slugify } from "../utils/deviceUtils";
+  import {
+    VALID_TYPES,
+    VALID_BOARDS,
+    VALID_STANDARDS,
+  } from "../utils/validFrontmatter";
+
+  type Row = {
+    id: string;
+    title: string;
+    path: string;
+    type: string | string[] | null;
+    board: string | string[] | null;
+    standard: string | string[] | null;
+    datePublished: string | null;
+  };
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderTag(
+    value: string,
+    base: "type" | "board" | "standards",
+    set: ReadonlySet<string>
+  ): string {
+    const slug = set.has(slugify(value)) ? slugify(value) : null;
+    const v = escapeHtml(value);
+    return slug
+      ? `<a href="/${base}/${slug}" class="deviceTag">${v}</a>`
+      : `<span class="deviceTag">${v}</span>`;
+  }
+
+  function renderRow(d: Row): string {
+    const type = splitValues(d.type ?? undefined)
+      .map((v) => renderTag(v, "type", VALID_TYPES))
+      .join("");
+    const board = splitValues(d.board ?? undefined)
+      .map((v) => renderTag(v, "board", VALID_BOARDS))
+      .join("");
+    const standard = splitValues(d.standard ?? undefined)
+      .map((v) => renderTag(v, "standards", VALID_STANDARDS))
+      .join("");
+    return `<li class="deviceListItem"><div class="deviceListContent"><a href="${escapeHtml(
+      d.path
+    )}" class="deviceListTitle">${escapeHtml(
+      d.title
+    )}</a><div class="deviceListTags">${type}${board}${standard}</div></div></li>`;
+  }
+
+  function sortRows(rows: Row[], by: "title" | "date"): Row[] {
+    const copy = rows.slice();
+    if (by === "title") {
+      copy.sort((a, b) => a.title.localeCompare(b.title));
+      return copy;
+    }
+    copy.sort((a, b) => {
+      const da = a.datePublished ? new Date(a.datePublished).getTime() : NaN;
+      const db = b.datePublished ? new Date(b.datePublished).getTime() : NaN;
+      const va = !isNaN(da);
+      const vb = !isNaN(db);
+      if (!va && !vb) return 0;
+      if (!va) return 1;
+      if (!vb) return -1;
+      return db - da;
+    });
+    return copy;
+  }
+
+  document.querySelectorAll<HTMLUListElement>("ul[data-device-list]").forEach((list) => {
+    const raw = list.getAttribute("data-devices");
+    if (!raw) return;
+    const rows: Row[] = JSON.parse(raw);
+    const controls = list.parentElement?.querySelectorAll<HTMLButtonElement>(
+      "button.sortButton"
+    );
+    controls?.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        controls.forEach((b) => b.classList.remove("sortButton--active"));
+        btn.classList.add("sortButton--active");
+        const by = (btn.dataset.sort as "title" | "date") ?? "title";
+        const sorted = sortRows(rows, by);
+        list.innerHTML = sorted.map(renderRow).join("");
+      });
+    });
+  });
+</script>

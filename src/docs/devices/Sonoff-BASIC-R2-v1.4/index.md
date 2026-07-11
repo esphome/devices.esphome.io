@@ -18,7 +18,7 @@ The red side of the LED cannot be individually controlled without modification t
 and serves as the indicator of when the relay is physically enabled.
 
 As the only controllable LED is the Blue LED, it is configured here to use the
-[`status_led` light component](https://esphome.io/components/light/status_led), which will take
+[`status_led` light component](https://esphome.io/components/light/status_led/), which will take
 over the LED in the event of a error/warning state, such as when WiFi is disrupted.
 
 ## GPIO Pinout

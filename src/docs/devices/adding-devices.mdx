@@ -1,34 +1,186 @@
 ---
-layout: default
 title: "Contributing: Adding Devices"
-permalink: /adding-devices/
+head:
+  - tag: script
+    attrs:
+      src: /js/adding-devices-quickstart.js
+      defer: true
 ---
 
-import {
-  TypeOptions,
-  BoardOptions,
-  StandardOptions,
-} from "../../components/ValidOptions";
+import ValidOptions from "@components/ValidOptions.astro";
+
+<style>{`
+  .quickstart-card {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 560px;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background-color: var(--sl-color-gray-6);
+  }
+  .quickstart-card label {
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+  .quickstart-card .quickstart-label-text {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .quickstart-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.375rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+  }
+  .quickstart-card .quickstart-path {
+    margin: 0.5rem 0 1rem;
+    min-height: 1.5em;
+    font-size: 0.9rem;
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    color: var(--sl-color-gray-3);
+  }
+  #quickstart-link {
+    display: none;
+  }
+  .quickstart-button {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--sl-color-accent);
+    border-radius: 0.375rem;
+    background-color: var(--sl-color-accent);
+    color: var(--sl-color-black);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .quickstart-button:hover {
+    background-color: var(--sl-color-accent-high);
+    border-color: var(--sl-color-accent-high);
+    color: var(--sl-color-black);
+  }
+  .quickstart-button--disabled,
+  .quickstart-button--disabled:hover {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--sl-color-gray-5);
+    border-color: var(--sl-color-gray-5);
+    color: var(--sl-color-text);
+  }
+`}</style>
 
 ## Create device folder and markdown file
 
-1. To add a new device create a new folder named after your device under the `src/docs/devices` directory in the
-   [GitHub Repository](https://github.com/esphome/esphome-devices). In that folder, create a markdown (`.md`) file named
-   `index.md` with the content. Please avoid using underscores or spaces in the filenames and use hypens instead as this
-   makes for easier to understand the URLs generated when the site is built. When using the _Add file_ -> _Create new
-   file_
-   button in the `Devices` folder or by following
-   [this link](https://github.com/esphome/esphome-devices/new/main/src/docs/devices),
-   Github will automatically create a fork of the repository and a new branch for your changes. Just type the device
-   name for
-   the folder followed by a `/index.md` (including the slash).
+### Step 1: Fork the repository
 
-   [Fork](https://github.com/esphome/esphome-devices/fork) on GitHub
+Go to [github.com/esphome/devices.esphome.io/fork](https://github.com/esphome/devices.esphome.io/fork) and click
+**Create fork**. This gives you your own copy of the repo at `github.com/<your-username>/devices.esphome.io`.
 
-2. Once you have written your file commit your changes and raise a pull request on GitHub. A guide for creating a pull
-   request from a fork can be found
-   [in the GitHub documentation](https://help.github.com/en/articles/creating-a-pull-request-from-a-fork)
-   if you are unsure.
+Once your fork is created, **come back to this page** to continue.
+
+### Step 2: Create the device file
+
+The fastest way is to use the link generator below — fill in the link to your fork (or just your GitHub username) and
+the device name, and it will open GitHub's new file page with the filename and front matter pre-filled.
+
+<div class="quickstart-card">
+  <label>
+    <span class="quickstart-label-text">Your fork URL or GitHub username</span>
+    <input
+      id="quickstart-username"
+      type="text"
+      placeholder="https://github.com/octocat/devices.esphome.io"
+      spellcheck="false"
+      autocapitalize="off"
+      autocorrect="off"
+    />
+  </label>
+
+  <label>
+    <span class="quickstart-label-text">Device name</span>
+    <input
+      id="quickstart-device"
+      type="text"
+      placeholder="Sonoff S20"
+    />
+  </label>
+
+  <p id="quickstart-path" class="quickstart-path"></p>
+
+  <a
+    id="quickstart-link"
+    class="quickstart-button"
+    href="#"
+    target="_blank"
+    rel="noopener noreferrer"
+  >Open pre-filled new file page on GitHub</a>
+  <button
+    id="quickstart-placeholder"
+    type="button"
+    class="quickstart-button quickstart-button--disabled"
+    disabled
+  >Fill in both fields to generate a link</button>
+</div>
+
+<details>
+<summary>Or create the file manually</summary>
+
+Follow these steps in your fork:
+
+1. **Open the devices folder.** Navigate to `src/docs/devices` in your fork.
+2. **Click _Add file_ → _Create new file_.**
+3. **Name the file.** Start by typing your device's folder name — e.g. `some-new-device`:
+
+   ![GitHub's filename field with "some-new-device" typed in and no folder yet created.](/img/adding-devices-filename-before-slash.png)
+
+   Then type a `/` (forward slash) after the name. GitHub will automatically turn what you typed into a folder and
+   move the cursor into a new filename field inside it. Finish by typing `index.md`:
+
+   ![GitHub's breadcrumb now shows "some-new-device" as a folder, with "index.md" in the filename field.](/img/adding-devices-filename-after-slash.png)
+
+   Use hyphens (`-`) in folder names instead of underscores or spaces. This keeps the generated URLs clean and
+   readable.
+
+</details>
+
+### Step 3: Write the content
+
+The file needs a [YAML front matter](#yaml-front-matter) block at the top, followed by the device's documentation in
+Markdown.
+
+If you used the link generator in Step 2, the filename and a starter template are already filled in for you — but you
+still need to **fill in the empty front matter fields** (`type`, `standard`, and optionally `board`) and write the
+documentation in the body.
+
+If you created the file manually, you'll need to add the entire front matter block plus the documentation yourself.
+
+See the [YAML front matter](#yaml-front-matter) section below for the list of valid options for each field.
+
+### Step 4: Commit your changes
+
+Click **Commit changes...** at the top right. A dialog will appear:
+
+![The GitHub Propose changes dialog, with "Create a new branch for this commit and start a pull request" selected and a branch name entered.](/img/adding-devices-propose-changes.png)
+
+- Leave the default commit message or write your own.
+- **Important:** select **Create a new branch for this commit and start a pull request**, and give the branch a short
+  name like `some-new-device`. Do **not** commit directly to `main` — committing to `main` in your fork makes it
+  harder to open clean pull requests later.
+- Click **Propose changes**.
+
+### Step 5: Open the pull request
+
+GitHub will take you to the pull request page automatically. Check that the base repository is
+`esphome/devices.esphome.io` and the base branch is `main`, then click **Create pull request** to submit it.
+
+If the base repository is set to your own fork instead of `esphome/devices.esphome.io`, click the
+**compare across forks** link near the top of the page. That will reveal the **base repository** dropdown — switch it
+to `esphome/devices.esphome.io` and make sure the base branch is `main` before clicking **Create pull request**.
 
 ## YAML Front Matter
 
@@ -48,12 +200,112 @@ standard: uk, us
 | ------------------ | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `title`            | Device Title                                                                                        |                                                                                                                             | Yes                                      |
 | `date-published`   | Date Published                                                                                      | Formatting: `YYYY-MM-DD HH:MM:SS +/-TTTT` (Time and Timezone offset are optional)                                           | Yes                                      |
-| `type`             | Type of Device                                                                                      | <TypeOptions />                                                                                                             | Yes                                      |
-| `standard`         | Electrical standard country                                                                         | <StandardOptions />                                                                                                         | Yes                                      |
-| `board`            | Type of board used in product                                                                       | <BoardOptions />                                                                                                            | No (but required to show on Boards page) |
+| `type`             | Type of Device                                                                                      | <ValidOptions set="type" />                                                                                                 | Yes                                      |
+| `standard`         | Electrical standard country                                                                         | <ValidOptions set="standard" />                                                                                             | Yes                                      |
+| `board`            | Type of board used in product                                                                       | <ValidOptions set="board" />                                                                                                | No (but required to show on Boards page) |
 | `project-url`      | URL for product or GitHub. Points to working Yaml file or page where yaml file is easily accessible |                                                                                                                             | No                                       |
 | `made-for-esphome` | Has the manufacturer certified the device for ESPHome                                               | `True`, `False`                                                                                                             | No                                       |
 | `difficulty`       | Difficulty rating                                                                                   | `1`: Comes with ESPHome, `2`: Plug-n-flash, `3`: Disassembly required, `4`: Soldering required, `5`: Chip needs replacement | No                                       |
+
+## Configuration YAML files
+
+Each example configuration on a device page lives in its own `.yaml` file alongside `index.md` and is included
+into the page via a fenced code block of the form:
+
+````md
+```yaml file=config.yaml
+```
+````
+
+The build pipeline replaces the empty fence with the file's contents at render time, so the rendered page still
+shows a normal yaml code block. Linking from a `.yaml` URL elsewhere (e.g. a download link) also continues to work
+because `.yaml` files are mirrored into the published site.
+
+The following rules are enforced by `npm run validate-devices`:
+
+| Scope                       | Rule                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| Every yaml file             | Must parse as valid YAML.                                                                     |
+| Every yaml file             | No passwords (literal **or** `!secret`) on any `password:`, `*_password:`, or `psk:` key.     |
+| Every yaml file             | No `!secret` references anywhere. Example configs must not depend on the user's secrets.yaml. |
+| First `file=` fence on a page | Must reference `config.yaml`. `url=` fences may appear before or after — only `file=` fences count toward this ordering rule. |
+| `config.yaml` only          | No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `improv_serial:`, `bluetooth_proxy:`, etc. |
+| `config.yaml` only          | `wifi:` is allowed for radio/hardware tunables (`country`, `power_save_mode`, `output_power`, …). It must not contain `ssid`, `password`, `networks`, `manual_ip`, `eap`, or `use_address`. An empty `ap:` block is allowed (and recommended) so the device boots into a default fallback hotspot. |
+| `config.yaml` only          | No `platform: homeassistant`, `platform: mqtt`, or `platform: template` anywhere — those are network-dependent or user-derived, not hardware. |
+| `made-for-esphome: true` pages added/modified by the PR | Must include at least one `url=` yaml fence pointing at a `.yaml`/`.yml` file in the manufacturer's GitHub repo (`github.com/<owner>/<repo>/(blob\|raw)/<ref>/...` or `raw.githubusercontent.com/<owner>/<repo>/<ref>/...`) — see [Live yaml from a GitHub URL](#live-yaml-from-a-github-url-url-form) below. |
+
+Additional yaml files (e.g. `voice-assistant.yaml`, `battery-percentage.yaml`) can hold derived sensors,
+automations, or anything else specific to one feature — they just have to be valid YAML and follow the
+no-passwords / no-`!secret` rules.
+
+If you have inline yaml in an existing markdown page, extract it to files with `npm run extract-yaml -- <path>`.
+The script is idempotent — it leaves already-migrated fences alone and writes the first fence on each page as
+`config.yaml`. Quotes around the file attribute are optional (`file=config.yaml` and `file="config.yaml"` both
+parse).
+
+### Small snippets that stay inline (`inline` marker)
+
+The `file=` rule exists so full example configs live in their own files. For a very small illustrative snippet —
+a couple of lines showing one option, not a runnable config — extracting it to a file is overkill. Mark the fence
+`inline` and it stays on the page verbatim; the validator and `npm run extract-yaml` both leave it alone.
+
+````md
+```yaml inline
+sensor:
+  - platform: adc
+    pin: GPIO34
+```
+````
+
+Use this only for short snippets. Anything that is (or grows into) a real, runnable config belongs in its own
+`.yaml` file via `file=` — `inline` is not an escape hatch for skipping the no-passwords / no-`!secret` rules on a
+full config.
+
+### Live yaml from a GitHub URL (`url=` form)
+
+For made-for-ESPHome devices whose configuration lives in the manufacturer's own GitHub repository, you can point
+at the upstream yaml directly instead of vendoring a copy. `url=` is allowed on any device page, but it isn't the
+standard form outside of made-for-ESPHome — for ordinary devices, prefer `file=config.yaml` and only fall back to
+`url=` for upstream-pinned references. When a page mixes both, the first `file=` fence must still be
+`config.yaml`; `url=` fences can appear anywhere on the page.
+
+````md
+```yaml url=https://github.com/esphome/firmware/blob/main/esp-web-tools/esp32.yaml
+```
+````
+
+That fence renders live on this page as:
+
+```yaml url=https://github.com/esphome/firmware/blob/main/esp-web-tools/esp32.yaml
+```
+
+The build emits a `<remote-yaml-include>` element that fetches the file from `raw.githubusercontent.com` at visit
+time and renders it inside the same Expressive Code container as a `file=` block. An explanatory paragraph
+("The current firmware configuration is fetched live from the upstream repository:") is auto-injected above each
+`url=` block — pages don't need to write that sentence themselves.
+
+The host is allowlisted at build time: only `https://github.com/...` and `https://raw.githubusercontent.com/...`
+URLs are accepted. Any other host (or non-`https://` URL) triggers a build warning and the block is dropped.
+
+To satisfy the made-for-esphome rule, the URL must also point at an actual yaml file the renderer can fetch as
+raw bytes:
+
+- `https://github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.yaml`
+- `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.yaml`
+
+(`.yml` works too; `refs/heads/<branch>` and `refs/tags/<tag>` are both accepted in the ref slot.) A bare repo
+URL, a tree/directory URL, or a non-yaml file all render as HTML or 404 in the browser, so they don't count.
+
+`url=` blocks **are not validated** by `npm run validate-yaml`. Validation only inspects the yaml referenced via
+`file=` because we can only check what's in the repo — the upstream file's contents are out of our control. If you
+want the same compile-time guarantees, vendor a snapshot into the repo as `config.yaml` (`file=` form) instead, or
+pin the URL to a specific commit SHA so the rendered page can't drift after the device ships.
+
+Pages that opt into [Made for ESPHome](https://devices.esphome.io/made-for-esphome) by setting
+`made-for-esphome: true` in frontmatter **must** include at least one `url=` fence pointing at a host on the
+allowlist. The programme requires the firmware config to be open and reachable; a live link to the upstream yaml
+is how we surface that on the device page. `npm run validate-yaml` enforces this on every PR that adds or modifies
+a made-for-esphome page.
 
 ## Images
 

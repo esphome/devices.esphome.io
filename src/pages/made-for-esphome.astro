@@ -1,0 +1,39 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import DeviceListing from "@components/DeviceListing.astro";
+import {
+  getAllDevices,
+  matchesFilter,
+  sortDevices,
+} from "../utils/getDevices";
+
+const all = await getAllDevices();
+const filtered = sortDevices(
+  all.filter((d) => matchesFilter(d.data, "made-for-esphome", "true"))
+);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Made for ESPHome",
+    description: "Browse devices officially made for ESPHome",
+    tableOfContents: false,
+  }}
+>
+  <div class="made-for-esphome-logo-container">
+    <a href="https://esphome.io/guides/made_for_esphome/">
+      <div class="made-for-esphome-logo-image"></div>
+    </a>
+  </div>
+  <p class="made-for-esphome-description">
+    The following devices are designed to work with ESPHome and are preflashed
+    with the firmware. This means you can easily integrate them into your smart
+    home without any additional setup. Their configurations{" "}
+    <a href="https://esphome.io/guides/made_for_esphome/"
+      >meet requirements</a
+    >{" "}
+    as set out by the ESPHome project.
+  </p>
+
+  <DeviceListing devices={filtered} />
+</StarlightPage>

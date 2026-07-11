@@ -133,7 +133,7 @@ uart:
   baud_rate: 4800
 
 sensor:
-  - platform: cse7766 # https://esphome.io/components/sensor/cse7766.html
+  - platform: cse7766 # https://esphome.io/components/sensor/cse7766/
     uart_id: cse7766_uart_bus
     current:
       name: "${friendly_name} Current"

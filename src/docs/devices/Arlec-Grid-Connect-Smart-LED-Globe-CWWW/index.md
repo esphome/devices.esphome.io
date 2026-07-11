@@ -19,7 +19,7 @@ as it was impossible to directly specify `brightness` and `color_temp` values un
 
 At the time of writing, you can now use the direct integration `color_temperature` platform from ESPHome. By using this
 platform, it opens up the ability to also add
-[light effects](https://esphome.io/components/light/index.html#light-effects) to the bulb as well.
+[light effects](https://esphome.io/components/light/#light-effects) to the bulb as well.
 
 The `GLD112HA` uses a `BP5926 chip` to drive the LED's and this chip uses two PWM signals to set the colour temperature
 and brightness. The bulb comes in both B22 and E27 bayonet fitting.

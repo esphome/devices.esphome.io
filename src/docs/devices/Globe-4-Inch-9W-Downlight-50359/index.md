@@ -57,7 +57,7 @@ stable 3.3v power supply that can supply more than 1A.
 
 PINs matched using Saleae analyzer with the original WB2S module. The original chip uses 1KHz PWM by default, however
 the and the ESP32-C3 seem to work better at
-[1220Hz](https://www.esphome.io/components/output/ledc.html "ESPHome LEDC Frequencies").
+[1220Hz](https://www.esphome.io/components/output/ledc/ "ESPHome LEDC Frequencies").
 
 | Pin    | Name | Function                       |
 | ------ | ---- | ------------------------------ |

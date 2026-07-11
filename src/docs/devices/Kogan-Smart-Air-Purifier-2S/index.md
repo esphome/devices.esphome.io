@@ -11,9 +11,9 @@ board: esp8266
 
 [Product Listing](https://www.kogan.com/au/buy/kogan-smarterhome-4-stage-air-purifier-2s-with-h13-filter-130-cadr/)
 
-[Flashing Tips (Home Assistant Thread)](https://community.home-assistant.io/t/tuya-tywe1s-flash-help/273747/).
+[Flashing Tips (Home Assistant Thread)](https://community.home-assistant.io/t/273747/).
 
-[Tear down, mods/enhancements, Home Assistant configs, and more detailed write up (Home Assistant Thread)](https://community.home-assistant.io/t/kogan-smart-air-purifier-2s-working-with-esphome/390526)
+[Tear down, mods/enhancements, Home Assistant configs, and more detailed write up (Home Assistant Thread)](https://community.home-assistant.io/t/390526)
 
 ## GPIO Pinout
 
@@ -55,11 +55,11 @@ uart:
     tx_pin: GPIO15
     baud_rate: 9600
 
-#Tuya component: https://esphome.io/components/tuya.html
+#Tuya component: https://esphome.io/components/tuya/
 tuya:
   uart_id: uart_0
 
-#Tuya Fan: https://esphome.io/components/fan/tuya.html
+#Tuya Fan: https://esphome.io/components/fan/tuya/
 fan:
   - platform: tuya
     name: ${kogan-air-purifier}

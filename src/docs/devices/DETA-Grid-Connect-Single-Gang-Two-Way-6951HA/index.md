@@ -55,9 +55,6 @@ adding a 10k pull-down resistor on GPIO15.
 
 ### Series 1 (WB3S) GPIO Pinouts
 
-_See
-[Pinouts on WB3S Module Datasheet](https://developer.tuya.com/en/docs/iot/wb3s-module-datasheet?id=K9dx20n6hz5n4#title-5-Interface%20pin%20definition) for more detail_
-
 | Pin | Function                                                                                                                                    |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | P24 | Status LED _(inverted)_                                                                                                                     |

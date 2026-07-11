@@ -98,4 +98,4 @@ binary_sensor:
         - light.toggle: strip_light
 ```
 
-[1]: /Mirabella-Genio-WiFi-LED-Strip-Light_Teardown.jpg "Genio Wi-Fi LED Strip Light Teardown"
+[1]: ./Mirabella-Genio-WiFi-LED-Strip-Light_Teardown.jpg "Genio Wi-Fi LED Strip Light Teardown"

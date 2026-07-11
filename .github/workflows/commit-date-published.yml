@@ -1,0 +1,166 @@
+name: Commit date-published update
+
+# Runs in the trusted base-repo context after the fork-PR workflow finishes,
+# so it has access to the GitHub App credentials that update-date-published.yml
+# cannot see. It consumes the metadata artifact produced there, rewrites the
+# date-published frontmatter, and commits back to the PR branch.
+on:
+  workflow_run:
+    workflows: ["Update date-published on approval"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  commit:
+    name: Update date-published and push
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read  # download the metadata artifact from the triggering run
+    steps:
+      - name: Download metadata
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: date-published-metadata
+          path: metadata
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      # The triggering workflow only uploads an artifact when it found newly
+      # added device pages, so its absence means there is nothing to do.
+      - name: Read metadata
+        id: meta
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('metadata/info.json')) {
+              core.info('No metadata artifact — nothing to do.');
+              core.setOutput('proceed', 'false');
+              return;
+            }
+            const m = JSON.parse(fs.readFileSync('metadata/info.json', 'utf8'));
+            core.setOutput('proceed', 'true');
+            core.setOutput('head_repo', m.headRepo);
+            core.setOutput('head_ref', m.headRef);
+            core.setOutput('head_sha', m.headSha);
+            core.setOutput('pages', m.pages.join('\n'));
+
+      - name: Generate a token
+        if: steps.meta.outputs.proceed == 'true'
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Checkout PR branch
+        if: steps.meta.outputs.proceed == 'true'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          repository: ${{ steps.meta.outputs.head_repo }}
+          # Pin to the immutable approved SHA, not the mutable branch ref.
+          # If a contributor pushes between approval and this workflow
+          # running, the createCommitOnBranch expectedHeadOid check below
+          # will see the branch has moved past head.sha and fail loudly —
+          # the safe behavior, rather than silently rewriting whatever the
+          # branch tip now happens to be.
+          ref: ${{ steps.meta.outputs.head_sha }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      # Domain-specific: rewrite the date-published frontmatter line in each
+      # newly added device page, and emit the list of files actually changed
+      # so the commit step below can be kept generic.
+      - name: Update date-published
+        if: steps.meta.outputs.proceed == 'true'
+        id: update
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          PAGES: ${{ steps.meta.outputs.pages }}
+        with:
+          script: |
+            const fs = require('fs');
+            const pages = (process.env.PAGES || '')
+              .split('\n')
+              .filter(Boolean);
+            const today = new Date().toISOString().slice(0, 10);
+            const changed = [];
+            for (const path of pages) {
+              if (!fs.existsSync(path)) {
+                core.warning(`Skipping ${path} — not present in checkout`);
+                continue;
+              }
+              const text = fs.readFileSync(path, 'utf8');
+              const match = text.match(/^(date-published:[ \t]*)(\S+)/m);
+              if (!match) {
+                core.warning(`No date-published field in ${path}`);
+                continue;
+              }
+              if (match[2] === today) {
+                core.info(`${path} already on ${today}`);
+                continue;
+              }
+              const updated = text.replace(
+                /^(date-published:[ \t]*).*$/m,
+                `$1${today}`,
+              );
+              fs.writeFileSync(path, updated);
+              core.info(`Updated ${path}: ${match[2]} -> ${today}`);
+              changed.push(path);
+            }
+            core.setOutput('paths', changed.join('\n'));
+
+      - name: Commit changes via createCommitOnBranch
+        if: steps.meta.outputs.proceed == 'true' && steps.update.outputs.paths != ''
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          PATHS: ${{ steps.update.outputs.paths }}
+          MESSAGE: Update date-published to date of approval
+          REPOSITORY: ${{ steps.meta.outputs.head_repo }}
+          BRANCH: ${{ steps.meta.outputs.head_ref }}
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            const repository = process.env.REPOSITORY;
+            const branchName = process.env.BRANCH;
+            const message = process.env.MESSAGE;
+            const paths = (process.env.PATHS || '')
+              .split('\n')
+              .filter(Boolean);
+
+            // Use the SHA we actually checked out as the optimistic-lock
+            // value — if anyone pushed between checkout and now, the
+            // mutation fails rather than silently overwriting their commit.
+            const { stdout } = await exec.getExecOutput(
+              'git', ['rev-parse', 'HEAD'],
+            );
+            const expectedHeadOid = stdout.trim();
+
+            const additions = paths.map((p) => ({
+              path: p,
+              contents: fs.readFileSync(p).toString('base64'),
+            }));
+
+            const result = await github.graphql(
+              `mutation($input: CreateCommitOnBranchInput!) {
+                createCommitOnBranch(input: $input) {
+                  commit { url oid }
+                }
+              }`,
+              {
+                input: {
+                  branch: {
+                    repositoryNameWithOwner: repository,
+                    branchName,
+                  },
+                  message: { headline: message },
+                  expectedHeadOid,
+                  fileChanges: { additions },
+                },
+              },
+            );
+            const commit = result.createCommitOnBranch.commit;
+            core.info(`Created verified commit ${commit.oid}: ${commit.url}`);

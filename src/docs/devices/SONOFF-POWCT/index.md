@@ -46,6 +46,8 @@ esphome:
 
 esp32:
   variant: esp32
+  framework:
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -118,13 +120,9 @@ sensor:
       # Multiplication factor from W to kW is 0.001
       - multiply: 0.001
 
-  - platform: template
+  - platform: internal_temperature
     name: ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
     id: esp32_temp
-    icon: mdi:thermometer
-    lambda: return temperatureRead();
 
   - platform: template
     name: Power Factor

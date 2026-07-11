@@ -7,7 +7,7 @@ board: esp8266
 Made-for-esphome: False
 difficulty: 4
 ---
-[Amazon Link](https://amzn.to/447q55e)
+[Amazon Link](https://www.amazon.com/dp/B00ZYLRQNE)
 
 ## WiOn 50050 Indoor WiFi Plug
 

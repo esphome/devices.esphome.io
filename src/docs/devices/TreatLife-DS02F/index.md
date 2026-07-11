@@ -8,7 +8,7 @@ board: bk72xx
 
 Treatlife DS02F Switch![image](treatlife_DS02F.jpg)
 
-[Amazon Link](https://amzn.to/400MRsE)
+[Amazon Link](https://www.amazon.com/dp/B08P5D3ZKW)
 
 ## Notes
 

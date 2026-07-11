@@ -1,0 +1,56 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import DeviceListing from "@components/DeviceListing.astro";
+import {
+  getAllDevices,
+  matchesFilter,
+  sortDevices,
+} from "../../utils/getDevices";
+
+export async function getStaticPaths() {
+  const labels: Record<string, string> = {
+    dimmer: "Dimmers",
+    light: "Lights & LEDs",
+    misc: "Miscellaneous Devices",
+    plug: "Plugs & Sockets",
+    relay: "Relays",
+    sensor: "Sensors",
+    switch: "Switches",
+  };
+  const descriptions: Record<string, string> = {
+    dimmer: "Browse dimmer devices for ESPHome",
+    light: "Browse light and LED devices for ESPHome",
+    misc: "Browse miscellaneous devices for ESPHome",
+    plug: "Browse plug and socket devices for ESPHome",
+    relay: "Browse relay devices for ESPHome",
+    sensor: "Browse sensor devices for ESPHome",
+    switch: "Browse switch devices for ESPHome",
+  };
+
+  return Object.keys(labels).map((slug) => ({
+    params: { type: slug },
+    props: {
+      displayName: labels[slug],
+      description: descriptions[slug],
+    },
+  }));
+}
+
+const { type } = Astro.params;
+const { displayName, description } = Astro.props;
+
+const all = await getAllDevices();
+const filtered = sortDevices(
+  all.filter((d) => matchesFilter(d.data, "type", type!))
+);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: displayName,
+    description,
+    tableOfContents: false,
+  }}
+>
+  <DeviceListing devices={filtered} />
+</StarlightPage>
