@@ -1,0 +1,66 @@
+esphome:
+  name: remko-rkl-355-eco
+  friendly_name: Remko RKL 355 Eco
+
+esp32:
+  variant: ESP32C6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+wifi:
+  ap:
+
+uart:
+  - baud_rate: 9600
+    rx_pin:
+      number: 17
+      inverted: true
+    tx_pin:
+      number: 16
+      inverted: true
+    id: uart_1
+
+status_led:
+  pin: GPIO15
+
+tuya:
+  uart_id: uart_1
+  id: tuya_1
+
+climate:
+  - platform: tuya
+    name: Remko
+    id: climate_tuya_1
+    supports_heat: false
+    supports_cool: true
+    switch_datapoint: 1
+    target_temperature_datapoint: 2
+    current_temperature_datapoint: 3
+    active_state:
+      datapoint: 4
+      cooling_value: 0
+      drying_value: 1
+      fanonly_value: 2
+    fan_mode:
+      datapoint: 5
+      low_value: 0
+      medium_value: 1
+      high_value: 2
+    swing_mode:
+      vertical_datapoint: 0x11
+    visual:
+      max_temperature: 32°C
+      min_temperature: 16°C
+      temperature_step: 1°C
+    temperature_multiplier: 1
+
+switch:
+  - platform: tuya
+    name: Remko Night Mode
+    switch_datapoint: 0x10
+    id: switch_tuya_1
+  - platform: tuya
+    name: Remko UVC
+    switch_datapoint: 0x12
+    id: switch_tuya_2
