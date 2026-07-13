@@ -1,7 +1,7 @@
 ---
 title: KinCony-MT4 (ESP32-S3 4CH DC motor driver board)
 date-published: 2026-07-11
-type: relay
+type: misc
 standard: global
 board: esp32
 ---
