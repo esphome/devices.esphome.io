@@ -34,8 +34,12 @@ jobs:
       run: ${{ steps.check-made-for-esphome.outputs.result }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
+          # checkout v7 blocks fork-PR checkouts under pull_request_target
+          # unless explicitly opted in. Safe here: we only diff the checked-out
+          # tree, never build or execute the fork's code.
+          allow-unsafe-pr-checkout: true
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0  # Ensure we have full history for diff
 
@@ -65,7 +69,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout checklist from base
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: |

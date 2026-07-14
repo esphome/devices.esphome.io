@@ -58,8 +58,13 @@ jobs:
 
       - name: Checkout PR branch
         if: steps.meta.outputs.proceed == 'true'
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
+          # checkout v7 blocks fork-PR checkouts under workflow_run unless
+          # explicitly opted in. Safe here: the fork's code is never built or
+          # executed — we only rewrite the date-published frontmatter and push
+          # via createCommitOnBranch with an expectedHeadOid optimistic lock.
+          allow-unsafe-pr-checkout: true
           repository: ${{ steps.meta.outputs.head_repo }}
           # Pin to the immutable approved SHA, not the mutable branch ref.
           # If a contributor pushes between approval and this workflow
