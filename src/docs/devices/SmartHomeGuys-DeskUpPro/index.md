@@ -17,8 +17,7 @@ Full Integration with Home Assistant or use it's API from any smart home automat
 
 All the existing functionality of the desk's controller is retained.
 
-![DeskUp Pro](DeskUpPro-Top.jpg "DeskUp Pro")
-![DeskUp Pro Under Desk](DeskUpPro-UnderDesk.jpg "DeskUp Pro Under Desk")
+![DeskUp Pro](DeskUpPro-MarketingImage.jpeg "DeskUp Pro")
 ![DeskUp Pro Controls](DeskUpPro-C6-Controls-HomeAssistant.png "DeskUp Pro Controls")
 ![DeskUp Pro Sensors](DeskUpPro-Sensors-black.jpg "DeskUp Pro Sensors")
 
@@ -29,6 +28,6 @@ All the existing functionality of the desk's controller is retained.
 
 ## Support
 
-- [Shop](https://www.ebay.co.uk/itm/226942026649)
+- [Shop](https://smarthomeguys.uk/products/deskup-pro)
 - [Official Documentation](https://smarthomeguys.github.io/DeskUp-Pro-Controller-RJ12/)
 - [GitHub](https://github.com/SmartHomeGuys/DeskUp-Pro-Controller-RJ12)
