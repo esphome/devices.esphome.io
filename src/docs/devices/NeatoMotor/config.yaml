@@ -6,4 +6,4 @@ substitutions:
 packages:
   board: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/boards/rev3.yaml@main
   drive: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/boards/common/drive_dc.yaml@main
-  config: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/configs/networked.yaml@main
+  config: github://CodeMakesItGo/NeatoFx_Public/Controllers/NeatoMotor/configs/home_assistant.yaml@main
