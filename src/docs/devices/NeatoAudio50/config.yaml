@@ -6,4 +6,4 @@ substitutions:
 packages:
   board: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/boards/rev2_4.yaml@main
   rftx: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/boards/rftx_outputs.yaml@main
-  config: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/configs/networked.yaml@main
+  config: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/configs/home_assistant.yaml@main
