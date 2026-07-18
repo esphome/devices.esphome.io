@@ -28,19 +28,8 @@ bk72xx:
 logger:
   level: DEBUG
 
-api:
-
-ota:
-  - platform: esphome
-
 wifi:
   ap:
-    ssid: "Sprinkler-8Z Fallback"
-    password: "12345678"
-
-captive_portal:
-web_server:
-  port: 80
 
 status_led:
   pin:
@@ -234,15 +223,17 @@ interval:
     then:
       - lambda: |
           uint32_t now = millis();
-          if ((id(selected_zone) >= 0 || id(all_zones_mode) != 0) && (now - id(last_button_time)) > 8000) {
+          if ((id(selected_zone) >= 0 || id(all_zones_mode) != 0) &&
+              (now - id(last_button_time)) > 8000) {
             id(cancel_selection)->execute();
             return;
           }
-          
+
           if (id(selected_zone) >= 0 && id(all_zones_mode) == 0) {
             static bool blink_state = false;
             blink_state = !blink_state;
-            auto leds = {id(led_1), id(led_2), id(led_3), id(led_4), id(led_5), id(led_6), id(led_7), id(led_8)};
+            auto leds = {id(led_1), id(led_2), id(led_3), id(led_4),
+                         id(led_5), id(led_6), id(led_7), id(led_8)};
             int i = 0;
             for (auto led : leds) {
               if (i == id(selected_zone)) {
@@ -261,7 +252,8 @@ interval:
           } else if (id(all_zones_mode) != 0) {
             static bool blink_all = false;
             blink_all = !blink_all;
-            auto leds = {id(led_1), id(led_2), id(led_3), id(led_4), id(led_5), id(led_6), id(led_7), id(led_8)};
+            auto leds = {id(led_1), id(led_2), id(led_3), id(led_4),
+                         id(led_5), id(led_6), id(led_7), id(led_8)};
             for (auto led : leds) {
               if (blink_all) led->turn_on();
               else led->turn_off();
@@ -288,7 +280,8 @@ script:
       - lambda: |
           id(selected_zone) = -1;
           id(all_zones_mode) = 0;
-          auto leds = {id(led_1), id(led_2), id(led_3), id(led_4), id(led_5), id(led_6), id(led_7), id(led_8)};
+          auto leds = {id(led_1), id(led_2), id(led_3), id(led_4),
+                       id(led_5), id(led_6), id(led_7), id(led_8)};
           int i = 0;
           for (auto led : leds) {
             auto valve_id = id(irrigador).valve_switch(i);

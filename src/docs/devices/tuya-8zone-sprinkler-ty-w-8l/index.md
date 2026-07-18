@@ -8,7 +8,9 @@ project-url: https://github.com/gnacho/esphome-tuya-8zone-valve
 difficulty: 4
 ---
 
-Generic Tuya 8-zone irrigation controller with Beken BK7231N (CBU module). PCB model TY-W-8L-AC-DZAK. Uses two independent 74HC595 shift registers for LEDs and valves.
+Generic Tuya 8-zone irrigation controller with Beken BK7231N (CBU module).
+PCB model TY-W-8L-AC-DZAK. Uses two independent 74HC595 shift registers for
+LEDs and valves.
 
 ## Hardware
 
@@ -24,11 +26,13 @@ Generic Tuya 8-zone irrigation controller with Beken BK7231N (CBU module). PCB m
 
 ## Installation
 
-The BK7231N is flashed via UART with [ltchiptool](https://github.com/libretiny-eu/ltchiptool). No soldering required — dupont cables and a steady hand are enough.
+The BK7231N is flashed via UART with
+[ltchiptool](https://github.com/libretiny-eu/ltchiptool). No soldering required
+— dupont cables and a steady hand are enough.
 
 ### Connections (3.3V USB-TTL adapter)
 
-```
+```text
   USB-TTL Adapter            TY-W-8L-AC-DZAK Board
   ───────────────            ─────────────────────
        3.3V  ───────────────────►  3.3V
@@ -37,17 +41,19 @@ The BK7231N is flashed via UART with [ltchiptool](https://github.com/libretiny-e
          RX  ◄───────────────────  TX
 ```
 
-**CRITICAL WARNING**: **NEVER connect 3.3V from USB adapter and 24VAC at the same time**. You can damage the board.
+**CRITICAL WARNING**: **NEVER connect 3.3V from USB adapter and 24VAC at the
+same time**. You can damage the board.
 
-**Option A: 3.3V only (preferable if it works)**
+### Option A: 3.3V only (preferable if it works)
 
-Connect all 4 dupont cables (3.3V, GND, TX, RX) as shown above. Try flashing first with this setup.
+Connect all 4 dupont cables (3.3V, GND, TX, RX) as shown above. Try flashing
+first with this setup.
 
-**Option B: With 24VAC (if 3.3V doesn't work)**
+### Option B: With 24VAC (if 3.3V doesn't work)
 
 If Option A fails, disconnect the 3.3V cable and use the 24VAC transformer:
 
-```
+```text
   USB-TTL Adapter            TY-W-8L-AC-DZAK Board
   ───────────────            ─────────────────────
         GND  ───────────────────►  GND
@@ -59,7 +65,8 @@ If Option A fails, disconnect the 3.3V cable and use the 24VAC transformer:
        24VAC ───────────────────►  AC IN (terminals)
 ```
 
-In Option B, **DO NOT connect the 3.3V cable from the USB adapter**. Only GND, TX and RX. The board generates its own 3.3V internally from the 24VAC.
+In Option B, **DO NOT connect the 3.3V cable from the USB adapter**. Only GND,
+TX and RX. The board generates its own 3.3V internally from the 24VAC.
 
 ### Flashing process
 
@@ -87,7 +94,8 @@ ltchiptool flash read bk7231n backup_original.bin
 - **DOWN**: selects the previous zone (LED blinks)
 - **SET**: confirms selection and activates the zone (LED stays solid)
 
-If you don't press anything for **8 seconds**, the selection is automatically cancelled.
+If you don't press anything for **8 seconds**, the selection is automatically
+cancelled.
 
 ### Activate a single zone
 
@@ -112,4 +120,5 @@ If you don't press anything for **8 seconds**, the selection is automatically ca
 
 ## Project repository
 
-Full documentation, compiled firmware binaries, and source code available at [github.com/gnacho/esphome-tuya-8zone-valve](https://github.com/gnacho/esphome-tuya-8zone-valve).
+Full documentation, compiled firmware binaries, and source code available at
+[github.com/gnacho/esphome-tuya-8zone-valve](https://github.com/gnacho/esphome-tuya-8zone-valve).
