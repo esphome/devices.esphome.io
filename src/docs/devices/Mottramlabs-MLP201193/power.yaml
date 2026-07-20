@@ -1,3 +1,5 @@
+captive_portal:
+
 interval:
   - interval: 5s
     then:

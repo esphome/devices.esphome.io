@@ -11,8 +11,6 @@ wifi:
   power_save_mode: none
   ap:
 
-captive_portal:
-
 logger:
 
 sensor:
