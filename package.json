@@ -6,6 +6,10 @@
   "author": "",
   "license": "GPL-3.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=9.6.5"
+  },
   "scripts": {
     "dev": "npm run validate-devices && astro dev --host",
     "build": "npm run validate-devices && astro build",
@@ -14,17 +18,20 @@
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
     "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
     "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",
-    "check-links": "tsx scripts/check-links.ts"
+    "check-links": "tsx scripts/check-links.ts",
+    "wrap-markdown": "tsx scripts/wrap-markdown-lines.ts",
+    "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.2",
-    "@astrojs/starlight": "^0.39.1",
-    "astro": "^6.3.1",
+    "@astrojs/markdown-remark": "^7.2.1",
+    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.0.7",
     "gray-matter": "^4.0.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "@types/node": "^25.6.2",
-    "tsx": "^4.21.0"
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1"
   }
 }

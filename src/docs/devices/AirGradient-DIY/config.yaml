@@ -1,0 +1,44 @@
+esphome:
+  name: airgradient
+
+esp8266:
+  board: d1_mini
+
+logger:
+
+i2c:
+  sda: D2
+  scl: D1
+
+uart:
+  - rx_pin: D5
+    tx_pin: D6
+    baud_rate: 9600
+    id: uart1
+  - rx_pin: D4
+    tx_pin: D3
+    baud_rate: 9600
+    id: uart2
+
+sensor:
+  - platform: sht3xd
+    temperature:
+      id: temp
+      name: "Temperature"
+    humidity:
+      id: humidity
+      name: "Humidity"
+    address: 0x44
+    update_interval: 5s
+  - platform: pmsx003
+    type: PMSX003
+    uart_id: uart1
+    pm_2_5:
+      id: pm25
+      name: "Particulate Matter <2.5µm Concentration"
+  - platform: senseair
+    uart_id: uart2
+    co2:
+      id: co2
+      name: "SenseAir CO2 Value"
+    update_interval: 60s
