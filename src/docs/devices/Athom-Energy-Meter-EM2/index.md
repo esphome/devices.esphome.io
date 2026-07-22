@@ -25,7 +25,7 @@ Also on Aliexpress, available pre-flashed with ESPHome or Tasmota.
 | GPIO9  | button    |
 | GPIO10 | led       |
 
-## Basic Configuration
+## Configuration
 
-The [Latest configuration](https://github.com/athom-tech/esp32-configs/blob/main/athom-energy-monitor-x2.yaml)
-can be found on Athom's GitHub repo.
+```yaml url=https://github.com/athom-tech/esp32-configs/blob/main/athom-energy-monitor-x2.yaml
+```

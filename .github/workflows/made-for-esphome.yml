@@ -3,13 +3,13 @@ name: Check Made for ESPHome
 on:
   pull_request_target:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   pre-check:
     runs-on: ubuntu-latest
     name: Pre-check for made-for-esphome label
+    permissions: {}
     outputs:
       run: ${{ steps.check-label.outputs.result }}
     steps:
@@ -28,14 +28,20 @@ jobs:
     needs:
       - pre-check
     if: ${{ needs.pre-check.outputs.run == 'true' }}
+    permissions:
+      contents: read
     outputs:
       run: ${{ steps.check-made-for-esphome.outputs.result }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
         with:
+          # checkout v7 blocks fork-PR checkouts under pull_request_target
+          # unless explicitly opted in. Safe here: we only diff the checked-out
+          # tree, never build or execute the fork's code.
+          allow-unsafe-pr-checkout: true
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0 # Ensure we have full history for diff
+          fetch-depth: 0  # Ensure we have full history for diff
 
       - name: Check for made-for-esphome
         id: check-made-for-esphome
@@ -46,7 +52,9 @@ jobs:
             const baseBranch = context.payload.pull_request.base.ref;
 
             // Get the diff for src/docs/devices/**/index.md files
-            const { exitCode, stdout, stderr } = await exec.getExecOutput(`git diff origin/${baseBranch} -- src/docs/devices/**/index.md`);
+            const { exitCode, stdout, stderr } = await exec.getExecOutput(
+              `git diff origin/${baseBranch} -- src/docs/devices/**/index.md`
+            );
 
             // Check if any line contains 'made-for-esphome: true'
             return stdout.includes('+made-for-esphome: true') || stdout.includes('+made-for-esphome: True');
@@ -58,13 +66,27 @@ jobs:
       - check
     if: ${{ needs.check.outputs.run == 'true' }}
     permissions:
-      pull-requests: write
+      contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - name: Checkout checklist from base
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: |
+            .github/made-for-esphome-checklist.md
+          sparse-checkout-cone-mode: false
+
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Update Pull Request
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const pr = context.payload.pull_request;
             await github.rest.issues.addLabels({
@@ -89,7 +111,8 @@ jobs:
               body: updatedBody
             });
 
-            const message = "This PR has been labeled as **Made for ESPHome** and is pending review. Please complete the checklist added to the description above.";
+            const message = "This PR has been labeled as **Made for ESPHome** and is pending review. " +
+              "Please complete the checklist added to the description above.";
 
             await github.rest.pulls.createReview({
               pull_number: pr.number,

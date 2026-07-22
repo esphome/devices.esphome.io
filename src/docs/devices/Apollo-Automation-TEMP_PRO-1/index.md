@@ -36,6 +36,11 @@ The Apollo Automation TEMP_PRO-1 is a PoE temperature multisensor with the follo
 4. In Home Assistant, look at discovered devices.
 5. If you'd like to switch to the ethernet version please follow the guide on our wiki
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/TEMP_PRO-1/blob/main/Integrations/ESPHome/TEMP_PRO-1_W.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/temp-pro-1)
