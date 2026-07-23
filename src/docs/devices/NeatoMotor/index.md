@@ -1,6 +1,6 @@
 ---
 title: NeatoFx Motor
-date-published: 2026-05-21
+date-published: 2026-07-23
 type: misc
 standard: global
 board: esp32
