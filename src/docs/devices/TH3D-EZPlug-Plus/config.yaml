@@ -13,8 +13,6 @@ wifi:
 
 logger:
 
-captive_portal:
-
 time:
   - platform: sntp
     id: sntp_time
