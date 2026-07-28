@@ -1,6 +1,6 @@
 ---
 title: TH3D EZPlug+
-date-published: 2023-02-20
+date-published: 2026-07-26
 type: plug
 standard: us
 board: esp8266
