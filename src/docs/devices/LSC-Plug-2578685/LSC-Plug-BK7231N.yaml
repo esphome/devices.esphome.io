@@ -11,11 +11,8 @@ web_server:
 captive_portal:
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
   ap:
-    ssid: "lsc_plug_1 Hotspot"
-    password: !secret wifi_ap_password
+    ssid: "LSC-Plug Hotspot"
     
 sensor:
   - platform: wifi_signal
