@@ -42,11 +42,7 @@ Pinout for Version with BK7231N (Relay and LED Swapped)
 
 ## Basic configuration
 
-Version for BK7231T:
-```yaml file=LSC-Plug-BK7231T.yaml
+Version for BK7231T and BK7231N, just change board_model substitutions:
+```yaml file=config.yaml
 ```
 
-
-Version for BK7231N:
-```yaml file=LSC-Plug-BK7231N.yaml
-```
