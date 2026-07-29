@@ -21,16 +21,19 @@ sensor:
   - platform: wifi_signal
     name: "WiFi Signal Sensor"
     update_interval: 60s
-    
+
+# LED2 on board
 status_led:
   pin: P26
 
 output:
+  # LED1 on board
   - platform: gpio
     id: relay_1_led
     pin: P8
     
 binary_sensor:
+  # SW1 on board
   - platform: gpio
     id: button_1
     name: lsc-plug-1_button
@@ -43,6 +46,7 @@ binary_sensor:
       - switch.toggle: relay_1
 
 switch:
+  # RY1 on board
   - platform: gpio
     id: relay_1
     name: lsc-plug-1_relay
