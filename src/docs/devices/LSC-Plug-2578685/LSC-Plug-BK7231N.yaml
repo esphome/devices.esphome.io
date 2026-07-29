@@ -1,0 +1,53 @@
+esphome:
+  name: lsc-plug-1
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+logger:
+
+web_server:
+
+captive_portal:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "lsc_plug_1 Hotspot"
+    password: !secret wifi_ap_password
+    
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 60s
+    
+status_led:
+  pin: P26
+
+output:
+  - platform: gpio
+    id: relay_1_led
+    pin: P8
+    
+binary_sensor:
+  - platform: gpio
+    id: button_1
+    name: lsc-plug-1_button
+    pin:
+      number: P7
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    on_press:
+      - switch.toggle: relay_1
+
+switch:
+  - platform: gpio
+    id: relay_1
+    name: lsc-plug-1_relay
+    pin: P6
+    on_turn_on:
+      - output.turn_on: relay_1_led
+    on_turn_off:
+      - output.turn_off: relay_1_led
