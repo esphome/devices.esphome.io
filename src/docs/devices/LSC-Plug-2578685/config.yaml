@@ -9,15 +9,8 @@ packages:
 esphome:
   name: lsc-plug-1
 
-logger:
-
-web_server:
-
-captive_portal:
-
 wifi:
   ap:
-    ssid: "lsc_plug_1 Hotspot"
     
 sensor:
   - platform: wifi_signal
