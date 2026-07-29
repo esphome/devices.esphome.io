@@ -10,13 +10,8 @@ libretuya:
 logger:
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
   ap:
-    ssid: "Lsc-Switch-01 Fallback Hotspot"
-    password: !secret wifi_ap_password
+    ssid: "Lsc-plug Hotspot"
     
 sensor:
   - platform: wifi_signal
