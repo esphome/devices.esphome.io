@@ -43,6 +43,4 @@ Pinout for Version with BK7231N (Relay and LED Swapped)
 ## Basic configuration
 
 Version for BK7231T and BK7231N, just change board_model substitutions:
-```yaml file=config.yaml
-```
-
+```yaml file=config.yaml```
