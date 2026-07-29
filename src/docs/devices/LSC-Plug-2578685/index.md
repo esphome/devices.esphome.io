@@ -6,10 +6,6 @@ standard: eu
 board: bk72xx
 ---
 
-## Warning
-
-The latest LSC smart plug 2578685 devices use the Tuya BK7231N module, which is not compatible with ESPHome!
-
 ## Notice
 
 - This smart plug is flashable using the latest tuya-cloudcutter with a compiled ESPHome binary. I recommend following
