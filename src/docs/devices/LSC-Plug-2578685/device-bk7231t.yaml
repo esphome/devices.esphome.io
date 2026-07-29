@@ -1,0 +1,9 @@
+substitutions:
+  pin:
+    led1: P26
+    ry1: P8
+    sw1: P7
+    led2: P6
+
+bk72xx:
+  board: generic-bk7231t-qfn32-tuya
