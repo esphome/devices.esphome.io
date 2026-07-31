@@ -24,7 +24,7 @@ The lamp features two independently controllable lighting zones. The main light 
 
 The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter**.
 
-### Hardware flashing
+### UART flashing
 
 1. Turn the lamp upside down.
 
@@ -74,23 +74,23 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 
 | Function | GPIO |
 |----------|------|
-| Red Base Led| P8 |
-| Green Base Led | P24 |
-| Blue Base Led | P9 |
-| White Base Led | P26 |
-| Addresable Led | P16 |
+| Base Red | P8 |
+| Base Green | P24 |
+| Base Blue | P9 |
+| Base White | P26 |
+| Addressable LEDs | P16 |
 | IR Receiver | P23 |
 | Capacitive Button | P22 |
 
 ## Basic configuration
 
-```
+```yaml
 # Board: T1-U Wi-Fi Module
 # Definition: definitions/boards/t1-u/manifest.yaml
 
 esphome:
-  name: lsc-smart-conect-smart-floor-la
-  friendly_name: LSC Smart Conect Smart Floor Lamp
+  name: lsc-smart-connect-smart-floor-la
+  friendly_name: LSC Smart Connect Smart Floor Lamp
 
 
 bk72xx:
@@ -108,7 +108,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: LSC Smart Conec Fallback Hotspot
+    ssid: LSC Smart Connect Hotspot
     password: "!secret apPassword"
 
 captive_portal:
@@ -163,7 +163,7 @@ remote_receiver:
 
 binary_sensor:
   - platform: gpio
-    name: GPIO Binary Sensor
+    name: Touch Button
     pin:
       number: P22
       mode:
@@ -182,7 +182,7 @@ binary_sensor:
 
 - Supports two independently controllable lighting zones.
 - Main light section uses addressable LEDs.
-- Base uses a conventional RGBW LED Strip.
+- Base uses a conventional RGBW LED.
 - Flashing requires opening the device.
 - This guide is based on the Action retail version with article number **3221699**.
 
