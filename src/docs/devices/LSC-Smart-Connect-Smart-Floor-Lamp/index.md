@@ -3,7 +3,7 @@ title: LSC Smart Connect Smart RGB Floor Lamp
 date-published: 2026-07-31
 type: light
 standard: eu
-board: bk7238
+board: bk72xx
 difficulty: 3
 ---
 
@@ -15,7 +15,7 @@ This guide applies to the **LSC Smart Connect Smart RGB Floor Lamp** sold by **A
 |----------|-------|
 | Brand | LSC Smart Connect |
 | Retailer | Action |
-| Product | Smart RGB Floor Lamp |
+| Product | Smart Floor Lamp |
 | Article number | **3221699** |
 
 ![Bottom of the lamp](3221699.png)
@@ -76,11 +76,13 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 
 | Function | GPIO |
 |----------|------|
-| Red PWM | |
-| Green PWM | |
-| Blue PWM | |
-| White PWM | |
-| Addresable Led | |
+| Red Base Led| P8 |
+| Green Base Led | P24 |
+| Blue Base Led | P9 |
+| White Base Led | P26 |
+| Addresable Led | P16 |
+| IR Receiver | P23 |
+| Capacitive Button | P22 |
 
 ## Basic configuration
 
@@ -100,7 +102,7 @@ logger:
 
 api:
   encryption:
-    key: gBWt5FRp9FKyRPLxjjOkZADU5BJCFDBm+CdhPm8ZePk=
+    key: !secret otaPassword
 ota:
   - platform: esphome
 
@@ -109,7 +111,7 @@ wifi:
   password: !secret wifi_password
   ap:
     ssid: LSC Smart Conec Fallback Hotspot
-    password: "8psoXosANcHq"
+    password: "!secret apPassword"
 
 captive_portal:
 
@@ -174,7 +176,6 @@ binary_sensor:
     on_click:
       - then:
           - light.toggle: light_beken_spi_led_strip_1
-          - light.toggle: light_rgbw_1
 
 
 ```
