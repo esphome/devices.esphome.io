@@ -3,7 +3,7 @@ title: LSC Smart Connect Smart RGB Floor Lamp
 date-published: 2026-07-31
 type: light
 standard: eu
-board: bk7238
+board: bk72xx
 difficulty: 3
 ---
 
