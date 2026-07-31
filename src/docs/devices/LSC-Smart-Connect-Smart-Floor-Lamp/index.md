@@ -89,7 +89,7 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 # Definition: definitions/boards/t1-u/manifest.yaml
 
 esphome:
-  name: lsc-smart-connect-smart-floor-la
+  name: lsc-smart-connect-floor-lamp
   friendly_name: LSC Smart Connect Smart Floor Lamp
 
 
