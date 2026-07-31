@@ -20,9 +20,7 @@ This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Actio
 
 ![Bottom of the lamp](3221699.png)
 
-The lamp features two independently controllable lighting zones. The main light section is an **addressable LED strip**, allowing animations and individually controlled LEDs. The illuminated base uses a conventional **RGBW LED Strip**, providing independent RGB and white light control.
-
-## Flashing
+The lamp features two independently controllable lighting zones. The main light section is an **addressable LED strip**, allowing animations and individually controlled LEDs. The illuminated base uses a conventional RGBW LED, providing independent RGB and white light control.
 
 The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter**.
 
