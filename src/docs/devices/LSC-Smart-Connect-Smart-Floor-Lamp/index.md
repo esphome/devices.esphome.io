@@ -9,7 +9,7 @@ difficulty: 3
 
 # LSC Smart Connect Smart RGB Floor Lamp
 
-This guide applies to the **LSC Smart Connect Smart RGB Floor Lamp** sold by **Action**.
+This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Action**.
 
 | Property | Value |
 |----------|-------|
