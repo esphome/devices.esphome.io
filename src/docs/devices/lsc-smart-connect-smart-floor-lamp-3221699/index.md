@@ -76,11 +76,13 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 
 | Function | GPIO |
 |----------|------|
-| Red PWM | |
-| Green PWM | |
-| Blue PWM | |
-| White PWM | |
-| Addresable Led | |
+| Red Base Led| P8 |
+| Green Base Led | P24 |
+| Blue Base Led | P9 |
+| White Base Led | P26 |
+| Addresable Led | P16 |
+| IR Receiver | P23 |
+| Capacitive Button | P22 |
 
 ## Basic configuration
 
@@ -174,7 +176,6 @@ binary_sensor:
     on_click:
       - then:
           - light.toggle: light_beken_spi_led_strip_1
-          - light.toggle: light_rgbw_1
 
 
 ```
