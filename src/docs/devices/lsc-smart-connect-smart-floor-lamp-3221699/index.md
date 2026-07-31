@@ -100,7 +100,7 @@ logger:
 
 api:
   encryption:
-    key: gBWt5FRp9FKyRPLxjjOkZADU5BJCFDBm+CdhPm8ZePk=
+    key: !secret otaPassword
 ota:
   - platform: esphome
 
@@ -109,7 +109,7 @@ wifi:
   password: !secret wifi_password
   ap:
     ssid: LSC Smart Conec Fallback Hotspot
-    password: "8psoXosANcHq"
+    password: "!secret apPassword"
 
 captive_portal:
 
