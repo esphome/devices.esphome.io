@@ -14,8 +14,6 @@ logger:
 wifi:
   ap:
 
-web_server:
-
 light:
   - platform: beken_spi_led_strip
     name: Main
