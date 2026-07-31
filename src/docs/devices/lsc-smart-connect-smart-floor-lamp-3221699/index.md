@@ -56,7 +56,7 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
 The programming pads can be accessed either by soldering temporary wires or by using pogo pins. **Pogo pins are recommended**, as they do not require any permanent modification to the PCB.
 
-7. In **LTChipTool**, select the correct firmware and serial port, then start the flashing process. Once LTChipTool is waiting for the device, either power on the lamp or briefly short the **RESET** pad to **GND**. The bootloader will be detected automatically and flashing will begin.
+7. Build your ESPHome configuration and download the **UF2** firmware image. In **LTChipTool**, select the downloaded **.uf2** file, leave the flash address at the default value of **`0x0`**, select the correct serial port, and start the flashing process. Once LTChipTool is waiting for the device, either power on the lamp or briefly short the **RESET** pad to **GND**. LTChipTool should detect the bootloader and begin flashing automatically.
 
 8. Wait until flashing has completed successfully.
 
@@ -82,9 +82,101 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 | White PWM | |
 | Addresable Led | |
 
-## ESPHome configuration
+## Basic configuration
 
-```yaml file=config.yaml
+```
+# Board: T1-U Wi-Fi Module
+# Definition: definitions/boards/t1-u/manifest.yaml
+
+esphome:
+  name: lsc-smart-conect-smart-floor-la
+  friendly_name: LSC Smart Conect Smart Floor Lamp
+
+
+bk72xx:
+  board: generic-bk7238-tuya
+
+logger:
+
+api:
+  encryption:
+    key: gBWt5FRp9FKyRPLxjjOkZADU5BJCFDBm+CdhPm8ZePk=
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: LSC Smart Conec Fallback Hotspot
+    password: "8psoXosANcHq"
+
+captive_portal:
+
+web_server:
+  version: "2"
+
+light:
+  - platform: beken_spi_led_strip
+    name: Main
+    pin: P16
+    id: light_beken_spi_led_strip_1
+    chipset: SM16703
+    num_leds: 96
+    rgb_order: GRB
+    effects:
+      - addressable_rainbow:
+      - addressable_twinkle:
+  - platform: rgbw
+    name: Base
+    blue: blue_base
+    green: green_base
+    red: red_base
+    white: white_base
+    id: light_rgbw_1
+    icon: "mdi:lightbulb"
+    restore_mode: ALWAYS_ON
+
+output:
+  - platform: libretiny_pwm
+    pin: P9
+    id: blue_base
+  - platform: libretiny_pwm
+    pin: P24
+    id: green_base
+  - platform: libretiny_pwm
+    pin: P8
+    id: red_base
+  - platform: libretiny_pwm
+    pin: P26
+    id: white_base
+
+
+remote_receiver:
+  id: ir_rx
+  pin:
+    number: P23
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+
+binary_sensor:
+  - platform: gpio
+    name: GPIO Binary Sensor
+    pin:
+      number: P22
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    id: binary_sensor_gpio_1
+    on_click:
+      - then:
+          - light.toggle: light_beken_spi_led_strip_1
+          - light.toggle: light_rgbw_1
+
+
 ```
 
 ## Notes
@@ -94,4 +186,4 @@ https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/#flashing-firmware
 - Base uses a conventional RGBW LED Strip.
 - Flashing requires opening the device.
 - This guide is based on the Action retail version with article number **3221699**.
-````
+
