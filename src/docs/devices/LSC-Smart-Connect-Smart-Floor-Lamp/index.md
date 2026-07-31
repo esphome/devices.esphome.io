@@ -1,5 +1,5 @@
 ---
-title: LSC Smart Connect Smart RGB Floor Lamp
+title: LSC Smart Connect Smart Floor Lamp
 date-published: 2026-07-31
 type: light
 standard: eu
@@ -7,7 +7,7 @@ board: bk72xx
 difficulty: 3
 ---
 
-# LSC Smart Connect Smart RGB Floor Lamp
+# LSC Smart Connect Smart Floor Lamp
 
 This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Action**.
 
