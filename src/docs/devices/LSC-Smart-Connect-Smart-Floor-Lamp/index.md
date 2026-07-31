@@ -100,16 +100,16 @@ logger:
 
 api:
   encryption:
-    key: !secret otaPassword
+    key: <Paste your api key here>
 ota:
   - platform: esphome
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  ssid: <Your wifi ssid>
+  password: <Your wifi password>
   ap:
     ssid: LSC Smart Connect Hotspot
-    password: "!secret apPassword"
+    password: <Your Fallback Hotspot password>
 
 captive_portal:
 
