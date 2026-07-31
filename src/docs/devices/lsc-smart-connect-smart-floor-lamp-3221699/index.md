@@ -15,7 +15,7 @@ This guide applies to the **LSC Smart Connect Smart RGB Floor Lamp** sold by **A
 |----------|-------|
 | Brand | LSC Smart Connect |
 | Retailer | Action |
-| Product | Smart RGB Floor Lamp |
+| Product | Smart Floor Lamp |
 | Article number | **3221699** |
 
 ![Bottom of the lamp](3221699.png)
