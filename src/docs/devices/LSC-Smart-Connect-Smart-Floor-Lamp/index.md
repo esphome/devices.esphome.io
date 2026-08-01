@@ -30,24 +30,24 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
 1. Turn the lamp upside down.
 
-![Bottom of the lamp](bottom.png)
+   ![Bottom of the lamp](bottom.png)
 
 2. Carefully remove the large foam pad from the bottom of the base.
 
 3. Remove the three screws underneath the foam pad.
 
-![Screw locations](screws.png)
+   ![Screw locations](screws.png)
 
 4. Carefully open the base to access the PCB.
 
 5. Disconnect the connector between the base and the PCB. Hold the connector itself instead of
    pulling on the wires.
 
-![Opened base](connector.png)
+   ![Opened base](connector.png)
 
 6. Connect the USB-to-UART adapter to the programming pads.
 
-![Programming pads](points.png)
+   ![Programming pads](points.png)
 
 | USB-to-UART | Lamp |
 |-------------|------|
