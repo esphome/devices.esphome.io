@@ -20,8 +20,9 @@ This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Actio
 
 ![Bottom of the lamp](3221699.png)
 
-The lamp features two independently controllable lighting zones. The main light section is an **addressable LED strip**, 
-allowing animations and individually controlled LEDs. The illuminated base uses a conventional RGBW LED, providing independent RGB and white light control.
+The lamp features two independently controllable lighting zones. The main light section is an
+**addressable LED strip**, allowing animations and individually controlled LEDs. The illuminated
+base uses a conventional RGBW LED, providing independent RGB and white light control.
 
 The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter**.
 
@@ -39,7 +40,8 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
 4. Carefully open the base to access the PCB.
 
-5. Disconnect the connector between the base and the PCB. Hold the connector itself instead of pulling on the wires.
+5. Disconnect the connector between the base and the PCB. Hold the connector itself instead of
+   pulling on the wires.
 
 ![Opened base](connector.png)
 
@@ -53,16 +55,20 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 | RX | TX1 |
 | GND | GND |
 
-The programming pads can be accessed either by soldering temporary wires or by using pogo pins. **Pogo pins are recommended**, as they do not require any permanent modification to the PCB.
+The programming pads can be accessed either by soldering temporary wires or by using pogo pins.
+**Pogo pins are recommended**, as they do not require any permanent modification to the PCB.
 
-7. Build your ESPHome configuration and download the **UF2** firmware image. In **LTChipTool**,
-select the downloaded **.uf2** file, leave the flash address at the default value of **`0x0`**, select the correct serial port,
-and start the flashing process. Once LTChipTool is waiting for the device, either power on the lamp or
-briefly short the **RESET** pad to **GND**. LTChipTool should detect the bootloader and begin flashing automatically.
+7. Build your ESPHome configuration and download the **UF2** firmware image. In
+   **LTChipTool**, select the downloaded **.uf2** file, leave the flash address at the default
+   value of **`0x0`**, select the correct serial port, and start the flashing process. Once
+   LTChipTool is waiting for the device, either power on the lamp or briefly short the
+   **RESET** pad to **GND**. LTChipTool should detect the bootloader and begin flashing
+   automatically.
 
-9. Wait until flashing has completed successfully.
+8. Wait until flashing has completed successfully.
 
-10. Disconnect the programmer, reconnect the cable between the PCB and the base, and reassemble the lamp.
+9. Disconnect the programmer, reconnect the cable between the PCB and the base, and reassemble
+   the lamp.
 
 > **Warning**
 >
@@ -70,8 +76,8 @@ briefly short the **RESET** pad to **GND**. LTChipTool should detect the bootloa
 
 ### LTChipTool
 
-For detailed installation and usage instructions, please refer to the official LibreTiny LTChipTool documentation
-
+For detailed installation and usage instructions, please refer to the official LibreTiny
+LTChipTool documentation.
 
 ### GPIO configuration
 
@@ -89,7 +95,9 @@ For detailed installation and usage instructions, please refer to the official L
 
 ```yaml file=config.yaml
 ```
+
 ## Notes
+
 - Supports two independently controllable lighting zones.
 - Main light section uses addressable LEDs.
 - Base uses a conventional RGBW LED.
