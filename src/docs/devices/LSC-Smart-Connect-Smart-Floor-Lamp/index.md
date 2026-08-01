@@ -49,14 +49,14 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
    ![Programming pads](points.png)
 
-| USB-to-UART | Lamp |
-|-------------|------|
-| TX | RX1 |
-| RX | TX1 |
-| GND | GND |
+   | USB-to-UART | Lamp |
+   |-------------|------|
+   | TX | RX1 |
+   | RX | TX1 |
+   | GND | GND |
 
-The programming pads can be accessed either by soldering temporary wires or by using pogo pins.
-**Pogo pins are recommended**, as they do not require any permanent modification to the PCB.
+   The programming pads can be accessed either by soldering temporary wires or by using pogo pins.
+   **Pogo pins are recommended**, as they do not require any permanent modification to the PCB.
 
 7. Build your ESPHome configuration and download the **UF2** firmware image. In
    **LTChipTool**, select the downloaded **.uf2** file, leave the flash address at the default
@@ -70,9 +70,9 @@ The programming pads can be accessed either by soldering temporary wires or by u
 9. Disconnect the programmer, reconnect the cable between the PCB and the base, and reassemble
    the lamp.
 
-> **Warning**
->
-> Use only a **3.3 V** USB-to-UART adapter. Applying **5 V** may permanently damage the device.
+   > **Warning**
+   >
+   > Use only a **3.3 V** USB-to-UART adapter. Applying **5 V** may permanently damage the device.
 
 ### LTChipTool
 
