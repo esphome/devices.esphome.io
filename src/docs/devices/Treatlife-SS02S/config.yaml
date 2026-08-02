@@ -1,12 +1,12 @@
 substitutions:
-  device_name: treatlifeswitch #change
-  friendly_name: "Treatlife Light Switch" #change
+  device_name: treatlifeswitch  # change
+  friendly_name: "Treatlife Light Switch"  # change
   icon: "mdi:light-switch"
 
 bk72xx:
-  board: generic-bk7231t-qfn32-tuya # WB3S board Ref: https://docs.libretiny.eu/boards/generic-bk7231t-qfn32-tuya/
-  # board: cb3s # CB3S board Ref: https://docs.libretiny.eu/boards/cb3s/
-  # board: t1-3s # CB3S-V200 board same as t1-3s board Ref: https://docs.libretiny.eu/boards/t1-3s/  
+  board: generic-bk7231t-qfn32-tuya  # WB3S board Ref: https://docs.libretiny.eu/boards/generic-bk7231t-qfn32-tuya/
+  # board: cb3s  # CB3S board Ref: https://docs.libretiny.eu/boards/cb3s/
+  # board: t1-3s  # CB3S-V200 board same as t1-3s board Ref: https://docs.libretiny.eu/boards/t1-3s/
 
 esphome:
   name: ${device_name}
@@ -14,15 +14,15 @@ esphome:
 output:
   - platform: gpio
     id: switch_output
-    pin: P24 # WB3S and CB3S boards
-    # pin: P8 # CB3S-V200
+    pin: P24  # WB3S and CB3S boards
+    # pin: P8  # CB3S-V200
 
   - platform: gpio
     id: white_led_output
     pin:
-      number: P9 # WB3S board
-      # number: P8 # CB3S board
-      # number: P24 # CB3S-V200 board
+      number: P9  # WB3S board
+      # number: P8  # CB3S board
+      # number: P24  # CB3S-V200 board
 
 light:
   - platform: binary
@@ -43,15 +43,15 @@ binary_sensor:
     id: ${device_name}_button
     name: ${friendly_name} Button
     pin:
-      number: P6 # WB3S and CB3S boards
-      # number: P9 # CB3S-V200 board
+      number: P6  # WB3S and CB3S boards
+      # number: P9  # CB3S-V200 board
     on_press:
       - light.toggle: ${device_name}
 
 status_led:
   # Red LED
   pin:
-    number: P8 # WB3S board
-    # number: P7 # CB3S board
-    # number: P26 # CB3S-V200 board
-    inverted: yes
+    number: P8  # WB3S board
+    # number: P7  # CB3S board
+    # number: P26  # CB3S-V200 board
+    inverted: true
