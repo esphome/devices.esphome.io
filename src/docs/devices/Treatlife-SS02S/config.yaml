@@ -6,7 +6,7 @@ substitutions:
 bk72xx:
   board: generic-bk7231t-qfn32-tuya # WB3S board Ref: https://docs.libretiny.eu/boards/generic-bk7231t-qfn32-tuya/
   # board: cb3s # CB3S board Ref: https://docs.libretiny.eu/boards/cb3s/
-  # board: t1-3s  # CB3S-V200 is same as T1-3S tuya module Ref: https://docs.libretiny.eu/boards/t1-3s/  Requires libretiny 1.13.0 or newer
+  # board: t1-3s # CB3S-V200 board same as t1-3s board Ref: https://docs.libretiny.eu/boards/t1-3s/  
 
 esphome:
   name: ${device_name}
