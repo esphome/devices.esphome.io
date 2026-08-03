@@ -1,0 +1,71 @@
+name: Made for ESPHome Review Feedback
+
+# Runs after the "Made for ESPHome Review" workflow finishes. That workflow
+# compiles the linked config and runs the m4e checklist in the secret-free
+# `pull_request` context, leaving a markdown report (and the PR number) as the
+# `mfe-review-report` artifact. This workflow turns that into a
+# REQUEST_CHANGES review on the PR as esphome[bot], updating the existing
+# review while issues remain and dismissing it once they are gone.
+#
+# It lives in a separate workflow_run trigger because the review workflow runs
+# on `pull_request` and therefore has no access to the GitHub App secret for
+# fork PRs. workflow_run runs in the base-repo context with secrets available,
+# while never executing untrusted PR code — it only reads the artifact and
+# calls the GitHub API.
+
+on:
+  workflow_run:
+    workflows:
+      - Made for ESPHome Review
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  review:
+    name: Post made-for-esphome review
+    runs-on: ubuntu-latest
+    # Only act on review runs triggered by pull requests.
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    permissions:
+      actions: read  # to list/download the triggering run's artifacts
+    steps:
+      # Check out the base repo (default branch, trusted) only to load the
+      # review-posting script — never the PR's code.
+      - name: Checkout scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Download review artifact
+        id: download
+        # A cancelled review run (concurrency cancel-in-progress) uploads
+        # nothing, so a missing artifact is expected — don't fail over it, the
+        # outcome check below skips the remaining steps instead.
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: mfe-review-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifact
+
+      - name: Generate a token
+        if: steps.download.outcome == 'success'
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Supersede and repost review
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const script = require('./.github/scripts/mfe-review-feedback.cjs');
+            await script({ github, context, core });
