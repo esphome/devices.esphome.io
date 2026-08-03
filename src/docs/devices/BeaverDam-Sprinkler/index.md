@@ -1,6 +1,6 @@
 ---
 title: BeaverDam Sprinkler
-date-published: 2026-05-04
+date-published: 2026-08-03
 type: misc
 standard: global
 board: esp32
