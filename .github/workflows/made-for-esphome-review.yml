@@ -95,27 +95,40 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           MFE_REVIEW_REPORT: ${{ github.workspace }}/mfe-review-report.md
+          # Explicit verdict (pass/changes/inconclusive/no-mfe) so the feedback
+          # workflow never dismisses a blocking review on a crash or an
+          # inconclusive run — only on a genuine pass.
+          MFE_STATUS: ${{ github.workspace }}/mfe-status.txt
           # Report an unfinished build as inconclusive before the job's own
           # timeout hard-kills it.
           COMPILE_TIMEOUT_MS: "1200000"
         run: npm run --silent review-made-for-esphome
 
-      - name: Record PR number for feedback
+      - name: Record PR number and status for feedback
         # Always (even when detection is false or the review fails) so the
-        # follow-up workflow can resolve the PR and dismiss a stale review.
+        # follow-up workflow can resolve the PR. When the review did not run
+        # (not made-for-esphome) record `no-mfe` so a stale review is dismissed;
+        # a crash leaves no status file, which the feedback workflow treats as
+        # "do not dismiss".
         if: always()
-        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+        run: |
+          echo "${{ github.event.pull_request.number }}" > pr-number.txt
+          if [ "${{ steps.detect.outputs.run }}" != "true" ]; then
+            echo "no-mfe" > mfe-status.txt
+          fi
 
       - name: Upload review artifact
         # When there are no blocking issues (or the PR is not made-for-esphome)
-        # no report file exists and only pr-number.txt is uploaded, which
-        # signals the feedback workflow to dismiss any stale review.
+        # no report file exists and only pr-number.txt + mfe-status.txt are
+        # uploaded, which signals the feedback workflow to dismiss any stale
+        # review (on a genuine pass) or leave it (on a crash/inconclusive run).
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: mfe-review-report
           path: |
             pr-number.txt
+            mfe-status.txt
             mfe-review-report.md
           if-no-files-found: ignore
           retention-days: 1

@@ -30,11 +30,18 @@ module.exports = async ({ github, context, core }) => {
     return;
   }
 
-  // A report file means the review found blocking issues; its absence means the
-  // checks passed (only pr-number.txt was uploaded) or the PR is not
-  // made-for-esphome.
+  // A report file means the review found blocking issues. Its absence is
+  // ambiguous, so the review script also writes an explicit verdict to
+  // mfe-status.txt: `pass`/`no-mfe` mean genuinely clear (safe to dismiss),
+  // `inconclusive` means the run could not complete the checks, and a MISSING
+  // status file means the run crashed. We only ever dismiss on a real pass, so
+  // a crash or an inconclusive run never silently unblocks the PR.
   const reportPath = path.join(artifactDir, "mfe-review-report.md");
   const hasReport = fs.existsSync(reportPath);
+  const statusPath = path.join(artifactDir, "mfe-status.txt");
+  const status = fs.existsSync(statusPath)
+    ? fs.readFileSync(statusPath, "utf8").trim()
+    : null;
   const common = {
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -100,8 +107,17 @@ module.exports = async ({ github, context, core }) => {
       body,
     });
     core.info(`Posted a new Made for ESPHome review on PR #${prNumber}.`);
+  } else if (status !== "pass" && status !== "no-mfe") {
+    // No report and not a genuine pass — the run was inconclusive (status
+    // `inconclusive`) or crashed (status file missing). Leave any existing
+    // blocking review in place; dismissing here would silently unblock a PR
+    // whose checks never actually completed.
+    core.warning(
+      `Made for ESPHome run did not produce a pass (status: ${status ?? "missing"}); ` +
+        "leaving any existing review untouched."
+    );
   } else if (active.length) {
-    // Checks pass (or the page is no longer made-for-esphome): dismiss every
+    // Genuine pass (or the page is no longer made-for-esphome): dismiss every
     // active review so the PR is unblocked.
     for (const r of active) {
       await github.rest.pulls.dismissReview({

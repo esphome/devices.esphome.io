@@ -89,9 +89,13 @@ function makeGithub(opts: {
 function freshCore() {
   return {
     info: () => {},
+    warning(m: string) {
+      (this._warned as string[]).push(m);
+    },
     setFailed(m: string) {
       (this._failed as string[]).push(m);
     },
+    _warned: [] as string[],
     _failed: [] as string[],
   };
 }
@@ -100,10 +104,17 @@ const context = { repo: { owner: "esphome", repo: "esphome-devices" } };
 
 // --- feedback script -------------------------------------------------------
 
-function withArtifact(prNumber: string, report: string | null): string {
+// `status` writes mfe-status.txt (the review verdict); pass `undefined` to omit
+// it entirely (simulating a crashed run).
+function withArtifact(
+  prNumber: string,
+  report: string | null,
+  status?: string
+): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-art-"));
   fs.writeFileSync(path.join(dir, "pr-number.txt"), prNumber + "\n");
   if (report !== null) fs.writeFileSync(path.join(dir, "mfe-review-report.md"), report);
+  if (status !== undefined) fs.writeFileSync(path.join(dir, "mfe-status.txt"), status + "\n");
   process.env.MFE_ARTIFACT_DIR = dir;
   return dir;
 }
@@ -170,8 +181,8 @@ test("feedback: superseded/other-bot reviews are ignored", async () => {
   assert.equal(calls.filter((c) => c.method === "createReview").length, 1);
 });
 
-test("feedback: no report + active review -> dismiss", async () => {
-  withArtifact("7", null);
+test("feedback: no report + pass status + active review -> dismiss", async () => {
+  withArtifact("7", null, "pass");
   const { github, calls } = makeGithub({
     reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
   });
@@ -180,8 +191,39 @@ test("feedback: no report + active review -> dismiss", async () => {
   assert.equal(calls.filter((c) => c.method === "createReview").length, 0);
 });
 
-test("feedback: no report + no active review -> nothing", async () => {
-  withArtifact("7", null);
+test("feedback: no-mfe status + active review -> dismiss", async () => {
+  withArtifact("7", null, "no-mfe");
+  const { github, calls } = makeGithub({
+    reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+  });
+  await feedbackScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "dismissReview").length, 1);
+});
+
+test("feedback: inconclusive status does NOT dismiss the blocking review", async () => {
+  withArtifact("7", null, "inconclusive");
+  const { github, calls } = makeGithub({
+    reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+  });
+  const c = freshCore();
+  await feedbackScript({ github, context, core: c });
+  assert.equal(calls.filter((c) => c.method === "dismissReview").length, 0);
+  assert.equal(c._warned.length, 1);
+});
+
+test("feedback: crashed run (no status file) does NOT dismiss", async () => {
+  withArtifact("7", null); // no report AND no status -> crash
+  const { github, calls } = makeGithub({
+    reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+  });
+  const c = freshCore();
+  await feedbackScript({ github, context, core: c });
+  assert.equal(calls.filter((c) => c.method === "dismissReview").length, 0);
+  assert.equal(c._warned.length, 1);
+});
+
+test("feedback: no report + pass status + no active review -> nothing", async () => {
+  withArtifact("7", null, "pass");
   const { github, calls } = makeGithub({ reviews: [] });
   await feedbackScript({ github, context, core: freshCore() });
   assert.equal(calls.length, 0);

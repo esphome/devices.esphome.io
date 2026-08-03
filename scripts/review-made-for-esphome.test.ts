@@ -105,9 +105,12 @@ test("collectMissingIds requires id on every component, incl. buses/hubs", () =>
     i2c: [{ sda: "GPIO21", scl: "GPIO22" }],
     uart: [{ tx_pin: "GPIO1", id: "bus_uart" }], // has id -> ok
     canbus: [{ platform: "esp32_can", tx_pin: "GPIO5" }], // no id -> flagged
-    // Non-id automation/platform domains are exempt.
+    // Non-id automation/platform/source domains are exempt.
     ota: [{ platform: "esphome", password: "" }],
     interval: [{ interval: "1s", then: [] }],
+    external_components: [
+      { source: "github://acme/comp", components: ["x"], refresh: "0s" },
+    ],
   };
   const missing = collectMissingIds(cfg);
   assert.deepEqual(

@@ -89,6 +89,7 @@ const CHECKLIST_URL =
 const NON_ID_LIST_DOMAINS = new Set([
   "ota", // list of OTA platforms (`- platform: esphome`, …) — no id
   "interval", // anonymous time automations — no id
+  "external_components", // source specs (`- source: github://…`) — no id
   "packages", // mapping in practice, but guard anyway
 ]);
 
@@ -1550,6 +1551,20 @@ function writeGithubOutput(entries: Record<string, string>): void {
   }
 }
 
+// Explicit review verdict, written to MFE_STATUS so the feedback workflow can
+// tell a genuine pass from a crash or an inconclusive run and never dismiss a
+// blocking review on anything but a real pass.
+type ReviewStatus = "changes" | "pass" | "inconclusive" | "no-mfe";
+function writeStatus(status: ReviewStatus): void {
+  const target = process.env.MFE_STATUS;
+  if (target) fs.writeFileSync(target, status + "\n", "utf8");
+  console.log(`status: ${status}`);
+}
+
+function pageInconclusive(r: PageResult): boolean {
+  return r.configInconclusive || r.compile === "INCONCLUSIVE";
+}
+
 function resolveDevicesRoot(): string {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -1576,6 +1591,7 @@ async function main(): Promise<void> {
 
   if (pages.length === 0) {
     console.log("No changed made-for-esphome pages — nothing to review.");
+    writeStatus("no-mfe");
     return;
   }
 
@@ -1596,6 +1612,7 @@ async function main(): Promise<void> {
     } else {
       console.log("\n" + report);
     }
+    writeStatus("changes");
     process.exitCode = 1;
     return;
   }
@@ -1639,11 +1656,19 @@ async function main(): Promise<void> {
     } else {
       console.log("\n" + report);
     }
+    writeStatus("changes");
     // Exit non-zero so the CI job surfaces the failure in its own right,
     // independent of the review-posting workflow.
     process.exitCode = 1;
+  } else if (results.some(pageInconclusive)) {
+    // No blocking findings, but a config/compile could not run to completion
+    // (network/toolchain/timeout). Not a genuine pass — the feedback workflow
+    // must leave any existing blocking review in place rather than dismiss it.
+    console.log("\nNo blocking findings, but the run was inconclusive.");
+    writeStatus("inconclusive");
   } else {
     console.log("\nAll made-for-esphome checks pass — no report emitted.");
+    writeStatus("pass");
   }
 }
 
