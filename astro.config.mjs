@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import starlight from "@astrojs/starlight";
 import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "url";
@@ -21,7 +22,7 @@ export default defineConfig({
     responsiveStyles: true,
   },
   markdown: {
-    remarkPlugins: [remarkYamlInclude],
+    processor: unified({ remarkPlugins: [remarkYamlInclude] }),
   },
   integrations: [
     starlight({
