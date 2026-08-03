@@ -508,6 +508,26 @@ test("buildReport neutralizes @mentions from fork-controlled text", () => {
   assert.ok(!/@evil/.test(report), "raw @mention must be neutralized");
 });
 
+test("buildReport uses a green header when nothing blocks", () => {
+  const report = buildReport([
+    {
+      page: "src/docs/devices/Foo/index.md",
+      url: "https://github.com/o/r/blob/main/x.yaml",
+      fenceMissing: false,
+      fatalError: null,
+      configOk: true,
+      configInconclusive: false,
+      configError: null,
+      compile: "PASS",
+      compileLog: null,
+      checks: [{ item: "ESP32", status: "OK", detail: "ok" }],
+    },
+  ]);
+  assert.ok(report.includes("## ✅ Made for ESPHome review"));
+  assert.ok(report.includes("All automated Made for ESPHome checks pass"));
+  assert.ok(!report.includes("❌"));
+});
+
 test("buildReport escapes pipes/backslashes/newlines in checklist detail", () => {
   const report = buildReport([
     {

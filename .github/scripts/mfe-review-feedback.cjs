@@ -11,12 +11,14 @@
 const fs = require("fs");
 const path = require("path");
 
-// Hidden markers so we only ever touch our own reviews and never the
+// Hidden markers so we only ever touch our own reviews/comments and never the
 // device-config validation review or the made-for-esphome checklist review
 // (both also bot REQUEST_CHANGES reviews). SUPERSEDED tags the stub we leave
-// behind when a newer review replaces an older one.
+// behind when a newer review replaces an older one; MARKER_PASS tags the
+// non-blocking "all checks pass" acknowledgement comment.
 const MARKER = "<!-- made-for-esphome-review -->";
 const SUPERSEDED = "<!-- mfe-superseded -->";
+const MARKER_PASS = "<!-- made-for-esphome-pass -->";
 
 module.exports = async ({ github, context, core }) => {
   const artifactDir = process.env.MFE_ARTIFACT_DIR || "artifact";
@@ -84,52 +86,86 @@ module.exports = async ({ github, context, core }) => {
     });
   };
 
-  if (hasReport) {
-    const body = `${MARKER}\n${fs.readFileSync(reportPath, "utf8").trim()}`;
+  const dismissActive = async (message) => {
+    for (const r of active) {
+      await github.rest.pulls.dismissReview({ ...common, review_id: r.id, message });
+    }
+    if (active.length) core.info(`Dismissed ${active.length} review(s) on PR #${prNumber}.`);
+  };
+
+  // The "all checks pass" acknowledgement is a plain issue comment (keyed by
+  // MARKER_PASS) — non-blocking, and cleanly upserted/removed.
+  const issueCommon = { owner: context.repo.owner, repo: context.repo.repo };
+  const findPassComment = async () => {
+    const comments = await github.paginate(github.rest.issues.listComments, {
+      ...issueCommon,
+      issue_number: prNumber,
+      per_page: 100,
+    });
+    return comments.find((c) => c.body && c.body.includes(MARKER_PASS)) || null;
+  };
+  const removePassComment = async () => {
+    const existing = await findPassComment();
+    if (existing) {
+      await github.rest.issues.deleteComment({ ...issueCommon, comment_id: existing.id });
+      core.info(`Removed pass comment ${existing.id}.`);
+    }
+  };
+
+  const reportBody = hasReport ? fs.readFileSync(reportPath, "utf8").trim() : null;
+
+  if (status === "changes") {
+    if (!reportBody) {
+      core.warning("status is `changes` but no report was uploaded; leaving reviews untouched.");
+      return;
+    }
+    const body = `${MARKER}\n${reportBody}`;
     // workflow_run fires on every push; if the newest active review already
     // carries this exact content, nothing changed — skip so we don't spam a
     // fresh review on a no-op push.
     const newest = active[active.length - 1];
     if (newest && newest.body === body) {
       core.info(`Review ${newest.id} already current; nothing to do.`);
-      return;
+    } else {
+      // Move the old content to a stub and post a new review lower down rather
+      // than editing in place.
+      for (const r of active) {
+        await supersede(r);
+      }
+      // Reviews are only ever REQUEST_CHANGES (blocking) — never APPROVE.
+      await github.rest.pulls.createReview({ ...common, event: "REQUEST_CHANGES", body });
+      core.info(`Posted a new Made for ESPHome review on PR #${prNumber}.`);
     }
-    // When the PR is altered (or a review is re-requested and this re-runs),
-    // move the old content to a stub and post a new review lower down rather
-    // than editing in place.
-    for (const r of active) {
-      await supersede(r);
+    // A failing run must not leave a stale "all pass" acknowledgement behind.
+    await removePassComment();
+  } else if (status === "pass") {
+    // Genuine pass: unblock (dismiss any active review) and post/refresh the
+    // non-blocking green acknowledgement comment.
+    await dismissActive("Made for ESPHome checks now pass — dismissing.");
+    const passBody = `${MARKER_PASS}\n${
+      reportBody ?? "## ✅ Made for ESPHome review\n\nAll automated checks pass."
+    }`;
+    const existing = await findPassComment();
+    if (existing && existing.body === passBody) {
+      core.info(`Pass comment ${existing.id} already current.`);
+    } else if (existing) {
+      await github.rest.issues.updateComment({ ...issueCommon, comment_id: existing.id, body: passBody });
+      core.info(`Updated pass comment ${existing.id}.`);
+    } else {
+      await github.rest.issues.createComment({ ...issueCommon, issue_number: prNumber, body: passBody });
+      core.info(`Posted pass comment on PR #${prNumber}.`);
     }
-    // Reviews are only ever REQUEST_CHANGES (blocking) — never APPROVE.
-    await github.rest.pulls.createReview({
-      ...common,
-      event: "REQUEST_CHANGES",
-      body,
-    });
-    core.info(`Posted a new Made for ESPHome review on PR #${prNumber}.`);
-  } else if (status !== "pass" && status !== "no-mfe") {
-    // No report and not a genuine pass — the run was inconclusive (status
-    // `inconclusive`) or crashed (status file missing). Leave any existing
-    // blocking review in place; dismissing here would silently unblock a PR
-    // whose checks never actually completed.
+  } else if (status === "no-mfe") {
+    // No longer made-for-esphome: unblock and remove any acknowledgement.
+    await dismissActive("No longer made-for-esphome — dismissing.");
+    await removePassComment();
+  } else {
+    // `inconclusive` or a missing status file (a crashed run). Leave everything
+    // as-is; dismissing here would silently unblock a PR whose checks never
+    // actually completed.
     core.warning(
       `Made for ESPHome run did not produce a pass (status: ${status ?? "missing"}); ` +
-        "leaving any existing review untouched."
+        "leaving any existing review/comment untouched."
     );
-  } else if (active.length) {
-    // Genuine pass (or the page is no longer made-for-esphome): dismiss every
-    // active review so the PR is unblocked.
-    for (const r of active) {
-      await github.rest.pulls.dismissReview({
-        ...common,
-        review_id: r.id,
-        message:
-          "Made for ESPHome checks now pass (or the page is no longer " +
-          "made-for-esphome) — dismissing.",
-      });
-    }
-    core.info(`Dismissed ${active.length} review(s) on PR #${prNumber}.`);
-  } else {
-    core.info("Checks pass and no active review; nothing to do.");
   }
 };

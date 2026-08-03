@@ -31,6 +31,7 @@ function makeGithub(opts: {
   permission?: string; // legacy `permission` field
   roleName?: string; // granular `role_name` field
   permissionError?: boolean; // getCollaboratorPermissionLevel throws
+  comments?: unknown[]; // issue comments for paginate(listComments)
 } = {}) {
   const calls: Call[] = [];
   const record =
@@ -39,8 +40,12 @@ function makeGithub(opts: {
       calls.push({ method, args });
       return { data: {} };
     };
+  // Tag the list functions so paginate can dispatch reviews vs comments.
+  const listReviews = Object.assign(() => {}, { _kind: "reviews" });
+  const listComments = Object.assign(() => {}, { _kind: "comments" });
   const github = {
-    paginate: async () => opts.reviews ?? [],
+    paginate: async (fn: { _kind?: string }) =>
+      fn && fn._kind === "comments" ? opts.comments ?? [] : opts.reviews ?? [],
     rest: {
       repos: {
         getCollaboratorPermissionLevel: async (args: unknown) => {
@@ -55,7 +60,7 @@ function makeGithub(opts: {
         },
       },
       pulls: {
-        listReviews: () => {},
+        listReviews,
         createReview: record("createReview"),
         updateReview: record("updateReview"),
         dismissReview: record("dismissReview"),
@@ -79,7 +84,10 @@ function makeGithub(opts: {
         },
       },
       issues: {
+        listComments,
         createComment: record("createComment"),
+        updateComment: record("updateComment"),
+        deleteComment: record("deleteComment"),
       },
     },
   };
@@ -121,9 +129,10 @@ function withArtifact(
 
 const MARKER = "<!-- made-for-esphome-review -->";
 const SUPERSEDED = "<!-- mfe-superseded -->";
+const MARKER_PASS = "<!-- made-for-esphome-pass -->";
 
-test("feedback: report + no existing review -> creates a REQUEST_CHANGES review", async () => {
-  withArtifact("42", "## report body");
+test("feedback: changes + no existing review -> creates a REQUEST_CHANGES review", async () => {
+  withArtifact("42", "## report body", "changes");
   const { github, calls } = makeGithub({ reviews: [] });
   await feedbackScript({ github, context, core: freshCore() });
   const created = calls.filter((c) => c.method === "createReview");
@@ -136,7 +145,7 @@ test("feedback: report + no existing review -> creates a REQUEST_CHANGES review"
 });
 
 test("feedback: identical existing review -> no-op", async () => {
-  withArtifact("42", "## report body");
+  withArtifact("42", "## report body", "changes");
   const body = `${MARKER}\n## report body`;
   const { github, calls } = makeGithub({
     reviews: [{ id: 1, state: "CHANGES_REQUESTED", body }],
@@ -148,7 +157,7 @@ test("feedback: identical existing review -> no-op", async () => {
 });
 
 test("feedback: changed report -> supersedes old and posts new", async () => {
-  withArtifact("7", "## new body");
+  withArtifact("7", "## new body", "changes");
   const { github, calls } = makeGithub({
     reviews: [
       { id: 9, state: "CHANGES_REQUESTED", body: `${MARKER}\n## old body` },
@@ -166,7 +175,7 @@ test("feedback: changed report -> supersedes old and posts new", async () => {
 });
 
 test("feedback: superseded/other-bot reviews are ignored", async () => {
-  withArtifact("7", "## body");
+  withArtifact("7", "## body", "changes");
   const { github, calls } = makeGithub({
     reviews: [
       { id: 1, state: "CHANGES_REQUESTED", body: `${MARKER}\n${SUPERSEDED}\nstub` },
@@ -181,23 +190,67 @@ test("feedback: superseded/other-bot reviews are ignored", async () => {
   assert.equal(calls.filter((c) => c.method === "createReview").length, 1);
 });
 
-test("feedback: no report + pass status + active review -> dismiss", async () => {
-  withArtifact("7", null, "pass");
+test("feedback: changes clears a stale pass comment", async () => {
+  withArtifact("7", "## body", "changes");
+  const { github, calls } = makeGithub({
+    reviews: [],
+    comments: [{ id: 88, body: `${MARKER_PASS}\nall good` }],
+  });
+  await feedbackScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "createReview").length, 1);
+  const del = calls.filter((c) => c.method === "deleteComment");
+  assert.equal(del.length, 1);
+  assert.equal((del[0].args as { comment_id: number }).comment_id, 88);
+});
+
+test("feedback: pass -> dismiss active review and post the green comment", async () => {
+  withArtifact("7", "## ✅ all green", "pass");
   const { github, calls } = makeGithub({
     reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+    comments: [],
   });
   await feedbackScript({ github, context, core: freshCore() });
   assert.equal(calls.filter((c) => c.method === "dismissReview").length, 1);
-  assert.equal(calls.filter((c) => c.method === "createReview").length, 0);
+  const created = calls.filter((c) => c.method === "createComment");
+  assert.equal(created.length, 1);
+  const body = (created[0].args as { body: string }).body;
+  assert.ok(body.startsWith(MARKER_PASS));
+  assert.ok(body.includes("## ✅ all green"));
 });
 
-test("feedback: no-mfe status + active review -> dismiss", async () => {
+test("feedback: pass with identical existing comment -> no rewrite", async () => {
+  withArtifact("7", "## ✅ all green", "pass");
+  const { github, calls } = makeGithub({
+    reviews: [],
+    comments: [{ id: 3, body: `${MARKER_PASS}\n## ✅ all green` }],
+  });
+  await feedbackScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "createComment").length, 0);
+  assert.equal(calls.filter((c) => c.method === "updateComment").length, 0);
+});
+
+test("feedback: pass with changed comment -> update in place", async () => {
+  withArtifact("7", "## ✅ new green", "pass");
+  const { github, calls } = makeGithub({
+    reviews: [],
+    comments: [{ id: 3, body: `${MARKER_PASS}\n## ✅ old green` }],
+  });
+  await feedbackScript({ github, context, core: freshCore() });
+  const upd = calls.filter((c) => c.method === "updateComment");
+  assert.equal(upd.length, 1);
+  assert.equal((upd[0].args as { comment_id: number }).comment_id, 3);
+  assert.equal(calls.filter((c) => c.method === "createComment").length, 0);
+});
+
+test("feedback: no-mfe -> dismiss active review and remove pass comment", async () => {
   withArtifact("7", null, "no-mfe");
   const { github, calls } = makeGithub({
     reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+    comments: [{ id: 9, body: `${MARKER_PASS}\ngreen` }],
   });
   await feedbackScript({ github, context, core: freshCore() });
   assert.equal(calls.filter((c) => c.method === "dismissReview").length, 1);
+  assert.equal(calls.filter((c) => c.method === "deleteComment").length, 1);
 });
 
 test("feedback: inconclusive status does NOT dismiss the blocking review", async () => {
@@ -208,6 +261,7 @@ test("feedback: inconclusive status does NOT dismiss the blocking review", async
   const c = freshCore();
   await feedbackScript({ github, context, core: c });
   assert.equal(calls.filter((c) => c.method === "dismissReview").length, 0);
+  assert.equal(calls.filter((c) => c.method === "createComment").length, 0);
   assert.equal(c._warned.length, 1);
 });
 
@@ -222,15 +276,8 @@ test("feedback: crashed run (no status file) does NOT dismiss", async () => {
   assert.equal(c._warned.length, 1);
 });
 
-test("feedback: no report + pass status + no active review -> nothing", async () => {
-  withArtifact("7", null, "pass");
-  const { github, calls } = makeGithub({ reviews: [] });
-  await feedbackScript({ github, context, core: freshCore() });
-  assert.equal(calls.length, 0);
-});
-
 test("feedback: unreadable PR number -> setFailed", async () => {
-  withArtifact("not-a-number", "## body");
+  withArtifact("not-a-number", "## body", "changes");
   const { github, calls } = makeGithub({ reviews: [] });
   const c = freshCore();
   await feedbackScript({ github, context, core: c });

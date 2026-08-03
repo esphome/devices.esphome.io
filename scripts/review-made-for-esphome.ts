@@ -1476,18 +1476,30 @@ function renderPage(r: PageResult): string {
 function buildReport(pages: PageResult[]): string {
   const blocking = pages.filter(pageBlocks);
   const lines: string[] = [];
-  lines.push("## ❌ Made for ESPHome review");
-  lines.push("");
-  lines.push(
-    `The automated Made for ESPHome checks found blocking issues on ` +
-      `**${blocking.length} page${blocking.length === 1 ? "" : "s"}**. ` +
-      "Each page below was compiled from its linked upstream config with only " +
-      "placeholder Wi-Fi secrets, then checked against the " +
-      `[Made for ESPHome checklist](${CHECKLIST_URL}). ` +
-      "Address the items marked ❌ and push an update — this review refreshes " +
-      "automatically and is dismissed once the checks pass. Items marked ⚠️ " +
-      "need a human to confirm (e.g. whether the hardware has a USB port)."
-  );
+  if (blocking.length === 0) {
+    lines.push("## ✅ Made for ESPHome review");
+    lines.push("");
+    lines.push(
+      "All automated Made for ESPHome checks pass. Each page below was compiled " +
+        "from its linked upstream config with only placeholder Wi-Fi secrets, " +
+        `then checked against the [Made for ESPHome checklist](${CHECKLIST_URL}). ` +
+        "A maintainer will take a final look before approval. Items marked ⚠️ " +
+        "still need a human to confirm (e.g. whether the hardware has a USB port)."
+    );
+  } else {
+    lines.push("## ❌ Made for ESPHome review");
+    lines.push("");
+    lines.push(
+      `The automated Made for ESPHome checks found blocking issues on ` +
+        `**${blocking.length} page${blocking.length === 1 ? "" : "s"}**. ` +
+        "Each page below was compiled from its linked upstream config with only " +
+        "placeholder Wi-Fi secrets, then checked against the " +
+        `[Made for ESPHome checklist](${CHECKLIST_URL}). ` +
+        "Address the items marked ❌ and push an update — this review refreshes " +
+        "automatically and is dismissed once the checks pass. Items marked ⚠️ " +
+        "need a human to confirm (e.g. whether the hardware has a USB port)."
+    );
+  }
   lines.push("");
   // Only the per-page content derives from fork-controlled input (URLs, slugs,
   // details), so neutralize @mentions there; the trusted intro/footer are left
@@ -1667,7 +1679,15 @@ async function main(): Promise<void> {
     console.log("\nNo blocking findings, but the run was inconclusive.");
     writeStatus("inconclusive");
   } else {
-    console.log("\nAll made-for-esphome checks pass — no report emitted.");
+    // All checks pass: still emit the (all-green) report so the feedback
+    // workflow can post it as a non-blocking acknowledgement comment.
+    const report = buildReport(results);
+    if (reportPath) {
+      fs.writeFileSync(reportPath, report, "utf8");
+      console.log("\nAll made-for-esphome checks pass — wrote green report.");
+    } else {
+      console.log("\n" + report);
+    }
     writeStatus("pass");
   }
 }
