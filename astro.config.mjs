@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import starlight from "@astrojs/starlight";
 import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "url";
@@ -21,7 +22,7 @@ export default defineConfig({
     responsiveStyles: true,
   },
   markdown: {
-    remarkPlugins: [remarkYamlInclude],
+    processor: unified({ remarkPlugins: [remarkYamlInclude] }),
   },
   integrations: [
     starlight({
@@ -40,7 +41,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/esphome/esphome-devices",
+          href: "https://github.com/esphome/devices.esphome.io",
         },
         {
           icon: "discord",
@@ -49,7 +50,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: "https://github.com/esphome/esphome-devices/edit/main/",
+        baseUrl: "https://github.com/esphome/devices.esphome.io/edit/main/",
       },
       components: {
         MarkdownContent: "./src/components/MarkdownContent.astro",

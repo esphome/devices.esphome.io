@@ -27,6 +27,9 @@ import type { VFile } from "vfile";
 
 const FILE_ATTR = /(^|\s)file=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
 const URL_ATTR = /(^|\s)url=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
+// Bare `inline` marker (no `=value`) opting a small snippet out of file
+// extraction. The validator and extractor honour it too.
+const INLINE_ATTR = /(^|\s)inline(?=\s|$)/;
 const YAML_LANGS = new Set(["yaml", "yml"]);
 
 // Hosts a `url=` fence may point at. We don't want a device page to be able
@@ -39,7 +42,7 @@ const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
 // users can paste into their own ESPHome config to pull this device's yaml
 // straight from GitHub. Tracks the editLink baseUrl in astro.config.mjs.
 const REPO_OWNER = "esphome";
-const REPO_NAME = "esphome-devices";
+const REPO_NAME = "devices.esphome.io";
 const REPO_BRANCH = "main";
 
 function stripAttrs(meta: string, ...attrs: string[]): string {
@@ -143,6 +146,15 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
     visitCodeNodes(tree, (parent, index, node) => {
       const lang = (node.lang ?? "").toLowerCase();
       if (!YAML_LANGS.has(lang)) return;
+
+      // `inline` keeps a small snippet on the page verbatim instead of
+      // extracting it to a sibling yaml file. Strip the marker so it never
+      // leaks into the rendered fence meta; the rest of the pipeline then
+      // highlights the block as an ordinary inline yaml fence.
+      if (node.meta && INLINE_ATTR.test(node.meta)) {
+        const stripped = node.meta.replace(INLINE_ATTR, "").replace(/\s+/g, " ").trim();
+        node.meta = stripped.length > 0 ? stripped : null;
+      }
 
       const filePath = extractAttr(FILE_ATTR, node.meta);
       const url = extractAttr(URL_ATTR, node.meta);

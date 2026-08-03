@@ -41,6 +41,7 @@ interface MetaAttrs {
   fileAttr?: { value: string; quoted: boolean };
   urlAttr?: { value: string; quoted: boolean };
   title?: { value: string; quoted: boolean };
+  inline?: boolean;
   raw: string;
 }
 
@@ -63,6 +64,8 @@ function parseMeta(meta: string): MetaAttrs {
     else if (key === "url") out.urlAttr = { value, quoted };
     else if (key === "title") out.title = { value, quoted };
   }
+  // Bare `inline` marker (no `=value`) opts the snippet out of extraction.
+  out.inline = /(^|\s)inline(?=\s|$)/.test(meta);
   return out;
 }
 
@@ -254,6 +257,11 @@ function processFile(absPath: string, opts: { dryRun: boolean }): ProcessResult 
     if (lang !== "yaml" && lang !== "yml") continue;
 
     const meta = parseMeta(fence.meta);
+
+    // `inline` opts a small snippet out of extraction. Leave it verbatim and
+    // don't let it consume the "first fence is config.yaml" slot.
+    if (meta.inline && !meta.fileAttr && !meta.urlAttr) continue;
+
     const isFirstFence = yamlFenceIndex === 0;
     yamlFenceIndex++;
 

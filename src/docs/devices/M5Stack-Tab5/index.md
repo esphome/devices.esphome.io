@@ -22,6 +22,11 @@ The Tab5 has many peripherals built in including but not limited to:
 - IMU
 - RTC
 
+## Note
+
+Only the original hardware revision (with the ILI9881C display driver and GT911 touchscreen) is currently
+supported. Later revisions using the ST7123 or ST7121 display drivers are not yet supported.
+
 ## Example Configuration
 
 The base configuration below covers all of the on-board hardware: the ESP32-P4, the ESP32-C6 hosted Wi-Fi

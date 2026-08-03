@@ -78,8 +78,8 @@ import ValidOptions from "@components/ValidOptions.astro";
 
 ### Step 1: Fork the repository
 
-Go to [github.com/esphome/esphome-devices/fork](https://github.com/esphome/esphome-devices/fork) and click
-**Create fork**. This gives you your own copy of the repo at `github.com/<your-username>/esphome-devices`.
+Go to [github.com/esphome/devices.esphome.io/fork](https://github.com/esphome/devices.esphome.io/fork) and click
+**Create fork**. This gives you your own copy of the repo at `github.com/<your-username>/devices.esphome.io`.
 
 Once your fork is created, **come back to this page** to continue.
 
@@ -94,7 +94,7 @@ the device name, and it will open GitHub's new file page with the filename and f
     <input
       id="quickstart-username"
       type="text"
-      placeholder="https://github.com/octocat/esphome-devices"
+      placeholder="https://github.com/octocat/devices.esphome.io"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"
@@ -176,11 +176,11 @@ Click **Commit changes...** at the top right. A dialog will appear:
 ### Step 5: Open the pull request
 
 GitHub will take you to the pull request page automatically. Check that the base repository is
-`esphome/esphome-devices` and the base branch is `main`, then click **Create pull request** to submit it.
+`esphome/devices.esphome.io` and the base branch is `main`, then click **Create pull request** to submit it.
 
-If the base repository is set to your own fork instead of `esphome/esphome-devices`, click the
+If the base repository is set to your own fork instead of `esphome/devices.esphome.io`, click the
 **compare across forks** link near the top of the page. That will reveal the **base repository** dropdown — switch it
-to `esphome/esphome-devices` and make sure the base branch is `main` before clicking **Create pull request**.
+to `esphome/devices.esphome.io` and make sure the base branch is `main` before clicking **Create pull request**.
 
 ## YAML Front Matter
 
@@ -242,6 +242,24 @@ If you have inline yaml in an existing markdown page, extract it to files with `
 The script is idempotent — it leaves already-migrated fences alone and writes the first fence on each page as
 `config.yaml`. Quotes around the file attribute are optional (`file=config.yaml` and `file="config.yaml"` both
 parse).
+
+### Small snippets that stay inline (`inline` marker)
+
+The `file=` rule exists so full example configs live in their own files. For a very small illustrative snippet —
+a couple of lines showing one option, not a runnable config — extracting it to a file is overkill. Mark the fence
+`inline` and it stays on the page verbatim; the validator and `npm run extract-yaml` both leave it alone.
+
+````md
+```yaml inline
+sensor:
+  - platform: adc
+    pin: GPIO34
+```
+````
+
+Use this only for short snippets. Anything that is (or grows into) a real, runnable config belongs in its own
+`.yaml` file via `file=` — `inline` is not an escape hatch for skipping the no-passwords / no-`!secret` rules on a
+full config.
 
 ### Live yaml from a GitHub URL (`url=` form)
 
