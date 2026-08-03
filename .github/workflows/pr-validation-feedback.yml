@@ -1,0 +1,131 @@
+name: PR Validation Feedback
+
+# Runs after the CI workflow finishes. When the device-config validator fails
+# it leaves a markdown report (and the PR number) as the `validation-report`
+# artifact; this workflow turns that into a REQUEST_CHANGES review on the PR as
+# esphome[bot], updating the existing review while issues remain and dismissing
+# it once they are gone.
+#
+# It lives in a separate workflow_run trigger because the CI workflow runs on
+# `pull_request` and therefore has no access to the GitHub App secret for fork
+# PRs. workflow_run runs in the base-repo context with secrets available, while
+# never executing untrusted PR code.
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  review:
+    name: Post device-config validation review
+    runs-on: ubuntu-latest
+    # Only act on CI runs triggered by pull requests.
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    permissions:
+      actions: read  # to list/download the triggering run's artifacts
+    steps:
+      - name: Download validation artifact
+        id: download
+        # A cancelled CI run (concurrency cancel-in-progress) uploads nothing,
+        # so a missing artifact is expected — don't fail the workflow over it,
+        # the outcome check below skips the remaining steps instead.
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: validation-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifact
+
+      - name: Generate a token
+        if: steps.download.outcome == 'success'
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Upsert or dismiss review
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            // Hidden marker so we only ever touch our own review and never the
+            // made-for-esphome checklist review (also a bot REQUEST_CHANGES).
+            const MARKER = '<!-- device-config-validation -->';
+
+            const prNumber = parseInt(
+              fs.readFileSync('artifact/pr-number.txt', 'utf8').trim(),
+              10
+            );
+            if (!Number.isInteger(prNumber)) {
+              core.setFailed('Could not read a PR number from the artifact.');
+              return;
+            }
+
+            // A report file means the validator failed; its absence means it
+            // passed (only pr-number.txt was uploaded).
+            const reportPath = 'artifact/validation-report.md';
+            const hasReport = fs.existsSync(reportPath);
+
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+            const existing = reviews.find(
+              (r) =>
+                r.state === 'CHANGES_REQUESTED' &&
+                r.body &&
+                r.body.includes(MARKER)
+            );
+
+            if (hasReport) {
+              const body = `${MARKER}\n${fs.readFileSync(reportPath, 'utf8').trim()}`;
+              if (existing) {
+                // workflow_run fires on every CI completion, so skip the write
+                // when nothing changed. updateReview edits the submitted
+                // review's summary body in place; its CHANGES_REQUESTED state
+                // is preserved, which is what keeps the PR blocked.
+                if (existing.body === body) {
+                  core.info(`Review ${existing.id} already up to date.`);
+                } else {
+                  await github.rest.pulls.updateReview({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber,
+                    review_id: existing.id,
+                    body,
+                  });
+                  core.info(`Updated review ${existing.id} on PR #${prNumber}.`);
+                }
+              } else {
+                await github.rest.pulls.createReview({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  event: 'REQUEST_CHANGES',
+                  body,
+                });
+                core.info(`Requested changes on PR #${prNumber}.`);
+              }
+            } else if (existing) {
+              await github.rest.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                review_id: existing.id,
+                message: 'Device configuration checks now pass — dismissing.',
+              });
+              core.info(`Dismissed review ${existing.id} on PR #${prNumber}.`);
+            } else {
+              core.info('Checks pass and no existing review; nothing to do.');
+            }

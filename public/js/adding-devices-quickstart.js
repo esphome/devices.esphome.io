@@ -3,7 +3,7 @@
 (function () {
   "use strict";
 
-  var DEFAULT_REPO = "esphome-devices";
+  var DEFAULT_REPO = "devices.esphome.io";
 
   function slugify(value) {
     return value
@@ -19,7 +19,7 @@
   //   octocat
   //   octocat/my-fork
   //   github.com/octocat
-  //   https://github.com/octocat/esphome-devices
+  //   https://github.com/octocat/devices.esphome.io
   //   https://github.com/octocat/my-fork.git
   // Returns { user, repo } where repo falls back to DEFAULT_REPO when not
   // specified in the input.
@@ -61,8 +61,6 @@
       "standard: ",
       "board: ",
       "---",
-      "",
-      "# " + name,
       "",
       "<!-- Describe the device here. See the front-matter table on the contributing page for valid options. -->",
       "",

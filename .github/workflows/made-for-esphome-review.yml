@@ -1,0 +1,134 @@
+name: Made for ESPHome Review
+
+# Automated, deterministic review of Made-for-ESPHome device PRs. For every
+# changed `src/docs/devices/*/index.md` with `made-for-esphome: true`, this
+# downloads the linked upstream config, compiles it with only placeholder
+# Wi-Fi secrets, and runs the m4e checklist as pure structural checks. It
+# emits a `mfe-review-report` artifact (report + PR number); the companion
+# `made-for-esphome-review-feedback` workflow turns that into an
+# esphome[bot] review.
+#
+# SECURITY: compiling a fork PR's linked YAML runs the ESPHome/PlatformIO
+# toolchain on contributor-controlled input (external_components can execute
+# code at codegen time). This workflow therefore runs in the secret-free
+# `pull_request` context with `contents: read` and no secrets — it only reads
+# the tree, reaches GitHub/PlatformIO over the network, and uploads an
+# artifact. The review is posted by the separate `workflow_run` workflow,
+# which never checks out or executes PR code.
+
+on:
+  pull_request:
+    paths:
+      - "src/docs/devices/**"
+
+concurrency:
+  # yamllint disable-line rule:line-length
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: Review Made for ESPHome configs
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          # Check out the PR head (not the merge ref) so the page content is
+          # exactly what the contributor submitted. Full history so the
+          # changed-page diff (BASE_SHA..HEAD_SHA) resolves.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect made-for-esphome pages
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run --silent review-made-for-esphome -- --detect
+
+      # The ESPHome toolchain is only needed to compile. Skip it entirely when
+      # the PR has more than one device page — that fails early with a
+      # one-device-per-PR review and never compiles.
+      - name: Setup Python
+        if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip and PlatformIO
+        if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+          key: mfe-review-${{ runner.os }}-platformio-v1
+          restore-keys: |
+            mfe-review-${{ runner.os }}-platformio-
+
+      - name: Install ESPHome
+        if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
+        run: pip install esphome
+
+      - name: Run Made for ESPHome review
+        if: steps.detect.outputs.run == 'true'
+        # The script exits non-zero when it finds blocking issues, failing this
+        # check (like the device-config validator does). The report artifact is
+        # still uploaded below via `if: always()` and turned into a bot review.
+        # A clean run exits zero and writes no report. An inconclusive compile
+        # (timeout) or a needs-human-check note alone does not block.
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MFE_REVIEW_REPORT: ${{ github.workspace }}/mfe-review-report.md
+          # Explicit verdict (pass/changes/inconclusive/no-mfe) so the feedback
+          # workflow never dismisses a blocking review on a crash or an
+          # inconclusive run — only on a genuine pass.
+          MFE_STATUS: ${{ github.workspace }}/mfe-status.txt
+          # Report an unfinished build as inconclusive before the job's own
+          # timeout hard-kills it.
+          COMPILE_TIMEOUT_MS: "1200000"
+        run: npm run --silent review-made-for-esphome
+
+      - name: Record PR number and status for feedback
+        # Always (even when detection is false or the review fails) so the
+        # follow-up workflow can resolve the PR. When the review did not run
+        # (not made-for-esphome) record `no-mfe` so a stale review is dismissed;
+        # a crash leaves no status file, which the feedback workflow treats as
+        # "do not dismiss".
+        if: always()
+        run: |
+          echo "${{ github.event.pull_request.number }}" > pr-number.txt
+          if [ "${{ steps.detect.outputs.run }}" != "true" ]; then
+            echo "no-mfe" > mfe-status.txt
+          fi
+
+      - name: Upload review artifact
+        # When there are no blocking issues (or the PR is not made-for-esphome)
+        # no report file exists and only pr-number.txt + mfe-status.txt are
+        # uploaded, which signals the feedback workflow to dismiss any stale
+        # review (on a genuine pass) or leave it (on a crash/inconclusive run).
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: mfe-review-report
+          path: |
+            pr-number.txt
+            mfe-status.txt
+            mfe-review-report.md
+          if-no-files-found: ignore
+          retention-days: 1
