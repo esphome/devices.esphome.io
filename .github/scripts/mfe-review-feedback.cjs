@@ -116,7 +116,10 @@ module.exports = async ({ github, context, core }) => {
 
   if (status === "changes") {
     if (!reportBody) {
+      // The verdict is failures, so a stale "all pass" comment must go even if
+      // we can't (re)post the blocking review without the report body.
       core.warning("status is `changes` but no report was uploaded; leaving reviews untouched.");
+      await removePassComment();
       return;
     }
     const body = `${MARKER}\n${reportBody}`;

@@ -203,6 +203,21 @@ test("feedback: changes clears a stale pass comment", async () => {
   assert.equal((del[0].args as { comment_id: number }).comment_id, 88);
 });
 
+test("feedback: changes with no report still removes a stale pass comment", async () => {
+  withArtifact("7", null, "changes"); // status changes but report missing
+  const { github, calls } = makeGithub({
+    reviews: [{ id: 5, state: "CHANGES_REQUESTED", body: `${MARKER}\nx` }],
+    comments: [{ id: 88, body: `${MARKER_PASS}\nall good` }],
+  });
+  const c = freshCore();
+  await feedbackScript({ github, context, core: c });
+  // No report -> don't touch the review, but still clear the contradictory ✅ comment.
+  assert.equal(calls.filter((x) => x.method === "createReview").length, 0);
+  assert.equal(calls.filter((x) => x.method === "dismissReview").length, 0);
+  assert.equal(calls.filter((x) => x.method === "deleteComment").length, 1);
+  assert.equal(c._warned.length, 1);
+});
+
 test("feedback: pass -> dismiss active review and post the green comment", async () => {
   withArtifact("7", "## ✅ all green", "pass");
   const { github, calls } = makeGithub({
