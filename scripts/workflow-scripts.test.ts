@@ -28,7 +28,8 @@ function makeGithub(opts: {
   runs?: unknown[];
   headSha?: string;
   reactionError?: boolean;
-  permission?: string; // effective repo permission of the commenter
+  permission?: string; // legacy `permission` field
+  roleName?: string; // granular `role_name` field
   permissionError?: boolean; // getCollaboratorPermissionLevel throws
 } = {}) {
   const calls: Call[] = [];
@@ -45,7 +46,12 @@ function makeGithub(opts: {
         getCollaboratorPermissionLevel: async (args: unknown) => {
           calls.push({ method: "getCollaboratorPermissionLevel", args });
           if (opts.permissionError) throw new Error("403 forbidden");
-          return { data: { permission: opts.permission ?? "none" } };
+          return {
+            data: {
+              permission: opts.permission ?? "none",
+              role_name: opts.roleName ?? opts.permission ?? "none",
+            },
+          };
         },
       },
       pulls: {
@@ -294,6 +300,38 @@ test("command: write access authorises a non-author; in-progress run not re-run"
   assert.ok(
     calls.some((c) => c.method === "reaction" && (c.args as { content: string }).content === "eyes")
   );
+});
+
+test("command: maintain role (via role_name) authorises", async () => {
+  const { github, calls } = makeGithub({
+    permission: "read", // legacy field collapses maintain oddly on some repos
+    roleName: "maintain",
+    runs: [{ id: 4, status: "completed", created_at: "2026-02-01T00:00:00Z" }],
+  });
+  await commandScript({
+    github,
+    context: commandContext({
+      body: "@esphome[bot] review",
+      commenter: "maintainer",
+      author: "author",
+    }),
+    core: freshCore(),
+  });
+  assert.equal(calls.filter((c) => c.method === "reRunWorkflow").length, 1);
+});
+
+test("command: triage role is not authorised", async () => {
+  const { github, calls } = makeGithub({ permission: "read", roleName: "triage" });
+  await commandScript({
+    github,
+    context: commandContext({
+      body: "@esphome[bot] review",
+      commenter: "triager",
+      author: "author",
+    }),
+    core: freshCore(),
+  });
+  assert.equal(calls.filter((c) => c.method === "reRunWorkflow").length, 0);
 });
 
 test("command: admin access authorises; no run found -> confused + comment", async () => {

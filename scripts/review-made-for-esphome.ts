@@ -256,6 +256,7 @@ interface PageResult {
   fenceMissing: boolean;
   fatalError: string | null; // repo/url/download problem — no compile possible
   configOk: boolean | null; // null when not attempted
+  configInconclusive: boolean; // config could not run (network/toolchain) — non-blocking
   configError: string | null; // trimmed `esphome config` error
   compile: CompileOutcome;
   compileLog: string | null; // trimmed tail on FAIL
@@ -284,11 +285,14 @@ function findChangedDevicePages(devicesRoot: string): Set<string> | null {
   const base = process.env.BASE_SHA;
   const head = process.env.HEAD_SHA;
   if (!base || !head) return null;
+  // Derive the git pathspec from devicesRoot so a DEVICES_ROOT override stays
+  // consistent with the filter below.
+  const relRoot = path.relative(process.cwd(), devicesRoot) || ".";
   let out: string;
   try {
     out = execFileSync(
       "git",
-      ["diff", "--name-status", "-z", `${base}..${head}`, "--", "src/docs/devices"],
+      ["diff", "--name-status", "-z", `${base}..${head}`, "--", relRoot],
       { encoding: "utf8" }
     );
   } catch (err) {
@@ -315,11 +319,12 @@ function findChangedDevicePages(devicesRoot: string): Set<string> | null {
       if (code === "A" || code === "M" || code === "T") candidatePath = p;
     }
     if (!candidatePath) continue;
-    if (!/^src\/docs\/devices\/[^/]+\/index\.(?:md|mdx)$/i.test(candidatePath)) {
-      continue;
-    }
     const abs = path.resolve(process.cwd(), candidatePath);
     if (!abs.startsWith(devicesRoot + path.sep)) continue;
+    // Only depth-1 device pages: <devicesRoot>/<dir>/index.(md|mdx).
+    if (!/^[^/\\]+[/\\]index\.(?:md|mdx)$/i.test(path.relative(devicesRoot, abs))) {
+      continue;
+    }
     changed.add(abs);
   }
   return changed;
@@ -1035,6 +1040,24 @@ async function fetchWithTimeout(
   }
 }
 
+// Read only the first byte of a response body, then cancel the stream so a
+// server that ignored a Range request (returning the full body) doesn't get
+// buffered in full. Returns null for an empty body.
+async function readFirstByte(res: Response): Promise<number | null> {
+  if (!res.body) {
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length === 0 ? null : buf[0];
+  }
+  const reader = res.body.getReader();
+  try {
+    const { value, done } = await reader.read();
+    if (done || !value || value.length === 0) return null;
+    return value[0];
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+}
+
 // Collect the source URLs of every http_request update entry.
 function updateSources(cfg: Record<string, unknown>): string[] {
   const update = cfg.update;
@@ -1148,14 +1171,17 @@ async function checkOneManifest(
         rows.push(fail(`OTA binary (${chipLabel})`, `binary returned HTTP ${r.status} (unreachable)`));
         return rows;
       }
-      const buf = Buffer.from(await r.arrayBuffer());
-      if (buf.length === 0) {
+      // Read only the first chunk and cancel — a server that ignores the Range
+      // header returns 200 with the whole body, and buffering that would defeat
+      // the point of the cheap liveness check.
+      const first = await readFirstByte(r);
+      if (first === null) {
         rows.push(fail(`OTA binary (${chipLabel})`, "binary body is empty"));
-      } else if (buf[0] !== 0xe9) {
+      } else if (first !== 0xe9) {
         rows.push(
           fail(
             `OTA binary (${chipLabel})`,
-            `first byte is 0x${buf[0].toString(16)} not 0xE9 — not an ESP firmware image`
+            `first byte is 0x${first.toString(16)} not 0xE9 — not an ESP firmware image`
           )
         );
       } else {
@@ -1224,6 +1250,7 @@ async function reviewPage(
     fenceMissing: false,
     fatalError: null,
     configOk: null,
+    configInconclusive: false,
     configError: null,
     compile: "SKIPPED",
     compileLog: null,
@@ -1277,14 +1304,20 @@ async function reviewPage(
   );
   if (!cfgRun.ok) {
     if (cfgRun.timedOut) {
-      result.configOk = false;
+      result.configInconclusive = true;
       result.configError =
         "`esphome config` timed out while expanding the configuration";
       return result;
     }
     const classified = classifyConfigError(cfgRun);
-    result.configOk = false;
     result.configError = classified.message;
+    if (classified.network) {
+      // A network/toolchain blip is inconclusive, not a config defect — don't
+      // block the PR over it (same policy as a compile timeout).
+      result.configInconclusive = true;
+    } else {
+      result.configOk = false;
+    }
     return result;
   }
   result.configOk = true;
@@ -1386,11 +1419,13 @@ function renderPage(r: PageResult): string {
   // Config / compile section.
   lines.push(`**Configuration & compile**`);
   lines.push("");
+  if (r.configInconclusive) {
+    lines.push(`- ⚠️ \`esphome config\` — ${r.configError} (inconclusive; not blocking)`);
+    lines.push("");
+    return lines.join("\n");
+  }
   if (r.configOk === false) {
     lines.push(`- ❌ \`esphome config\` — ${r.configError}`);
-    if (r.configError && r.configError.includes("\n")) {
-      // multiline error captured as a tail
-    }
     lines.push("");
     return lines.join("\n");
   }
@@ -1425,7 +1460,12 @@ function renderPage(r: PageResult): string {
   lines.push("| ----- | ------ | ------ |");
   for (const c of r.checks) {
     const status = `${STATUS_ICON[c.status]} ${c.status}`;
-    const detail = c.detail.replace(/\|/g, "\\|");
+    // Escape backslashes before pipes (so an input `\|` doesn't collapse), and
+    // fold newlines to spaces, so fork-derived detail can't break the table row.
+    const detail = c.detail
+      .replace(/\\/g, "\\\\")
+      .replace(/\|/g, "\\|")
+      .replace(/\r?\n/g, " ");
     lines.push(`| ${c.item} | ${status} | ${detail} |`);
   }
   lines.push("");

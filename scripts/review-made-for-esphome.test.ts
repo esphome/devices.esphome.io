@@ -239,6 +239,7 @@ test("runChecklist passes a compliant config", () => {
     fenceMissing: false,
     fatalError: null,
     configOk: true,
+    configInconclusive: false,
     configError: null,
     compile: "PASS",
     compileLog: null,
@@ -285,6 +286,7 @@ test("pageBlocks: fence/fatal/config/compile gate correctly", () => {
     fenceMissing: false,
     fatalError: null,
     configOk: true,
+    configInconclusive: false,
     configError: null,
     compile: "PASS",
     compileLog: null,
@@ -296,6 +298,11 @@ test("pageBlocks: fence/fatal/config/compile gate correctly", () => {
   assert.equal(pageBlocks({ ...base, compile: "FAIL" }), true);
   // INCONCLUSIVE compile and NEEDS-HUMAN-CHECK alone do not block.
   assert.equal(pageBlocks({ ...base, compile: "INCONCLUSIVE" }), false);
+  // A network/toolchain-inconclusive config (configOk still null) does not block.
+  assert.equal(
+    pageBlocks({ ...base, configOk: null, configInconclusive: true }),
+    false
+  );
   assert.equal(
     pageBlocks({
       ...base,
@@ -320,6 +327,7 @@ test("buildReport renders a fence-missing page", () => {
       fenceMissing: true,
       fatalError: null,
       configOk: null,
+      configInconclusive: false,
       configError: null,
       compile: "SKIPPED",
       compileLog: null,
@@ -487,6 +495,7 @@ test("buildReport neutralizes @mentions from fork-controlled text", () => {
       fenceMissing: false,
       fatalError: "nope",
       configOk: null,
+      configInconclusive: false,
       configError: null,
       compile: "SKIPPED",
       compileLog: null,
@@ -494,4 +503,31 @@ test("buildReport neutralizes @mentions from fork-controlled text", () => {
     },
   ]);
   assert.ok(!/@evil/.test(report), "raw @mention must be neutralized");
+});
+
+test("buildReport escapes pipes/backslashes/newlines in checklist detail", () => {
+  const report = buildReport([
+    {
+      page: "src/docs/devices/Foo/index.md",
+      url: "https://github.com/o/r/blob/main/x.yaml",
+      fenceMissing: false,
+      fatalError: null,
+      configOk: true,
+      configInconclusive: false,
+      configError: null,
+      compile: "PASS",
+      compileLog: null,
+      checks: [
+        { item: "Some check", status: "FAIL", detail: "a | b \\ c\nsecond line" },
+      ],
+    },
+  ]);
+  const row = report.split("\n").find((l) => l.startsWith("| Some check"))!;
+  assert.ok(row.includes("\\|"), "pipe must be escaped");
+  assert.ok(row.includes("\\\\"), "backslash must be escaped");
+  assert.ok(!/\n/.test(row) && row.includes("second line"), "newline folded into the row");
+  // The row must still be a single well-formed table row (3 unescaped pipes:
+  // leading, the two separators, trailing => 4 total delimiters).
+  const unescaped = (row.match(/(?<!\\)\|/g) || []).length;
+  assert.equal(unescaped, 4);
 });

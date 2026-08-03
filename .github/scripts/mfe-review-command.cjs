@@ -35,9 +35,14 @@ module.exports = async ({ github, context, core }) => {
         ...common,
         username: login,
       });
-      // Legacy `permission` collapses roles: admin/write cover admin, maintain
-      // and write; triage/read/none do not grant re-review.
-      authorized = data.permission === "admin" || data.permission === "write";
+      // The legacy `permission` field usually collapses maintain -> write, but
+      // some responses surface the granular role in `permission`/`role_name`,
+      // so accept admin/write/maintain from either. triage/read/none do not
+      // grant re-review.
+      const level = data.permission;
+      const role = data.role_name;
+      const allowed = new Set(["admin", "write", "maintain"]);
+      authorized = allowed.has(level) || allowed.has(role);
     } catch (e) {
       core.info(`Could not resolve repo permission for ${login}: ${e.message}`);
     }
