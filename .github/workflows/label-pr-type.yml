@@ -1,0 +1,95 @@
+name: Label PR by type
+
+# Reads the "Type of changes" section of the pull request description and
+# applies the matching type label (new-device / update-device / remove-device /
+# cleanup / other) based on which checkboxes are ticked. Runs again whenever the
+# description is edited, so ticking or unticking a box keeps the labels in sync.
+# The labels themselves already exist in the repo.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions: {}
+
+jobs:
+  label:
+    name: Sync type labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # add/remove labels on the PR
+    steps:
+      - name: Sync labels from checklist
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            // Maps a checkbox under "## Type of changes" to the label it drives.
+            // `match` is anchored at the start of the checkbox's label text so an
+            // unrelated box (e.g. "Another …") can't match by substring. Every
+            // entry is a "managed" label: unticking a box removes it again.
+            const LABELS = [
+              { name: 'new-device', match: /^new device\b/i },
+              { name: 'update-device', match: /^update existing device\b/i },
+              { name: 'remove-device', match: /^removing a device\b/i },
+              { name: 'cleanup', match: /^general cleanup\b/i },
+              { name: 'other', match: /^other\b/i },
+            ];
+
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            // Isolate the "Type of changes" section so checkboxes in other
+            // sections (e.g. the "Checklist:" block, which also mentions
+            // "new device") can never trigger a label.
+            // \r?\n throughout so CRLF bodies (common from the web editor) match.
+            const section = body.match(/##\s*Type of changes\s*\r?\n([\s\S]*?)(?:\r?\n##\s|$)/i);
+            const scoped = section ? section[1] : '';
+
+            // Collect the text of every ticked checkbox in that section.
+            const ticked = [];
+            const checkbox = /^\s*-\s*\[[xX]\]\s*(.+?)\s*$/gm;
+            let m;
+            while ((m = checkbox.exec(scoped)) !== null) {
+              ticked.push(m[1]);
+            }
+
+            const desired = new Set(
+              LABELS.filter((l) => ticked.some((t) => l.match.test(t))).map((l) => l.name)
+            );
+            core.info(`Desired type labels: ${[...desired].join(', ') || '(none)'}`);
+
+            const managed = new Set(LABELS.map((l) => l.name));
+            const current = new Set(pr.labels.map((l) => l.name));
+
+            const toAdd = [...desired].filter((name) => !current.has(name));
+            const toRemove = [...managed].filter(
+              (name) => current.has(name) && !desired.has(name)
+            );
+
+            if (toAdd.length) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: toAdd,
+              });
+              core.info(`Added: ${toAdd.join(', ')}`);
+            }
+
+            for (const name of toRemove) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                name,
+              });
+              core.info(`Removed: ${name}`);
+            }
+
+            if (!toAdd.length && !toRemove.length) {
+              core.info('Labels already in sync.');
+            }

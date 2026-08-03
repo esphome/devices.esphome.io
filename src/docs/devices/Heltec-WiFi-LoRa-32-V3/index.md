@@ -190,13 +190,13 @@ display:
     reset_pin: GPIO21
     address: 0x3C
     lambda: |-
-      it.printf(0, 0, id(font), "Heltec V3");
-      it.printf(0, 16, id(font), "WiFi LoRa 32");
-      it.printf(0, 32, id(font), "%.1f dBm", id(wifi_signal_db).state);
+      it.printf(0, 0, id(font1), "Heltec V3");
+      it.printf(0, 16, id(font1), "WiFi LoRa 32");
+      it.printf(0, 32, id(font1), "%.1f dBm", id(wifi_signal_db).state);
 
 font:
   - file: "gfonts://Roboto"
-    id: font
+    id: font1
     size: 14
 
 sensor:
