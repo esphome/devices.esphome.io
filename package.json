@@ -16,6 +16,9 @@
     "preview": "astro preview",
     "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
+    "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
+    "check-workflow-scripts": "node --check .github/scripts/mfe-review-feedback.cjs && node --check .github/scripts/mfe-review-command.cjs",
+    "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",
     "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
     "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",
     "check-links": "tsx scripts/check-links.ts",
@@ -23,15 +26,15 @@
     "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "^7.2.1",
+    "@astrojs/markdown-remark": "^7.2.2",
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/starlight": "^0.41.3",
-    "astro": "^7.0.7",
+    "@astrojs/starlight": "^0.41.6",
+    "astro": "^7.1.6",
     "gray-matter": "^4.0.3",
     "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "tsx": "^4.23.1"
   }
 }
