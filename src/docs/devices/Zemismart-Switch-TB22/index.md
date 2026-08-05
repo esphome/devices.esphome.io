@@ -12,7 +12,7 @@ This switch comes in three variants with 1 to 3 gangs (TB21, TB22, TB23).
 They all use the same config, you just drop the extra relays/inputs
 
 Manufacturer:
-[Zemismart](https://www.zemismart.com/products/zemismart-tb21-smart-wifi-luxury-wall-light-switch-1-2-3-gangs-compatible-with-smart-life-app-alexa-google-home-voice-control)
+[Zemismart](https://www.zemismart.com/products/tb21)
 
 ## How to flash
 
