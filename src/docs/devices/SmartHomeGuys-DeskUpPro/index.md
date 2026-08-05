@@ -17,7 +17,7 @@ Full Integration with Home Assistant or use it's API from any smart home automat
 
 All the existing functionality of the desk's controller is retained.
 
-![DeskUp Pro](DeskUpPro-MarketingImage.jpeg "DeskUp Pro")
+![DeskUp Pro](DeskUpProv2_ontable.png "DeskUp Pro")
 ![DeskUp Pro Controls](DeskUpPro-C6-Controls-HomeAssistant.png "DeskUp Pro Controls")
 ![DeskUp Pro Sensors](DeskUpPro-Sensors-black.jpg "DeskUp Pro Sensors")
 
