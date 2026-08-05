@@ -1,0 +1,16 @@
+esphome:
+  name: "esp32-p4-m3-dev"
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+
+ota:
+  platform: esphome

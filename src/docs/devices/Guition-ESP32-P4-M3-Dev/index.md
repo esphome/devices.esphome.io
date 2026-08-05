@@ -69,82 +69,35 @@ The board uses the ESP32-C6-MINI module as a coprocessor for Wi-Fi and Bluetooth
 
 Minimum configuration required for the Guition JC-ESP32-P4-M3-Dev:
 
-```yaml
-esphome:
-  name: "esp32-p4-m3-dev"
-
-esp32:
-  variant: esp32p4
-  flash_size: 16MB
-  framework:
-    type: esp-idf
-
-logger:
-  hardware_uart: USB_SERIAL_JTAG
-
-api:
-
-ota:
-  platform: esphome
+```yaml file=config.yaml
 ```
 
 ## ESP32 Hosted Configuration
 
 ESP32 Hosted ESP32-C6 coprocessor configuration:
 
-```yaml
-esp32_hosted:
-  active_high: true
-  variant: ESP32C6
-  reset_pin: GPIO54
-  cmd_pin: GPIO19
-  clk_pin: GPIO18
-  d0_pin: GPIO14
-  d1_pin: GPIO15
-  d2_pin: GPIO16
-  d3_pin: GPIO17
+```yaml file=esp32-hosted.yaml
 ```
 
 ## Wi-Fi Configuration
 
 The ESP32-C6 coprocessor enables Wi-Fi functionality:
 
-```yaml
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+```yaml file=wifi.yaml
 ```
 
 ## Bluetooth Proxy Configuration
 
 The ESP32-C6 coprocessor enables Bluetooth proxy functionality - could require a C6 firmware update to work:
 
-```yaml
-esp32_ble_tracker:
-  scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
-
-bluetooth_proxy:
-  active: true
-  connection_slots: 3
+```yaml file=bluetooth-proxy.yaml
 ```
 
 ## Ethernet Configuration
 
 Configuration to use the onboard 100M Ethernet with IP101 PHY:
 
-```yaml
-ethernet:
-  type: IP101
-  mdc_pin: GPIO31
-  mdio_pin: GPIO52
-  power_pin: GPIO51
-  clk:
-    mode: CLK_EXT_IN
-    pin: GPIO50
-  phy_addr: 1
+```yaml file=ethernet.yaml
 ```
 
 ## Coprocessor Firmware Update
@@ -152,12 +105,7 @@ ethernet:
 The ESP32-C6 coprocessor firmware can be updated over-the-air using the esp32_hosted update platform:  
 (see [esp32_hosted component](https://esphome.io/components/esp32_hosted/))
 
-```yaml
-update:
-  - platform: esp32_hosted
-    name: "C6 Coprocessor Update"
-    path: /path/to/network_adapter.bin
-    sha256: your_sha256_hash_here
+```yaml file=c6-firmware-update.yaml
 ```
 
 The firmware binary is embedded into the ESP32-P4's flash at compile time and can be deployed to the

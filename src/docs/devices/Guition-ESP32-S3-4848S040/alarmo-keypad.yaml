@@ -109,9 +109,9 @@ display:
       - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x10]
       - [0xCD, 0x00]
     data_pins:
-      red:   [11, 12, 13, 14, 0]
+      red: [11, 12, 13, 14, 0]
       green: [8, 20, 3, 46, 9, 10]
-      blue:  [4, 5, 6, 7, 15]
+      blue: [4, 5, 6, 7, 15]
 
 # =========================
 # Touch (GT911)
@@ -310,7 +310,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "1" }
+              - script.execute: {id: pin_add_digit, d: "1"}
             widgets:
               - label:
                   text: "1"
@@ -325,7 +325,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "2" }
+              - script.execute: {id: pin_add_digit, d: "2"}
             widgets:
               - label:
                   text: "2"
@@ -340,7 +340,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "3" }
+              - script.execute: {id: pin_add_digit, d: "3"}
             widgets:
               - label:
                   text: "3"
@@ -356,7 +356,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "4" }
+              - script.execute: {id: pin_add_digit, d: "4"}
             widgets:
               - label:
                   text: "4"
@@ -371,7 +371,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "5" }
+              - script.execute: {id: pin_add_digit, d: "5"}
             widgets:
               - label:
                   text: "5"
@@ -386,7 +386,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "6" }
+              - script.execute: {id: pin_add_digit, d: "6"}
             widgets:
               - label:
                   text: "6"
@@ -402,7 +402,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "7" }
+              - script.execute: {id: pin_add_digit, d: "7"}
             widgets:
               - label:
                   text: "7"
@@ -417,7 +417,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "8" }
+              - script.execute: {id: pin_add_digit, d: "8"}
             widgets:
               - label:
                   text: "8"
@@ -432,7 +432,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "9" }
+              - script.execute: {id: pin_add_digit, d: "9"}
             widgets:
               - label:
                   text: "9"
@@ -463,7 +463,7 @@ lvgl:
             height: 62
             bg_color: 0x1D2630
             on_press:
-              - script.execute: { id: pin_add_digit, d: "0" }
+              - script.execute: {id: pin_add_digit, d: "0"}
             widgets:
               - label:
                   text: "0"
