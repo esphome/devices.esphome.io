@@ -164,6 +164,52 @@ The firmware binary is embedded into the ESP32-P4's flash at compile time and ca
 coprocessor on demand. The component automatically detects the current firmware version and compares it to
 the embedded version. If they differ, an update becomes available in Home Assistant.
 
+## Example configuration: Home Assistant voice assistant
+
+A complete voice assistant satellite for this board: microWakeWord wake-word
+detection, the Assist pipeline, audio out through the onboard speaker header,
+and networking over the onboard 100M Ethernet. BLE and Wi-Fi are provided by the
+onboard ESP32-C6 through `esp32_hosted`.
+
+Add your own `api:`, `ota:` and network credentials after adopting. Set the
+`ha_media_player` substitution to the `media_player` entity Home Assistant
+creates for this device, or TTS replies will not play.
+
+```yaml file=voice-assistant.yaml
+
+```
+
+### Build notes from running this board
+
+Audio pins in use on this board (ES8311 codec on the I2C bus):
+
+| Signal            | GPIO   |
+| ----------------- | ------ |
+| I2S LRCLK (WS)    | GPIO10 |
+| I2S BCLK          | GPIO12 |
+| I2S MCLK          | GPIO13 |
+| I2S DIN (mic)     | GPIO11 |
+| I2S DOUT (speaker)| GPIO9  |
+| Amplifier PA-CTRL | GPIO53 |
+
+Speaker output through the onboard header works reliably. Microphone capture did
+not: on the CoreBoard variant tested, the actual mic ADC is an ES7210 that never
+answered on I2C, so only the ES8311 playback path could be brought up. If you
+need wake-word capture, verify your board revision before relying on the onboard
+mic. The config above is therefore an output-and-pipeline satellite - it hears
+via a separate device and speaks through this one.
+
+If the board bricks after a bad flash and drops off the network, OTA is no longer
+an option. Recover over USB through the CH340 UART port:
+
+```bash
+esptool --chip esp32p4 write_flash 0x0 firmware.factory.bin
+```
+
+A cold-boot bricking issue was traced to the default 400MHz CPU frequency on this
+board; running at 360MHz was stable. If you see boot failures only after a full
+power cycle, that is worth trying first.
+
 ## Links
 
 - [Product Page](https://www.aliexpress.com/item/1005009511796128.html)
