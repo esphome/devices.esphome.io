@@ -1,8 +1,13 @@
-# Guition ESP32-P4-M3-Dev - Home Assistant voice assistant satellite
+# Guition ESP32-P4-M3-Dev - Home Assistant playback + Alarmo announcement satellite
 #
-# Wake word (microWakeWord) + Assist pipeline, audio out via the onboard
-# speaker header, networking over the onboard 100M Ethernet (IP101 PHY).
-# BLE/Wi-Fi come from the onboard ESP32-C6 via esp32_hosted.
+# Audio out via the onboard speaker header, networking over the onboard 100M
+# Ethernet (IP101 PHY). BLE comes from the onboard ESP32-C6 via esp32_hosted.
+#
+# This board's mic input (ES7210) does not respond on the tested revision - see
+# Build notes below - so no local wake-word/Assist capture is included here.
+# This is a playback-only satellite: it announces Alarmo state changes and
+# plays Home Assistant media through the onboard speaker. Trigger Assist/TTS
+# from another satellite or automation targeting this device's media_player.
 #
 # Add your own api:, ota: and wifi:/ethernet: credentials after adopting.
 # Set ha_media_player below to the media_player entity Home Assistant
@@ -23,19 +28,20 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  comment: "JC-ESP32P4-M3-DEV: Alarmo VA + Ethernet"
+  comment: "JC-ESP32P4-M3-DEV: Alarmo announcements + Ethernet"
   on_boot:
     priority: 600
     then:
       - media_player.volume_set:
           id: board_player
           volume: ${default_volume}
-      - delay: 1s
-      - micro_wake_word.start
 
 esp32:
   variant: esp32p4
   flash_size: 16MB
+  # Default 400MHz caused cold-boot bricking after a full power cycle on the
+  # tested board - see Build notes below. 360MHz was stable.
+  cpu_frequency: 360MHz
   framework:
     type: esp-idf
 
@@ -109,8 +115,8 @@ i2s_audio:
     i2s_bclk_pin: GPIO12
     i2s_mclk_pin: GPIO13
 
-# Mic goes THROUGH the ES8311 (analog) - this board has NO ES7210.
-# Ref: p1ngb4ck/unofficial_guition_esp32p4_repo JC-ESP32P4-M3-Dev example.
+# ES8311 playback only - the ES7210 mic ADC never answered on I2C on the
+# tested board, so the microphone input is not wired up here.
 audio_dac:
   - platform: es8311
     id: codec
@@ -118,18 +124,7 @@ audio_dac:
     bits_per_sample: 16bit
     sample_rate: 48000
     use_mclk: true
-    use_microphone: true
-
-microphone:
-  - platform: i2s_audio
-    id: board_mic
-    i2s_audio_id: i2s_bus
-    i2s_din_pin: GPIO11
-    adc_type: external
-    pdm: false
-    sample_rate: 16000
-    bits_per_sample: 16bit
-    channel: left
+    use_microphone: false
 
 # --- Speakers (mixer so HA media + announcements both work) ---
 speaker:
@@ -186,86 +181,6 @@ number:
             id: board_player
             volume: !lambda "return x / 100.0f;"
 
-micro_wake_word:
-  microphone: board_mic
-  stop_after_detection: true
-  models:
-    - model: github://esphome/micro-wake-word-models/models/v2/hey_jarvis.json
-      internal: true
-      probability_cutoff: 0.85
-      sliding_window_size: 4
-  on_wake_word_detected:
-    - logger.log:
-        format: "Wake word detected: %s"
-        args: ["wake_word.c_str()"]
-    - if:
-        condition:
-          not:
-            voice_assistant.is_running: {}
-        then:
-          - voice_assistant.start:
-              wake_word: !lambda return wake_word;
-
-voice_assistant:
-  microphone: board_mic
-  media_player: board_player
-  use_wake_word: false
-  noise_suppression_level: 2
-  auto_gain: 31dBFS
-  volume_multiplier: 2.0
-  on_start:
-    - logger.log: "VA: start"
-    - script.stop: say_tts
-  on_listening:
-    - logger.log: "VA: listening"
-    - micro_wake_word.stop
-    - script.stop: say_tts
-  on_stt_end:
-    # Release I2S bus as soon as STT finishes — mic no longer needed.
-    - logger.log:
-        format: "VA: STT end: %s"
-        args: ["x.c_str()"]
-    - micro_wake_word.stop
-    - microphone.stop_capture:
-        id: board_mic
-    - delay: 300ms
-  on_intent_end:
-    - logger.log: "VA: intent end"
-  on_tts_start:
-    - logger.log:
-        format: "VA: TTS start: %s"
-        args: ["x.c_str()"]
-    - lambda: |-
-        id(va_playback_pending) = true;
-    - micro_wake_word.stop
-    - microphone.stop_capture:
-        id: board_mic
-  on_tts_end:
-    - logger.log: "VA: TTS end"
-  on_end:
-    - logger.log: "VA: end"
-    - if:
-        condition:
-          lambda: return id(va_playback_pending);
-        then:
-          # TTS was generated — media_player is playing the response.
-          # DON'T restart wake word now (it would grab the I2S bus
-          # and block the speaker). Let resume_wake_after_playback
-          # wait for the announcement to finish, then restart.
-          - script.execute: resume_wake_after_playback
-        else:
-          # No TTS response — safe to restart wake word immediately.
-          - delay: 300ms
-          - micro_wake_word.start
-  on_error:
-    - logger.log:
-        level: WARN
-        format: "VA error: %s - %s"
-        args: ["code.c_str()", "message.c_str()"]
-    - lambda: |-
-        id(va_playback_pending) = false;
-    - micro_wake_word.start
-
 sensor:
   - platform: uptime
     name: "Uptime"
@@ -313,65 +228,57 @@ text_sensor:
             then:
               - if:
                   condition:
-                    or:
-                      - voice_assistant.is_running: {}
-                      - lambda: return id(va_playback_pending);
+                    lambda: return x != "triggered";
                   then:
-                    - logger.log: "Alarmo announcement suppressed (voice assistant active)"
-                  else:
-                    - if:
-                        condition:
-                          lambda: return x != "triggered";
-                        then:
-                          - script.stop: triggered_repeat
-                    - if:
-                        condition:
-                          lambda: return x == "disarmed";
-                        then:
-                          - script.stop: exit_countdown
-                          - script.stop: entry_countdown
-                          - script.execute:
-                              id: say_tts
-                              msg: "Alarm disarmed."
-                    - if:
-                        condition:
-                          lambda: return x == "arming";
-                        then:
-                          - script.stop: entry_countdown
-                          - script.execute:
-                              id: say_tts
-                              msg: "Arming. Exit delay started."
-                          - script.execute: exit_countdown
-                    - if:
-                        condition:
-                          lambda: return x.rfind("armed_", 0) == 0;
-                        then:
-                          - script.stop: exit_countdown
-                          - script.execute:
-                              id: say_tts
-                              msg: !lambda |-
-                                std::string pretty = x;
-                                for (auto &c : pretty) if (c == '_') c = ' ';
-                                return std::string("Alarm ") + pretty + ".";
-                    - if:
-                        condition:
-                          lambda: return x == "pending";
-                        then:
-                          - script.stop: exit_countdown
-                          - script.execute:
-                              id: say_tts
-                              msg: "Entry delay. Disarm now."
-                          - script.execute: entry_countdown
-                    - if:
-                        condition:
-                          lambda: return x == "triggered";
-                        then:
-                          - script.stop: exit_countdown
-                          - script.stop: entry_countdown
-                          - script.execute:
-                              id: say_tts
-                              msg: "Alarm activated."
-                          - script.execute: triggered_repeat
+                    - script.stop: triggered_repeat
+              - if:
+                  condition:
+                    lambda: return x == "disarmed";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Alarm disarmed."
+              - if:
+                  condition:
+                    lambda: return x == "arming";
+                  then:
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Arming. Exit delay started."
+                    - script.execute: exit_countdown
+              - if:
+                  condition:
+                    lambda: return x.rfind("armed_", 0) == 0;
+                  then:
+                    - script.stop: exit_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: !lambda |-
+                          std::string pretty = x;
+                          for (auto &c : pretty) if (c == '_') c = ' ';
+                          return std::string("Alarm ") + pretty + ".";
+              - if:
+                  condition:
+                    lambda: return x == "pending";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Entry delay. Disarm now."
+                    - script.execute: entry_countdown
+              - if:
+                  condition:
+                    lambda: return x == "triggered";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Alarm activated."
+                    - script.execute: triggered_repeat
 
 button:
   - platform: template
@@ -382,12 +289,6 @@ button:
             id: say_tts
             msg: !lambda |-
               return std::string("Alarm state is ") + id(alarmo_state).state + ".";
-  - platform: template
-    name: "VA Test: Start Listening"
-    on_press:
-      then:
-        - logger.log: "Manual VA start"
-        - voice_assistant.start
   - platform: restart
     name: "Restart"
     entity_category: config
@@ -400,48 +301,11 @@ button:
     disabled_by_default: true
 
 script:
-  - id: resume_wake_after_playback
-    mode: restart
-    then:
-      - wait_until:
-          condition:
-            or:
-              - media_player.is_announcing:
-                  id: board_player
-              - media_player.is_playing:
-                  id: board_player
-          timeout: 8s
-      - wait_until:
-          condition:
-            media_player.is_idle:
-              id: board_player
-          timeout: 30s
-      - lambda: |-
-          id(va_playback_pending) = false;
-      - delay: 800ms
-      - micro_wake_word.start
-
-  - id: audio_handoff_to_speaker
-    mode: restart
-    then:
-      - micro_wake_word.stop
-      - voice_assistant.stop
-      - microphone.stop_capture:
-          id: board_mic
-      - wait_until:
-          condition:
-            not:
-              micro_wake_word.is_running: {}
-          timeout: 2s
-      - delay: 500ms
-
   - id: say_tts
     mode: restart
     parameters:
       msg: string
     then:
-      - script.execute: audio_handoff_to_speaker
-      - script.wait: audio_handoff_to_speaker
       - media_player.volume_set:
           id: board_player
           volume: !lambda "return id(hp_volume).state / 100.0f;"
@@ -459,7 +323,6 @@ script:
             media_player_entity_id: ${ha_media_player}
             message: !lambda "return msg;"
             cache: "true"
-      - script.execute: resume_wake_after_playback
 
   - id: exit_countdown
     mode: restart
@@ -541,7 +404,3 @@ globals:
     type: std::string
     restore_value: no
     initial_value: '"__unset__"'
-  - id: va_playback_pending
-    type: bool
-    restore_value: no
-    initial_value: "false"
