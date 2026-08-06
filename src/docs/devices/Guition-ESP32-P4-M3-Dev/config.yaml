@@ -9,8 +9,3 @@ esp32:
 
 logger:
   hardware_uart: USB_SERIAL_JTAG
-
-api:
-
-ota:
-  platform: esphome
