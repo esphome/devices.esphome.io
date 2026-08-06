@@ -112,12 +112,14 @@ The firmware binary is embedded into the ESP32-P4's flash at compile time and ca
 coprocessor on demand. The component automatically detects the current firmware version and compares it to
 the embedded version. If they differ, an update becomes available in Home Assistant.
 
-## Example configuration: Home Assistant voice assistant
+## Example configuration: Alarmo announcements + media playback
 
-A complete voice assistant satellite for this board: microWakeWord wake-word
-detection, the Assist pipeline, audio out through the onboard speaker header,
-and networking over the onboard 100M Ethernet. BLE and Wi-Fi are provided by the
-onboard ESP32-C6 through `esp32_hosted`.
+A playback satellite for this board: Home Assistant media playback and spoken
+Alarmo state announcements through the onboard speaker header, networking over
+the onboard 100M Ethernet. BLE is provided by the onboard ESP32-C6 through
+`esp32_hosted`. There is no local wake-word/Assist capture here - see the build
+note below on why - so trigger Assist from another satellite or automation
+targeting this device's `media_player` entity.
 
 Add your own `api:`, `ota:` and network credentials after adopting. Set the
 `ha_media_player` substitution to the `media_player` entity Home Assistant
