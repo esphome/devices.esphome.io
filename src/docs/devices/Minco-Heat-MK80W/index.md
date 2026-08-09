@@ -3,7 +3,7 @@ title: Minco Heat MK80W
 date-published: 2026-08-09
 type: relay
 standard: global
-board: esp32-s3
+board: esp32
 difficulty: 3
 ---
 
