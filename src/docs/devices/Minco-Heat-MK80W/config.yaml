@@ -1,4 +1,3 @@
-# Hardware configuration for Minco Heat MK80W
 packages:
   base: !include base.yaml
 
