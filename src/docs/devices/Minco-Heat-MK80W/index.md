@@ -37,7 +37,7 @@ One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol)
 | **106** | Integer | Temperature Hysteresis deadband (e.g., `5` = 0.5°C) |
 | **108** | Raw Bytes | Weekly programmable schedule matrix |
 
-## Configuration
+## Configuration 
 
 Below is the verified standalone configuration split into hardware components and helper entities.
 
