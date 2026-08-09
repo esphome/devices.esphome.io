@@ -1,5 +1,5 @@
 ---
-title: "Beok TGP508-WIFI-EP"
+title: "Beok TGP508-WIFI-EP electric underfloor heating thermostat"
 date-published: 2026-08-09
 type: misc
 standard: eu
