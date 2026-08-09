@@ -39,10 +39,10 @@ One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol)
 
 ## Configuration
 
-Below is the verified standalone configuration split into hardware components and helper entities.
+Below is the verified standalone configuration split into hardware components and advanced helper entities.
 
 ```yaml file=config.yaml
 ```
 
-```yaml file=config_text.yaml
+```yaml file=base.yaml
 ```
