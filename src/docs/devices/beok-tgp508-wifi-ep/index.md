@@ -48,7 +48,7 @@ The thermostat contains a Tuya WBR3 Wi-Fi module based on the Realtek RTL8720CF.
 
 The WBR3 has 2 MiB of flash memory and is supported by LibreTiny using the `wbr3` board definition.
 
-See the [LibreTiny WBR3 documentation](https://docs.libretiny.eu/boards/wbr3/) for the module pinout, flashing information, and flash layout.
+See the [LibreTiny WBR3 documentation](https://docs.libretiny.eu/boards/wbr3/) for flash info.
 
 ### Flashing hardware
 
