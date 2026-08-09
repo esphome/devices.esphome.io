@@ -13,17 +13,17 @@ rtl87xx:
 preferences:
   flash_write_interval: never
 
-#logger:
+# logger:
 
-#debug:
+# debug:
 #  update_interval: 30s
 
 mdns:
 
-#time:
+# time:
 #  - platform: homeassistant
 #    id: homeassistant_time
-    
+
 button:
   - platform: restart
     name: "Reboot"
@@ -61,7 +61,7 @@ sensor:
     device_class: temperature
     state_class: measurement
     accuracy_decimals: 1
-    filters: 
+    filters:
       multiply: 0.1
 
 uart:
@@ -70,10 +70,10 @@ uart:
   tx_pin: GPIO14
   baud_rate: 9600
 #  debug:
-    #direction: BOTH
-  #  dummy_receiver: true
-   # after:
-   #   timeout: 50ms
+#    direction: BOTH
+#    dummy_receiver: true
+#    after:
+#      timeout: 50ms
 
 tuya:
   id: "tuya_device"
@@ -140,7 +140,7 @@ number:
     step: 1
     unit_of_measurement: "°C"
     icon: "mdi:thermometer-chevron-up"
-  
+
   - platform: tuya
     name: "Temperature control switch difference"
     number_datapoint: 101
