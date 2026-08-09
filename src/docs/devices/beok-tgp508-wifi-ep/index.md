@@ -8,8 +8,6 @@ made-for-esphome: false
 difficulty: 4
 ---
 
-# Beok TGP508-WIFI-EP
-
 Device Type: **Thermostat**
 
 Electrical Standard: **EU**
