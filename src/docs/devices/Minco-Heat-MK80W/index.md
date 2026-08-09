@@ -61,7 +61,7 @@ uart:
 time:
   - platform: sntp
     id: ntp_time
-    timezone: "Europe/Minsk"
+    timezone: "Europe/Moscow"
     
 tuya:
   id: tuya_bus
