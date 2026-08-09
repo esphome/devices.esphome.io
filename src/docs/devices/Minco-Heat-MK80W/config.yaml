@@ -1,3 +1,4 @@
+# Hardware configuration for Minco Heat MK80W
 packages:
   base: !include base.yaml
 
@@ -31,6 +32,35 @@ switch:
   - platform: tuya
     name: "Thermostat Anti-Frost Mode"
     switch_datapoint: 103
+
+interval:
+  - interval: 250ms
+    then:
+      - lambda: |-
+          if (!id(ntp_time).now().is_valid()) {
+            if (id(thermo_status_pin).state) {
+              id(thermo_status_pin).turn_off();
+            } else {
+              id(thermo_status_pin).turn_on();
+            }
+          }
+
+  - interval: 5s
+    then:
+      - lambda: |-
+          auto *uart_bus = id(tuya_uart);
+          uint8_t query_packet[] = {
+            0x55, 0xAA, 0x00, 0x08, 0x00, 0x00, 0x07
+          };
+          uart_bus->write_array(query_packet, sizeof(query_packet));
+
+          if (id(ntp_time).now().is_valid()) {
+            id(thermo_status_pin).turn_off();
+            uint8_t wifi_packet[] = {
+              0x55, 0xAA, 0x00, 0x03, 0x00, 0x01, 0x04, 0x08
+            };
+            uart_bus->write_array(wifi_packet, sizeof(wifi_packet));
+          }
 
 climate:
   - platform: tuya
