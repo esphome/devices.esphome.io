@@ -1,4 +1,4 @@
-# User-derived entities and templates for Home Assistant UI
+# Advanced templates, calibration logic and HA UI entities
 captive_portal:
 
 text:
@@ -15,6 +15,33 @@ text:
               ESP_LOGW("ntp_config", "New NTP address saved in memory: %s", x.c_str());
 
 interval:
+  # Loop 1 (250ms): Fast blinking animation while searching for network/time sync
+  - interval: 250ms
+    then:
+      - lambda: |-
+          if (!id(ntp_time).now().is_valid()) {
+            if (id(thermo_status_pin).state) {
+              id(thermo_status_pin).turn_off();
+            } else {
+              id(thermo_status_pin).turn_on();
+            }
+          }
+
+  # Loop 2 (5s): Standard button poll + Lock network icon solid (LOW) upon successful sync
+  - interval: 5s
+    then:
+      - lambda: |-
+          auto* uart_bus = id(tuya_uart);
+          uint8_t query_packet[] = {0x55, 0xAA, 0x00, 0x08, 0x00, 0x00, 0x07};
+          uart_bus->write_array(query_packet, sizeof(query_packet));
+
+          if (id(ntp_time).now().is_valid()) {
+            id(thermo_status_pin).turn_off(); 
+            uint8_t wifi_status_packet[] = {0x55, 0xAA, 0x00, 0x03, 0x00, 0x01, 0x04, 0x08};
+            uart_bus->write_array(wifi_status_packet, sizeof(wifi_status_packet));
+          }
+
+  # Loop 3 (30min): Scheduled maintenance log
   - interval: 30min
     then:
       - if:
@@ -28,6 +55,7 @@ interval:
                 ESP_LOGI("custom_net", "Scheduled time validation routine. Active NTP server: %s", current_ntp.c_str());
 
 select:
+  # Mode Selection (Bypasses limitations for ECO mode)
   - platform: template
     name: "Thermostat Mode"
     id: custom_thermo_mode
@@ -81,6 +109,7 @@ number:
           packet[sizeof(packet)-1] = cs;
           id(tuya_uart).write_array(packet, sizeof(packet));
 
+  # Corrected 4-byte signed integer calibration
   - platform: template
     name: "Thermostat Calibration"
     id: text_calibration
