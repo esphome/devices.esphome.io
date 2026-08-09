@@ -18,46 +18,27 @@ preferences:
 #debug:
 #  update_interval: 30s
 
-web_server:
-
 captive_portal:
 
 mdns:
 
-api:
-  encryption:
-    key: !secret home_assistant_api_enc_key
-
-ota:
-  platform: esphome
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_name
-  password: !secret wifi_password
-  fast_connect: true
-  post_connect_roaming: false
-  power_save_mode: light
-  ap:
-    password: !secret wifi_password
-
-time:
-  - platform: homeassistant
-    id: homeassistant_time
+#time:
+#  - platform: homeassistant
+#    id: homeassistant_time
     
 button:
   - platform: restart
     name: "Reboot"
     entity_category: "diagnostic"
 
-  - platform: template
-    name: "Factory reset"
-    entity_category: "diagnostic"
-    on_press:
-      - switch.turn_on: factory_reset
-      - delay: 1s
-      - switch.turn_off: factory_reset
-    icon: "mdi:cogs"
+#  - platform: template
+#    name: "Factory reset"
+#    entity_category: "diagnostic"
+#    on_press:
+#      - switch.turn_on: factory_reset
+#      - delay: 1s
+#      - switch.turn_off: factory_reset
+#    icon: "mdi:cogs"
 
 text_sensor:
   - platform: libretiny
