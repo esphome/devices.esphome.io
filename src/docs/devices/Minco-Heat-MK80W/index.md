@@ -75,7 +75,7 @@ text:
     name: "Thermostat NTP Server"
     mode: TEXT
     optimistic: true
-    initial_value: "192.168.1.200"
+    initial_value: "pool.ntp.org"
     restore_value: true
     on_value:
       - then:
