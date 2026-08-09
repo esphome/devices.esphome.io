@@ -177,7 +177,7 @@ uart:
 
 The ESPHome configuration also sets the RTL87xx serial pin definitions:
 
-```yaml
+```yaml inline
 platformio_options:
   build_flags:
     - "-DPIN_SERIAL0_RX=13u"
