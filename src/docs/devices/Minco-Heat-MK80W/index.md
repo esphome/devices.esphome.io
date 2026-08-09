@@ -1,11 +1,12 @@
 ---
 title: Minco Heat MK80W
 date-published: 2026-08-09
-type: climate
+type: relay
 standard: global
 board: esp32-s3
 difficulty: 3
 ---
+
 
 ## Minco Heat MK80W (Platform ME80)
 
