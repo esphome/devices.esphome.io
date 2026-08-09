@@ -112,7 +112,7 @@ correctly.
 For the **initial conversion from OpenBeken to ESPHome**, I used the following
 board definition:
 
-```yaml
+```yaml inline
 rtl87xx:
   board: "generic-rtl8720cf-2mb-896k"
 ```
@@ -135,7 +135,7 @@ provided by **NonPIayerCharacter** in
 Once ESPHome was running, the configuration was changed to use the proper WBR3
 board definition:
 
-```yaml
+```yaml inline
 rtl87xx:
   board: "wbr3"
 ```
@@ -169,7 +169,7 @@ The working configuration uses:
 | TX | GPIO14 |
 | Baud rate | 9600 |
 
-```yaml
+```yaml inline
 uart:
   id: uart_bus
   rx_pin: GPIO13
@@ -246,7 +246,7 @@ The thermostat reports temperatures using a value scaled by a factor of 10.
 The ESPHome configuration therefore uses a multiplier of `0.1` for both the
 current and target temperature:
 
-```yaml
+```yaml inline
 target_temperature_multiplier: 0.1
 current_temperature_multiplier: 0.1
 ```
@@ -323,7 +323,7 @@ The thermostat uses the Tuya protocol over a 9600 baud UART connection.
 
 The relevant ESPHome configuration is:
 
-```yaml
+```yaml inline
 tuya:
   id: "tuya_device"
   uart_id: uart_bus
@@ -334,7 +334,7 @@ time-dependent operation.
 
 The configuration intentionally uses:
 
-```yaml
+```yaml inline
 preferences:
   flash_write_interval: never
 ```
