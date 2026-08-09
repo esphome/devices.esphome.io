@@ -7,16 +7,21 @@ board: esp32-s3
 difficulty: 3
 ---
 
-# Minco Heat MK80W (Platform ME80)
+## Minco Heat MK80W (Platform ME80)
 
-The Minco Heat MK80W is a Tuya MCU-based touchscreen thermostat used for floor heating and boilers. It communicates with the Wi-Fi/ESP module via a hardware UART interface at 9600 baud.
+The Minco Heat MK80W is a Tuya MCU-based touchscreen thermostat used for floor heating and boilers.
+It communicates with the Wi-Fi/ESP module via a hardware UART interface at 9600 baud.
 
 ## Hardware Modifications (Hardware Modding)
 
-To flash this thermostat with ESPHome, the stock Tuya Wi-Fi module (such as the WBR3) must be desoldered and replaced with a custom ESP32-S3 board (or equivalent).
+To flash this thermostat with ESPHome, the stock Tuya Wi-Fi module (such as the WBR3) must be desoldered
+and replaced with a custom ESP32-S3 board (or equivalent).
 
 **Critical Wiring Note:**
-One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol) on the front LCD panel must be hardware-soldered directly to the pad that originally mapped to pin **`A_2`** on the stock Tuya WBR3 module. In this ESPHome configuration, this pin is mapped to **`GPIO7`**. The control logic is inverted: pulling the pin `LOW (0V)` keeps the icon solidly lit, while pulling it `HIGH` turns it off.
+One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol) on the front LCD panel
+must be hardware-soldered directly to the pad that originally mapped to pin **`A_2`** on the stock Tuya WBR3 module.
+In this ESPHome configuration, this pin is mapped to **`GPIO7`**.
+The control logic is inverted: pulling the pin `LOW (0V)` keeps the icon solidly lit, while pulling it `HIGH` turns it off.
 
 ### Data Points (DPID) Mapping
 
@@ -39,7 +44,7 @@ One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol)
 
 ## Configuration
 
-Below is the verified standalone configuration for this device. All advanced templates and calibration logic are automatically included via the base package.
+Below is the verified standalone configuration split into hardware components and advanced helper entities.
 
 ```yaml file=config.yaml
 ```
