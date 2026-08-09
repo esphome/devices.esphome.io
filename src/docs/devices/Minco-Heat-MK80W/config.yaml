@@ -13,12 +13,12 @@ time:
   - platform: sntp
     id: ntp_time
     timezone: "Europe/Minsk"
-    
+
 tuya:
   id: tuya_bus
   uart_id: tuya_uart
   time_id: ntp_time
-  
+
 switch:
   - platform: gpio
     pin: GPIO7
