@@ -18,8 +18,6 @@ preferences:
 #debug:
 #  update_interval: 30s
 
-captive_portal:
-
 mdns:
 
 #time:
