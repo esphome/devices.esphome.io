@@ -41,5 +41,5 @@ One of the signal traces controlling the network status icon (Wi-Fi leaf/symbol)
 
 Below is the verified standalone configuration for this device.
 
-```yaml file=minco_heat_mk80w.yaml
+```yaml file=config.yaml
 ```
