@@ -18,8 +18,8 @@ Hold down the button while powering on the device to put it into bootloader mode
 | Pin    | Function                           |
 | ------ | ---------------------------------- |
 | GPIO0  | Push Button (HIGH = off, LOW = on) |
-| GPIO12 | Relay and its status LED           |
-| GPIO13 | Green LED (HIGH = off, LOW = on)   |
+| GPIO12 | Red Relay State LED           |
+| GPIO13 | Blue Status LED (HIGH = off, LOW = on)   |
 | GPIO1  | RX pin (for external sensors)      |
 | GPIO3  | TX pin (for external sensors)      |
 
