@@ -12,6 +12,7 @@ project-url: https://github.com/cocodmdr/JSY-MK-339-ESPHome
 Configuration for the JSY-MK-339 three-phase DIN-rail Modbus energy meter.
 
 It supports:
+
 - Three-phase voltage and current
 - Active, reactive, and apparent power
 - Energy counters (total, forward, reverse)
