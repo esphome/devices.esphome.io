@@ -12,6 +12,8 @@ This setup was modeled after the [BTSMX Outdoor LED String Lights](https://www.a
 
 ![image](./btsmx.jpg)
 
+The control board was potted over with silicone, but only the back needs to be cleaned off for flashing with LibreTiny.
+
 ## Basic Configuration
 
 ```yaml file=config.yaml
