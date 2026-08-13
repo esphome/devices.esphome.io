@@ -13,8 +13,6 @@ logger:
 wifi:
   ap:
 
-captive_portal:
-
 mdns:
 
 power_supply:
