@@ -1,0 +1,39 @@
+substitutions:
+  name: jsy-mk-339-example
+  friendly_name: JSY-MK-339 Example
+  meter_name: JSY MK-339 Main
+  meter_id: jsy339_main
+  meter_address: "1"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp8266:
+  board: nodemcuv2
+
+logger:
+
+uart:
+  - id: mod_bus
+    tx_pin: GPIO14
+    rx_pin: GPIO12
+    baud_rate: 9600
+
+modbus:
+  - id: modbus1
+    uart_id: mod_bus
+
+packages:
+  meter_package:
+    url: https://github.com/cocodmdr/JSY-MK-339-ESPHome
+    ref: main
+    files:
+      - path: jsy-mk-339.yaml
+        vars:
+          meter_name: ${meter_name}
+          meter_id: ${meter_id}
+          meter_address: ${meter_address}
+
+wifi:
+  ap: {}
