@@ -18,7 +18,7 @@ mdns:
 power_supply:
   - id: led_power
     pin: P6
-  
+
 light:
   - platform: beken_spi_led_strip
     name: "LED Strip"
@@ -28,13 +28,13 @@ light:
     rgb_order: RBG
     power_supply: led_power
     effects:
-     - random:
-     - pulse:
-     - strobe:
-     - flicker:
-     - addressable_rainbow:
-     - addressable_color_wipe:
-     - addressable_scan:
-     - addressable_twinkle:
-     - addressable_random_twinkle:
-     - addressable_fireworks:
+      - random:
+      - pulse:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
