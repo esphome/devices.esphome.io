@@ -1,0 +1,132 @@
+esphome:
+  name: m5stack-atoms3r
+  friendly_name: M5Stack AtomS3R
+  platformio_options:
+    # Required for the BMI270's I2C reads
+    build_flags: -DI2C_BUFFER_LENGTH=8193
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+
+# TODO: drop this override once esphome/esphome#18436 (bmi270 BMM150 aux
+# support) and #18453 (lp5562) are merged into a release.
+external_components:
+  - source: github://pr#18436
+    components: [ bmi270 ]
+  - source: github://pr#18453
+    components: [ lp5562 ]
+
+wifi:
+  ap:
+
+# Programmable button
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: 41
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+
+# I2C bus shared by the BMI270 IMU (0x68) and LP5562 backlight driver (0x30)
+i2c:
+  sda: 45
+  scl: 0
+  scan: false
+  frequency: 400kHz
+
+# BMI270 6-axis IMU with a BMM150 magnetometer wired through its auxiliary
+# I2C interface
+motion:
+  - platform: bmi270
+    id: bmi270_motion
+    accelerometer_range: 8G
+    gyroscope_range: 2000DPS
+    aux_device: BMM150
+
+sensor:
+  - platform: motion
+    motion_id: bmi270_motion
+    type: acceleration_x
+    name: "IMU Accel X"
+  - platform: motion
+    motion_id: bmi270_motion
+    type: acceleration_y
+    name: "IMU Accel Y"
+  - platform: motion
+    motion_id: bmi270_motion
+    type: acceleration_z
+    name: "IMU Accel Z"
+  - platform: motion
+    motion_id: bmi270_motion
+    type: gyroscope_x
+    name: "IMU Gyro X"
+  - platform: motion
+    motion_id: bmi270_motion
+    type: gyroscope_y
+    name: "IMU Gyro Y"
+  - platform: motion
+    motion_id: bmi270_motion
+    type: gyroscope_z
+    name: "IMU Gyro Z"
+  - platform: bmi270
+    type: temperature
+    name: "IMU Temperature"
+  - platform: bmi270
+    type: magnetic_field_x
+    name: "IMU Mag X"
+  - platform: bmi270
+    type: magnetic_field_y
+    name: "IMU Mag Y"
+  - platform: bmi270
+    type: magnetic_field_z
+    name: "IMU Mag Z"
+
+# LP5562 LED driver powering the display backlight
+lp5562:
+  - id: lp5562_1
+    address: 0x30
+
+output:
+  - platform: lp5562
+    id: displaybacklightoutput
+    lp5562_id: lp5562_1
+    channel: white
+
+light:
+  - platform: monochromatic
+    output: displaybacklightoutput
+    name: "Display Backlight"
+    restore_mode: ALWAYS_ON
+
+# SPI bus for the display
+spi:
+  clk_pin: 15
+  mosi_pin: 21
+
+display:
+  - platform: ili9xxx
+    model: st7789v
+    dimensions:
+      height: 128
+      width: 128
+      offset_height: 1
+      offset_width: 2
+    cs_pin: 14
+    dc_pin: 42
+    reset_pin: 48
+    invert_colors: true
+    rotation: 0
+    lambda: |-
+      it.print(64, 64, id(font_default), TextAlign::CENTER, "Hello World!");
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_default
+    size: 20
