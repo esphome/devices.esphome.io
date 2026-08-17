@@ -49,6 +49,9 @@ appearing directly on the main bus.
 
 ## Basic Configuration
 
+<!-- TODO: esphome/esphome#18436 and #18453 are pending merge into a release. Once both land,
+     remove the external_components: override in config.yaml and delete this paragraph. -->
+
 The IMU (`bmi270`, with BMM150 auxiliary support) and the display backlight driver (`lp5562`) are
 both driven by upstream ESPHome platforms that are currently pending merge as
 [esphome/esphome#18436](https://github.com/esphome/esphome/pull/18436) and
@@ -60,6 +63,43 @@ BMI270 also requires a large I2C buffer, hence the `build_flags: -DI2C_BUFFER_LE
 `platformio_options`.
 
 ```yaml file=config.yaml
+```
+
+## Display All Sensor Values
+
+The basic configuration above only prints "Hello World!" on the display. To turn it into a small
+IMU dashboard, add a smaller font (the default 20pt font is too large to fit ten readings on a
+128x128 screen) and replace the `display:` lambda with one that prints the accelerometer,
+gyroscope, magnetometer, temperature, and current backlight brightness:
+
+```yaml inline
+font:
+  - file: "gfonts://Roboto"
+    id: font_mini
+    size: 10
+
+display:
+  - platform: ili9xxx
+    model: st7789v
+    dimensions:
+      height: 128
+      width: 128
+      offset_height: 1
+      offset_width: 2
+    cs_pin: 14
+    dc_pin: 42
+    reset_pin: 48
+    invert_colors: true
+    rotation: 0
+    lambda: |-
+      it.printf(0, 0, id(font_mini), "AX %.2f AY %.2f", id(imu_accel_x).state, id(imu_accel_y).state);
+      it.printf(0, 10, id(font_mini), "AZ %.2f", id(imu_accel_z).state);
+      it.printf(0, 20, id(font_mini), "GX %.1f GY %.1f", id(imu_gyro_x).state, id(imu_gyro_y).state);
+      it.printf(0, 30, id(font_mini), "GZ %.1f", id(imu_gyro_z).state);
+      it.printf(0, 40, id(font_mini), "MX %.1f MY %.1f", id(imu_mag_x).state, id(imu_mag_y).state);
+      it.printf(0, 50, id(font_mini), "MZ %.1f", id(imu_mag_z).state);
+      it.printf(0, 60, id(font_mini), "Temp %.1f C", id(imu_temperature).state);
+      it.printf(0, 70, id(font_mini), "Backlight %.0f%%", id(display_backlight).current_values.get_brightness() * 100.0f);
 ```
 
 ## Use Cases
