@@ -9,6 +9,11 @@ esp32:
   framework:
     type: arduino
 
+# AtomS3R has 8MB of Octal PSRAM
+psram:
+  mode: octal
+  speed: 80MHz
+
 # TODO: drop this override once esphome/esphome#18436 (bmi270 BMM150 aux
 # support) and #18453 (lp5562) are merged into a release.
 external_components:
@@ -121,18 +126,9 @@ spi:
   mosi_pin: 21
 
 display:
-  - platform: ili9xxx
-    model: st7789v
-    dimensions:
-      height: 128
-      width: 128
-      offset_height: 1
-      offset_width: 2
-    cs_pin: 14
-    dc_pin: 42
-    reset_pin: 48
-    invert_colors: true
-    rotation: 0
+  - platform: mipi_spi
+    model: M5STACK-ATOMS3R-GC9107
+    rotation: 0           # 180 = USB-C port is bottom, 90 = port is left, 270 = port is right
     lambda: |-
       it.print(64, 64, id(font_default), TextAlign::CENTER, "Hello World!");
 
