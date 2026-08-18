@@ -59,8 +59,7 @@ both driven by upstream ESPHome platforms that are currently pending merge as
 release, the config below pulls them in directly via `external_components:` — remove that block
 once both PRs are merged.
 
-BMI270 also requires a large I2C buffer, hence the `build_flags: -DI2C_BUFFER_LENGTH=8193` under
-`platformio_options`.
+BMI270 also requires a large I2C buffer, hence the `build_flags: -DI2C_BUFFER_LENGTH=8193`.
 
 ```yaml file=config.yaml
 ```

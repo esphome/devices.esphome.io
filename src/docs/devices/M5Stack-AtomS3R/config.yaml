@@ -1,9 +1,8 @@
 esphome:
   name: m5stack-atoms3r
   friendly_name: M5Stack AtomS3R
-  platformio_options:
-    # Required for the BMI270's I2C reads
-    build_flags: -DI2C_BUFFER_LENGTH=8193
+# Required for the BMI270's I2C reads
+build_flags: -DI2C_BUFFER_LENGTH=8193
 
 esp32:
   board: esp32-s3-devkitc-1
