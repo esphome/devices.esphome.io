@@ -14,9 +14,9 @@ esp32:
 # support) and #18453 (lp5562) are merged into a release.
 external_components:
   - source: github://pr#18436
-    components: [ bmi270 ]
+    components: [bmi270]
   - source: github://pr#18453
-    components: [ lp5562 ]
+    components: [lp5562]
 
 wifi:
   ap:
