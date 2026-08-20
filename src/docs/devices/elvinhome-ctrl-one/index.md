@@ -35,7 +35,7 @@ sliders.
 
 Key hardware:
 
-- Espressif ESP32-C6 (RISC-V) with 2.4 GHz WiFi 6; Zigbee and Thread are possible 
+- Espressif ESP32-C6 (RISC-V) with 2.4 GHz WiFi 6; Zigbee and Thread are possible
   through configuration changes.
 - 4.2-inch e-paper display (Goodisplay GDEY042T81, 300 x 400 portrait) with
   touchscreen (FT63x6) and auto-dimming front light, driven over SPI.
