@@ -29,8 +29,11 @@ touchscreen and a button in one wall-mountable unit.
 ## Setup
 
 1. Connect the board over USB-C. It enumerates as a USB serial device.
-2. Flash the configuration below.
-3. Adopt the device in Home Assistant.
+2. Create a device in ESPHome Device Builder and merge the hardware configuration
+   below into it. The configuration here is the hardware layer only &mdash; your own
+   `wifi:` credentials, `api:` and `ota:` come from the node configuration around it,
+   which the Device Builder generates for you.
+3. Flash over USB, then adopt the device in Home Assistant.
 
 ## Configuration
 
@@ -63,6 +66,9 @@ enter button — nothing redefines the encoder or button from the hardware confi
 
 ## Notes
 
+- **The dimmer example needs Home Assistant actions enabled.** In the ESPHome
+  integration, turn on *Allow the device to perform Home Assistant actions* for this
+  device. Without it the arc moves on screen and the light never changes.
 - **Rate-limit what you send while the knob is turning.** The example uses a `mode: restart` script with a
   short delay so a spin collapses into one call. Sending on every detent floods the API; sending only after
   the knob stops makes the dial feel dead in the hand.
