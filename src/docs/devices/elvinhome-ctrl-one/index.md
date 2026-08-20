@@ -85,7 +85,7 @@ This configuration contains the hardware components only. For the display and LV
 configuration, go to the
 [Codeberg repository](https://codeberg.org/elvinhome/ctrl-one).
 
-```yaml file=config.yaml
+```yaml url=https://github.com/elvinhome-io/esphome-configs/blob/main/ctrl-one-base.yaml
 ```
 
 ## Notes
