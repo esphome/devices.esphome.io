@@ -26,8 +26,11 @@ board, the panel connector and the battery circuit are already wired together.
 ## Setup
 
 1. Seat the XIAO ESP32-C3 in the socket and connect it over USB-C.
-2. Flash the configuration below.
-3. Adopt the device in Home Assistant.
+2. Create a device in ESPHome Device Builder and merge the hardware configuration
+   below into it. The configuration here is the hardware layer only &mdash; your own
+   `wifi:` credentials, `api:` and `ota:` come from the node configuration around it,
+   which the Device Builder generates for you.
+3. Flash over USB, then adopt the device in Home Assistant.
 
 ## Configuration
 
