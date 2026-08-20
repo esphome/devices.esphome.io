@@ -1,0 +1,168 @@
+substitutions:
+  name: matouch-rotary
+  friendly_name: MaTouch Rotary
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.arduino.memory_type: qio_opi
+    build_flags: "-DBOARD_HAS_PSRAM"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: INFO
+
+wifi:
+  # Fallback hotspot only - add your own ssid/password when you adopt this.
+  ap:
+
+# The CST826 touch controller is not in ESPHome mainline.
+external_components:
+  - source: github://sEbola76/Makerfabs
+    components: [cst826]
+
+output:
+  - platform: ledc
+    pin: GPIO38
+    id: backlight_output
+
+light:
+  - platform: monochromatic
+    name: Backlight
+    output: backlight_output
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+
+i2c:
+  - id: i2c_bus
+    sda: GPIO17
+    scl: GPIO18
+    scan: true
+    frequency: 400kHz
+
+touchscreen:
+  platform: cst826
+  id: touch
+  i2c_id: i2c_bus
+  # This controller does not answer a probe, but works once addressed.
+  skip_probe: true
+  update_interval: 25ms
+  on_touch:
+    - light.turn_on: display_backlight
+
+spi:
+  id: spi_bus
+  mosi_pin: GPIO0
+  clk_pin: GPIO46
+
+display:
+  - platform: st7701s
+    id: round_display
+    auto_clear_enabled: false
+    color_order: rgb
+    data_rate: 10MHz
+    spi_mode: MODE3
+    dimensions:
+      width: 480
+      height: 480
+    cs_pin: GPIO1
+    de_pin: GPIO2
+    hsync_pin: GPIO3
+    vsync_pin: GPIO42
+    pclk_pin: GPIO45
+    pclk_frequency: 12MHz
+    pclk_inverted: false
+    hsync_front_porch: 10
+    hsync_pulse_width: 8
+    hsync_back_porch: 50
+    vsync_front_porch: 10
+    vsync_pulse_width: 8
+    vsync_back_porch: 20
+    data_pins:
+      red:   [11, 15, 12, 16, 21]
+      green: [39, 7, 47, 8, 48, 9]
+      blue:  [4, 41, 5, 40, 6]
+
+    # Full init sequence (kept exactly to avoid breaking the panel)
+    init_sequence:
+      - [0x01]
+      - delay 120ms
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x10]
+      - [0xC0, 0x3B, 0x00]
+      - [0xC1, 0x0B, 0x02]
+      - [0xC2, 0x00, 0x02]
+      - [0xCC, 0x10]
+      - [0xCD, 0x08]
+      - [0xB0, 0x02, 0x13, 0x1B, 0x0D, 0x10, 0x05, 0x08, 0x07, 0x07, 0x24, 0x04, 0x11, 0x0E, 0x2C, 0x33, 0x1D]
+      - [0xB1, 0x05, 0x13, 0x1B, 0x0D, 0x11, 0x05, 0x08, 0x07, 0x07, 0x24, 0x04, 0x11, 0x0E, 0x2C, 0x33, 0x1D]
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x11]
+      - [0xB0, 0x5D]
+      - [0xB1, 0x43]
+      - [0xB2, 0x81]
+      - [0xB3, 0x80]
+      - [0xB5, 0x43]
+      - [0xB7, 0x85]
+      - [0xB8, 0x20]
+      - [0xC1, 0x78]
+      - [0xC2, 0x78]
+      - [0xD0, 0x88]
+      - [0xE0, 0x00, 0x00, 0x02]
+      - [0xE1, 0x03, 0xA0, 0x00, 0x00, 0x04, 0xA0, 0x00, 0x00, 0x00, 0x20, 0x20]
+      - [0xE2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      - [0xE3, 0x00, 0x00, 0x11, 0x00]
+      - [0xE4, 0x22, 0x00]
+      - [0xE5, 0x05, 0xEC, 0xA0, 0xA0, 0x07, 0xEE, 0xA0, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      - [0xE6, 0x00, 0x00, 0x11, 0x00]
+      - [0xE7, 0x22, 0x00]
+      - [0xE8, 0x06, 0xED, 0xA0, 0xA0, 0x08, 0xEF, 0xA0, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+      - [0xEB, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x00]
+      - [0xED, 0xFF, 0xFF, 0xFF, 0xBA, 0x0A, 0xBF, 0x45, 0xFF, 0xFF, 0x54, 0xFB, 0xA0, 0xAB, 0xFF, 0xFF, 0xFF]
+      - [0xEF, 0x10, 0x0D, 0x04, 0x08, 0x3F, 0x1F]
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x13]
+      - [0xEF, 0x08]
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x00]
+      - [0x36, 0x08]
+      - [0x3A, 0x60]
+      - [0x11]
+      - delay 100ms
+      - [0x29]
+      - delay 50ms
+
+sensor:
+  - platform: rotary_encoder
+    id: encoder
+    name: Encoder
+    pin_a: GPIO10
+    pin_b: GPIO13
+    resolution: 1
+    on_clockwise:
+      - light.turn_on: display_backlight
+    on_anticlockwise:
+      - light.turn_on: display_backlight
+
+binary_sensor:
+  - platform: gpio
+    name: Knob Button
+    id: knob_button
+    pin:
+      number: GPIO14
+      inverted: true
+    on_press:
+      - light.turn_on: display_backlight
