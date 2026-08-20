@@ -130,30 +130,32 @@ sensor:
     cs_pin: GPIO15    # Outlets 4+3
     irq_pin: GPIO6
     update_interval: 10s
-    current_pga_gain_a: 4x
-    current_pga_gain_b: 4x
     voltage:
       name: "Voltage"
     frequency:
       name: "AC Frequency"
     current_a:
       name: "Outlet 4 Current"
+      filters:
+        - multiply: 4.0
     current_b:
       name: "Outlet 3 Current"
+      filters:
+        - multiply: 4.0
     active_power_a:
       name: "Outlet 4 Power"
+      filters:
+        - multiply: 4.0
     active_power_b:
       name: "Outlet 3 Power"
       filters:
-        - multiply: -1.0
+        - multiply: -4.0
 
   - platform: ade7953_spi
     id: ade7953_1
     cs_pin: GPIO10    # Outlets 2+1
     irq_pin: GPIO7
     update_interval: 10s
-    current_pga_gain_a: 4x
-    current_pga_gain_b: 4x
     voltage:
       name: "Voltage 2"
       internal: true
@@ -162,14 +164,20 @@ sensor:
       internal: true
     current_a:
       name: "Outlet 2 Current"
+      filters:
+        - multiply: 4.0
     current_b:
       name: "Outlet 1 Current"
+      filters:
+        - multiply: 4.0
     active_power_a:
       name: "Outlet 2 Power"
+      filters:
+        - multiply: 4.0
     active_power_b:
       name: "Outlet 1 Power"
       filters:
-        - multiply: -1.0
+        - multiply: -4.0
 
 switch:
   - platform: gpio
