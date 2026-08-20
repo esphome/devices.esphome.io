@@ -81,11 +81,11 @@ or higher.
 
 ## Basic Configuration
 
-This configuration is taken from the elvinhome GitHub repository, which is not
-guaranteed to be up to date. For the latest configuration, go to the
+This configuration contains the hardware components only. For the display and LVGL
+configuration, go to the
 [Codeberg repository](https://codeberg.org/elvinhome/ctrl-one).
 
-```yaml url=https://github.com/elvinhome-io/esphome-configs/blob/main/ctrl-one.yaml
+```yaml file=config.yaml
 ```
 
 ## Notes
