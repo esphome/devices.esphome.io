@@ -3,7 +3,7 @@ title: "Shelly Plug M Gen3"
 date-published: 2026-08-25
 type: plug
 standard: eu
-board: esp32c3
+board: esp32
 ---
 
 <!-- Describe the device here. See the front-matter table on the contributing page for valid options. -->
