@@ -23,9 +23,6 @@ esp32:
     sdkconfig_options:
       COMPILER_OPTIMIZATION_SIZE: y
 
-time:
-  - platform: homeassistant
-
 sensor:
   - platform: ntc
     sensor: temp_resistance_reading
