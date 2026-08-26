@@ -1,5 +1,4 @@
 substitutions:
-
   devicename: shelly_plugm_gen3_01
   board: freenove_esp32_s3_wroom
   friendlyName: Waschmaschine
@@ -13,7 +12,7 @@ esphome:
     - priority: 250
       then:
         - switch.turn_on: switch_relay
-  
+
 esp32:
   variant: esp32c3
   flash_size: 8MB
@@ -123,7 +122,7 @@ binary_sensor:
       - delayed_on: 10ms
     on_press:
       - switch.toggle: switch_relay
-        
+
 switch:
   - platform: gpio
     pin: GPIO0
@@ -133,7 +132,7 @@ switch:
       - output.turn_on: led_green
     on_turn_off:
       - output.turn_off: led_green
-    
+
 output:
   - platform: gpio
     pin: GPIO10
