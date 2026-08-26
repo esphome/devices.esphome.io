@@ -9,7 +9,7 @@ difficulty: 1
 made-for-esphome: true
 ---
 
-![Apollo CAST-1](CAST-1.JPG "Apollo CAST-1 Audio Streamer")
+![Apollo CAST-1](CAST-1.jpg "Apollo CAST-1 Audio Streamer")
 
 ## Description
 
