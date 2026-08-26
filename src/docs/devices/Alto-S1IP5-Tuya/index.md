@@ -26,6 +26,7 @@ Manufacturer: ALTO
 ## Basic Configuration
 
 ```yaml
+# Basic Config
 esphome:
   name: alto-s1ip5-tuya
   friendly_name: alto-s1ip5-tuya
