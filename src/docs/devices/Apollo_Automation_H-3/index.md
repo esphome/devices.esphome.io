@@ -9,7 +9,7 @@ difficulty: 1
 made-for-esphome: true
 ---
 
-![Apollo H-3](H-3.jpg "Apollo H-3 Holiday Ornament")
+![Apollo H-3](H-3.png "Apollo H-3 Holiday Ornament")
 
 ## Description
 
@@ -63,4 +63,4 @@ Assistant as an RTTTL string.
 
 ## Product Images
 
-![Apollo H-3](H-3.jpg "Apollo H-3 Holiday Ornament")
+![Apollo H-3](H-3.png "Apollo H-3 Holiday Ornament")
