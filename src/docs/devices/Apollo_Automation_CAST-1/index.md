@@ -13,7 +13,9 @@ made-for-esphome: true
 
 ## Description
 
-Any speaker with a 3.5mm input can join your smart home. The Apollo CAST-1 plugs into powered speakers, a hi-fi amplifier, an AV receiver, or a pair of desktop monitors and turns them into a network audio player. They show up in ESPHome as a media player and also use SendSpin to connect to Music Assistant!
+Any speaker with a 3.5mm input can join your smart home. The Apollo CAST-1 plugs into powered speakers, a hi-fi
+amplifier, an AV receiver, or a pair of desktop monitors and turns them into a network audio player. They show up in
+ESPHome as a media player and also use SendSpin to connect to Music Assistant!
 
 **Perfect for:**
 
