@@ -18,7 +18,7 @@ Manufacturer: ALTO
 
 | Pin    | Function                   |
 |--------|----------------------------|
-| GPIO00 | Button1 (pullup, inverted) |
+| GPIO00 | Button (pullup, inverted)  |
 | GPIO12 | Relay                      |
 | GPIO13 | LED  (inverted)            |
 
