@@ -5,7 +5,7 @@ type: socket
 standard: eu
 board: esp8266
 ---
-  ![Product Image](./alto-s1ip5-tuya_img1.jpg "Product Image")
+  ![Product Image](./atlo-s1ip5-tuya_img1.jpg "Product Image")
   ![Product Pinout](./alto-s1ip5-tuya_pinout.jpg "Product Pinout")
 
 Model reference: ALTO-S1IP5-TUYA
