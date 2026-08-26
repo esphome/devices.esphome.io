@@ -1,18 +1,11 @@
-###############################################
-# substitutions
-###############################################
 substitutions:
 
   devicename: shelly_plugm_gen3_01
-  ip: 192.168.178.57
   board: freenove_esp32_s3_wroom
   friendlyName: Waschmaschine
   max_power: "3000"
   max_temp: "70.0"
 
-###############################################
-# esphome
-###############################################
 esphome:
   name: ${devicename}
   friendly_name: ${friendlyName}
@@ -30,24 +23,6 @@ esp32:
     sdkconfig_options:
       COMPILER_OPTIMIZATION_SIZE: y
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  manual_ip:
-    static_ip: ${ip}
-    gateway: 192.168.178.3
-    subnet: 255.255.255.0
-
-logger:
-
-ota:
-  - platform: esphome
-    password: !secret shelly_plugm_gen3_01_ota_pwd
-
-api:
-  encryption:
-    key: !secret shelly_plugm_gen3_01_api_key
-    
 time:
   - platform: homeassistant
 
