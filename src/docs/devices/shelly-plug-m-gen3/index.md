@@ -8,7 +8,7 @@ board: esp32c3
 
 <!-- Describe the device here. See the front-matter table on the contributing page for valid options. -->
 
-![Shelly Plug M Gen3](../shelly-plug-m-gen3/Doku.png "Shelly Plug M Gen3")
+![Shelly Plug M Gen3](Doku.png "Shelly Plug M Gen3")
 
 To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
@@ -26,7 +26,5 @@ To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
 ## Basic Configuration
 
-```
-yaml file=config.yaml
-
+```yaml file=config.yaml
 ```
