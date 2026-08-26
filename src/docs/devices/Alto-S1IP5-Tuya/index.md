@@ -6,8 +6,6 @@ standard: eu
 board: esp8266
 ---
   ![Product Image](./alto-s1ip5-tuya_1.jpg "Product Image")
-  ![Product Inside](./alto-s1ip5-tuya_2.jpg "Product Inside")
-  ![Product Inside2](./alto-s1ip5-tuya_3.jpg "Product Inside2")
   ![Product Pinout](./alto-s1ip5-tuya_pinout.jpg "Product Pinout")
 
 Model reference: ALTO-S1IP5-TUYA
