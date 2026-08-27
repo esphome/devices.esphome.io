@@ -1,0 +1,54 @@
+packages:
+  hardware: !include config.yaml
+
+network: {}
+
+speaker:
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: jab5_output
+    bits_per_sample: 16
+    num_channels: 2
+    task_stack_in_psram: true
+    source_speakers:
+      - id: media_mixing_input
+        timeout: never
+      # The mixer requires a second source; reserve it for future announcements.
+      - id: announcement_mixing_input
+        timeout: never
+
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    bits_per_sample: 16
+    sample_rate: 48000
+
+sendspin:
+  id: sendspin_hub
+  task_stack_in_psram: false
+
+media_source:
+  - platform: sendspin
+    id: sendspin_media_source
+    initial_static_delay: 0ms
+    static_delay_adjustable: true
+    decode_memory: internal
+
+media_player:
+  - platform: sendspin
+    id: sendspin_group_media_player
+    name: Group
+
+  - platform: speaker_source
+    id: local_media_player
+    name: Player
+    media_pipeline:
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+      speaker: media_resampling_speaker
+      sources:
+        - sendspin_media_source
+    volume_increment: 5%
+    volume_min: 0%
+    volume_max: 100%
