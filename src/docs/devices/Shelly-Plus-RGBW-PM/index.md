@@ -15,8 +15,8 @@ board: esp32
 | GPIO14 | Onboard LED           |
 | GPIO22 | Onboard Button        |
 | GPIO25 | PWM 1 (R)             |
-| GPIO26 | PWM 3 (B)             |
-| GPIO27 | PWM 2 (G)             |
+| GPIO26 | PWM 3 (G)             |
+| GPIO27 | PWM 2 (B)             |
 | GPIO4  | PWM 4 (W)             |
 | GPIO36 | Input 1               |
 | GPIO37 | Input 2               |
