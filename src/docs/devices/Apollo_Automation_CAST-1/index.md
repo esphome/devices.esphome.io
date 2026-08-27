@@ -43,7 +43,7 @@ ESPHome as a media player and also use SendSpin to connect to Music Assistant!
 
 ## Configuration
 
-```yaml url=https://github.com/ApolloAutomation/CAST-1/blob/main/Integrations/ESPHome/CAST-1_W.yaml
+```yaml url=https://github.com/ApolloAutomation/CAST-1/blob/main/Integrations/ESPHome/CAST-1.yaml
 ```
 
 ## Links
