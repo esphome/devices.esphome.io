@@ -11,6 +11,10 @@ made-for-esphome: true
 
 ![alt text](athom-plug-us-v3.webp "Athom Smart Plug US V3 - PG03V3-US16A")
 
+IoTorero is a rebranding of Athom; the
+[IoTorero Smart Plug US V3 (PG03V3-US16A)](../IoTorero-Smart-Plug-PG03V3-US16A)
+is otherwise identical.
+
 Maker: [https://www.athom.tech/](https://www.athom.tech/)
 Product page: [https://www.athom.tech/blank-1/esp32-c3-us-plug-for-esphome](https://www.athom.tech/blank-1/esp32-c3-us-plug-for-esphome)
 
