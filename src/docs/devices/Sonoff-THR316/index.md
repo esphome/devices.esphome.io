@@ -18,8 +18,8 @@ difficulty: 3
 | GPIO15 | Middle LED (Blue/WiFi)             |
 | GPIO16 | Left LED (Red/Relay)               |
 | GPIO21 | Relay                              |
-| GPIO25 | Dallas Sensor Bus Data In/Out      |
-| GPIO27 | Dallas Sensor 3.3V Power           |
+| GPIO25 | Sensor Bus Data In/Out             |
+| GPIO27 | Sensor 3.3V Power                  |
 
 ## RJ9 Pinout
 
@@ -272,4 +272,30 @@ climate:
               return id(climate_control).mode == CLIMATE_MODE_HEAT;
           then:
             - light.turn_on: auto_led
+```
+
+## Using a WTS01 temperature sensor
+
+The following yaml enables the [WTS01 sensor](https://esphome.io/components/sensor/wts01/) on the Sonoff THR316
+and exposes the measured value as `temp`.
+
+```yaml
+switch:
+  # This is needed to power the external sensor.
+  # It receives 3v3 from this pin, which is pulled up on boot.
+  - platform: gpio
+    pin: GPIO27
+    id: sensor_power
+    restore_mode: ALWAYS_ON
+
+uart:
+  rx_pin: GPIO25
+  baud_rate: 9600
+
+sensor:
+  - platform: wts01
+    id: temp
+    filters:
+      - throttle_average: 60s
+      - round: 1
 ```
