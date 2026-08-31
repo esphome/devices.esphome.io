@@ -1,0 +1,44 @@
+# Basic Config
+esphome:
+  name: shelly_1
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# Output
+switch:
+
+  - id: output_zero
+    name: GPIO0
+    platform: gpio
+    pin: GPIO0
+
+# Inputs
+binary_sensor:
+
+  - id: input_one
+    name: GPIO1
+    platform: gpio
+    pin:
+      number: GPIO1
+      inverted: true  # Default behaviour is N/C (high) = On, GND (low) = Off; Invert to fix.
+      mode:
+        input: true
+        pullup: true  # GPIO1 is floating by default; Enable pull-up resistor to avoid unexpected behaviour.
+    filters:
+      - delayed_off: 50ms
+
+  - id: input_three
+    name: GPIO3
+    platform: gpio
+    pin:
+      number: GPIO3
+      inverted: true  # Default behaviour is N/C (high) = On, GND (low) = Off; Invert to fix.
+      mode:
+        input: true
+        pullup: true  # GPIO3 is floating by default; Enable pull-up resistor to avoid unexpected behaviour.
+    filters:
+      - delayed_off: 50ms
