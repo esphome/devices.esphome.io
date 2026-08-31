@@ -1,0 +1,43 @@
+esp8266:
+  board: esp01_1m
+
+esphome:
+  name: "ekf-connect-rce-1-wf"
+
+wifi:
+  ap:
+
+logger:
+  baud_rate: 0
+
+switch:
+  - platform: gpio
+    name: "socket"
+    pin: GPIO15
+    id: relay_AC
+    icon: mdi:power-socket-eu
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO16
+      mode:
+        input: true
+      inverted: true
+    name: "button"
+    on_click:
+      - switch.toggle: relay_AC
+      - light.toggle: ac_light
+
+light:
+  - platform: binary
+    name: "AC"
+    output: ac_output
+    id: ac_light
+    internal: true
+
+output:
+  - platform: gpio
+    pin: GPIO1
+    id: ac_output
+    inverted: true
