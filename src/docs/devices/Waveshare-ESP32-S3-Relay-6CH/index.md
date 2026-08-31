@@ -1,5 +1,5 @@
 ---
-title: WAVESHARE-6CH-RELAY
+title: Waveshare ESP32-S3-Relay-6CH
 date-published: 2024-12-21
 type: relay
 standard: global
