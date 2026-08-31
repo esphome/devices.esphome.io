@@ -16,6 +16,9 @@ These devices are sold under many brands on Aliexpress.
 
 Contains CB2S BK7231n module.
 
+![PXL_20250113_171351012~2](https://github.com/user-attachments/assets/c5659178-4992-4de6-a82c-7eb932f1feab)
+
+
 ## GPIO Pinout
 
 | Pin | Function            |
