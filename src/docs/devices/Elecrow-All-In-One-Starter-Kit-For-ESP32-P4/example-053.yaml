@@ -1,0 +1,56 @@
+substitutions:
+  device_name: esp32-p4-elecrow-aio-kit
+  friendly_name: "ESP32-P4 Elecrow All-In-One Kit"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+# PSRAM
+psram:
+  mode: hex
+  speed: 200MHz
+
+# Logger
+logger:
+  level: INFO
+  hardware_uart: UART0
+
+# Home Assistant API
+api:
+  encryption:
+    key: REPLACE_ME
+
+# OTA Updates
+ota:
+  - platform: esphome
+    # SECURITY: credential omitted from documentation example
+
+# Ethernet Configuration (RMII definition)
+ethernet:
+  type: IP101
+  mdc_pin: GPIO31
+  mdio_pin: GPIO52
+  power_pin: GPIO51
+  clk:
+    mode: CLK_EXT_IN
+    pin: GPIO50
+  phy_addr: 1
+
+# Wi-Fi transport: one-wire SPI, full duplex (not SDIO)
+# P4 GPIO02: C6 EN/reset
+# P4 GPIO14: C6 CS
+# P4 GPIO15: C6 CLK
+# P4 GPIO07: C6 MOSI
+# P4 GPIO09: C6 MISO
+# P4 GPIO10: C6 data-ready
+# P4 GPIO11: C6 handshake
+#
+# Use the ESP32-C6 ESP-Hosted SPI configuration shown above. Do not use
+# cmd_pin or d0_pin-d3_pin; those are for SDIO and do not work on this board.

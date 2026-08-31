@@ -1,0 +1,8 @@
+sensor:
+  # 1. Ultrasonic Distance Sensor
+  - platform: ultrasonic
+    trigger_pin: GPIO13
+    echo_pin: GPIO12
+    name: "Distance"
+    update_interval: 5s
+    timeout: 3m

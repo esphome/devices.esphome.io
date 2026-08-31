@@ -1,0 +1,10 @@
+servo:
+  # 7. Servo Motor
+  - id: my_servo
+    output: servo_pwm
+
+output:
+  - platform: ledc
+    id: servo_pwm
+    pin: GPIO25
+    frequency: 50Hz

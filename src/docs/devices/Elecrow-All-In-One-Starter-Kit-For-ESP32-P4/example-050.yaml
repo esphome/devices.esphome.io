@@ -1,0 +1,7 @@
+uart:
+  tx_pin: GPIO47
+  rx_pin: GPIO48
+  baud_rate: 115200
+
+logger:
+  level: DEBUG

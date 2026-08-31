@@ -1,0 +1,40 @@
+# CSI camera example for the Elecrow ESP32-P4 AIO.
+# Experimental: these components are external to the stable ESPHome release.
+# The camera connector uses the separate camera I2C bus on GPIO45/GPIO46.
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/youkorr/test2_esp_video_esphome
+      ref: main
+    components:
+      - esp_video
+      - esp_cam_sensor
+    refresh: always
+
+i2c:
+  - id: camera_i2c
+    sda: GPIO45
+    scl: GPIO46
+    frequency: 400kHz
+
+esp_video:
+  i2c_id: camera_i2c
+  xclk_pin: GPIO30
+  xclk_freq: 24000000
+  enable_jpeg: true
+  enable_isp: true
+  use_heap_allocator: false
+
+esp_cam_sensor:
+  id: sc2336_cam
+  i2c_id: camera_i2c
+  sensor_type: SC2336
+  resolution: "1280x720"
+  pixel_format: RGB565
+  framerate: 30
+  jpeg_quality: 15
+  mirror_x: false
+  mirror_y: false
+  rotation: 0
+  crop_offset_x: 0

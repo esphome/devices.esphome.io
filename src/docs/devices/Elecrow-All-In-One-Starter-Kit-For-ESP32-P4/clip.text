@@ -1,0 +1,598 @@
+### Integrated Sensors Configuration
+
+```yaml
+# Sensor Bus (I2C)
+i2c:
+  - id: bus_sensors
+    sda: GPIO18
+    scl: GPIO19
+    scan: true
+    frequency: 100kHz
+
+sensor:
+  # 1. DHT20 Temperature & Humidity
+  - platform: aht10
+    i2c_id: bus_sensors
+    address: 0x38
+    temperature:
+      name: "Temperature"
+      accuracy_decimals: 1
+    humidity:
+      name: "Humidity"
+      accuracy_decimals: 1
+    update_interval: 60s
+  
+  # 2. BH1750 Light Sensor
+  - platform: bh1750
+    i2c_id: bus_sensors
+    address: 0x5C  # or 0x23
+    name: "Illuminance"
+    update_interval: 60s
+  
+  # 8. LSM6DS3 Accelerometer & Gyroscope
+  - platform: lsm6dsx
+    i2c_id: bus_sensors
+    address: 0x6B
+    accel_x:
+      name: "Accel X"
+    accel_y:
+      name: "Accel Y"  
+    accel_z:
+      name: "Accel Z"
+    gyro_x:
+      name: "Gyro X"
+    gyro_y:
+      name: "Gyro Y"
+    gyro_z:
+      name: "Gyro Z"
+    update_interval: 60s
+  
+  # 12. MQ2 Gas Sensor (Analog)
+  - platform: adc
+    pin: GPIO17
+    name: "Gas Sensor"
+    update_interval: 5s
+    attenuation: 11db
+  
+  # 4. Ultrasonic Distance Sensor
+  - platform: ultrasonic
+    trigger_pin: GPIO13
+    echo_pin: GPIO12
+    name: "Distance"
+    update_interval: 5s
+    timeout: 3m
+
+binary_sensor:
+  # 3. PIR Motion Sensor
+  - platform: gpio
+    pin: GPIO24
+    name: "Motion"
+    device_class: motion
+  
+  # 7. Hall Sensor  
+  - platform: gpio
+    pin: GPIO7
+    name: "Hall Sensor"
+    device_class: motion
+  
+  # 10. Custom Button
+  - platform: gpio
+    pin:
+      number: GPIO16
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Button"
+  
+  # 11. Touch Sensor
+  - platform: esp32_touch
+    pin: GPIO2
+    name: "Touch Pad"
+    threshold: 1000
+
+# 9. WS2814A RGB LED
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812
+    pin: GPIO8
+    num_leds: 1
+    name: "Status LED"
+    id: status_led
+
+# 5. Servo Motor
+servo:
+  - id: my_servo
+    output: servo_pwm
+
+output:
+  - platform: ledc
+    id: servo_pwm
+    pin: GPIO25
+    frequency: 50Hz
+  
+  # Audio amplifier enable
+  - platform: gpio
+    id: amp_enable
+    pin: GPIO6
+
+# 6. Relay
+switch:
+  - platform: gpio
+    pin: GPIO42
+    name: "Relay"
+    id: relay_switch
+  
+  # Audio amplifier
+  - platform: output
+    name: "Audio Amp"
+    output: amp_enable
+```
+
+### Full Sensor Configuration
+
+```yaml
+# I2C Bus Configuration
+# Bus A: Touch controller (GT911)  
+# Note: This kit uses NS4168 audio codec (I2S only, no I2C)
+i2c:
+  - id: bus_a
+    sda: GPIO45
+    scl: GPIO46
+    scan: true
+    frequency: 400kHz
+  
+  # Bus B: Sensors (DHT20, BH1750, LSM6DS3)
+  - id: bus_sensors
+    sda: GPIO18
+    scl: GPIO19
+    scan: true
+    frequency: 100kHz
+  
+  # Bus C: Camera I2C (SC2336)
+  # Note: GPIO12/13 conflict with Ultrasonic sensor
+  - id: bus_camera
+    sda: GPIO12
+    scl: GPIO13
+    scan: true
+    frequency: 100kHz
+
+# I2S Audio Configuration (NS4168 Codec)
+# NS4168 is a Class D stereo amplifier with I2S digital input
+i2s_audio:
+  - id: i2s_out
+    i2s_lrclk_pin: GPIO21
+    i2s_bclk_pin: GPIO22
+
+# Speaker Output (NS4168 Stereo Amplifier)
+speaker:
+  - platform: i2s_audio
+    id: external_speaker
+    i2s_audio_id: i2s_out
+    dac_type: external
+    i2s_dout_pin: GPIO23
+    i2s_mode: primary
+
+# Microphone Input (PDM Microphone)
+microphone:
+  - platform: i2s_audio
+    id: pdm_mic
+    i2s_din_pin: GPIO4  # PDM DATA
+    adc_type: external
+    # PDM clock on GPIO3
+
+# Power Amplifier Enable (NS4168)
+output:
+  - platform: gpio
+    id: amp_enable
+    pin:
+      number: GPIO6  # Correct pin for NS4168 enable
+      mode: output
+  
+  # Display Backlight (PWM via MT9201 LED driver)
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO20  # Correct pin from schematic
+    frequency: 100Hz
+
+switch:
+  - platform: output
+    name: "Audio Amplifier"
+    output: amp_enable
+    id: audio_amp_switch
+    restore_mode: RESTORE_DEFAULT_ON
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: backlight_light
+    restore_mode: RESTORE_DEFAULT_ON
+    default_transition_length: 250ms
+
+# Touch Controller GT911
+# Configuration verified from official Elecrow code
+touchscreen:
+  - platform: gt911
+    id: touch
+    i2c_id: bus_a
+    interrupt_pin: GPIO41  # Touch_GPIO_INT from official code
+    reset_pin: GPIO40      # Touch_GPIO_RST from official code
+    update_interval: 50ms
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    # Note: GT911 has two possible I2C addresses:
+    # Primary: 0x5D (ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS_BACKUP)
+    # Secondary: 0x14 (ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS)
+    # The driver tries backup address first, then falls back to primary
+    # I2C clock: 400 kHz (Fast Mode)
+
+# LDO Regulator Configuration
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+
+# ===== INTEGRATED SENSORS =====
+
+# 1. DHT22 Temperature & Humidity Sensor
+sensor:
+  - platform: dht
+    pin: GPIO10  # Verify from schematic
+    model: DHT22
+    temperature:
+      name: "Temperature"
+      filters:
+        - offset: -0.5  # Calibration
+    humidity:
+      name: "Humidity"
+    update_interval: 30s
+
+  # 2. Light/Luminosity Sensor (Analog)
+  - platform: adc
+    pin: GPIO11  # Verify from schematic
+    name: "Light Level"
+    attenuation: 11db
+    filters:
+      - multiply: 100  # Convert to percentage
+    unit_of_measurement: "%"
+    update_interval: 10s
+
+  # 3. Ultrasonic Distance Sensor
+  - platform: ultrasonic
+    trigger_pin: GPIO12  # Verify from schematic
+    echo_pin: GPIO13     # Verify from schematic
+    name: "Distance"
+    update_interval: 2s
+    timeout: 3m
+
+  # 4. Potentiometer (Analog Input)
+  - platform: adc
+    pin: GPIO14  # Verify from schematic
+    name: "Potentiometer"
+    attenuation: 11db
+    filters:
+      - multiply: 3.3  # Convert to voltage
+    unit_of_measurement: "V"
+    update_interval: 1s
+
+# ===== BINARY SENSORS =====
+
+binary_sensor:
+  # 5. PIR Motion Sensor
+  - platform: gpio
+    pin:
+      number: GPIO15  # Verify from schematic
+      mode: INPUT
+    name: "Motion Detected"
+    device_class: motion
+
+  # 6. Button/Switch
+  - platform: gpio
+    pin:
+      number: GPIO16  # Verify from schematic
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Button"
+    on_press:
+      - logger.log: "Button pressed!"
+
+  # 7. Flame Sensor
+  - platform: gpio
+    pin:
+      number: GPIO17  # Verify from schematic
+      mode: INPUT
+    name: "Flame Detected"
+    device_class: smoke
+
+  # 8. IR Receiver (as binary sensor for detection)
+  - platform: gpio
+    pin:
+      number: GPIO18  # Verify from schematic
+      mode: INPUT
+    name: "IR Signal"
+
+# ===== OUTPUTS & ACTUATORS =====
+
+# 9. RGB LED
+light:
+  - platform: rgb
+    name: "RGB LED"
+    red: pwm_r
+    green: pwm_g
+    blue: pwm_b
+
+output:
+  - platform: ledc
+    pin: GPIO19  # Verify from schematic
+    id: pwm_r
+    frequency: 1000 Hz
+  
+  - platform: ledc
+    pin: GPIO20  # Verify from schematic
+    id: pwm_g
+    frequency: 1000 Hz
+  
+  - platform: ledc
+    pin: GPIO21  # Verify from schematic
+    id: pwm_b
+    frequency: 1000 Hz
+
+  # 10. Buzzer
+  - platform: ledc
+    pin: GPIO23  # Verify from schematic
+    id: buzzer_output
+    frequency: 2000 Hz
+
+# 11. Relay
+switch:
+  - platform: gpio
+    pin: GPIO24  # Verify from schematic
+    name: "Relay"
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: "mdi:power-socket"
+
+  # 12. DC Motor Control (via H-bridge or driver)
+  - platform: gpio
+    pin: GPIO25  # Verify from schematic
+    name: "Motor Enable"
+    id: motor_enable
+
+  # IR Transmitter
+  - platform: gpio
+    pin: GPIO26  # Verify from schematic
+    name: "IR Transmitter"
+    id: ir_tx
+
+# 13. Servo Motor
+servo:
+  - id: my_servo
+    output: servo_pwm
+    min_level: 3%
+    max_level: 12%
+    idle_level: 7.5%
+
+output:
+  - platform: ledc
+    pin: GPIO27  # Verify from schematic
+    id: servo_pwm
+    frequency: 50 Hz
+
+# ===== MICROPHONE (I2S) =====
+# Requires custom I2S component
+# Example configuration:
+# microphone:
+#   - platform: i2s_audio
+#     id: mic
+#     i2s_din_pin: GPIO28
+#     adc_type: external
+#     pdm: false
+
+# ===== 7-INCH DISPLAY (Requires significant setup) =====
+# Note: Display configuration is complex and may require custom components
+# This is a simplified placeholder - see advanced example below
+
+# ===== GAS SENSOR (MQ-series, analog) =====
+sensor:
+  - platform: adc
+    pin: GPIO29  # Verify from schematic
+    name: "Gas Sensor"
+    attenuation: 11db
+    update_interval: 10s
+
+# ===== OLED DISPLAY (if present) =====
+# Uncomment if your kit includes an OLED
+# display:
+#   - platform: ssd1306_i2c
+#     model: "SSD1306 128x64"
+#     address: 0x3C
+#     lambda: |-
+#       it.print(0, 0, id(font1), "ESP32-P4");
+#       it.printf(0, 16, id(font1), "Temp: %.1f°C", id(temperature).state);
+```
+
+### Advanced: 7-Inch Display Configuration
+
+The 7-inch IPS display (1024×600) uses MIPI-DSI interface with **EK79007 controller** (verified from official Elecrow code):
+
+```yaml
+# External component for MIPI-DSI support
+external_components:
+  - source: github://pr#11886
+    components: [mipi_dsi]
+    refresh: 1h
+
+# Font for LVGL
+font:
+  - file: gfonts://Roboto
+    id: main_font
+    size: 24
+    glyphs: "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "
+
+# Color definitions
+color:
+  - id: COLOR_BLACK
+    red: 0%
+    green: 0%
+    blue: 0%
+  - id: COLOR_WHITE
+    red: 100%
+    green: 100%
+    blue: 100%
+
+# MIPI-DSI Display Configuration (EK79007 Controller)
+# Parameters verified from official Elecrow ESP-IDF code
+display:
+  - platform: mipi_dsi
+    id: main_display
+    model: CUSTOM  # EK79007 controller
+    rotation: 0  # Set to 180 if needed
+    update_interval: never
+    auto_clear_enabled: false
+    lanes: 2
+    lane_bit_rate: 900Mbps  # Official: 900 Mbps
+    color_order: rgb
+    pclk_frequency: 51MHz   # Official: 51 MHz DPI clock
+    dimensions:
+      width: 1024
+      height: 600
+    # Timing parameters from official code
+    hsync_back_porch: 160
+    hsync_pulse_width: 70
+    hsync_front_porch: 160
+    vsync_back_porch: 23
+    vsync_pulse_width: 10   # Official code uses 10, not 1
+    vsync_front_porch: 12
+    # Display initialization sequence
+    # Note: EK79007 init is handled internally by the driver
+    init_sequence:
+      - [0xB2, 0x10]
+      - [0x80, 0x8B]
+      - [0x81, 0x78]
+      - [0x82, 0x84]
+      - [0x83, 0x88]
+      - [0x84, 0xA8]
+      - [0x85, 0xE3]
+      - [0x86, 0x88]
+      - delay: 120ms
+      - [0x29]  # Display on
+
+# GPIO Control for Display
+# UPDN: GPIO32 (vertical scan direction: 0=normal, 1=inverted)
+# SHLR: GPIO33 (horizontal scan direction: 0=normal, 1=inverted)
+switch:
+  - platform: gpio
+    pin: GPIO32
+    name: "Display UPDN"
+    id: display_updn
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+  
+  - platform: gpio
+    pin: GPIO33
+    name: "Display SHLR"
+    id: display_shlr
+    internal: true
+    restore_mode: RESTORE_DEFAULT_ON  # Official code sets this to 1
+
+# LVGL Configuration for UI
+lvgl:
+  buffer_size: 100%
+  byte_order: little_endian
+  displays:
+    - main_display
+  touchscreens:
+    - touch
+  pages:
+    - id: main_page
+      widgets:
+        - label:
+            align: TOP_MID
+            y: 20
+            text: "ESP32-P4 Control Panel"
+            text_font: main_font
+            text_color: 0xFFFFFF
+        
+        - button:
+            align: CENTER
+            width: 200
+            height: 60
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Test Button"
+                  text_font: main_font
+```
+
+### Camera Configuration (2MP SC2336 MIPI-CSI)
+
+```yaml
+# External components for camera support
+external_components:
+  - source: github://pr#7639
+    components: [camera, camera_encoder, camera_pipeline, camera_sensor, esp32_camera, esp32_camera_web_server]
+    refresh: 0s
+
+# Camera configuration in sdkconfig
+esp32:
+  framework:
+    sdkconfig_options:
+      # Enable SC2336 camera driver
+      CONFIG_CAMERA_SC2336: "y"
+      CONFIG_CAMERA_SC2336_MIPI_RAW8_1024x600_30FPS: "y"
+      CONFIG_CAMERA_SC2336_AUTO_DETECT: "y"
+      CONFIG_CAMERA_SC2336_AUTO_DETECT_MIPI_INTERFACE_SENSOR: "y"
+      CONFIG_CAMERA_XCLK_USE_ESP_CLOCK_ROUTER: "y"
+
+# Camera sensor controls
+number:
+  - platform: camera_sensor
+    type: isp
+    brightness:
+      name: "Camera Brightness"
+    hue:
+      name: "Camera Hue"
+    contrast:
+      name: "Camera Contrast"
+    saturation:
+      name: "Camera Saturation"
+    filter:
+      name: "Camera Filter"
+    red:
+      name: "Camera Red"
+    green:
+      name: "Camera Green"
+    blue:
+      name: "Camera Blue"
+
+# Main camera configuration
+camera:
+  name: "ESP32-P4 Camera"
+
+camera_sensor:
+  type: mipi_csi
+  mode: "MIPI_2lane_24Minput_RAW8_1024x600_30fps"
+  i2c_id: bus_b  # Camera I2C bus
+
+camera_pipeline:
+  - id: input
+    type: input
+    next: encode
+
+  - id: encode
+    type: output
+    camera_encoder_id: jpeg_encoder
+
+camera_encoder:
+  id: jpeg_encoder
+  type: accelerated_jpeg
+
+# Camera web server
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
+```

@@ -1,0 +1,13 @@
+light:
+  - platform: esp32_rmt_led_strip
+    id: rgb_leds
+    name: "RGBW LED"
+    chipset: WS2814
+    pin:
+      number: GPIO8
+    num_leds: 1
+    rgb_order: WRGB
+    is_wrgb: true
+    color_interlock: true
+    rmt_symbols: 192
+    default_transition_length: 0s

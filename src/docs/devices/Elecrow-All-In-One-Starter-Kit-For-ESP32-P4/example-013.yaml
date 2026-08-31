@@ -1,0 +1,6 @@
+binary_sensor:
+  # 6. PIR Motion Sensor
+  - platform: gpio
+    pin: GPIO24
+    name: "Motion Detected"
+    device_class: motion
