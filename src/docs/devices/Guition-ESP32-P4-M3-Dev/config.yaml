@@ -1,0 +1,14 @@
+esphome:
+  name: "esp32-p4-m3-dev"
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  # Default 400MHz caused cold-boot bricking after a full power cycle on the
+  # tested board. 360MHz was stable.
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG

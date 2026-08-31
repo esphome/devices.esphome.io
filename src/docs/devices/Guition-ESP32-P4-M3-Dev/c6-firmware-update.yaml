@@ -1,0 +1,5 @@
+update:
+  - platform: esp32_hosted
+    name: "C6 Coprocessor Update"
+    path: /path/to/network_adapter.bin
+    sha256: your_sha256_hash_here
