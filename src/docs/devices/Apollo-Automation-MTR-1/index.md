@@ -17,7 +17,7 @@ The Apollo Automation MTR-1 is a multi-target radar sensor with the following fe
 
 - LD2450 Multi-target radar sensor.
 - LTR-390UV LUX and UV Sensor.
-- DPS310 Temperature and Pressure Sensor.
+- DPS310 Temperature and Pressure Sensor (late 2025/early 2026 models may not have the DPS310 populated due to it being discontinued; mid 2026 and later models use a DPS368 with the same features).
 - SCD-40 CO2 Sensor.
 - RGB Pixel.
 - Piezo Buzzer.

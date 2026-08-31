@@ -17,6 +17,7 @@ The Apollo Automation AIR-1 is an air quality sensor with the following features
 
 - SEN55: PM1, PM2.5, PM4, PM10, VOC, NOx, Temperature, and Humidity. 10-year sensor life.
 - SCD40 CO2 Sensor.
+- DPS310 Temperature and Pressure Sensor (late 2025/early 2026 models may not have the DPS310 populated due to it being discontinued; mid 2026 and later models use a DPS368 with the same features).
 - MiCS-4514 from DFRobot: CO (Carbon Monoxide), C2H5OH (Alcohol), H2, NO2, NH3 (Ammonia), and CH4 (Methane).
 - RGB Pixel x3.
 - Bluetooth tracking and Bluetooth proxy.

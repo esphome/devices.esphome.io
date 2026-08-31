@@ -18,7 +18,7 @@ The Apollo Automation MSR-2 is a mmWave CO2 multisensor. We improved on the MSR-
 
 - HLK-LD2410B+BLE 24GHz Human Presence mmWave Radar Sensor Module.
 - LTR-390UV LUX and UV Sensor.
-- DPS310 Temperature and Pressure Sensor.
+- DPS310 Temperature and Pressure Sensor (late 2025/early 2026 models may not have the DPS310 populated due to it being discontinued; mid 2026 and later models use a DPS368 with the same features).
 - SCD-40 CO2 Sensor.
 - RGB Pixel.
 - Piezo Buzzer.
