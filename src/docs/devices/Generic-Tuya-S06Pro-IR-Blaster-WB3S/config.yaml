@@ -1,0 +1,60 @@
+esphome:
+  name: ir-s06-pro
+  friendly_name: IR S06 Pro
+
+bk72xx:
+  board: wb3s
+
+# Enable logging
+logger:
+
+remote_transmitter:
+  pin: P26
+  carrier_duty_percent: 50%
+
+remote_receiver:
+  pin:
+    number: P8
+    inverted: true
+  tolerance: 30%
+  idle: 8ms
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    id: gpio_button
+    pin:
+      number: P6
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    pin: P9
+
+##### AHT10 ######
+uart:
+  rx_pin: RX1
+  tx_pin: TX1
+  baud_rate: 9600
+
+tuya:
+
+sensor:
+  - platform: tuya
+    sensor_datapoint: 101
+    id: temperature
+    name: "Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+  - platform: tuya
+    sensor_datapoint: 102
+    id: humidity
+    name: "Humidity"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
