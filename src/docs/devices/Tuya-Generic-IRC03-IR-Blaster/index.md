@@ -14,7 +14,8 @@ There's detailed teardown info at [Elektroda](https://www.elektroda.com/rtvforum
 Despite appearing outwardly identical to the
 [Tuya Generic IR Remote Control](/devices/Tuya-Generic-WiFi-IR-Remote-Control), the IRC03 has a custom PCB with the
 BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts between the two devices differ as a
-result.
+result. You can determine which board you have by shining a flashlight through the casing; on this model, the PCB is a
+single solid board with no cutouts.
 
 ![IRC03](IRC03.jpg)
 
@@ -38,42 +39,7 @@ flash ESPHome Kickstart to the device, from which I uploaded a proper UF2 binary
 
 ## Configuration
 
-```yaml
-bk72xx:
-  board: generic-bk7231n-qfn32-tuya
-
-output:
-  - platform: libretiny_pwm
-    id: led
-    pin: 24
-
-light:
-  - platform: monochromatic
-    name: LED
-    output: led
-
-binary_sensor:
-  - platform: gpio
-    id: btn
-    pin:
-      number: 9
-      mode:
-        input: true
-        pullup: true
-      inverted: true
-
-remote_transmitter:
-  pin: 7
-  carrier_duty_percent: 50%
-
-remote_receiver:
-  pin:
-    number: 8
-    inverted: true
-    mode:
-      input: true
-      pullup: true
-  tolerance: 55%
+```yaml file=config.yaml
 ```
 
 If you're attempting to use this with raw IR commands with an integration such as SmartIR, make sure that you set the
@@ -81,34 +47,14 @@ carrier frequency accordingly. Not setting this may result in otherwise valid co
 anticipated or at all. Valid frequencies typically range betweeen 33-40 kHz or 50-60 kHz, with the most common protocol,
 the NEC protocol, using a frequency of 38 kHz.
 
-```yaml
-api:
-  encryption:
-    key: "xxxxxxx"
-  services:
-    - service: send_raw_command
-      variables:
-        command: int[]
-      then:
-        - remote_transmitter.transmit_raw:
-            code: !lambda "return command;"
-            carrier_frequency: !lambda "return 38000.0;"
+```yaml file=services.yaml
 ```
 
 If you don't know the carrier frequency, and the NEC default of 38 kHz doesn't work, you can find out what your device's
 frequency is by dumping a code from your existing remote. First, modify the `remote_receiver` definition in the ESPHome
 configuration to dump the codes in Pronto form. These include the carrier frequency embedded in them.
 
-```yaml
-remote_receiver:
-  pin:
-    number: 8
-    inverted: true
-    mode:
-      input: true
-      pullup: true
-  tolerance: 55%
-  dump: pronto
+```yaml file=receiver.yaml
 ```
 
 Once you flash the firmware, keep the device logs open within ESPHome Device Builder. Take the remote for your device,
