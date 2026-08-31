@@ -1,0 +1,28 @@
+---
+#------------------------------------------------------------------------
+# This setting is only for the 1 Phase Meter (DDS238-4 W).
+# All possible entities are shown, but the idea is to only place the ones
+# that are going to be used.
+#
+# The following code only shows the properties needed to configure the
+# meter to access the measurements. Everything related to Wifi, MQTT, API,
+# Time, etc., see directly in the ESPHome options, because it is not the
+# scope of this Readme.
+#------------------------------------------------------------------------
+
+sensor:
+  - platform: dxs238xw
+    current_phase_1:
+      name: "Current"
+
+    voltage_phase_1:
+      name: "Voltage"
+
+    reactive_power_phase_1:
+      name: "Reactive Power"
+
+    active_power_phase_1:
+      name: "Active Power"
+
+    power_factor_phase_1:
+      name: "Power Factor"
