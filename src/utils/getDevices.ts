@@ -1,19 +1,46 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import { splitValues, slugify, type RawDeviceMetadata } from "./deviceUtils";
+import { parseAliases, type DeviceAlias } from "./deviceAliases";
 
 export type DeviceEntry = {
   id: string;
   path: string;
   data: RawDeviceMetadata;
+  /** Alternate names/URLs declared in `alias` frontmatter. */
+  aliases: DeviceAlias[];
+  /** Set on listing rows synthesised from an alias; id of the real device. */
+  aliasOf?: string;
 };
 
 function entryToDevice(entry: CollectionEntry<"docs">): DeviceEntry {
   const id = entry.id.replace(/^devices\//, "");
+  const data = entry.data as unknown as RawDeviceMetadata;
   return {
     id,
     path: `/devices/${id}/`,
-    data: entry.data as unknown as RawDeviceMetadata,
+    data,
+    aliases: parseAliases(data.alias).aliases,
   };
+}
+
+/**
+ * Expand a list for display: every alias that carries a `title` gets its own
+ * row, so the device is findable under each of its names. The extra rows link
+ * straight to the canonical page instead of via the alias redirect.
+ */
+export function withAliasEntries(devices: DeviceEntry[]): DeviceEntry[] {
+  return devices.flatMap((device) => [
+    device,
+    ...device.aliases
+      .filter((alias) => alias.title !== undefined)
+      .map((alias) => ({
+        id: `${device.id}--${alias.slug.toLowerCase()}`,
+        path: device.path,
+        data: { ...device.data, title: alias.title! },
+        aliases: [],
+        aliasOf: device.id,
+      })),
+  ]);
 }
 
 export async function getAllDevices(): Promise<DeviceEntry[]> {

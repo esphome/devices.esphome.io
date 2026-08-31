@@ -206,6 +206,46 @@ standard: uk, us
 | `project-url`      | URL for product or GitHub. Points to working Yaml file or page where yaml file is easily accessible |                                                                                                                             | No                                       |
 | `made-for-esphome` | Has the manufacturer certified the device for ESPHome                                               | `True`, `False`                                                                                                             | No                                       |
 | `difficulty`       | Difficulty rating                                                                                   | `1`: Comes with ESPHome, `2`: Plug-n-flash, `3`: Disassembly required, `4`: Soldering required, `5`: Chip needs replacement | No                                       |
+| `alias`            | Other names/URLs the same device is sold under. See [Alternate names](#alternate-names-alias)       | List of `title` / `slug` entries                                                                                            | No                                       |
+
+## Alternate names (`alias`)
+
+Plenty of devices are sold under more than one brand, and pages sometimes get renamed. Both cases belong on a
+single page rather than in a duplicate: add an `alias` list to the canonical page instead of copying it.
+
+```yaml
+---
+title: Current Name Smart Plug
+type: plug
+standard: us
+alias:
+  - title: Other Name Smart Plug
+    slug: Other-Name-Smart-Plug
+---
+```
+
+Each alias does two things:
+
+- **`slug`** gets a `301` redirect to the canonical page, so `/devices/other-name-smart-plug/` keeps working
+  after the folder is renamed. It follows the same rules as a device folder name (only `a-z`, `A-Z`,
+  `0-9`, `_`, `.`, `-`, `+`), and if you leave it out it is derived from `title`.
+- **`title`** adds a second row for the device to the browse listings, so it can be found under either name. Both
+  rows link straight to the canonical page.
+
+A bare string is shorthand for a `slug` with no `title` — a redirect only, with no extra listing row. Use it when
+an old URL should keep working but the old name should not be advertised any more:
+
+```yaml
+alias:
+  - Some-Old-Folder-Name
+```
+
+An alias must not match an existing device folder, and two pages cannot claim the same alias. `npm run
+validate-devices` checks both, and the redirects are generated into `_redirects` at build time — there is no need
+to hand-edit `public/_redirects` for a rename.
+
+Redirects only apply to the deployed site. `astro dev` and `astro preview` serve straight from the filesystem, so
+an alias URL 404s locally even when it is correct.
 
 ## Configuration YAML files
 
