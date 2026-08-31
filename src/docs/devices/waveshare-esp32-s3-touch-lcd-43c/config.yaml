@@ -1,0 +1,382 @@
+################################################################################
+# ESP32-S3-Touch-LCD-4.3C  —  ESPHome 2026.5.x
+# Waveshare ESP32-S3-WROOM-1-N16R8 · 800×480 RGB LCD · GT911 touch
+# ES8311 DAC · ES7210 ADC · PCF85063 RTC · Isolated I/O (DI0/DI1, DO0/DO1)
+#
+# IO Expander: CH32V003 RISC-V MCU at I²C 0x24 (GPIO8 SDA, GPIO9 SCL)
+#   EXIO0  → DI0        (optocoupler digital input 0)
+#   EXIO1  → CTP_RST    (GT911 touch reset)
+#   EXIO2  → DISP       (LCD backlight enable — on/off)
+#   EXIO3  → PA_CTRL    (NS4150B power amp enable)
+#   EXIO4  → SDCS       (SD card chip select)
+#   EXIO5  → DI1        (optocoupler digital input 1)
+#   EXIO6  → DO0        (optocoupler digital output 0)
+#   EXIO7  → DO1        (optocoupler digital output 1)
+#   EXIO_PWM → BL_PWM   (backlight PWM brightness, inverted)
+#   EXIO_ADC → VBAT sense (battery voltage via 10K/20K divider → ×3 ref)
+################################################################################
+
+globals:
+  - id: screen_on
+    type: bool
+    restore_value: false
+    initial_value: "true"
+
+esphome:
+  name: display
+  friendly_name: Display
+  platformio_options:
+    build_flags:
+      - "-D LV_USE_OBSERVER=1"
+      # Enable when performance tuning
+      # - "-D LV_USE_SYSMON=1"
+      # - "-D LV_USE_PERF_MONITOR=1"
+      # - "-D LV_USE_MEM_MONITOR=1"
+      # - "-D LV_PERF_MONITOR_ALIGN_BOTTOM_RIGHT=1"
+      # - "-D LV_MEM_MONITOR_ALIGN_BOTTOM_LEFT=1"
+  on_boot:
+    priority: 600
+    then:
+      - light.turn_on:
+          id: backlight
+          brightness: 80%
+      - switch.turn_on: pa_ctrl
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_SPIRAM_USE_MALLOC: "y"
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNALLY: "y"
+      CONFIG_HEAP_TLSF_USE_ROM_IMPL: "y"
+      CONFIG_HEAP_CORRUPTION_DETECTION: "basic"
+      CONFIG_LV_MEMCPY_MEMSET_STD: "y"
+      CONFIG_ESP_MAIN_TASK_AFFINITY_CPU1: "y"
+    advanced:
+      compiler_optimization: PERF
+      execute_from_psram: true
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+# External component for CH32V003 IO expander
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/fuzzybear62/esphome-waveshare_io_ch32v003
+      ref: main
+    components: [waveshare_io_ch32v003]
+
+logger:
+  level: DEBUG
+
+wifi:
+  ap:
+
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  scan: true
+  id: bus_a
+
+waveshare_io_ch32v003:
+  id: waveshare_io_hub
+  i2c_id: bus_a
+  address: 0x24
+
+display:
+  - platform: mipi_rgb
+    model: RPI
+    id: lcd_display
+    auto_clear_enabled: false
+    update_interval: never
+    color_order: RGB
+    pclk_frequency: 20MHz  # Adjust downward if screen jitters
+    pclk_inverted: true
+    dimensions:
+      width: 800
+      height: 480
+    de_pin: GPIO5
+    hsync_pin:
+      number: GPIO46
+      ignore_strapping_warning: true
+    vsync_pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+    pclk_pin: GPIO7
+    hsync_back_porch: 30
+    hsync_front_porch: 210
+    hsync_pulse_width: 30
+    vsync_back_porch: 4
+    vsync_front_porch: 4
+    vsync_pulse_width: 4
+    data_pins:
+      red:
+        - GPIO1    # R3
+        - GPIO2    # R4
+        - GPIO42   # R5
+        - GPIO41   # R6
+        - GPIO40   # R7
+      green:
+        - GPIO39   # G2
+        - GPIO0    # G3
+        - GPIO45   # G4
+        - GPIO48   # G5
+        - GPIO47   # G6
+        - GPIO21   # G7
+      blue:
+        - GPIO14   # B3
+        - GPIO38   # B4
+        - GPIO18   # B5
+        - GPIO17   # B6
+        - GPIO10   # B7
+
+output:
+  - platform: waveshare_io_ch32v003
+    id: backlight_pwm_output
+    waveshare_io_ch32v003_id: waveshare_io_hub
+    inverted: true
+    zero_means_zero: true
+    safe_pwm_levels:
+      min_value: 0
+      max_value: 247
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: "Display Backlight"
+    output: backlight_pwm_output
+    restore_mode: RESTORE_AND_ON
+    default_transition_length: 200ms
+
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    interrupt_pin: GPIO4
+    reset_pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 1        # EXIO1 = CTP_RST
+      mode: OUTPUT
+    on_touch:
+      - light.turn_on:
+          id: backlight
+          brightness: 80%
+      - switch.turn_on: disp_enable
+      - lvgl.resume:
+
+time:
+  - platform: pcf85063
+    id: rtc_time
+    i2c_id: bus_a
+    address: 0x51
+    update_interval: 60s
+    on_time_sync:
+      then:
+        - logger.log: "RTC time synced"
+
+binary_sensor:
+  - platform: gpio
+    id: di0
+    name: "Digital Input 0"
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 0        # EXIO0 = DI0
+      mode: INPUT
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    device_class: connectivity
+
+  - platform: gpio
+    id: di1
+    name: "Digital Input 1"
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 5        # EXIO5 = DI1
+      mode: INPUT
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    device_class: connectivity
+
+  - platform: status
+    name: "Device Status"
+
+switch:
+  - platform: gpio
+    id: do0
+    name: "Digital Output 0"
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 6        # EXIO6 = DO0
+      mode: OUTPUT
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: do1
+    name: "Digital Output 1"
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 7        # EXIO7 = DO1
+      mode: OUTPUT
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: pa_ctrl
+    name: "Speaker"
+    internal: false
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 3        # EXIO3 = PA_CTRL
+      mode: OUTPUT
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    id: disp_enable
+    name: "Display"
+    internal: true
+    pin:
+      waveshare_io_ch32v003: waveshare_io_hub
+      number: 2        # EXIO2 = DISP
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+
+sensor:
+  - platform: waveshare_io_ch32v003
+    id: battery_voltage
+    name: "Battery Voltage"
+    waveshare_io_ch32v003_id: waveshare_io_hub
+    reference_voltage: 9.9
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+    device_class: voltage
+    state_class: measurement
+    update_interval: 60s
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "Uptime"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "Connected SSID"
+
+button:
+  - platform: restart
+    name: "Restart"
+
+  - platform: safe_mode
+    name: "Safe Mode Boot"
+
+  - platform: factory_reset
+    name: "Factory Reset"
+    disabled_by_default: true
+
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO16
+    i2s_bclk_pin: GPIO44
+    i2s_mclk_pin: GPIO6
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    bits_per_sample: 16bit
+    sample_rate: 44100
+
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+    bits_per_sample: 16bit
+    sample_rate: 44100
+    mic_gain: 24dB
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    i2s_audio_id: i2s_shared
+    i2s_dout_pin: GPIO15
+    dac_type: external
+    audio_dac: es8311_dac
+    channel: mono
+    sample_rate: 44100
+    bits_per_sample: 16bit
+    timeout: never
+
+  - platform: resampler
+    id: announcement_speaker
+    output_speaker: i2s_audio_speaker
+
+media_player:
+  - platform: speaker
+    name: "Display Speaker"
+    id: media_player_main
+    announcement_pipeline:
+      speaker: announcement_speaker
+      format: FLAC
+      sample_rate: 44100
+      num_channels: 1
+    on_play:
+      then:
+        - switch.turn_on: pa_ctrl
+    on_idle:
+      then:
+        - switch.turn_off: pa_ctrl
+
+microphone:
+  - platform: i2s_audio
+    id: va_mic
+    i2s_audio_id: i2s_shared
+    i2s_din_pin: GPIO43
+    adc_type: external
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+lvgl:
+  displays:
+    - lcd_display
+  touchscreens:
+    - touch_panel
+
+  log_level: WARN
+  color_depth: 16
+
+  on_idle:
+    timeout: 60s
+    then:
+      - globals.set:
+          id: screen_on
+          value: "false"
+      - light.turn_off:
+          id: backlight
+      - switch.turn_off: disp_enable
+      - lvgl.pause:
+
+  pages:
+    - id: page_main
+      bg_color: 0x111318
+      bg_opa: COVER
+      widgets:
+        - label:
+            x: 340
+            y: 220
+            text: "Hello World"
+            text_align: CENTER
+            text_font: MONTSERRAT_24
+            text_color: 0xFFFFFF
