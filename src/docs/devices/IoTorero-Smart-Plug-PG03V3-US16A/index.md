@@ -12,6 +12,8 @@ alias:
     slug: Athom-Smart-Plug-PG03V3-US16A
 ---
 
+**Just testing CI, do not merge. **
+
 ![alt text](athom-plug-us-v3.webp "IoTorero Smart Plug US V3 - PG03V3-US16A")
 
 The same plug is sold as **IoTorero** and as **Athom** - IoTorero is a rebranding of Athom, and the hardware and
