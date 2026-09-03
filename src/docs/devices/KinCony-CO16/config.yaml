@@ -1,0 +1,79 @@
+esphome:
+  name: kincony-co16
+  friendly_name: KinCony CO16
+  name_add_mac_suffix: true
+  min_version: 2026.5.3
+
+esp32:
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+# ESPHome does not support Ethernet and Wi-Fi at the same time. Remove this
+# block before adding a wifi: configuration.
+ethernet:
+  type: W5500
+  clk_pin: GPIO1
+  mosi_pin: GPIO2
+  miso_pin: GPIO41
+  cs_pin: GPIO42
+  interrupt_pin: GPIO43
+  reset_pin: GPIO44
+  clock_speed: 16MHz
+  interface: spi2
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/hzkincony/esphome-nx3l4051
+      ref: c3b3d5fe6a23e43875dab20dce9ee517a67e95a1
+    components:
+      - nx3l4051
+      - nx3l4051_max31865
+
+i2c:
+  sda: GPIO8
+  scl: GPIO18
+  frequency: 100kHz
+  scan: true
+
+pcf8574:
+  - id: co16_relay_hub
+    address: 0x22
+    pcf8575: true
+
+xl9535:
+  - id: co16_input_hub
+    address: 0x24
+
+ads1115:
+  - id: co16_adc_01_04
+    address: 0x48
+  - id: co16_adc_05_08
+    address: 0x49
+  - id: co16_adc_09_12
+    address: 0x4B
+  - id: co16_adc_13_16
+    address: 0x4A
+
+nx3l4051:
+  - id: co16_pt100_mux
+    pin_s1: GPIO7
+    pin_s2: GPIO21
+    pin_s3: LOW
+    delay: 20ms
+
