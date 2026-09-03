@@ -76,4 +76,3 @@ nx3l4051:
     pin_s2: GPIO21
     pin_s3: LOW
     delay: 20ms
-
