@@ -1,0 +1,122 @@
+substitutions:
+  name: "waveshare-touch-epaper-154"
+  friendly_name: "Waveshare Touch ePaper 1.54"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+  flash_size: 8MB
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG   # this board's only USB is native USB-JTAG
+
+# Add your own wifi: block with your credentials.
+
+# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), and PCF85063 RTC (0x51).
+i2c:
+  sda: GPIO47
+  scl: GPIO48
+  scan: true
+  id: bus_a
+
+# Single shared I2S bus. The ES8311 does both DAC (speaker) and ADC
+# (microphone) -- there is no separate ADC chip on this board, unlike the
+# RLCD-4.2 / S3-Audio-Board which pair ES8311 with an ES7210.
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO38
+    i2s_bclk_pin: GPIO15
+    i2s_mclk_pin: GPIO14
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    address: 0x18
+    i2c_id: bus_a
+    bits_per_sample: 16bit
+    sample_rate: 16000
+    # DO NOT set use_microphone: true on this board. It switches the ES8311's
+    # ADC input from analog (this board's mic) to PDM digital (a mic this
+    # board does not have), giving total silence with no error anywhere.
+    # The analog mic path is already enabled by default.
+    use_microphone: false
+    mic_gain: 24dB   # 30dB+ clipped into garbled STT in testing; 24dB was accurate.
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    i2s_audio_id: i2s_shared
+    i2s_dout_pin: GPIO45
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+microphone:
+  - platform: i2s_audio
+    id: va_mic
+    i2s_audio_id: i2s_shared
+    i2s_din_pin: GPIO16
+    adc_type: external
+    pdm: false
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+# Audio power rail (GPIO42, active LOW) and the battery latch (GPIO17).
+#
+# These MUST be `power_supply:`, not `switch: platform: gpio`. ESPHome setup
+# priorities (esphome/core/component.h):
+#     POWER    = 1200  <- power_supply with enable_on_boot on an internal pin
+#     BUS      = 1000  <- i2c
+#     IO       =  900
+#     HARDWARE =  800  <- switch: platform: gpio
+# A gpio switch is therefore set up AFTER i2c, so restore_mode: ALWAYS_ON does
+# NOT get the rail up before the bus scan. On a warm/OTA reboot you never notice,
+# because the rails are still powered from the previous run. On a true cold boot
+# the unpowered ES8311 holds SCL low and the whole bus dies:
+#     "Recovery failed: SCL is held LOW during clock pulse cycle"
+#     "Found no devices"          (plus an ~11s stall in i2c setup)
+# power_supply with enable_on_boot: true reports setup_priority::POWER, the tier
+# the core documents as "must be on before buses like i2c can work".
+power_supply:
+  - id: audio_power
+    pin:
+      number: GPIO42
+      inverted: true          # PA_EN P-FET: driving LOW turns the rail ON
+    enable_on_boot: true
+    keep_on_time: 0s
+  - id: vbat_power
+    pin: GPIO17               # battery power latch; harmless on USB power
+    enable_on_boot: true
+    keep_on_time: 0s
+  - platform: gpio
+    name: "Speaker Amp"
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_ON
+
+sensor:
+  - platform: shtcx
+    address: 0x70
+    i2c_id: bus_a
+    update_interval: 60s
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    pin:
+      number: GPIO0
+      inverted: true
+      mode: INPUT_PULLUP
