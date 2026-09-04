@@ -4,7 +4,7 @@ date-published: 2026-09-04
 type: misc
 standard: global
 board: esp32
-project-url: https://www.waveshare.com/esp32-s3-touch-epaper-1.54.htm
+project-url: https://docs.waveshare.com/ESP32-S3-ePaper-1.54
 made-for-esphome: false
 difficulty: 3
 ---
