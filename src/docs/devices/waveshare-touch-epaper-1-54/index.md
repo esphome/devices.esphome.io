@@ -45,7 +45,7 @@ audio — this is the single biggest time sink with this board family.
 | GPIO0  | BOOT button (active low)                                      |
 | GPIO4  | Battery voltage ADC (200K/200K divider)                       |
 | GPIO6  | e-paper panel power (inverted: LOW = on)                       |
-| GPIO8  | e-paper BUSY (inverted: idle HIGH / busy LOW)                  |
+| GPIO8  | e-paper BUSY (HIGH = busy, LOW = idle; NOT inverted)           |
 | GPIO9  | e-paper RESET                                                  |
 | GPIO10 | e-paper DC                                                     |
 | GPIO11 | e-paper CS                                                     |
@@ -104,16 +104,35 @@ plausible-looking-but-wrong config:
 - **`mic_gain: 24dB`** — 30dB and above clipped into garbled STT results in
   testing; 24dB gave accurate transcriptions.
 
-- **The `switch:` block for GPIO42/GPIO17 uses `restore_mode: ALWAYS_ON`,
-  not an `on_boot:` script.** ESPHome's `i2c:` component initializes at
-  priority 1000 — before almost everything else, including any `on_boot`
-  automation. If you gate the ES8311's power rail (GPIO42, active-low) from
-  `on_boot`, the I2C bus starts scanning/talking to the codec while its
-  power is still off. This can leave SCL stuck low and produce a scan full
-  of bogus addresses ("Performing bus recovery" / "SCL is held LOW" in the
-  logs). `restore_mode` is only a valid field on `switch: platform: gpio`
-  (not `output: platform: gpio`), and switch/GPIO setup happens early
-  enough to beat `i2c:`'s init.
+- **The GPIO42/GPIO17 rails use `power_supply:`, NOT
+  `switch: platform: gpio`.** This is easy to get wrong, and the failure only
+  shows up on a cold boot. ESPHome's setup priorities
+  (`esphome/core/component.h`) are:
+
+  ```text
+  POWER    = 1200   // "must be on before buses like i2c can work"
+  BUS      = 1000   // i2c
+  IO       =  900
+  HARDWARE =  800   // switch: platform: gpio
+  ```
+
+  A `gpio` switch is set up at 800 — *after* `i2c:` at 1000 — so
+  `restore_mode: ALWAYS_ON` does **not** guarantee the ES8311's rail is up
+  before the bus scan. You will not notice on warm or OTA reboots, because the
+  rails are still powered from the previous run. On a true cold boot the
+  unpowered codec holds SCL low and the entire bus fails:
+
+  ```text
+  [E][i2c.idf]: Recovery failed: SCL is held LOW during clock pulse cycle
+  [C][component]: Setup i2c took 11206ms
+  [C][i2c.idf]: Found no devices
+  ```
+
+  (no ES8311, no SHTC3, no RTC — and that ~11 s stall can itself cause a failed
+  boot and an OTA rollback). `power_supply:` with `enable_on_boot: true` reports
+  `setup_priority::POWER` on an internal pin, which genuinely precedes `i2c:`.
+  With it, a cold boot enumerates `0x18` (ES8311), `0x38` (touch controller),
+  `0x51` (PCF85063 RTC) and `0x70` (SHTC3).
 
 ## Voice Assistant Configuration
 

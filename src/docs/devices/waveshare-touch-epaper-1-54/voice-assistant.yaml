@@ -75,24 +75,33 @@ microphone:
     sample_rate: 16000
     bits_per_sample: 16bit
 
-# Audio power rail (GPIO42, active LOW) and NS4150B amp enable (GPIO46).
-# ALWAYS_ON on the switch platform applies the level during early switch/GPIO
-# setup, which happens BEFORE the i2c: component initialises (i2c: is
-# priority 1000). Gating this pin from an on_boot script instead is too late
-# and can leave the I2C bus mid-transaction with the codec at boot.
-switch:
-  - platform: gpio
-    id: audio_power
-    internal: true
+# Audio power rail (GPIO42, active LOW) and the battery latch (GPIO17).
+#
+# These MUST be `power_supply:`, not `switch: platform: gpio`. ESPHome setup
+# priorities (esphome/core/component.h):
+#     POWER    = 1200  <- power_supply with enable_on_boot on an internal pin
+#     BUS      = 1000  <- i2c
+#     IO       =  900
+#     HARDWARE =  800  <- switch: platform: gpio
+# A gpio switch is therefore set up AFTER i2c, so restore_mode: ALWAYS_ON does
+# NOT get the rail up before the bus scan. On a warm/OTA reboot you never notice,
+# because the rails are still powered from the previous run. On a true cold boot
+# the unpowered ES8311 holds SCL low and the whole bus dies:
+#     "Recovery failed: SCL is held LOW during clock pulse cycle"
+#     "Found no devices"          (plus an ~11s stall in i2c setup)
+# power_supply with enable_on_boot: true reports setup_priority::POWER, the tier
+# the core documents as "must be on before buses like i2c can work".
+power_supply:
+  - id: audio_power
     pin:
       number: GPIO42
-      inverted: true
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: vbat_power
-    internal: true
-    pin: GPIO17
-    restore_mode: ALWAYS_ON   # battery power latch; harmless on USB power
+      inverted: true          # PA_EN P-FET: driving LOW turns the rail ON
+    enable_on_boot: true
+    keep_on_time: 0s
+  - id: vbat_power
+    pin: GPIO17               # battery power latch; harmless on USB power
+    enable_on_boot: true
+    keep_on_time: 0s
 
 media_player:
   - platform: speaker
