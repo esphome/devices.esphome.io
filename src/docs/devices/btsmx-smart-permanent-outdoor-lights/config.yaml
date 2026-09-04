@@ -25,7 +25,7 @@ light:
     pin: P16
     chipset: SM16703
     num_leds: 24
-    rgb_order: RBG
+    channel_colors: RBG
     power_supply: led_power
     effects:
       - random:
