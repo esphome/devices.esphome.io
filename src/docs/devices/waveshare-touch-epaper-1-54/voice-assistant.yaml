@@ -1,0 +1,186 @@
+substitutions:
+  name: "waveshare-touch-epaper-154"
+  friendly_name: "Waveshare Touch ePaper 1.54"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+  flash_size: 8MB
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG   # this board's only USB is native USB-JTAG
+
+# Add your own wifi: block with your credentials.
+
+api:
+ota:
+  - platform: esphome
+
+# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), and PCF85063 RTC (0x51).
+i2c:
+  sda: GPIO47
+  scl: GPIO48
+  scan: true
+  id: bus_a
+
+# Single shared I2S bus. The ES8311 does both DAC (speaker) and ADC
+# (microphone) -- there is no separate ADC chip on this board, unlike the
+# RLCD-4.2 / S3-Audio-Board which pair ES8311 with an ES7210.
+i2s_audio:
+  - id: i2s_shared
+    i2s_lrclk_pin: GPIO38
+    i2s_bclk_pin: GPIO15
+    i2s_mclk_pin: GPIO14
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    address: 0x18
+    i2c_id: bus_a
+    bits_per_sample: 16bit
+    sample_rate: 16000
+    # DO NOT set use_microphone: true on this board. It switches the ES8311's
+    # ADC input from analog (this board's mic) to PDM digital (a mic this
+    # board does not have), giving total silence with no error anywhere.
+    # The analog mic path is already enabled by default.
+    use_microphone: false
+    mic_gain: 24dB   # 30dB+ clipped into garbled STT in testing; 24dB was accurate.
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_audio_speaker
+    i2s_audio_id: i2s_shared
+    i2s_dout_pin: GPIO45
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+microphone:
+  - platform: i2s_audio
+    id: va_mic
+    i2s_audio_id: i2s_shared
+    i2s_din_pin: GPIO16
+    adc_type: external
+    pdm: false
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+# Audio power rail (GPIO42, active LOW) and NS4150B amp enable (GPIO46).
+# ALWAYS_ON on the switch platform applies the level during early switch/GPIO
+# setup, which happens BEFORE the i2c: component initialises (i2c: is
+# priority 1000). Gating this pin from an on_boot script instead is too late
+# and can leave the I2C bus mid-transaction with the codec at boot.
+switch:
+  - platform: gpio
+    id: audio_power
+    internal: true
+    pin:
+      number: GPIO42
+      inverted: true
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    id: vbat_power
+    internal: true
+    pin: GPIO17
+    restore_mode: ALWAYS_ON   # battery power latch; harmless on USB power
+
+media_player:
+  - platform: speaker
+    id: spk_player
+    name: None
+    announcement_pipeline:
+      speaker: i2s_audio_speaker
+      format: FLAC
+      sample_rate: 16000
+      num_channels: 1
+    media_pipeline:
+      speaker: i2s_audio_speaker
+      format: FLAC
+      sample_rate: 16000
+      num_channels: 1
+    # micro_wake_word OWNS the microphone. Hand the shared I2S bus over with
+    # micro_wake_word.stop / .start ONLY. Do not add microphone.capture /
+    # microphone.stop_capture actions anywhere in this config: an explicit
+    # capture call creates a SECOND, independent claim on the mic that
+    # micro_wake_word.stop cannot release, which pins the bus open and makes
+    # every later playback attempt fail forever with "Parent bus is busy"
+    # (not the harmless one-off retry -- an infinite retry loop). This is
+    # easy to reproduce: a single announcement works, then the first full
+    # voice pipeline run adds the extra claim and all subsequent playback
+    # deadlocks.
+    on_play:
+      - micro_wake_word.stop:
+    on_announcement:
+      - micro_wake_word.stop:
+    on_idle:
+      - script.execute: restart_mww
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: va_mic
+    channels: 0
+    gain_factor: 4   # default of 1 leaves the model too quiet to ever hit its cutoff
+  models:
+    - model: hey_jarvis
+  on_wake_word_detected:
+    - voice_assistant.start:
+
+voice_assistant:
+  id: va
+  microphone: va_mic
+  media_player: spk_player
+  use_wake_word: false   # micro_wake_word handles the wake word instead
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+  on_client_connected:
+    - micro_wake_word.start:
+  on_client_disconnected:
+    - micro_wake_word.stop:
+  on_error:
+    - micro_wake_word.start:
+  # on_end fires BEFORE the TTS response actually plays -- it must NOT touch
+  # the mic/bus here. media_player's on_idle (above) is the sole place that
+  # reacquires the bus, once the speaker has actually finished.
+
+script:
+  - id: restart_mww
+    then:
+      - wait_until:
+          not:
+            media_player.is_announcing:
+      - wait_until:
+          not:
+            speaker.is_playing:
+              id: i2s_audio_speaker
+      - delay: 100ms
+      - micro_wake_word.start:
+
+sensor:
+  - platform: shtcx
+    address: 0x70
+    i2c_id: bus_a
+    update_interval: 60s
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    pin:
+      number: GPIO0
+      inverted: true
+      mode: INPUT_PULLUP
