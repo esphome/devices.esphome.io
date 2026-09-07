@@ -72,10 +72,11 @@ logger:
 api:
   encryption:
     key: ""
-
+    
 ota:
   - platform: esphome
-    password: !secret ota_mousepad
+    encryption:
+
     
 wifi:
   ssid: !secret wifi_ssid
