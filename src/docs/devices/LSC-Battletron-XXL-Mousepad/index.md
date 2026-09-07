@@ -82,7 +82,7 @@ wifi:
   password: !secret wifi_password
   ap:
     ssid: "Mousepad Fallback Hotspot"
-    password: "urv6OEvKVl8a"
+    password: ""
     
 captive_portal:
 
