@@ -11,11 +11,14 @@
  *   2. Downloads the whole upstream repo tree at the pinned ref (not just the
  *      one file) so relative `!include`s and sibling packages resolve exactly
  *      as they do upstream.
- *   3. Writes a `secrets.yaml` next to the config containing ONLY placeholder
- *      `wifi_ssid` / `wifi_password` — the pair the ESPHome Builder supplies
- *      on adoption. A dependency on any OTHER `!secret` therefore makes
- *      expansion fail, which is itself a valid "does not build without user
- *      secrets" finding.
+ *   3. Writes a `secrets.yaml` next to the config containing placeholder
+ *      `wifi_ssid` / `wifi_password`. Those placeholders are OURS, not the
+ *      manufacturer's: they exist so that a config which (wrongly) references
+ *      that pair still expands and compiles, letting us report the whole
+ *      checklist instead of one opaque expansion error. A dependency on any
+ *      OTHER `!secret` makes expansion fail, which is itself a valid "does
+ *      not build without user secrets" finding. Either way, a shipped config
+ *      must reference no secrets at all - see check 11.
  *   4. Runs `esphome config <file>` to fully expand packages/includes/removes
  *      and validate the schema, capturing the expanded document.
  *   5. If that succeeds, runs `esphome compile <file>` to prove the config
@@ -68,13 +71,28 @@ import yaml from "js-yaml";
 const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
 const YAML_EXT = /\.ya?ml$/i;
 
-// The only secrets we provide. Any config that references anything else fails
-// `esphome config` — surfaced as a "depends on user secrets" finding.
+// Placeholder values this script injects into a `secrets.yaml` of its own so
+// `esphome config` / `esphome compile` can run against the manufacturer's
+// config at all. This is NOT an allowlist: a shipped config that references
+// `!secret wifi_ssid` / `!secret wifi_password` still fails the "no secrets in
+// the configuration" checklist item. The placeholders only keep the compile
+// step meaningful, so that failure is reported alongside the rest of the
+// checklist rather than replacing it. Any config referencing a secret we do
+// not define fails `esphome config`, surfaced as a "depends on user secrets"
+// finding instead.
 const PLACEHOLDER_SECRETS: Record<string, string> = {
   wifi_ssid: "placeholder_ssid",
   wifi_password: "placeholder_password",
 };
-const ALLOWED_SECRET_NAMES = new Set(Object.keys(PLACEHOLDER_SECRETS));
+
+// Body of the `secrets.yaml` we drop next to the manufacturer's config.
+function placeholderSecretsYaml(): string {
+  return (
+    Object.entries(PLACEHOLDER_SECRETS)
+      .map(([k, v]) => `${k}: "${v}"`)
+      .join("\n") + "\n"
+  );
+}
 
 const CHECKLIST_URL =
   "https://github.com/esphome/esphome-devices/blob/main/.github/made-for-esphome-checklist.md";
@@ -508,10 +526,11 @@ function classifyConfigError(r: ExecResult): {
   if (secret) {
     return {
       message:
-        `config depends on \`!secret ${secret[1]}\` — the ESPHome Builder only ` +
-        "supplies `wifi_ssid`/`wifi_password` on adoption, so this will not " +
-        "build out of the box. Provide a sensible default in the config instead " +
-        "of requiring the user to define this secret.",
+        `config depends on \`!secret ${secret[1]}\`, which is not defined. A ` +
+        "shipped Made for ESPHome configuration must reference no secrets at " +
+        "all, so this will not build out of the box. Provide a sensible " +
+        "default in the config instead of requiring the user to define this " +
+        "secret.",
       network: false,
     };
   }
@@ -605,11 +624,12 @@ function describeMissingId(m: MissingId): string {
   return `\`${m.domain}\`${plat}${label}`;
 }
 
-// Walk the expanded tree for password/psk keys carrying a baked-in credential.
-// After `esphome config`, `!secret` refs survive as `"!secret <name>"` strings;
-// the only defined secrets are the wifi pair, so a surviving `!secret` is
-// always user-supplied wifi creds and is fine. Any non-empty literal is a
-// baked-in password and is flagged.
+// Walk the expanded tree for password/psk keys carrying a credential. After
+// `esphome config`, `!secret` refs survive as `"!secret <name>"` strings. Made
+// for ESPHome permits neither form on a password key: a literal is a baked-in
+// password, and a `!secret` reference (the `wifi_password` pair included) is
+// a credential the user must supply before the config works. Only an empty
+// value (e.g. ota `password: ""`) passes.
 const PASSWORD_KEY = /^([\w-]*password[\w-]*|psk)$/i;
 
 function collectBakedPasswords(
@@ -632,12 +652,9 @@ function collectBakedPasswords(
       if (trimmed === "") {
         // empty password (e.g. ota `password: ""`) is fine
       } else if (isSecretRef) {
-        // Surviving !secret => wifi pair (only defined secrets) => fine.
-        if (!ALLOWED_SECRET_NAMES.has(isSecretRef[1])) {
-          out.push(
-            `\`${[...pathStack, key].join(".")}\` references \`!secret ${isSecretRef[1]}\``
-          );
-        }
+        out.push(
+          `\`${[...pathStack, key].join(".")}\` references \`!secret ${isSecretRef[1]}\``
+        );
       } else {
         out.push(`\`${[...pathStack, key].join(".")}\` has a baked-in value`);
       }
@@ -646,16 +663,18 @@ function collectBakedPasswords(
   }
 }
 
-// Any non-wifi `!secret` that survived expansion (belt-and-suspenders: config
-// would normally have failed first).
-function collectStraySecrets(text: string): Set<string> {
-  const stray = new Set<string>();
+// Every `!secret` reference that survived expansion, the `wifi_ssid` /
+// `wifi_password` pair included. A Made for ESPHome configuration ships with
+// no secrets at all: users provision their own Wi-Fi credentials over Improv,
+// so anything baked in only leaves dummy values sitting in device storage.
+// Secrets belong in the configuration a user ends up with AFTER taking
+// control, never in what the manufacturer ships.
+function collectSecretRefs(text: string): Set<string> {
+  const refs = new Set<string>();
   const re = /!secret\s+'?([A-Za-z0-9_]+)'?/g;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    if (!ALLOWED_SECRET_NAMES.has(m[1])) stray.add(m[1]);
-  }
-  return stray;
+  while ((m = re.exec(text)) !== null) refs.add(m[1]);
+  return refs;
 }
 
 function collectManualIps(cfg: Record<string, unknown>): string[] {
@@ -830,17 +849,20 @@ function runChecklist(
     status: bakedPasswords.length ? "FAIL" : "OK",
     detail: bakedPasswords.length
       ? bakedPasswords.join("; ")
-      : "no baked-in passwords (user-supplied Wi-Fi secrets are fine)",
+      : "no passwords on any `password:`/`psk:` key",
   });
 
-  // 11. No secret references beyond the Wi-Fi pair.
-  const stray = collectStraySecrets(expandedText);
+  // 11. No secret references at all: the Wi-Fi pair is not exempt.
+  const secretRefs = collectSecretRefs(expandedText);
   checks.push({
-    item: "No references to non-standard secrets",
-    status: stray.size ? "FAIL" : "OK",
-    detail: stray.size
-      ? `references \`!secret\`: ${[...stray].map((s) => `\`${s}\``).join(", ")}`
-      : "only the standard `wifi_ssid`/`wifi_password` pair is referenced",
+    item: "No references to secrets in the configuration",
+    status: secretRefs.size ? "FAIL" : "OK",
+    detail: secretRefs.size
+      ? `references ${[...secretRefs]
+          .map((s) => `\`!secret ${s}\``)
+          .join(", ")}. The shipped configuration must contain no secrets; ` +
+        "users provision their own credentials after taking control"
+      : "no `!secret` references",
   });
 
   // 12. No static IPs.
@@ -876,7 +898,7 @@ function runChecklist(
           : "NEEDS-HUMAN-CHECK";
   const compileDetail =
     compile === "PASS"
-      ? "`esphome compile` succeeded with only placeholder Wi-Fi secrets"
+      ? "`esphome compile` succeeded against the configuration as shipped"
       : compile === "FAIL"
         ? "`esphome compile` failed — see the compile log above"
         : compile === "INCONCLUSIVE"
@@ -1288,11 +1310,14 @@ async function reviewPage(
   }
   const configDir = path.dirname(configFile);
 
-  // 3. Placeholder secrets next to the config.
-  const secretsBody = Object.entries(PLACEHOLDER_SECRETS)
-    .map(([k, v]) => `${k}: "${v}"`)
-    .join("\n");
-  fs.writeFileSync(path.join(configDir, "secrets.yaml"), secretsBody + "\n");
+  // 3. Placeholder secrets next to the config, so a config that references
+  //    the Wi-Fi pair still expands and compiles. Referencing it is still a
+  //    checklist failure (check 11); this only keeps the compile step, and
+  //    therefore the rest of the report, meaningful.
+  fs.writeFileSync(
+    path.join(configDir, "secrets.yaml"),
+    placeholderSecretsYaml()
+  );
 
   // 4. Expand + validate.
   const configTimeout = Number(process.env.CONFIG_TIMEOUT_MS ?? 180000);
@@ -1432,7 +1457,7 @@ function renderPage(r: PageResult): string {
   }
   lines.push("- ✅ `esphome config` — configuration expands and validates");
   if (r.compile === "PASS") {
-    lines.push("- ✅ `esphome compile` — builds with only placeholder Wi-Fi secrets");
+    lines.push("- ✅ `esphome compile` — builds as shipped, without user changes");
   } else if (r.compile === "FAIL") {
     lines.push("- ❌ `esphome compile` — failed to build (see log below)");
   } else if (r.compile === "INCONCLUSIVE") {
@@ -1481,8 +1506,8 @@ function buildReport(pages: PageResult[]): string {
     lines.push("");
     lines.push(
       "All automated Made for ESPHome checks pass. Each page below was compiled " +
-        "from its linked upstream config with only placeholder Wi-Fi secrets, " +
-        `then checked against the [Made for ESPHome checklist](${CHECKLIST_URL}). ` +
+        "from its linked upstream config exactly as shipped, then checked " +
+        `against the [Made for ESPHome checklist](${CHECKLIST_URL}). ` +
         "A maintainer will take a final look before approval. Items marked ⚠️ " +
         "still need a human to confirm (e.g. whether the hardware has a USB port)."
     );
@@ -1492,8 +1517,8 @@ function buildReport(pages: PageResult[]): string {
     lines.push(
       `The automated Made for ESPHome checks found blocking issues on ` +
         `**${blocking.length} page${blocking.length === 1 ? "" : "s"}**. ` +
-        "Each page below was compiled from its linked upstream config with only " +
-        "placeholder Wi-Fi secrets, then checked against the " +
+        "Each page below was compiled from its linked upstream config exactly " +
+        "as shipped, then checked against the " +
         `[Made for ESPHome checklist](${CHECKLIST_URL}). ` +
         "Address the items marked ❌ and push an update — this review refreshes " +
         "automatically and is dismissed once the checks pass. Items marked ⚠️ " +
@@ -1705,7 +1730,8 @@ export {
   collectMissingIds,
   collectBakedPasswords,
   collectManualIps,
-  collectStraySecrets,
+  collectSecretRefs,
+  placeholderSecretsYaml,
   runChecklist,
   pageBlocks,
   buildReport,
