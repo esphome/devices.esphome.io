@@ -1,0 +1,106 @@
+# Hardware definition for the Petkit Fresh Element Mini (P530). The ESP8266
+# exchanges commands and status with the original Nuvoton ISD91230 motor
+# controller; the Nuvoton continues to drive the motor, outlet, indicators,
+# beeper, and sensors.
+
+substitutions:
+  name: petkit-feeder
+  friendly_name: Petkit Feeder
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.9.0b1
+  project:
+    name: petkit.fresh-element-mini
+    version: "0.1"
+
+esp8266:
+  board: esp_wroom_02
+  restore_from_flash: true
+
+# UART0 is the motor-controller bus. The board's TX1 pad is connected to the
+# transmit-only UART1 on GPIO2, so logging cannot transmit into that bus.
+logger:
+  baud_rate: 115200
+  hardware_uart: UART1
+  level: INFO
+
+external_components:
+  - source: github://wrobelda/petkit-element-mini-esphome
+    components:
+      - petkit_feeder
+
+# The feeder's battery-backed RTC preserves time through a power or network
+# outage. The complete project configuration adds schedule policy and time
+# synchronization.
+i2c:
+  id: rtc_bus
+  sda: GPIO5
+  scl: GPIO14
+  scan: false
+
+time:
+  - platform: pcf8563
+    id: hardware_time
+    i2c_id: rtc_bus
+    address: 0x51
+    update_interval: never
+
+uart:
+  id: bus
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  baud_rate: 115200
+
+petkit_feeder:
+  id: feeder
+  uart_id: bus
+  reset_pin:
+    number: GPIO15
+    inverted: true
+  send_init_sequence: true
+  update_interval: 10s
+  dispenser_door_sensor:
+    name: "Dispenser door feedback (raw)"
+  food_detected:
+    name: "Food detected"
+  dispenser_wheel_sensor:
+    name: "Dispenser wheel feedback (raw)"
+  adapter_voltage:
+    name: "Adapter voltage"
+  battery_voltage:
+    name: "Battery voltage"
+  adapter_adc:
+    name: "Adapter ADC"
+  battery_adc:
+    name: "Battery ADC"
+  power_source:
+    name: "Power source"
+
+binary_sensor:
+  - platform: gpio
+    name: "Manual feed button"
+    pin:
+      number: GPIO13
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 30ms
+    on_press:
+      - lambda: 'id(feeder).manual_feed_start();'
+    on_release:
+      - lambda: 'id(feeder).manual_feed_stop();'
+
+  - platform: gpio
+    name: "Wi-Fi reset button"
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 30ms
