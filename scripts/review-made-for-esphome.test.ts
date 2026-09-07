@@ -191,6 +191,37 @@ test("collectSecretRefs catches every secret, wifi pair included", () => {
   assert.equal(collectSecretRefs("wifi:\n  ap: {}\n").size, 0);
 });
 
+// Secret names are arbitrary YAML keys. A name-character class of
+// `[A-Za-z0-9_]` truncated hyphenated names (merging `ha-key` and `ha-token`
+// into one `ha`) and matched no double-quoted name at all, which made the
+// check silently pass on `!secret "wifi_ssid"`.
+test("collectSecretRefs handles quoted, hyphenated and flow-style names", () => {
+  assert.deepEqual([...collectSecretRefs('a: !secret "wifi_ssid"')], [
+    "wifi_ssid",
+  ]);
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret ha-key\nb: !secret ha-token")].sort(),
+    ["ha-key", "ha-token"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret 'ha-key'")], ["ha-key"]);
+  // Flow sequences and trailing comments must not swallow the terminator.
+  assert.deepEqual(
+    [...collectSecretRefs("a: [!secret one, !secret two]")].sort(),
+    ["one", "two"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret three # comment")], [
+    "three",
+  ]);
+  // The same name in different quoting styles is one secret.
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret k\nb: !secret 'k'\nc: !secret \"k\"")],
+    ["k"]
+  );
+  // The regex is module-level; a previous call must not leave lastIndex set.
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
+});
+
 test("stripAnsi removes literal and real escape sequences", () => {
   assert.equal(stripAnsi("\\033[8m\\033[28m"), "");
   assert.equal(stripAnsi("\\033[8mmotor-1\\033[28m"), "motor-1");

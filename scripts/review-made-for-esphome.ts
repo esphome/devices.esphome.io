@@ -669,11 +669,22 @@ function collectBakedPasswords(
 // so anything baked in only leaves dummy values sitting in device storage.
 // Secrets belong in the configuration a user ends up with AFTER taking
 // control, never in what the manufacturer ships.
+//
+// Secret names are arbitrary YAML keys, so match all three forms `esphome
+// config` can emit: double-quoted, single-quoted, and bare. A bare name runs
+// to the first whitespace or YAML flow terminator. Matching only
+// `[A-Za-z0-9_]` would truncate a hyphenated name (`ha-key` -> `ha`, merging
+// distinct secrets) and miss a double-quoted one entirely, which would make
+// this check silently pass.
+const SECRET_REF_RE = /!secret\s+(?:"([^"]+)"|'([^']+)'|([^\s,\]}#]+))/g;
+
 function collectSecretRefs(text: string): Set<string> {
   const refs = new Set<string>();
-  const re = /!secret\s+'?([A-Za-z0-9_]+)'?/g;
+  SECRET_REF_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) refs.add(m[1]);
+  while ((m = SECRET_REF_RE.exec(text)) !== null) {
+    refs.add(m[1] ?? m[2] ?? m[3]);
+  }
   return refs;
 }
 
@@ -898,7 +909,8 @@ function runChecklist(
           : "NEEDS-HUMAN-CHECK";
   const compileDetail =
     compile === "PASS"
-      ? "`esphome compile` succeeded against the configuration as shipped"
+      ? "`esphome compile` succeeded, with only a placeholder `secrets.yaml` " +
+        "supplied by this review"
       : compile === "FAIL"
         ? "`esphome compile` failed — see the compile log above"
         : compile === "INCONCLUSIVE"
@@ -1457,7 +1469,10 @@ function renderPage(r: PageResult): string {
   }
   lines.push("- ✅ `esphome config` — configuration expands and validates");
   if (r.compile === "PASS") {
-    lines.push("- ✅ `esphome compile` — builds as shipped, without user changes");
+    lines.push(
+      "- ✅ `esphome compile` — builds with only a placeholder `secrets.yaml` " +
+        "supplied by this review"
+    );
   } else if (r.compile === "FAIL") {
     lines.push("- ❌ `esphome compile` — failed to build (see log below)");
   } else if (r.compile === "INCONCLUSIVE") {
@@ -1506,8 +1521,9 @@ function buildReport(pages: PageResult[]): string {
     lines.push("");
     lines.push(
       "All automated Made for ESPHome checks pass. Each page below was compiled " +
-        "from its linked upstream config exactly as shipped, then checked " +
-        `against the [Made for ESPHome checklist](${CHECKLIST_URL}). ` +
+        "from its linked upstream config, with only a placeholder " +
+        "`secrets.yaml` supplied by this review, then checked against the " +
+        `[Made for ESPHome checklist](${CHECKLIST_URL}). ` +
         "A maintainer will take a final look before approval. Items marked ⚠️ " +
         "still need a human to confirm (e.g. whether the hardware has a USB port)."
     );
@@ -1517,9 +1533,9 @@ function buildReport(pages: PageResult[]): string {
     lines.push(
       `The automated Made for ESPHome checks found blocking issues on ` +
         `**${blocking.length} page${blocking.length === 1 ? "" : "s"}**. ` +
-        "Each page below was compiled from its linked upstream config exactly " +
-        "as shipped, then checked against the " +
-        `[Made for ESPHome checklist](${CHECKLIST_URL}). ` +
+        "Each page below was compiled from its linked upstream config, with " +
+        "only a placeholder `secrets.yaml` supplied by this review, then " +
+        `checked against the [Made for ESPHome checklist](${CHECKLIST_URL}). ` +
         "Address the items marked ❌ and push an update — this review refreshes " +
         "automatically and is dismissed once the checks pass. Items marked ⚠️ " +
         "need a human to confirm (e.g. whether the hardware has a USB port)."
