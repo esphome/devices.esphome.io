@@ -8,6 +8,11 @@ difficulty: 4
 project-url: https://github.com/wrobelda/petkit-element-mini-esphome
 ---
 
+![Petkit Fresh Element Mini](petkit-fresh-element-mini.jpg "Petkit Fresh Element Mini")
+
+*Product image: [PETKIT](https://petkit.com), archived by the
+[Internet Archive](https://web.archive.org/).*
+
 ## Product description
 
 The Petkit Fresh Element Mini, product code P530, is an automatic dry-food pet
