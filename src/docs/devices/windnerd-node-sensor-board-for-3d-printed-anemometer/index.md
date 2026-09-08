@@ -29,9 +29,7 @@ The board can therefore be used not only as a wind sensor, but also as the basis
 - Maker: [https://windnerd.net](https://windnerd.net)
 - GitHub: [https://github.com/windnerd-labs/WindNerd-Node](https://github.com/windnerd-labs/WindNerd-Node)
 
-
 ## Configuration
 
 ```yaml url=https://github.com/windnerd-labs/WindNerd-Node/blob/main/example/esphome/factory.yaml
 ```
-
