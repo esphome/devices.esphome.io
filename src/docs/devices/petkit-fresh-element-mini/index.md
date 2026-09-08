@@ -20,15 +20,15 @@ feeder with an ESP8266 Wi-Fi module. ESPHome replaces the stock cloud firmware
 on that module and communicates with the feeder's ISD91230 motor controller,
 so no additional microcontroller or motor rewiring is required.
 
-This is not a board revision of the ESP32-based Fresh Element Solo. The Mini
-uses two processors:
+The Mini uses two processors:
 
 - the ESP8266 handles Wi-Fi, schedules, and high-level control;
 - a Nuvoton ISD91230 Cortex-M0 controls the motor, outlet, indicators, beeper,
   and sensors.
 
 Keeping the ISD91230 motor controller preserves its motion and door-safety
-logic.
+logic. The ESP32-based Fresh Element Solo is a different device and requires
+its own configuration.
 
 ## Hardware
 
@@ -71,12 +71,14 @@ uses the feeder's stock OTA client and an intermediate transition image.
 
 Follow the project's [wireless installation
 guide](https://github.com/wrobelda/petkit-element-mini-esphome#installation).
-It uses the separate [Petkit compatibility
-server](https://github.com/wrobelda/petkit-compat-server) for SoftAP
-provisioning and the first stock-format update. Lower-to-upper slot relocation
-is automatic when required; uploading the final ESPHome factory image through
-the transition image's authenticated web interface is currently a separate
-step.
+The guided installer provisions the feeder, installs Kickstart, saves a recovery
+image, and uploads the final ESPHome firmware. The guide also provides a manual
+procedure for development and diagnosis.
+
+The [Petkit compatibility server](https://github.com/wrobelda/petkit-compat-server)
+handles provisioning and the stock-format update. Kickstart then performs the
+non-OS V2 to eboot V1 layout transition, relocating to the upper application
+slot automatically when needed.
 
 ## Configuration
 
@@ -86,13 +88,5 @@ step.
 
 The configuration above describes the feeder hardware. The complete project
 adds the local schedules, controls, indicator policy, encrypted Home Assistant
-API, hardware tests, wireless migration bridge, and installation tutorial.
+API, and wireless installer.
 After migration, normal ESPHome OTA updates are supported.
-
-## Validation
-
-The UART framing and command behavior were checked against logic captures and
-both stock processors' firmware. On-device tests covered startup, sensor and
-power reporting, manual and Home Assistant feeding, 1/2/3-serving counted
-motion, local schedules, motor-controller reset, the complete wireless
-stock-to-Kickstart-to-ESPHome migration, and a subsequent standard ESPHome OTA.
