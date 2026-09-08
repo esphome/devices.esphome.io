@@ -1,5 +1,5 @@
 # Hardware definition for the Petkit Fresh Element Mini (P530). The ESP8266
-# exchanges commands and status with the original Nuvoton ISD91230 motor
+# exchanges commands and status with the Nuvoton ISD91230 motor
 # controller; the Nuvoton continues to drive the motor, outlet, indicators,
 # beeper, and sensors.
 
@@ -61,12 +61,12 @@ petkit_feeder:
     inverted: true
   send_init_sequence: true
   update_interval: 10s
-  dispenser_door_sensor:
-    name: "Dispenser door feedback (raw)"
+  dispenser_door_feedback:
+    name: "Dispenser door sensor level"
   food_detected:
     name: "Food detected"
-  dispenser_wheel_sensor:
-    name: "Dispenser wheel feedback (raw)"
+  dispenser_wheel_feedback:
+    name: "Dispenser wheel sensor level"
   adapter_voltage:
     name: "Adapter voltage"
   battery_voltage:

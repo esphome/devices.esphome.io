@@ -17,7 +17,7 @@ project-url: https://github.com/wrobelda/petkit-element-mini-esphome
 
 The Petkit Fresh Element Mini, product code P530, is an automatic dry-food pet
 feeder with an ESP8266 Wi-Fi module. ESPHome replaces the stock cloud firmware
-on that module and communicates with the feeder's original motor controller,
+on that module and communicates with the feeder's ISD91230 motor controller,
 so no additional microcontroller or motor rewiring is required.
 
 This is not a board revision of the ESP32-based Fresh Element Solo. The Mini
@@ -27,7 +27,7 @@ uses two processors:
 - a Nuvoton ISD91230 Cortex-M0 controls the motor, outlet, indicators, beeper,
   and sensors.
 
-Keeping the original motor controller preserves its motion and door-safety
+Keeping the ISD91230 motor controller preserves its motion and door-safety
 logic.
 
 ## Hardware
@@ -56,7 +56,7 @@ UART0.
 - outlet open, close, timeout recovery, and motor-controller reset;
 - four schedules stored and evaluated on the feeder;
 - battery-backed time through the PCF8563 RTC;
-- food detection, outlet and wheel feedback;
+- food detection, plus numeric outlet-door and wheel sensor levels;
 - adapter and battery voltage, plus a mains/battery power-source sensor;
 - upper Wi-Fi indicator and beeper control;
 - normal ESPHome OTA after the initial migration.
