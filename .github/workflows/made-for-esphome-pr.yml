@@ -52,7 +52,9 @@ jobs:
       github.event_name == 'pull_request_target'
       && !contains(github.event.pull_request.labels.*.name, 'made-for-esphome')
     permissions:
-      contents: read  # to check out the script below
+      contents: read  # to check out the script below and read the changed pages
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # to convert the PR to a draft and comment on it
     steps:
       - name: Checkout scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -61,17 +63,12 @@ jobs:
             .github/scripts
           sparse-checkout-cone-mode: false
 
-      - name: Generate a token
-        id: generate-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
-        with:
-          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
-
+      # Uses the default GITHUB_TOKEN rather than the app token: intake reads
+      # the changed pages through the contents API, and pull_request_target
+      # already runs in the base-repo context with write access.
       - name: Draft and label the pull request
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
-          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const script = require('./.github/scripts/mfe-intake.cjs');
             await script({ github, context, core });

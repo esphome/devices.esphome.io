@@ -6,19 +6,27 @@
 // and the rest of the checks are green, at which point mfe-promote.cjs marks it
 // ready for review and labels it for a human reviewer.
 //
-// Loaded by .github/workflows/made-for-esphome-pr.yml via actions/github-script
-// as the esphome[bot] app. It reads the diff through the API and never checks
-// out the PR's code. Exported as a function so it can be linted
+// Loaded by .github/workflows/made-for-esphome-pr.yml via actions/github-script.
+// It reads the diff and the pages through the API and never checks out the
+// PR's code. Exported as a function so it can be linted
 // (`node --check`) and unit-tested with a mocked GitHub client.
 const MFE_LABEL = "made-for-esphome";
 
 // Hidden marker so the intake comment stays recognisable.
 const MARKER = "<!-- made-for-esphome-intake -->";
 
-// Device pages are `src/docs/devices/<device>/index.md`; the flag only counts
-// as newly added when the diff adds the frontmatter line.
+// Device pages are `src/docs/devices/<device>/index.md`.
 const DEVICE_PAGE = /^src\/docs\/devices\/[^/]+\/index\.mdx?$/i;
-const FLAG_ADDED = /^\+\s*made-for-esphome:\s*(?:true|True)\s*$/m;
+
+// Cheap negative filter over a diff: adding the flag to the frontmatter always
+// shows up as an added `made-for-esphome:` line, whatever its value.
+const FLAG_TOUCHED = /^\+\s*made-for-esphome:/m;
+
+// Frontmatter is the leading `---` block. A truthy flag is the YAML boolean or
+// the rare quoted string form, matching isMadeForEsphome() in
+// scripts/review-made-for-esphome.ts.
+const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---/;
+const FLAG_TRUE = /^made-for-esphome:[ \t]*(?:"true"|'true'|true)[ \t]*$/im;
 
 const CHECKLIST =
   "https://github.com/esphome/esphome-devices/blob/main/.github/made-for-esphome-checklist.md";
@@ -32,6 +40,54 @@ const COMMENT =
   "the rest of the checks pass I will mark it ready for review and label it " +
   "`made-for-esphome-pending` so a human reviewer picks it up. If something needs fixing I will " +
   "leave a review here instead.";
+
+function isMadeForEsphome(content) {
+  const frontmatter = FRONTMATTER.exec(content);
+  return Boolean(frontmatter && FLAG_TRUE.test(frontmatter[1]));
+}
+
+async function readPage({ github, owner, repo, path, ref }) {
+  try {
+    const { data } = await github.rest.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref,
+      mediaType: { format: "raw" },
+    });
+    return String(data);
+  } catch (error) {
+    // A page that doesn't exist on that ref (the usual answer for a new page
+    // on the base) is information, not a failure.
+    if (error.status === 404) return null;
+    throw error;
+  }
+}
+
+// A page is a new submission when it carries the flag at the PR head and did
+// not already carry it on the base. The diff alone can't answer this: GitHub
+// omits `patch` once a file's diff is large, and the largest device page added
+// to this repo so far (3,911 lines) already comes back without one.
+async function addsTheFlag({ github, owner, repo, pr, file }) {
+  const head = await readPage({
+    github,
+    owner,
+    repo,
+    path: file.filename,
+    ref: pr.head.sha,
+  });
+  if (!head || !isMadeForEsphome(head)) return false;
+  if (file.status === "added") return true;
+  const base = await readPage({
+    github,
+    owner,
+    repo,
+    // A renamed page lived under its old path on the base.
+    path: file.previous_filename || file.filename,
+    ref: pr.base.sha,
+  });
+  return !(base && isMadeForEsphome(base));
+}
 
 module.exports = async ({ github, context, core }) => {
   const pr = context.payload.pull_request;
@@ -49,11 +105,23 @@ module.exports = async ({ github, context, core }) => {
     pull_number: pr.number,
     per_page: 100,
   });
-  // `patch` is absent for binary files and for diffs GitHub considers too
-  // large, neither of which can be a device page adding the flag.
-  const flagged = files.some(
-    (file) => DEVICE_PAGE.test(file.filename) && file.patch && FLAG_ADDED.test(file.patch)
+  // A page whose patch is present but never touches the flag is settled right
+  // here, without fetching anything; the rest are confirmed against the file.
+  const candidates = files.filter(
+    (file) =>
+      DEVICE_PAGE.test(file.filename) &&
+      file.status !== "removed" &&
+      (!file.patch || FLAG_TOUCHED.test(file.patch))
   );
+
+  let flagged = false;
+  for (const file of candidates) {
+    if (await addsTheFlag({ github, owner, repo, pr, file })) {
+      core.info(`PR #${pr.number} adds ${MFE_LABEL} to ${file.filename}.`);
+      flagged = true;
+      break;
+    }
+  }
   if (!flagged) {
     core.info(`PR #${pr.number} does not add a made-for-esphome device page; nothing to do.`);
     return;

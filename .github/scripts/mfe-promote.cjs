@@ -6,11 +6,13 @@
 // A PR is only taken out of draft if the bot put it there (see mfe-intake.cjs),
 // so an author's own work-in-progress draft is left alone.
 //
-// Runs as the last step of made-for-esphome-pr.yml, i.e. once the Made for
-// ESPHome review (the slowest check by a wide margin, it compiles the linked
-// config) has finished, so the other checks are in their final state by then.
-// It reads the PR number from the same `mfe-review-report` artifact and
-// re-derives everything else from the check runs, so the review verdict itself
+// Runs from two jobs in made-for-esphome-pr.yml: after the Made for ESPHome
+// review (the slowest check by a wide margin, it compiles the linked config,
+// so the rest have settled by then), and again after CI, which covers CI
+// finishing later or a failed CI job being re-run. Either way all it needs
+// from the run is the PR number, read from `pr-number.txt` in whichever
+// artifact that job downloaded (`mfe-review-report` or `validation-report`).
+// Everything else is re-derived from the check runs, so the review verdict
 // needs no plumbing: a failed review is simply a failed check.
 //
 // Exported as a function so it can be linted (`node --check`) and unit-tested
