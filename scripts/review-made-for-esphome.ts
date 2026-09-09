@@ -425,7 +425,10 @@ function resolveScopePages(devicesRoot: string): string[] {
 
 const MAX_TARBALL_BYTES = 300 * 1024 * 1024; // guard against abuse
 
-// The repo archive URL for the ref, on whichever host it lives.
+// The repo archive URL for the ref, on whichever host it lives. GitLab's
+// `/-/archive/<ref>.tar.gz` short form (without the trailing
+// `<repo>-<ref>.tar.gz` filename segment the web UI links to) is served
+// directly as a tarball; verified against gitlab.com.
 function archiveUrl(ref: UpstreamYamlRef): string {
   if (ref.host === "codeberg.org") {
     return `https://codeberg.org/${ref.owner}/${ref.repo}/archive/${ref.ref}.tar.gz`;

@@ -16,7 +16,25 @@ import type { Root } from "mdast";
 
 import remarkYamlInclude, {
   includeDirective,
+  parseUpstreamUrl,
 } from "../src/integrations/remark-yaml-include.ts";
+
+test("parseUpstreamUrl keeps a nested GitLab namespace and rejects non-yaml or http", () => {
+  assert.deepEqual(
+    parseUpstreamUrl("https://gitlab.com/group/sub/proj/-/raw/v2/dir/x.yaml"),
+    { scheme: "gitlab", namespace: "group/sub", repo: "proj", ref: "v2", rest: "dir/x.yaml" }
+  );
+  assert.deepEqual(
+    parseUpstreamUrl("https://raw.githubusercontent.com/o/r/refs/tags/v1/x.yml"),
+    { scheme: "github", namespace: "o", repo: "r", ref: "v1", rest: "x.yml" }
+  );
+  assert.equal(parseUpstreamUrl("https://github.com/o/r/blob/main/README.md"), null);
+  assert.equal(parseUpstreamUrl("http://github.com/o/r/blob/main/x.yaml"), null);
+  assert.equal(parseUpstreamUrl("https://github.com/o/r/tree/main/x.yaml"), null);
+  assert.equal(parseUpstreamUrl("https://raw.githubusercontent.com/o/r/main"), null);
+  assert.equal(parseUpstreamUrl("https://gitlab.com/o/r/-/tree/main/x.yaml"), null);
+  assert.equal(parseUpstreamUrl("https://gitlab.com/o/r/-/raw/main"), null);
+});
 
 test("includeDirective handles the canonical GitHub shapes", () => {
   assert.equal(
@@ -179,4 +197,32 @@ test("plugin rejects a disallowed host and leaves the code node in place", () =>
   assert.equal((tree.children[0] as { type: string }).type, "code");
   assert.equal(file.messages.length, 1);
   assert.match(file.messages[0].reason, /is not allowed/);
+});
+
+test("plugin warns on a non-canonical shape from an allowed host and leaves the code node in place", () => {
+  for (const url of [
+    "https://codeberg.org/o/r/src/main/x.yaml", // legacy Gitea shape
+    "https://gitlab.com/o/r/blob/main/x.yaml", // no `-` separator
+    "https://github.com/o/r/tree/main", // directory listing
+  ]) {
+    const tree = codeRoot(`url=${url}`);
+    const file = new VFile({ path: "src/docs/devices/Foo/index.md" });
+    runTransform(tree, file);
+
+    assert.equal(tree.children.length, 1, url);
+    assert.equal((tree.children[0] as { type: string }).type, "code", url);
+    assert.equal(file.messages.length, 1, url);
+    assert.match(file.messages[0].reason, /not a recognised upstream yaml file URL/, url);
+  }
+});
+
+test("plugin renders a nested-namespace GitLab url without a copy action", () => {
+  const tree = codeRoot("url=https://gitlab.com/group/sub/proj/-/blob/main/x.yaml");
+  const file = new VFile({ path: "src/docs/devices/Foo/index.md" });
+  runTransform(tree, file);
+
+  const html = renderedHtml(tree);
+  assert.match(html, /<remote-yaml-include url="https:\/\/gitlab\.com\/group\/sub\/proj\/-\/blob\/main\/x\.yaml">/);
+  assert.doesNotMatch(html, /<yaml-include-action/);
+  assert.equal(file.messages.length, 0);
 });

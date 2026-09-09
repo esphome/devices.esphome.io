@@ -37,7 +37,10 @@ const YAML_LANGS = new Set(["yaml", "yml"]);
 // to make a reader's browser fetch arbitrary origins (tracking, mixed-
 // content failures, surprise content), so the allowlist mirrors the git
 // hosts ESPHome's own `!include`/packages shorthand supports: GitHub,
-// Codeberg and GitLab.
+// Codeberg and GitLab. The host check gives a targeted warning; the full
+// path shape is then validated by parseUpstreamUrl below, since only the
+// canonical shapes can be rewritten to a CORS-enabled raw endpoint by the
+// client script.
 const URL_HOST_ALLOWLIST = new Set([
   "github.com",
   "raw.githubusercontent.com",
@@ -77,29 +80,49 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// Build an `!include github://owner/repo/path@ref` (or `codeberg://…` /
-// `gitlab://…`) directive from any github.com / raw.githubusercontent.com /
-// codeberg.org / gitlab.com URL. Returns null for everything else (raw HTTP,
-// malformed input, the legacy Gitea `/src/<ref>/<path>` shape without a
-// branch/tag/commit segment, a GitLab namespace with more than one segment -
-// ESPHome's shorthand grammar takes a single-segment `owner`) so the caller
-// can skip rendering the button rather than emit a broken directive.
+interface UpstreamRef {
+  scheme: "github" | "codeberg" | "gitlab";
+  // GitLab namespaces can be nested (`group/subgroup`); GitHub and Codeberg
+  // owners are always a single segment.
+  namespace: string;
+  repo: string;
+  ref: string;
+  rest: string;
+}
+
+const YAML_EXT = /\.ya?ml$/i;
+
+// Parse the exact upstream URL shapes a `url=` fence may use - the same set
+// scripts/validate-yaml-configs.ts enforces in CI and the client script
+// (public/js/remote-yaml-include.js) knows how to rewrite to a fetchable raw
+// endpoint:
+//   raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml
+//   raw.githubusercontent.com/<owner>/<repo>/refs/(heads|tags)/<ref>/<path>
+//   github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml
+//   github.com/<owner>/<repo>/(blob|raw)/refs/(heads|tags)/<ref>/<path>
+//   codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>
+//   gitlab.com/<namespace...>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml
+// Returns null for everything else (repo roots, directory listings, the
+// legacy Gitea `/src/<ref>/<path>` shape without a branch/tag/commit
+// segment, GitLab URLs without the `-` separator, malformed input) so the
+// caller can warn instead of emitting markup that would fail to load.
 //
 // Branch names that contain `/` are inherently ambiguous from a github.com
 // blob URL (`/blob/feature/foo/path/file.yaml` could be branch `feature`
 // + path `foo/path/...` OR branch `feature/foo` + path `path/...`); we
 // only handle the explicit `/blob/refs/{heads,tags}/<ref>/` form for those
-// and return null otherwise so the user can paste the raw URL directly.
+// and otherwise take the single segment after the marker as the ref.
 // Codeberg's `/(src|raw)/(branch|tag|commit)/<ref>/<path>` and GitLab's
-// `/-/(blob|raw)/<ref>/<path>` forms share that ambiguity for branch names
-// containing `/`; the single segment after the marker is taken as the ref.
-function includeDirective(url: string): string | null {
+// `/-/(blob|raw)/<ref>/<path>` forms share that ambiguity and get the same
+// single-segment treatment.
+function parseUpstreamUrl(url: string): UpstreamRef | null {
   let u: URL;
   try {
     u = new URL(url);
   } catch (_) {
     return null;
   }
+  if (u.protocol !== "https:") return null;
   // Decode each segment so `%2F` in a branch name, `%20` in a path, etc.
   // round-trip back to their literal form in the directive.
   const decode = (s: string) => {
@@ -113,15 +136,15 @@ function includeDirective(url: string): string | null {
   if (segments.some((s) => s === null)) return null;
   const p = segments as string[];
 
-  let scheme: string;
-  let owner: string | undefined;
+  let scheme: UpstreamRef["scheme"];
+  let namespace: string | undefined;
   let repo: string | undefined;
   let ref: string | undefined;
   let rest: string | undefined;
   if (u.hostname === "raw.githubusercontent.com") {
     scheme = "github";
     if (p.length < 4) return null;
-    owner = p[0];
+    namespace = p[0];
     repo = p[1];
     if (p[2] === "refs" && (p[3] === "heads" || p[3] === "tags") && p.length >= 6) {
       ref = p[4];
@@ -133,7 +156,7 @@ function includeDirective(url: string): string | null {
   } else if (u.hostname === "github.com") {
     scheme = "github";
     if (p.length < 5) return null;
-    owner = p[0];
+    namespace = p[0];
     repo = p[1];
     if (p[2] !== "blob" && p[2] !== "raw") return null;
     if (
@@ -153,7 +176,7 @@ function includeDirective(url: string): string | null {
     // segments. The legacy Gitea `/src/<ref>/<path>` shape (no
     // branch/tag/commit segment) is ambiguous and rejected.
     if (p.length < 6) return null;
-    owner = p[0];
+    namespace = p[0];
     repo = p[1];
     if (p[2] !== "src" && p[2] !== "raw") return null;
     if (p[3] !== "branch" && p[3] !== "tag" && p[3] !== "commit") return null;
@@ -176,19 +199,27 @@ function includeDirective(url: string): string | null {
     if (p[dashIndex + 1] !== "blob" && p[dashIndex + 1] !== "raw") return null;
     ref = p[dashIndex + 2];
     rest = p.slice(dashIndex + 3).join("/");
-    const namespace = p.slice(0, dashIndex - 1).join("/");
+    namespace = p.slice(0, dashIndex - 1).join("/");
     repo = p[dashIndex - 1];
-    // ESPHome's `!include gitlab://<owner>/<repo>/…` shorthand takes a
-    // single-segment owner - a nested namespace can't be expressed, so skip
-    // rendering the button rather than emit a directive the shorthand can't
-    // parse.
-    if (namespace.includes("/")) return null;
-    owner = namespace;
   } else {
     return null;
   }
-  if (!owner || !repo || !ref || !rest) return null;
-  return `!include ${scheme}://${owner}/${repo}/${rest}@${ref}`;
+  if (!namespace || !repo || !ref || !rest) return null;
+  if (!YAML_EXT.test(p[p.length - 1])) return null;
+  return { scheme, namespace, repo, ref, rest };
+}
+
+// Build an `!include github://owner/repo/path@ref` (or `codeberg://...` /
+// `gitlab://...`) directive from a canonical upstream URL. Returns null for
+// anything parseUpstreamUrl rejects, and for a GitLab namespace with more
+// than one segment (ESPHome's shorthand grammar takes a single-segment
+// `owner`), so the caller can skip rendering the button rather than emit a
+// broken directive.
+function includeDirective(url: string): string | null {
+  const ref = parseUpstreamUrl(url);
+  if (!ref) return null;
+  if (ref.namespace.includes("/")) return null;
+  return `!include ${ref.scheme}://${ref.namespace}/${ref.repo}/${ref.rest}@${ref.ref}`;
 }
 
 const remarkYamlInclude: Plugin<[], Root> = () => {
@@ -301,6 +332,14 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
           );
           return;
         }
+        if (parseUpstreamUrl(url) === null) {
+          warn(
+            file,
+            node,
+            `url="${url}" is not a recognised upstream yaml file URL; expected a github.com blob/raw, raw.githubusercontent.com, codeberg.org src/raw (branch|tag|commit), or gitlab.com /-/blob|raw URL ending in .yaml`,
+          );
+          return;
+        }
 
         // Replace the code node with raw HTML for the custom element, plus
         // a leading explanatory paragraph (so individual device pages don't
@@ -408,5 +447,5 @@ function visitCodeNodes(
   walk(tree as unknown as { type: string; children?: unknown[] }, null, null);
 }
 
-export { includeDirective };
+export { includeDirective, parseUpstreamUrl };
 export default remarkYamlInclude;
