@@ -113,7 +113,7 @@
     }
     var ref = parts[4];
     var pathSegments = parts.slice(5);
-    if (pathSegments.length === 0) return null;
+    if (!ref || pathSegments.length === 0) return null;
 
     return (
       "https://codeberg.org/api/v1/repos/" +

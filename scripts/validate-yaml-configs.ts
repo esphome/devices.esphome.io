@@ -38,10 +38,8 @@
  *   6. Pages with `made-for-esphome: true` in frontmatter that are added
  *      or modified in the current PR must include at least one `url=`
  *      yaml fence pointing at a yaml file on the manufacturer's GitHub,
- *      Codeberg or GitLab repo (`github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml`,
- *      `raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml`,
- *      `codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml`,
- *      or `gitlab.com/<owner>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml`).
+ *      Codeberg or GitLab repo. See src/lib/upstream-url.ts for the exact
+ *      accepted URL shapes.
  *      The Made-for-ESPHome programme requires the firmware config to be
  *      open and reachable; a live link to the upstream yaml is how we
  *      surface that on the device page. `url=` is also permitted on
@@ -58,94 +56,7 @@ import { fileURLToPath } from "url";
 import matter from "gray-matter";
 // js-yaml is a transitive dep of gray-matter; import directly to parse.
 import yaml from "js-yaml";
-
-// Hosts a `url=` yaml fence may point at — kept in sync with the build-time
-// allowlist in src/integrations/remark-yaml-include.ts. A `url=` fence is
-// only counted as "the upstream config is reachable" if its host is one
-// of these AND the path resolves to a yaml file the renderer can actually
-// fetch as raw bytes; anything else is dropped at render time and
-// shouldn't satisfy the made-for-esphome rule either.
-const URL_HOST_ALLOWLIST = new Set([
-  "github.com",
-  "raw.githubusercontent.com",
-  "codeberg.org",
-  "gitlab.com",
-]);
-const YAML_EXT = /\.ya?ml$/i;
-
-// Recognise the exact URL shapes that `remark-yaml-include` knows how to
-// normalise to a raw yaml fetch. Anything else (e.g. a repo root, a
-// directory listing, an HTML page) would render as HTML or 404 in the
-// browser — those mustn't satisfy the made-for-esphome rule.
-//
-//   raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml
-//   raw.githubusercontent.com/<owner>/<repo>/refs/(heads|tags)/<ref>/<path>.y[a]ml
-//   github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml
-//   github.com/<owner>/<repo>/(blob|raw)/refs/(heads|tags)/<ref>/<path>.y[a]ml
-//   codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml
-//   gitlab.com/<namespace...>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml
-//
-// The legacy Gitea `/src/<ref>/<path>` shape (no branch/tag/commit segment)
-// is ambiguous and rejected - codeberg 303-redirects it anyway. GitLab
-// namespaces can be nested, so the literal `-` separator segment is located
-// rather than assumed to be at a fixed position.
-function isAllowedUpstreamUrl(value: string): boolean {
-  let u: URL;
-  try {
-    u = new URL(value);
-  } catch {
-    return false;
-  }
-  if (u.protocol !== "https:") return false;
-  if (!URL_HOST_ALLOWLIST.has(u.hostname)) return false;
-
-  const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
-
-  let pathStart: number;
-  if (u.hostname === "raw.githubusercontent.com") {
-    // owner/repo/ref/path…  OR  owner/repo/refs/(heads|tags)/ref/path…
-    if (segments.length < 4) return false;
-    pathStart =
-      segments[2] === "refs" && (segments[3] === "heads" || segments[3] === "tags")
-        ? 5
-        : 3;
-  } else if (u.hostname === "codeberg.org") {
-    // owner/repo/(src|raw)/(branch|tag|commit)/ref/path... - at least 6 segments.
-    if (segments.length < 6) return false;
-    if (segments[2] !== "src" && segments[2] !== "raw") return false;
-    if (segments[3] !== "branch" && segments[3] !== "tag" && segments[3] !== "commit") {
-      return false;
-    }
-    pathStart = 5;
-  } else if (u.hostname === "gitlab.com") {
-    // [...namespace, repo, "-", "blob"|"raw", ref, ...path] - the `-` must
-    // sit at index >= 2 (at least one namespace segment plus the repo
-    // before it). Use the first `-` at or past that index.
-    let dashIndex = -1;
-    for (let i = 2; i < segments.length; i++) {
-      if (segments[i] === "-") {
-        dashIndex = i;
-        break;
-      }
-    }
-    if (dashIndex === -1) return false;
-    if (segments[dashIndex + 1] !== "blob" && segments[dashIndex + 1] !== "raw") {
-      return false;
-    }
-    pathStart = dashIndex + 3;
-  } else {
-    // github.com — must be /blob/ or /raw/
-    if (segments.length < 5) return false;
-    if (segments[2] !== "blob" && segments[2] !== "raw") return false;
-    pathStart =
-      segments[3] === "refs" && (segments[4] === "heads" || segments[4] === "tags")
-        ? 6
-        : 4;
-  }
-  if (segments.length <= pathStart) return false; // no path past the ref
-  const lastSeg = segments[segments.length - 1];
-  return YAML_EXT.test(lastSeg);
-}
+import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
 
 // Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
 // the JS boolean `true`) and the rare string form. Anything else — missing,
@@ -676,7 +587,7 @@ function main(): void {
       // PR that adds or modifies a made-for-esphome page.
       if (madeForEsphome) {
         const hasUpstreamUrlFence = fences.some(
-          (f) => f.urlAttr !== null && isAllowedUpstreamUrl(f.urlAttr)
+          (f) => f.urlAttr !== null && parseUpstreamUrl(f.urlAttr) !== null
         );
         if (!hasUpstreamUrlFence) {
           issues.push({
@@ -731,5 +642,3 @@ function main(): void {
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
-
-export { isAllowedUpstreamUrl };

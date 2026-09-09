@@ -63,18 +63,12 @@ import { createHash } from "crypto";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
 import yaml from "js-yaml";
+import { parseUpstreamUrl, type UpstreamRef } from "../src/lib/upstream-url.ts";
 
 // ---------------------------------------------------------------------------
-// Shared conventions (kept in step with scripts/validate-yaml-configs.ts)
+// Shared conventions (kept in step with scripts/validate-yaml-configs.ts and
+// src/lib/upstream-url.ts, the shared URL grammar module)
 // ---------------------------------------------------------------------------
-
-const URL_HOST_ALLOWLIST = new Set([
-  "github.com",
-  "raw.githubusercontent.com",
-  "codeberg.org",
-  "gitlab.com",
-]);
-const YAML_EXT = /\.ya?ml$/i;
 
 // Placeholder values this script injects into a `secrets.yaml` of its own so
 // `esphome config` / `esphome compile` can run against the manufacturer's
@@ -115,104 +109,6 @@ const NON_ID_LIST_DOMAINS = new Set([
   "external_components", // source specs (`- source: github://…`) — no id
   "packages", // mapping in practice, but guard anyway
 ]);
-
-interface UpstreamYamlRef {
-  host: "github.com" | "codeberg.org" | "gitlab.com";
-  owner: string;
-  repo: string;
-  ref: string;
-  filePath: string;
-}
-
-// Parse the exact GitHub/Codeberg/GitLab URL shapes remark-yaml-include (and
-// the validator) accept, returning the pieces needed to fetch the whole repo
-// at the ref:
-//   raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml
-//   raw.githubusercontent.com/<owner>/<repo>/refs/(heads|tags)/<ref>/<path>
-//   github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml
-//   github.com/<owner>/<repo>/(blob|raw)/refs/(heads|tags)/<ref>/<path>
-//   codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml
-//   gitlab.com/<namespace...>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml
-// A raw.githubusercontent.com URL yields `host: "github.com"` - it's the same
-// upstream, just a different fetch host. A GitLab namespace can be nested
-// (group/subgroup/repo); it's joined with `/` and returned as `owner` here
-// (unlike remark-yaml-include's `!include` button, this function doesn't
-// need a single-segment owner - it only drives the archive download).
-// Returns null for anything else (repo roots, directory listings, HTML
-// pages, the legacy Gitea `/src/<ref>/<path>` shape without a
-// branch/tag/commit segment).
-function parseUpstreamYamlUrl(value: string): UpstreamYamlRef | null {
-  let u: URL;
-  try {
-    u = new URL(value);
-  } catch {
-    return null;
-  }
-  if (u.protocol !== "https:") return null;
-  if (!URL_HOST_ALLOWLIST.has(u.hostname)) return null;
-
-  const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
-
-  let host: "github.com" | "codeberg.org" | "gitlab.com";
-  let pathStart: number;
-  let ownerSegments = [segments[0]];
-  let repoSegment = segments[1];
-  if (u.hostname === "raw.githubusercontent.com") {
-    host = "github.com";
-    if (segments.length < 4) return null;
-    pathStart =
-      segments[2] === "refs" &&
-      (segments[3] === "heads" || segments[3] === "tags")
-        ? 5
-        : 3;
-  } else if (u.hostname === "codeberg.org") {
-    host = "codeberg.org";
-    if (segments.length < 6) return null;
-    if (segments[2] !== "src" && segments[2] !== "raw") return null;
-    if (segments[3] !== "branch" && segments[3] !== "tag" && segments[3] !== "commit") {
-      return null;
-    }
-    pathStart = 5;
-  } else if (u.hostname === "gitlab.com") {
-    host = "gitlab.com";
-    // [...namespace, repo, "-", "blob"|"raw", ref, ...path] - the `-` must
-    // sit at index >= 2 (at least one namespace segment plus the repo
-    // before it). Use the first `-` at or past that index.
-    let dashIndex = -1;
-    for (let i = 2; i < segments.length; i++) {
-      if (segments[i] === "-") {
-        dashIndex = i;
-        break;
-      }
-    }
-    if (dashIndex === -1) return null;
-    if (segments[dashIndex + 1] !== "blob" && segments[dashIndex + 1] !== "raw") {
-      return null;
-    }
-    pathStart = dashIndex + 3;
-    ownerSegments = segments.slice(0, dashIndex - 1);
-    repoSegment = segments[dashIndex - 1];
-  } else {
-    host = "github.com";
-    if (segments.length < 5) return null;
-    if (segments[2] !== "blob" && segments[2] !== "raw") return null;
-    pathStart =
-      segments[3] === "refs" &&
-      (segments[4] === "heads" || segments[4] === "tags")
-        ? 6
-        : 4;
-  }
-  if (segments.length <= pathStart) return null; // no path past the ref
-  const lastSeg = segments[segments.length - 1];
-  if (!YAML_EXT.test(lastSeg)) return null;
-
-  const owner = ownerSegments.join("/");
-  const repo = repoSegment;
-  const ref = segments[pathStart - 1];
-  const filePath = segments.slice(pathStart).join("/");
-  if (!owner || !repo || !ref || !filePath) return null;
-  return { host, owner, repo, ref, filePath };
-}
 
 // Truthy `made-for-esphome` covers the YAML boolean and the rare string form.
 function isMadeForEsphome(content: string): boolean {
@@ -425,24 +321,35 @@ function resolveScopePages(devicesRoot: string): string[] {
 
 const MAX_TARBALL_BYTES = 300 * 1024 * 1024; // guard against abuse
 
+// URL-encode a `/`-joined value (an `owner` namespace or a `ref` branch
+// name) piece by piece so a literal `/` in it (a nested GitLab namespace, a
+// branch like `feature/foo`) survives in the URL rather than being escaped
+// to `%2F` or left to collide with the URL's own path separators.
+function encodeUrlPath(value: string): string {
+  return value.split("/").map(encodeURIComponent).join("/");
+}
+
 // The repo archive URL for the ref, on whichever host it lives. GitLab's
 // `/-/archive/<ref>.tar.gz` short form (without the trailing
 // `<repo>-<ref>.tar.gz` filename segment the web UI links to) is served
 // directly as a tarball; verified against gitlab.com.
-function archiveUrl(ref: UpstreamYamlRef): string {
+function archiveUrl(ref: UpstreamRef): string {
+  const owner = encodeUrlPath(ref.owner);
+  const repo = encodeURIComponent(ref.repo);
+  const refPart = encodeUrlPath(ref.ref);
   if (ref.host === "codeberg.org") {
-    return `https://codeberg.org/${ref.owner}/${ref.repo}/archive/${ref.ref}.tar.gz`;
+    return `https://codeberg.org/${owner}/${repo}/archive/${refPart}.tar.gz`;
   }
   if (ref.host === "gitlab.com") {
-    return `https://gitlab.com/${ref.owner}/${ref.repo}/-/archive/${ref.ref}.tar.gz`;
+    return `https://gitlab.com/${owner}/${repo}/-/archive/${refPart}.tar.gz`;
   }
-  return `https://codeload.github.com/${ref.owner}/${ref.repo}/tar.gz/${ref.ref}`;
+  return `https://codeload.github.com/${owner}/${repo}/tar.gz/${refPart}`;
 }
 
 // Download and extract the repo tarball at `ref`, returning the extracted root
 // directory. Throws with a human-readable message on any failure.
 async function downloadRepo(
-  ref: UpstreamYamlRef,
+  ref: UpstreamRef,
   workDir: string
 ): Promise<string> {
   const url = archiveUrl(ref);
@@ -1358,14 +1265,14 @@ async function reviewPage(
   // 1. First url= fence pointing at a GitHub, Codeberg or GitLab yaml file.
   const fences = findYamlFences(content);
   const urlFence = fences.find(
-    (f) => f.urlAttr !== null && parseUpstreamYamlUrl(f.urlAttr) !== null
+    (f) => f.urlAttr !== null && parseUpstreamUrl(f.urlAttr) !== null
   );
   if (!urlFence || !urlFence.urlAttr) {
     result.fenceMissing = true;
     return result;
   }
   result.url = urlFence.urlAttr;
-  const ghRef = parseUpstreamYamlUrl(urlFence.urlAttr)!;
+  const ghRef = parseUpstreamUrl(urlFence.urlAttr)!;
 
   // 2. Download the whole repo at the ref.
   const pageWork = fs.mkdtempSync(path.join(workRoot, "page-"));
@@ -1808,7 +1715,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
-  parseUpstreamYamlUrl,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
@@ -1832,4 +1738,4 @@ export {
   checkOneManifest,
   checkUpdateManifests,
 };
-export type { PageResult, CheckResult, CheckStatus, CompileOutcome, UpstreamYamlRef };
+export type { PageResult, CheckResult, CheckStatus, CompileOutcome };

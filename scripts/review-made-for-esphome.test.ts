@@ -15,7 +15,6 @@ import assert from "node:assert/strict";
 import yaml from "js-yaml";
 
 import {
-  parseUpstreamYamlUrl,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
@@ -40,149 +39,38 @@ import {
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
-test("parseUpstreamYamlUrl accepts the canonical GitHub shapes", () => {
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://github.com/Owner/Repo/blob/main/path/to/main.yaml"
-    ),
-    {
-      host: "github.com",
-      owner: "Owner",
-      repo: "Repo",
-      ref: "main",
-      filePath: "path/to/main.yaml",
-    }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl("https://github.com/Owner/Repo/raw/v1.2.3/cfg.yml"),
-    { host: "github.com", owner: "Owner", repo: "Repo", ref: "v1.2.3", filePath: "cfg.yml" }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/main/a/b.yaml"
-    ),
-    { host: "github.com", owner: "Owner", repo: "Repo", ref: "main", filePath: "a/b.yaml" }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://github.com/Owner/Repo/blob/refs/heads/dev/c.yaml"
-    ),
-    { host: "github.com", owner: "Owner", repo: "Repo", ref: "dev", filePath: "c.yaml" }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/refs/tags/v9/d.yaml"
-    ),
-    { host: "github.com", owner: "Owner", repo: "Repo", ref: "v9", filePath: "d.yaml" }
-  );
-});
-
-test("parseUpstreamYamlUrl accepts the canonical Codeberg shapes", () => {
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://codeberg.org/Owner/Repo/src/branch/main/path/to/main.yaml"
-    ),
-    {
-      host: "codeberg.org",
-      owner: "Owner",
-      repo: "Repo",
-      ref: "main",
-      filePath: "path/to/main.yaml",
-    }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://codeberg.org/Owner/Repo/src/tag/v1.2.3/cfg.yml"
-    ),
-    {
-      host: "codeberg.org",
-      owner: "Owner",
-      repo: "Repo",
-      ref: "v1.2.3",
-      filePath: "cfg.yml",
-    }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://codeberg.org/Owner/Repo/raw/commit/abcdef0123/a/b.yaml"
-    ),
-    {
-      host: "codeberg.org",
-      owner: "Owner",
-      repo: "Repo",
-      ref: "abcdef0123",
-      filePath: "a/b.yaml",
-    }
-  );
-});
-
-test("parseUpstreamYamlUrl accepts the canonical GitLab shapes", () => {
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://gitlab.com/Owner/Repo/-/blob/main/path/to/main.yaml"
-    ),
-    {
-      host: "gitlab.com",
-      owner: "Owner",
-      repo: "Repo",
-      ref: "main",
-      filePath: "path/to/main.yaml",
-    }
-  );
-  assert.deepEqual(
-    parseUpstreamYamlUrl(
-      "https://gitlab.com/group/sub/proj/-/raw/main/a/b.yaml"
-    ),
-    {
-      host: "gitlab.com",
-      owner: "group/sub",
-      repo: "proj",
-      ref: "main",
-      filePath: "a/b.yaml",
-    }
-  );
-});
-
-test("parseUpstreamYamlUrl rejects non-canonical URLs", () => {
-  for (const bad of [
-    "https://github.com/Owner/Repo", // repo root
-    "https://github.com/Owner/Repo/tree/main/dir", // directory, not blob
-    "https://github.com/Owner/Repo/blob/main/README.md", // not yaml
-    "http://github.com/Owner/Repo/blob/main/x.yaml", // not https
-    "https://codeberg.org/o/r/src/main/x.yaml", // legacy Gitea shape, no branch/tag/commit segment
-    "https://codeberg.org/o/r/raw/main/x.yaml", // legacy Gitea shape, no branch/tag/commit segment
-    "https://codeberg.org/o/r/src/branch/main/dir", // not yaml
-    "https://codeberg.org/o/r/src/branch/main", // no path
-    "https://codeberg.org/o/r/src/blob/main/x.yaml", // wrong type segment
-    "http://codeberg.org/o/r/src/branch/main/x.yaml", // not https
-    "https://gitlab.com/o/r/blob/main/x.yaml", // no `-` separator
-    "https://gitlab.com/o/-/blob/main/x.yaml", // `-` too early (index 1)
-    "https://gitlab.com/o/r/-/tree/main/x.yaml", // wrong type segment
-    "https://gitlab.com/o/r/-/raw/main", // no path
-    "https://gitlab.com/o/r/-/raw/main/x.txt", // not yaml
-    "https://bitbucket.org/o/r/raw/main/x.yaml", // unknown host
-    "not a url",
-  ]) {
-    assert.equal(parseUpstreamYamlUrl(bad), null, bad);
-  }
-});
-
 test("archiveUrl builds the codeload/Codeberg/GitLab archive URL per host", () => {
   assert.equal(
-    archiveUrl({ host: "github.com", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
     "https://codeload.github.com/Owner/Repo/tar.gz/main"
   );
   assert.equal(
-    archiveUrl({ host: "codeberg.org", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    archiveUrl({ host: "codeberg.org", scheme: "codeberg", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
     "https://codeberg.org/Owner/Repo/archive/main.tar.gz"
   );
   assert.equal(
-    archiveUrl({ host: "gitlab.com", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
     "https://gitlab.com/Owner/Repo/-/archive/main.tar.gz"
   );
   assert.equal(
-    archiveUrl({ host: "gitlab.com", owner: "group/sub", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "main", filePath: "x.yaml" }),
     "https://gitlab.com/group/sub/Repo/-/archive/main.tar.gz"
+  );
+  // A ref containing `/` (e.g. a branch named `feature/foo`) keeps its slash
+  // in the archive URL rather than being escaped to `%2F`.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "feature/foo", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/feature/foo"
+  );
+  // A ref with a space is percent-encoded.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "v 1", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/v%201"
+  );
+  // A nested GitLab owner keeps its slash.
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "v1", filePath: "x.yaml" }),
+    "https://gitlab.com/group/sub/Repo/-/archive/v1.tar.gz"
   );
 });
 

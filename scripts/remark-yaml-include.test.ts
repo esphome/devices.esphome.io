@@ -16,25 +16,7 @@ import type { Root } from "mdast";
 
 import remarkYamlInclude, {
   includeDirective,
-  parseUpstreamUrl,
 } from "../src/integrations/remark-yaml-include.ts";
-
-test("parseUpstreamUrl keeps a nested GitLab namespace and rejects non-yaml or http", () => {
-  assert.deepEqual(
-    parseUpstreamUrl("https://gitlab.com/group/sub/proj/-/raw/v2/dir/x.yaml"),
-    { scheme: "gitlab", namespace: "group/sub", repo: "proj", ref: "v2", rest: "dir/x.yaml" }
-  );
-  assert.deepEqual(
-    parseUpstreamUrl("https://raw.githubusercontent.com/o/r/refs/tags/v1/x.yml"),
-    { scheme: "github", namespace: "o", repo: "r", ref: "v1", rest: "x.yml" }
-  );
-  assert.equal(parseUpstreamUrl("https://github.com/o/r/blob/main/README.md"), null);
-  assert.equal(parseUpstreamUrl("http://github.com/o/r/blob/main/x.yaml"), null);
-  assert.equal(parseUpstreamUrl("https://github.com/o/r/tree/main/x.yaml"), null);
-  assert.equal(parseUpstreamUrl("https://raw.githubusercontent.com/o/r/main"), null);
-  assert.equal(parseUpstreamUrl("https://gitlab.com/o/r/-/tree/main/x.yaml"), null);
-  assert.equal(parseUpstreamUrl("https://gitlab.com/o/r/-/raw/main"), null);
-});
 
 test("includeDirective handles the canonical GitHub shapes", () => {
   assert.equal(
