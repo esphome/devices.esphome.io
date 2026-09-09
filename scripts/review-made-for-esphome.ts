@@ -68,7 +68,12 @@ import yaml from "js-yaml";
 // Shared conventions (kept in step with scripts/validate-yaml-configs.ts)
 // ---------------------------------------------------------------------------
 
-const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
+const URL_HOST_ALLOWLIST = new Set([
+  "github.com",
+  "raw.githubusercontent.com",
+  "codeberg.org",
+  "gitlab.com",
+]);
 const YAML_EXT = /\.ya?ml$/i;
 
 // Placeholder values this script injects into a `secrets.yaml` of its own so
@@ -111,21 +116,32 @@ const NON_ID_LIST_DOMAINS = new Set([
   "packages", // mapping in practice, but guard anyway
 ]);
 
-interface GitHubYamlRef {
+interface UpstreamYamlRef {
+  host: "github.com" | "codeberg.org" | "gitlab.com";
   owner: string;
   repo: string;
   ref: string;
   filePath: string;
 }
 
-// Parse the exact GitHub URL shapes remark-yaml-include (and the validator)
-// accept, returning the pieces needed to fetch the whole repo at the ref:
+// Parse the exact GitHub/Codeberg/GitLab URL shapes remark-yaml-include (and
+// the validator) accept, returning the pieces needed to fetch the whole repo
+// at the ref:
 //   raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml
 //   raw.githubusercontent.com/<owner>/<repo>/refs/(heads|tags)/<ref>/<path>
 //   github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml
 //   github.com/<owner>/<repo>/(blob|raw)/refs/(heads|tags)/<ref>/<path>
-// Returns null for anything else (repo roots, directory listings, HTML pages).
-function parseGitHubYamlUrl(value: string): GitHubYamlRef | null {
+//   codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml
+//   gitlab.com/<namespace...>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml
+// A raw.githubusercontent.com URL yields `host: "github.com"` - it's the same
+// upstream, just a different fetch host. A GitLab namespace can be nested
+// (group/subgroup/repo); it's joined with `/` and returned as `owner` here
+// (unlike remark-yaml-include's `!include` button, this function doesn't
+// need a single-segment owner - it only drives the archive download).
+// Returns null for anything else (repo roots, directory listings, HTML
+// pages, the legacy Gitea `/src/<ref>/<path>` shape without a
+// branch/tag/commit segment).
+function parseUpstreamYamlUrl(value: string): UpstreamYamlRef | null {
   let u: URL;
   try {
     u = new URL(value);
@@ -137,15 +153,47 @@ function parseGitHubYamlUrl(value: string): GitHubYamlRef | null {
 
   const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
 
+  let host: "github.com" | "codeberg.org" | "gitlab.com";
   let pathStart: number;
+  let ownerSegments = [segments[0]];
+  let repoSegment = segments[1];
   if (u.hostname === "raw.githubusercontent.com") {
+    host = "github.com";
     if (segments.length < 4) return null;
     pathStart =
       segments[2] === "refs" &&
       (segments[3] === "heads" || segments[3] === "tags")
         ? 5
         : 3;
+  } else if (u.hostname === "codeberg.org") {
+    host = "codeberg.org";
+    if (segments.length < 6) return null;
+    if (segments[2] !== "src" && segments[2] !== "raw") return null;
+    if (segments[3] !== "branch" && segments[3] !== "tag" && segments[3] !== "commit") {
+      return null;
+    }
+    pathStart = 5;
+  } else if (u.hostname === "gitlab.com") {
+    host = "gitlab.com";
+    // [...namespace, repo, "-", "blob"|"raw", ref, ...path] - the `-` must
+    // sit at index >= 2 (at least one namespace segment plus the repo
+    // before it). Use the first `-` at or past that index.
+    let dashIndex = -1;
+    for (let i = 2; i < segments.length; i++) {
+      if (segments[i] === "-") {
+        dashIndex = i;
+        break;
+      }
+    }
+    if (dashIndex === -1) return null;
+    if (segments[dashIndex + 1] !== "blob" && segments[dashIndex + 1] !== "raw") {
+      return null;
+    }
+    pathStart = dashIndex + 3;
+    ownerSegments = segments.slice(0, dashIndex - 1);
+    repoSegment = segments[dashIndex - 1];
   } else {
+    host = "github.com";
     if (segments.length < 5) return null;
     if (segments[2] !== "blob" && segments[2] !== "raw") return null;
     pathStart =
@@ -158,12 +206,12 @@ function parseGitHubYamlUrl(value: string): GitHubYamlRef | null {
   const lastSeg = segments[segments.length - 1];
   if (!YAML_EXT.test(lastSeg)) return null;
 
-  const owner = segments[0];
-  const repo = segments[1];
+  const owner = ownerSegments.join("/");
+  const repo = repoSegment;
   const ref = segments[pathStart - 1];
   const filePath = segments.slice(pathStart).join("/");
   if (!owner || !repo || !ref || !filePath) return null;
-  return { owner, repo, ref, filePath };
+  return { host, owner, repo, ref, filePath };
 }
 
 // Truthy `made-for-esphome` covers the YAML boolean and the rare string form.
@@ -377,13 +425,24 @@ function resolveScopePages(devicesRoot: string): string[] {
 
 const MAX_TARBALL_BYTES = 300 * 1024 * 1024; // guard against abuse
 
+// The repo archive URL for the ref, on whichever host it lives.
+function archiveUrl(ref: UpstreamYamlRef): string {
+  if (ref.host === "codeberg.org") {
+    return `https://codeberg.org/${ref.owner}/${ref.repo}/archive/${ref.ref}.tar.gz`;
+  }
+  if (ref.host === "gitlab.com") {
+    return `https://gitlab.com/${ref.owner}/${ref.repo}/-/archive/${ref.ref}.tar.gz`;
+  }
+  return `https://codeload.github.com/${ref.owner}/${ref.repo}/tar.gz/${ref.ref}`;
+}
+
 // Download and extract the repo tarball at `ref`, returning the extracted root
 // directory. Throws with a human-readable message on any failure.
 async function downloadRepo(
-  ref: GitHubYamlRef,
+  ref: UpstreamYamlRef,
   workDir: string
 ): Promise<string> {
-  const url = `https://codeload.github.com/${ref.owner}/${ref.repo}/tar.gz/${ref.ref}`;
+  const url = archiveUrl(ref);
   const tarPath = path.join(workDir, "repo.tar.gz");
 
   let res: Response;
@@ -404,7 +463,7 @@ async function downloadRepo(
       `repository archive is ${(declared / 1e6).toFixed(0)} MB — too large to review automatically`
     );
   }
-  if (!res.body) throw new Error("empty response body from codeload");
+  if (!res.body) throw new Error("empty response body from archive download");
 
   const out = fs.createWriteStream(tarPath);
   let received = 0;
@@ -435,7 +494,8 @@ async function downloadRepo(
   }
   fs.rmSync(tarPath, { force: true });
 
-  // codeload archives contain a single top-level directory.
+  // Every supported host's archive (codeload for GitHub, Codeberg, GitLab)
+  // contains a single top-level directory.
   const tops = fs
     .readdirSync(extractDir, { withFileTypes: true })
     .filter((e) => e.isDirectory());
@@ -1292,17 +1352,17 @@ async function reviewPage(
     checks: [],
   };
 
-  // 1. First url= fence pointing at a GitHub yaml file.
+  // 1. First url= fence pointing at a GitHub, Codeberg or GitLab yaml file.
   const fences = findYamlFences(content);
   const urlFence = fences.find(
-    (f) => f.urlAttr !== null && parseGitHubYamlUrl(f.urlAttr) !== null
+    (f) => f.urlAttr !== null && parseUpstreamYamlUrl(f.urlAttr) !== null
   );
   if (!urlFence || !urlFence.urlAttr) {
     result.fenceMissing = true;
     return result;
   }
   result.url = urlFence.urlAttr;
-  const ghRef = parseGitHubYamlUrl(urlFence.urlAttr)!;
+  const ghRef = parseUpstreamYamlUrl(urlFence.urlAttr)!;
 
   // 2. Download the whole repo at the ref.
   const pageWork = fs.mkdtempSync(path.join(workRoot, "page-"));
@@ -1434,10 +1494,14 @@ function renderPage(r: PageResult): string {
   if (r.fenceMissing) {
     lines.push(
       "This Made for ESPHome page has no ```` ```yaml url=… ```` fence pointing at " +
-        "a `.yaml` file in the manufacturer's GitHub repo, so the upstream config " +
-        "could not be located or compiled. Add a fence such as " +
+        "a `.yaml` file in the manufacturer's GitHub, Codeberg or GitLab repo, so " +
+        "the upstream config could not be located or compiled. Add a fence such as " +
         "```` ```yaml url=https://github.com/<owner>/<repo>/blob/<ref>/<path>.yaml ```` " +
-        "(or the `raw.githubusercontent.com` equivalent)."
+        "(or the `raw.githubusercontent.com` equivalent, " +
+        "```` ```yaml url=https://codeberg.org/<owner>/<repo>/src/branch/<branch>/<path>.yaml ```` " +
+        "for Codeberg, or " +
+        "```` ```yaml url=https://gitlab.com/<owner>/<repo>/-/blob/<ref>/<path>.yaml ```` " +
+        "for GitLab)."
     );
     lines.push("");
     return lines.join("\n");
@@ -1741,7 +1805,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
-  parseGitHubYamlUrl,
+  parseUpstreamYamlUrl,
+  archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
   collectBakedPasswords,
@@ -1764,4 +1829,4 @@ export {
   checkOneManifest,
   checkUpdateManifests,
 };
-export type { PageResult, CheckResult, CheckStatus, CompileOutcome };
+export type { PageResult, CheckResult, CheckStatus, CompileOutcome, UpstreamYamlRef };

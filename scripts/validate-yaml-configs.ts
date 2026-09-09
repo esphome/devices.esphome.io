@@ -37,9 +37,11 @@
  *          network-dependent or user-derived, not hardware.
  *   6. Pages with `made-for-esphome: true` in frontmatter that are added
  *      or modified in the current PR must include at least one `url=`
- *      yaml fence pointing at a yaml file on the manufacturer's GitHub
- *      repo (`github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml`
- *      or `raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml`).
+ *      yaml fence pointing at a yaml file on the manufacturer's GitHub,
+ *      Codeberg or GitLab repo (`github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml`,
+ *      `raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.y[a]ml`,
+ *      `codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml`,
+ *      or `gitlab.com/<owner>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml`).
  *      The Made-for-ESPHome programme requires the firmware config to be
  *      open and reachable; a live link to the upstream yaml is how we
  *      surface that on the device page. `url=` is also permitted on
@@ -63,7 +65,12 @@ import yaml from "js-yaml";
 // of these AND the path resolves to a yaml file the renderer can actually
 // fetch as raw bytes; anything else is dropped at render time and
 // shouldn't satisfy the made-for-esphome rule either.
-const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
+const URL_HOST_ALLOWLIST = new Set([
+  "github.com",
+  "raw.githubusercontent.com",
+  "codeberg.org",
+  "gitlab.com",
+]);
 const YAML_EXT = /\.ya?ml$/i;
 
 // Recognise the exact URL shapes that `remark-yaml-include` knows how to
@@ -75,7 +82,14 @@ const YAML_EXT = /\.ya?ml$/i;
 //   raw.githubusercontent.com/<owner>/<repo>/refs/(heads|tags)/<ref>/<path>.y[a]ml
 //   github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.y[a]ml
 //   github.com/<owner>/<repo>/(blob|raw)/refs/(heads|tags)/<ref>/<path>.y[a]ml
-function isAllowedGitHubUrl(value: string): boolean {
+//   codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.y[a]ml
+//   gitlab.com/<namespace...>/<repo>/-/(blob|raw)/<ref>/<path>.y[a]ml
+//
+// The legacy Gitea `/src/<ref>/<path>` shape (no branch/tag/commit segment)
+// is ambiguous and rejected - codeberg 303-redirects it anyway. GitLab
+// namespaces can be nested, so the literal `-` separator segment is located
+// rather than assumed to be at a fixed position.
+function isAllowedUpstreamUrl(value: string): boolean {
   let u: URL;
   try {
     u = new URL(value);
@@ -95,6 +109,30 @@ function isAllowedGitHubUrl(value: string): boolean {
       segments[2] === "refs" && (segments[3] === "heads" || segments[3] === "tags")
         ? 5
         : 3;
+  } else if (u.hostname === "codeberg.org") {
+    // owner/repo/(src|raw)/(branch|tag|commit)/ref/path... - at least 6 segments.
+    if (segments.length < 6) return false;
+    if (segments[2] !== "src" && segments[2] !== "raw") return false;
+    if (segments[3] !== "branch" && segments[3] !== "tag" && segments[3] !== "commit") {
+      return false;
+    }
+    pathStart = 5;
+  } else if (u.hostname === "gitlab.com") {
+    // [...namespace, repo, "-", "blob"|"raw", ref, ...path] - the `-` must
+    // sit at index >= 2 (at least one namespace segment plus the repo
+    // before it). Use the first `-` at or past that index.
+    let dashIndex = -1;
+    for (let i = 2; i < segments.length; i++) {
+      if (segments[i] === "-") {
+        dashIndex = i;
+        break;
+      }
+    }
+    if (dashIndex === -1) return false;
+    if (segments[dashIndex + 1] !== "blob" && segments[dashIndex + 1] !== "raw") {
+      return false;
+    }
+    pathStart = dashIndex + 3;
   } else {
     // github.com — must be /blob/ or /raw/
     if (segments.length < 5) return false;
@@ -637,14 +675,14 @@ function main(): void {
       // current upstream config. Require at least one such fence on every
       // PR that adds or modifies a made-for-esphome page.
       if (madeForEsphome) {
-        const hasGitHubUrlFence = fences.some(
-          (f) => f.urlAttr !== null && isAllowedGitHubUrl(f.urlAttr)
+        const hasUpstreamUrlFence = fences.some(
+          (f) => f.urlAttr !== null && isAllowedUpstreamUrl(f.urlAttr)
         );
-        if (!hasGitHubUrlFence) {
+        if (!hasUpstreamUrlFence) {
           issues.push({
             file: rel,
             message:
-              "`made-for-esphome: true` pages must include a yaml fence with `url=` pointing at a `.yaml` file in the manufacturer's GitHub repo — e.g. ```` ```yaml url=https://github.com/<owner>/<repo>/blob/<ref>/<path>.yaml ```` (or the `raw.githubusercontent.com` equivalent) — so the rendered page shows the upstream config live. " +
+              "`made-for-esphome: true` pages must include a yaml fence with `url=` pointing at a `.yaml` file in the manufacturer's GitHub, Codeberg or GitLab repo - e.g. ```` ```yaml url=https://github.com/<owner>/<repo>/blob/<ref>/<path>.yaml ```` (or the `raw.githubusercontent.com` equivalent, ```` ```yaml url=https://codeberg.org/<owner>/<repo>/src/branch/<branch>/<path>.yaml ```` for Codeberg, or ```` ```yaml url=https://gitlab.com/<owner>/<repo>/-/blob/<ref>/<path>.yaml ```` for GitLab) - so the rendered page shows the upstream config live. " +
               `See ${ADDING_DEVICES_HELP_URL}`,
           });
         }
@@ -693,3 +731,5 @@ function main(): void {
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
+
+export { isAllowedUpstreamUrl };

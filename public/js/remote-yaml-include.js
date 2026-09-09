@@ -1,7 +1,11 @@
 // <remote-yaml-include url="..."> — fetches the URL when the element enters
 // the DOM and renders the response as a yaml code block. GitHub blob/tree
 // URLs are normalised to raw.githubusercontent.com so authors can paste the
-// browsable URL straight from the address bar.
+// browsable URL straight from the address bar. Codeberg src/raw URLs and
+// GitLab blob/raw URLs are normalised to their respective API raw endpoints,
+// the only endpoints on either host that send an Access-Control-Allow-Origin
+// header (the plain codeberg.org/gitlab.com raw endpoints do not, so a
+// direct browser fetch would fail).
 //
 // Loaded globally via Starlight's head config; no build step. Plain ES2017+
 // to keep the bundle tiny (no framework, no transpilation).
@@ -11,10 +15,19 @@
   if (typeof window === "undefined" || !("customElements" in window)) return;
   if (window.customElements.get("remote-yaml-include")) return;
 
-  function rawifyGithub(url) {
+  function rawifyUrl(url) {
     try {
       var u = new URL(url, window.location.href);
       if (u.hostname === "raw.githubusercontent.com") return url;
+
+      if (u.hostname === "codeberg.org") {
+        return rawifyCodeberg(url, u) || url;
+      }
+
+      if (u.hostname === "gitlab.com") {
+        return rawifyGitlab(url, u) || url;
+      }
+
       if (u.hostname !== "github.com") return url;
       // Map github.com /{owner}/{repo}/{blob|raw}/{ref}/{...path} to the
       // raw.githubusercontent.com canonical form. GitHub's "Copy raw URL"
@@ -70,6 +83,96 @@
     } catch (_) {
       return url;
     }
+  }
+
+  // Map codeberg.org /{owner}/{repo}/(src|raw)/(branch|tag|commit)/{ref}/{...path}
+  // to the Codeberg API's raw endpoint - the plain codeberg.org raw endpoint
+  // does not send Access-Control-Allow-Origin, so a browser fetch against it
+  // would be blocked by CORS. Returns null (not a fallback) for anything that
+  // isn't this exact shape (e.g. the legacy Gitea `/src/<ref>/<path>` form
+  // with no branch/tag/commit segment) so the caller falls back to the
+  // original url unchanged.
+  function rawifyCodeberg(url, u) {
+    var rawSegments = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
+    var parts = [];
+    for (var i = 0; i < rawSegments.length; i++) {
+      try {
+        parts.push(decodeURIComponent(rawSegments[i]));
+      } catch (_) {
+        return null;
+      }
+    }
+    if (parts.length < 6) return null;
+    var owner = parts[0];
+    var repo = parts[1];
+    var kind = parts[2];
+    if (kind !== "src" && kind !== "raw") return null;
+    var refKind = parts[3];
+    if (refKind !== "branch" && refKind !== "tag" && refKind !== "commit") {
+      return null;
+    }
+    var ref = parts[4];
+    var pathSegments = parts.slice(5);
+    if (pathSegments.length === 0) return null;
+
+    return (
+      "https://codeberg.org/api/v1/repos/" +
+      encodeURIComponent(owner) +
+      "/" +
+      encodeURIComponent(repo) +
+      "/raw/" +
+      pathSegments.map(encodeURIComponent).join("/") +
+      "?ref=" +
+      encodeURIComponent(ref)
+    );
+  }
+
+  // Map gitlab.com /{namespace...}/{repo}/-/(blob|raw)/{ref}/{...path} to the
+  // GitLab API's raw endpoint - the plain gitlab.com raw endpoint does not
+  // send Access-Control-Allow-Origin, so a browser fetch against it would be
+  // blocked by CORS. Namespaces can be nested (group/subgroup/repo), so the
+  // literal `-` separator segment is located rather than assumed to be at a
+  // fixed position; it must be at index >= 2 (at least one namespace segment
+  // plus the repo before it). Returns null (not a fallback) for anything
+  // that isn't this exact shape so the caller falls back to the original url
+  // unchanged. Per the GitLab API, the project (namespace/repo) and the file
+  // path are each a single encoded path component - slashes become %2F.
+  function rawifyGitlab(url, u) {
+    var rawSegments = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
+    var parts = [];
+    for (var i = 0; i < rawSegments.length; i++) {
+      try {
+        parts.push(decodeURIComponent(rawSegments[i]));
+      } catch (_) {
+        return null;
+      }
+    }
+    var dashIndex = -1;
+    for (var j = 2; j < parts.length; j++) {
+      if (parts[j] === "-") {
+        dashIndex = j;
+        break;
+      }
+    }
+    if (dashIndex === -1) return null;
+    var kind = parts[dashIndex + 1];
+    if (kind !== "blob" && kind !== "raw") return null;
+    var ref = parts[dashIndex + 2];
+    var pathSegments = parts.slice(dashIndex + 3);
+    if (!ref || pathSegments.length === 0) return null;
+    var namespace = parts.slice(0, dashIndex - 1).join("/");
+    var repo = parts[dashIndex - 1];
+    var project = namespace + "/" + repo;
+    var filePath = pathSegments.join("/");
+
+    return (
+      "https://gitlab.com/api/v4/projects/" +
+      encodeURIComponent(project) +
+      "/repository/files/" +
+      encodeURIComponent(filePath) +
+      "/raw?ref=" +
+      encodeURIComponent(ref)
+    );
   }
 
   function flashCopy(btn, value, idleLabel, successLabel) {
@@ -260,7 +363,7 @@
     }
 
     _fetchAndRender(url) {
-      var rawUrl = rawifyGithub(url);
+      var rawUrl = rawifyUrl(url);
       this._render(STATE.loading, "Loading " + url + "…", { url: url });
 
       var self = this;
@@ -297,7 +400,7 @@
           target: "_blank",
           rel: "noopener noreferrer",
           referrerpolicy: "no-referrer",
-          title: "Open the source on GitHub",
+          title: "Open the upstream source",
         },
         meta.url || this.getAttribute("url") || ""
       );

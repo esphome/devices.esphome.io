@@ -2,7 +2,8 @@
  * Remark plugin: handle two attribute forms on yaml/yml fenced code blocks:
  *
  *   ```yaml file="path.yaml"        ->  inline contents at build time
- *   ```yaml url="https://github..."  ->  fetch in the browser at visit time
+ *   ```yaml url="https://github... or https://codeberg... or https://gitlab..."
+ *                                    ->  fetch in the browser at visit time
  *
  * `file=` resolves a path relative to the markdown file (with traversal
  * guarded), reads it from disk, and rewrites the code node so the rest of
@@ -34,9 +35,15 @@ const YAML_LANGS = new Set(["yaml", "yml"]);
 
 // Hosts a `url=` fence may point at. We don't want a device page to be able
 // to make a reader's browser fetch arbitrary origins (tracking, mixed-
-// content failures, surprise content), so the allowlist is GitHub only —
-// which is also the only host the `Copy !include` directive can target.
-const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
+// content failures, surprise content), so the allowlist mirrors the git
+// hosts ESPHome's own `!include`/packages shorthand supports: GitHub,
+// Codeberg and GitLab.
+const URL_HOST_ALLOWLIST = new Set([
+  "github.com",
+  "raw.githubusercontent.com",
+  "codeberg.org",
+  "gitlab.com",
+]);
 
 // Used to build a one-click `!include github://…@<branch>` directive that
 // users can paste into their own ESPHome config to pull this device's yaml
@@ -70,17 +77,23 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// Build an `!include github://owner/repo/path@ref` directive from any
-// github.com / raw.githubusercontent.com URL. Returns null for everything
-// else (gitlab, raw HTTP, malformed input) so the caller can skip rendering
-// the button rather than emit a broken directive.
+// Build an `!include github://owner/repo/path@ref` (or `codeberg://…` /
+// `gitlab://…`) directive from any github.com / raw.githubusercontent.com /
+// codeberg.org / gitlab.com URL. Returns null for everything else (raw HTTP,
+// malformed input, the legacy Gitea `/src/<ref>/<path>` shape without a
+// branch/tag/commit segment, a GitLab namespace with more than one segment -
+// ESPHome's shorthand grammar takes a single-segment `owner`) so the caller
+// can skip rendering the button rather than emit a broken directive.
 //
 // Branch names that contain `/` are inherently ambiguous from a github.com
 // blob URL (`/blob/feature/foo/path/file.yaml` could be branch `feature`
 // + path `foo/path/...` OR branch `feature/foo` + path `path/...`); we
 // only handle the explicit `/blob/refs/{heads,tags}/<ref>/` form for those
 // and return null otherwise so the user can paste the raw URL directly.
-function githubIncludeDirective(url: string): string | null {
+// Codeberg's `/(src|raw)/(branch|tag|commit)/<ref>/<path>` and GitLab's
+// `/-/(blob|raw)/<ref>/<path>` forms share that ambiguity for branch names
+// containing `/`; the single segment after the marker is taken as the ref.
+function includeDirective(url: string): string | null {
   let u: URL;
   try {
     u = new URL(url);
@@ -100,11 +113,13 @@ function githubIncludeDirective(url: string): string | null {
   if (segments.some((s) => s === null)) return null;
   const p = segments as string[];
 
+  let scheme: string;
   let owner: string | undefined;
   let repo: string | undefined;
   let ref: string | undefined;
   let rest: string | undefined;
   if (u.hostname === "raw.githubusercontent.com") {
+    scheme = "github";
     if (p.length < 4) return null;
     owner = p[0];
     repo = p[1];
@@ -116,6 +131,7 @@ function githubIncludeDirective(url: string): string | null {
       rest = p.slice(3).join("/");
     }
   } else if (u.hostname === "github.com") {
+    scheme = "github";
     if (p.length < 5) return null;
     owner = p[0];
     repo = p[1];
@@ -131,11 +147,48 @@ function githubIncludeDirective(url: string): string | null {
       ref = p[3];
       rest = p.slice(4).join("/");
     }
+  } else if (u.hostname === "codeberg.org") {
+    scheme = "codeberg";
+    // owner/repo/(src|raw)/(branch|tag|commit)/ref/path... - at least 6
+    // segments. The legacy Gitea `/src/<ref>/<path>` shape (no
+    // branch/tag/commit segment) is ambiguous and rejected.
+    if (p.length < 6) return null;
+    owner = p[0];
+    repo = p[1];
+    if (p[2] !== "src" && p[2] !== "raw") return null;
+    if (p[3] !== "branch" && p[3] !== "tag" && p[3] !== "commit") return null;
+    ref = p[4];
+    rest = p.slice(5).join("/");
+  } else if (u.hostname === "gitlab.com") {
+    scheme = "gitlab";
+    // Namespaces can be nested (group/subgroup/repo), so locate the
+    // literal `-` separator segment rather than assuming a fixed position.
+    // It must be at index >= 2 (at least one namespace segment plus the
+    // repo before it).
+    let dashIndex = -1;
+    for (let i = 2; i < p.length; i++) {
+      if (p[i] === "-") {
+        dashIndex = i;
+        break;
+      }
+    }
+    if (dashIndex === -1) return null;
+    if (p[dashIndex + 1] !== "blob" && p[dashIndex + 1] !== "raw") return null;
+    ref = p[dashIndex + 2];
+    rest = p.slice(dashIndex + 3).join("/");
+    const namespace = p.slice(0, dashIndex - 1).join("/");
+    repo = p[dashIndex - 1];
+    // ESPHome's `!include gitlab://<owner>/<repo>/…` shorthand takes a
+    // single-segment owner - a nested namespace can't be expressed, so skip
+    // rendering the button rather than emit a directive the shorthand can't
+    // parse.
+    if (namespace.includes("/")) return null;
+    owner = namespace;
   } else {
     return null;
   }
   if (!owner || !repo || !ref || !rest) return null;
-  return `!include github://${owner}/${repo}/${rest}@${ref}`;
+  return `!include ${scheme}://${owner}/${repo}/${rest}@${ref}`;
 }
 
 const remarkYamlInclude: Plugin<[], Root> = () => {
@@ -210,7 +263,7 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
             type: "html",
             value:
               `<div class="yaml-source-header">` +
-              `<a class="yaml-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener" title="Open the source on GitHub">${escapeHtml(sourceUrl)}</a>` +
+              `<a class="yaml-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener" title="Open the upstream source">${escapeHtml(sourceUrl)}</a>` +
               `</div>`,
           } as Html;
           parent.children.splice(
@@ -279,7 +332,7 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
           );
           htmlIndex = index + 1; // intro now at `index`, html at `index + 1`
         }
-        const directive = githubIncludeDirective(url);
+        const directive = includeDirective(url);
         if (directive) insertActionAfter(parent, htmlIndex, directive);
 
         // Force Expressive Code's CSS to load on this page so the markup the
@@ -355,4 +408,5 @@ function visitCodeNodes(
   walk(tree as unknown as { type: string; children?: unknown[] }, null, null);
 }
 
+export { includeDirective };
 export default remarkYamlInclude;
