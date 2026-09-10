@@ -5,17 +5,17 @@
 // stub and a fresh review is posted lower down; when the checks pass the active
 // review is dismissed. Reviews are only ever REQUEST_CHANGES — never APPROVE.
 //
-// Loaded by .github/workflows/made-for-esphome-review-feedback.yml via
+// Loaded by .github/workflows/made-for-esphome-pr.yml via
 // actions/github-script. Exported as a function so it can be linted
 // (`node --check`) and unit-tested with a mocked GitHub client.
 const fs = require("fs");
 const path = require("path");
 
 // Hidden markers so we only ever touch our own reviews/comments and never the
-// device-config validation review or the made-for-esphome checklist review
-// (both also bot REQUEST_CHANGES reviews). SUPERSEDED tags the stub we leave
-// behind when a newer review replaces an older one; MARKER_PASS tags the
-// non-blocking "all checks pass" acknowledgement comment.
+// device-config validation review (also a bot REQUEST_CHANGES review).
+// SUPERSEDED tags the stub we leave behind when a newer review replaces an
+// older one; MARKER_PASS tags the non-blocking "all checks pass"
+// acknowledgement comment.
 const MARKER = "<!-- made-for-esphome-review -->";
 const SUPERSEDED = "<!-- mfe-superseded -->";
 const MARKER_PASS = "<!-- made-for-esphome-pass -->";

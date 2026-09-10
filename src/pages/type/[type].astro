@@ -5,6 +5,7 @@ import {
   getAllDevices,
   matchesFilter,
   sortDevices,
+  withAliasEntries,
 } from "../../utils/getDevices";
 
 export async function getStaticPaths() {
@@ -41,7 +42,7 @@ const { displayName, description } = Astro.props;
 
 const all = await getAllDevices();
 const filtered = sortDevices(
-  all.filter((d) => matchesFilter(d.data, "type", type!))
+  withAliasEntries(all.filter((d) => matchesFilter(d.data, "type", type!)))
 );
 ---
 

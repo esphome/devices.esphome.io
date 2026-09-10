@@ -12,8 +12,13 @@
     - [ ] Configuration includes `dashboard_import:` to facilitate this ([documentation](https://esphome.io/components/esphome.html#adding-the-mac-address-as-a-suffix-to-the-device-name))
     - [ ] Configuration contains the `ota`.`esphome` component ([documentation](https://esphome.io/components/ota/esphome))
     - [ ] Serial flashing is not disabled
-    - [ ] There are no references to secrets in the configuration
-    - [ ] There are no passwords in the configuration
+    - [ ] There are no references to secrets in the configuration - not even
+          `!secret wifi_ssid` / `!secret wifi_password`. Users provision their
+          own Wi-Fi credentials, so anything baked in only leaves dummy values
+          in the device's storage; secrets belong in the configuration a user
+          ends up with **after** taking control
+    - [ ] There are no passwords in the configuration - neither literal values
+          nor `!secret` references on any `password:` / `psk:` key
     - [ ] There are no static IP addresses in the configuration
     - [ ] The configuration **must** be valid, compile and run successfully _without any user changes_ after taking control
     - [ ] Every entity/component (sensor, switch, etc.) **must** have an `id` defined
