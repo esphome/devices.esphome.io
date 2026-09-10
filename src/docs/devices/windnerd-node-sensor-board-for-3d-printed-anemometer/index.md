@@ -1,6 +1,6 @@
 ---
 title: WindNerd Node - Sensor board for 3D printed anemometer
-date-published: 2026-09-07
+date-published: 2026-09-10
 type: sensor
 standard: global
 board: esp32
