@@ -36,6 +36,9 @@ jobs:
           sparse-checkout: |
             .github/scripts
           sparse-checkout-cone-mode: false
+          # The script only needs the file on disk; don't leave the token in
+          # .git/config for any later step to pick up.
+          persist-credentials: false
 
       - name: Sync labels from checklist
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
