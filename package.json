@@ -17,7 +17,7 @@
     "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
     "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
-    "check-workflow-scripts": "node --check .github/scripts/mfe-review-feedback.cjs && node --check .github/scripts/mfe-review-command.cjs",
+    "check-workflow-scripts": "node --check .github/scripts/mfe-review-feedback.cjs && node --check .github/scripts/mfe-review-command.cjs && node --check .github/scripts/mfe-intake.cjs && node --check .github/scripts/mfe-promote.cjs",
     "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",
     "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
     "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",

@@ -5,8 +5,8 @@ name: Made for ESPHome Review
 # downloads the linked upstream config, compiles it with only placeholder
 # Wi-Fi secrets, and runs the m4e checklist as pure structural checks. It
 # emits a `mfe-review-report` artifact (report + PR number); the companion
-# `made-for-esphome-review-feedback` workflow turns that into an
-# esphome[bot] review.
+# `made-for-esphome-pr` workflow turns that into an esphome[bot] review and
+# takes the PR out of draft once every check is green.
 #
 # SECURITY: compiling a fork PR's linked YAML runs the ESPHome/PlatformIO
 # toolchain on contributor-controlled input (external_components can execute
