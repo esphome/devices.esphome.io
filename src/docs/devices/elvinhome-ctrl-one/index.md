@@ -1,6 +1,6 @@
 ---
 title: "elvinhome CTRL ONE"
-date-published: 2026-08-20 00:00:00 +02:00
+date-published: 2026-09-10 00:00:00 +02:00
 type: misc
 standard: global
 board: esp32
