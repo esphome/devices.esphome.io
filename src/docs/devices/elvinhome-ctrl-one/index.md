@@ -1,5 +1,5 @@
 ---
-title: "elvinhome CTRL ONE"
+title: "elvinhome CTRL ONE ePaper Room Controller"
 date-published: 2026-09-10 00:00:00 +02:00
 type: misc
 standard: global
@@ -13,7 +13,7 @@ project-url: https://codeberg.org/elvinhome/ctrl-one
 
 ## Product Description
 
-The CTRL ONE is a wall-mounted or desktop e-paper room controller built around the
+The CTRL ONE is a wall-mounted or desktop ePaper room controller built around the
 Espressif ESP32-C6 (single-core RISC-V). It is a touch panel, information display
 and air-quality monitor in one, with a flexible add-on system that turns it into
 a fully-featured smart thermostat. It ships with ESPHome pre-flashed out of the
@@ -24,7 +24,7 @@ The sensor sits in a corner cutout, separated from the heat-generating internals
 and shielded from draughts and direct sunlight. It samples every 30 seconds by
 default and is configurable down to every 5 seconds.
 
-The 300 x 400 e-paper touchscreen supports partial refresh, along with a front light
+The 300 x 400 ePaper touchscreen supports partial refresh, along with a front light
 (colloquially known as a backlight, but it is technically in front of the display layer).
 The front-facing ambient light sensor is configured to automatically set the brightness.
 
@@ -37,7 +37,7 @@ Key hardware:
 
 - Espressif ESP32-C6 (RISC-V) with 2.4 GHz WiFi 6; Zigbee and Thread are possible
   through configuration changes.
-- 4.2-inch e-paper display (Goodisplay GDEY042T81, 300 x 400 portrait) with
+- 4.2-inch ePaper display (Goodisplay GDEY042T81, 300 x 400 portrait) with
   touchscreen (FT63x6) and auto-dimming front light, driven over SPI.
 - Sensirion SCD40 sensor measuring CO2, temperature and humidity over I2C.
 - Ambient light sensor (ALS-PT19) on an ADC pin.
@@ -89,7 +89,7 @@ For the source code of all sub-packages, check the repository.
 
 ## Notes
 
-- The e-paper display uses the standard ESPHome `epaper_spi` platform
+- The ePaper display uses the standard ESPHome `epaper_spi` platform
   (Goodisplay GDEY042T81). The touchscreen is the FT63x6 on the shared I2C bus.
 - The add-on connector's relay output and buzzer both use GPIO1 (see the
   `addons/` folder in the firmware repository for the full add-on configs). The
