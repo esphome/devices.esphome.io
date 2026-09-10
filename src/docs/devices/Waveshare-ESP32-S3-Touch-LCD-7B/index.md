@@ -4,7 +4,7 @@ date-published: 2026-09-09
 type: misc
 standard: global
 board: esp32
-project-url: https://www.waveshare.com/esp32-s3-touch-lcd-7b.htm
+project-url: https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B
 difficulty: 3
 ---
 
@@ -32,7 +32,7 @@ backlight/VCOM enable, touch reset, the SD card chip-select line, and the
 shared USB/CAN mode-select line, because most of the ESP32-S3's usable
 GPIOs are consumed by the 16-bit RGB LCD bus.
 
-Available on [Waveshare](https://www.waveshare.com/esp32-s3-touch-lcd-7b.htm)
+Available on [Waveshare](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B)
 for ~$40. A version without touch (ESP32-S3-LCD-7B) is also sold.
 
 ## GPIO Pinout
@@ -135,7 +135,7 @@ confirmed working on real hardware. No network/API/OTA — add your own
 
 ## Links
 
-- [Product Page](https://www.waveshare.com/esp32-s3-touch-lcd-7b.htm)
-- [Wiki / Documentation](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B)
-- [Working with Arduino](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B/Working_with_Arduino)
-- [Working with ESP-IDF](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B/Working_with_ESP-IDF)
+- [Product Page](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7B)
+- [Wiki / Documentation](https://docs.waveshare.com/ESP32-S3-Touch-LCD-7B)
+- [Working with Arduino](https://docs.waveshare.com/ESP32-S3-Touch-LCD-7B/Arduino)
+- [Working with ESP-IDF](https://docs.waveshare.com/ESP32-S3-Touch-LCD-7B/ESP-IDF)
