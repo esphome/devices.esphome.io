@@ -1,0 +1,79 @@
+esphome:
+  name: m5stack-nanoc6
+  friendly_name: M5Stack NanoC6
+  name_add_mac_suffix: true
+
+esp32:
+  variant: esp32c6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: blue_status_led
+    entity_category: diagnostic
+    pin: GPIO7
+
+  #G20=RGB WS2812
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO20
+    num_leds: 1
+    chipset: ws2812
+    name: "RGB LED"
+    id: rgb_led
+    entity_category: diagnostic
+    power_supply: rgbpwr
+    default_transition_length: 150ms
+
+power_supply:
+  - id: 'rgbpwr'
+    pin: GPIO19
+
+    # According to the datasheet of the Awinic AW35122FDR, it takes the load
+    # switch 0.5ms to fully turn on (it has slew rate control), see "Switch
+    # turn on time".
+    enable_time: 5ms
+    keep_on_time: 10ms
+
+#G9=Button
+binary_sensor:
+  - platform: gpio
+    name: Button
+    id: case_button
+    entity_category: diagnostic
+    pin:
+      number: GPIO9
+
+      # M5Stack intended to use the GPIO9 for the button to allow the user to
+      # force the ESP into download mode. Acknowledge the warning from ESPHome.
+      # See "Download Mode" in https://docs.m5stack.com/en/core/M5NanoC6
+      ignore_strapping_warning: true
+
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - logger.log: Button Pressed
+
+remote_transmitter:
+  id: ir_tx
+  pin: GPIO3
+  carrier_duty_percent: 50%
+
+infrared:
+  # IR transmitter instance
+  - platform: ir_rf_proxy
+    name: IR Proxy Transmitter
+    id: ir_proxy_tx
+    remote_transmitter_id: ir_tx

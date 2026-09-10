@@ -5,12 +5,12 @@ type: switch
 standard: global
 board: bk72xx
 ---
-[Amazon Link](https://amzn.to/3NhW7EX)
+[Amazon Link](https://www.amazon.com/dp/B07WWYQJFR)
 
 ## Notes
 
 * Based on [Treatlife esp01_1m 2/3-Way Wall-Switch](/devices/Treatlife-Wall-Switch)
-* Bought here: [Amazon](https://amzn.to/42jq8fY)
+* Bought here: [Amazon](https://www.amazon.com/dp/B07WWYQJFR)
 * **Note:** These devices are sold with different Beken chips. Inspect your board before flashing!
   * The version of the LED board is v1.1 dated 2019-01-19 in both cases
   * Some versions feature the BK7231S board (`WB3S` label on the chip)

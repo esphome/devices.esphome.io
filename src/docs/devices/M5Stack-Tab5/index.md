@@ -22,372 +22,41 @@ The Tab5 has many peripherals built in including but not limited to:
 - IMU
 - RTC
 
+## Note
+
+Only the original hardware revision (with the ILI9881C display driver and GT911 touchscreen) is currently
+supported. Later revisions using the ST7123 or ST7121 display drivers are not yet supported.
+
 ## Example Configuration
 
-```yaml
-esphome:
-  name: m5stack-tab5
-  friendly_name: M5Stack Tab5
+The base configuration below covers all of the on-board hardware: the ESP32-P4, the ESP32-C6 hosted Wi-Fi
+co-processor, the MIPI DSI display and GT911 touchscreen, the ES8388 DAC + ES7210 ADC audio path, the RX8130
+RTC, the PI4IOE5V6408 IO expanders, and the INA226 battery monitor. Add your own `wifi:`, `api:`, and `ota:`
+sections (or include them via `!include`/packages) before flashing.
 
-esp32:
-  variant: esp32p4
-  flash_size: 16MB
-  framework:
-    type: esp-idf
-    advanced:
-      enable_idf_experimental_features: true
-
-esp32_hosted:
-  variant: esp32c6
-  active_high: true
-  clk_pin: GPIO12
-  cmd_pin: GPIO13
-  d0_pin: GPIO11
-  d1_pin: GPIO10
-  d2_pin: GPIO9
-  d3_pin: GPIO8
-  reset_pin: GPIO15
-  slot: 1
-
-logger:
-  hardware_uart: USB_SERIAL_JTAG
-
-psram:
-  mode: hex
-  speed: 200MHz
-
-api:
-
-ota:
-  platform: esphome
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-i2c:
-  - id: bsp_bus
-    sda: GPIO31
-    scl: GPIO32
-    frequency: 400kHz
-
-pi4ioe5v6408:
-  - id: pi4ioe1
-    address: 0x43
-    # 0: O - wifi_antenna_int_ext
-    # 1: O - speaker_enable
-    # 2: O - external_5v_power
-    # 3: NC
-    # 4: O - lcd reset
-    # 5: O - touch panel reset
-    # 6: O - camera reset
-    # 7: I - headphone detect
-  - id: pi4ioe2
-    address: 0x44
-    # 0: O - wifi_power
-    # 1: NC
-    # 2: NC
-    # 3: O - usb_5v_power
-    # 4: O - poweroff pulse
-    # 5: O - quick charge enable (inverted)
-    # 6: I - charging status
-    # 7: O - charge enable
-
-switch:
-  - platform: gpio
-    id: wifi_power
-    name: "WiFi Power"
-    pin:
-      pi4ioe5v6408: pi4ioe2
-      number: 0
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: usb_5v_power
-    name: "USB Power"
-    pin:
-      pi4ioe5v6408: pi4ioe2
-      number: 3
-  - platform: gpio
-    id: quick_charge
-    name: "Quick Charge"
-    pin:
-      pi4ioe5v6408: pi4ioe2
-      number: 5
-      inverted: true
-  - platform: gpio
-    id: charge_enable
-    name: "Charge Enable"
-    pin:
-      pi4ioe5v6408: pi4ioe2
-      number: 7
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: wifi_antenna_int_ext
-    pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 0
-  - platform: gpio
-    id: speaker_enable
-    name: "Speaker Enable"
-    pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 1
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: external_5v_power
-    name: "External 5V Power"
-    pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 2
-
-binary_sensor:
-  - platform: gpio
-    id: charging
-    name: "Charging Status"
-    pin:
-      pi4ioe5v6408: pi4ioe2
-      number: 6
-      mode: INPUT_PULLDOWN
-
-  - platform: gpio
-    id: headphone_detect
-    name: "Headphone Detect"
-    pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 7
-
-select:
-  - platform: template
-    id: wifi_antenna_select
-    name: "WiFi Antenna"
-    options:
-      - "Internal"
-      - "External"
-    optimistic: true
-    on_value:
-      - if:
-          condition:
-            lambda: return i == 0;
-          then:
-            - switch.turn_off: wifi_antenna_int_ext
-          else:
-            - switch.turn_on: wifi_antenna_int_ext
-
-sensor:
-  - platform: ina226
-    address: 0x41
-    adc_averaging: 16
-    max_current: 8.192A
-    shunt_resistance: 0.005ohm
-    bus_voltage:
-      id: battery_voltage
-      name: "Battery Voltage"
-    current:
-      id: battery_current
-      name: "Battery Current"
-      # Positive means discharging
-      # Negative means charging
-
-    # Tab5 built-in battery discharges from full (8.23 V) to shutdown threshold (6.0 V)
-  - platform: template
-    name: "Battery Percentage"
-    lambda: |-
-      float voltage = id(battery_voltage).state;
-      // Adjust these values based on your battery's actual min/max voltage
-      float min_voltage = 6.0;  // Discharged voltage
-      float max_voltage = 8.23;  // Fully charged voltage
-      float percentage = (voltage - min_voltage) / (max_voltage - min_voltage) * 100.0;
-      if (percentage > 100.0) return 100.0;
-      if (percentage < 0.0) return 0.0;
-      return percentage;
-    update_interval: 60s
-    unit_of_measurement: "%"
-    accuracy_decimals: 1
+```yaml file=config.yaml
 ```
 
-## Display
+## WiFi Antenna Selector
 
-```yaml
-touchscreen:
-  - platform: gt911
-    interrupt_pin: GPIO23
-    update_interval: never
-    reset_pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 5
-    calibration:
-      x_min: 0
-      x_max: 720
-      y_min: 0
-      y_max: 1280
-    id: touch
+A template select that exposes the on-board antenna switch as an "Internal" / "External" option rather than the
+raw GPIO toggle.
 
-esp_ldo:
-  - voltage: 2.5V
-    channel: 3
-
-display:
-  - platform: mipi_dsi
-    dimensions:
-      height: 1280
-      width: 720
-    model: M5Stack-Tab5
-    reset_pin:
-      pi4ioe5v6408: pi4ioe1
-      number: 4
-    show_test_card: true
-
-output:
-  - platform: ledc
-    pin: GPIO22
-    id: backlight_pwm
-    frequency: 1000Hz
-
-light:
-  - platform: monochromatic
-    output: backlight_pwm
-    name: "Display Backlight"
-    id: backlight
-    restore_mode: RESTORE_DEFAULT_ON
-    default_transition_length: 250ms
+```yaml file=wifi-antenna.yaml
 ```
 
-## LVGL
+## Battery Percentage
 
-```yaml
-lvgl:
-  byte_order: little_endian
+A template sensor that derives a 0–100% reading from the INA226 battery voltage. Adjust the min/max voltages to
+match your specific cell.
+
+```yaml file=battery-percentage.yaml
 ```
 
-## Audio / Wake word voice assistant
+## Voice Assistant
 
-```yaml
-# The DAC Output select needs to be manually (or with an automation) changed to `LINE1` for the onboard speaker
-select:
-  - platform: es8388
-    dac_output:
-      name: DAC Output
-    adc_input_mic:
-      name: ADC Input Mic
+The voice assistant configuration below adds a `media_player`, `micro_wake_word`, and `voice_assistant` on top of
+the audio hardware defined in the base config.
 
-i2s_audio:
-  - id: mic_bus
-    i2s_lrclk_pin: GPIO29
-    i2s_bclk_pin: GPIO27
-    i2s_mclk_pin: GPIO30
-
-audio_adc:
-  - platform: es7210
-    id: es7210_adc
-    bits_per_sample: 16bit
-    sample_rate: 16000
-
-microphone:
-  - platform: i2s_audio
-    id: tab5_microphone
-    i2s_din_pin: GPIO28
-    sample_rate: 16000
-    bits_per_sample: 16bit
-    adc_type: external
-
-audio_dac:
-  - platform: es8388
-    id: es8388_dac
-
-speaker:
-  - platform: i2s_audio
-    id: tab5_speaker
-    i2s_dout_pin: GPIO26
-    audio_dac: es8388_dac
-    dac_type: external
-    channel: mono
-    buffer_duration: 100ms
-    bits_per_sample: 16bit
-    sample_rate: 48000
-
-media_player:
-  - platform: speaker
-    name: None
-    id: speaker_player
-    announcement_pipeline:
-      speaker: tab5_speaker
-      format: FLAC
-      sample_rate: 48000
-      num_channels: 1
-    on_announcement:
-      # Stop the wake word (mWW or VA) if the mic is capturing
-      - if:
-          condition:
-            - microphone.is_capturing:
-          then:
-            - micro_wake_word.stop:
-    on_idle:
-      # Since VA isn't running, this is the end of user-intiated media playback. Restart the wake word.
-      - if:
-          condition:
-            not:
-              voice_assistant.is_running:
-          then:
-            - micro_wake_word.start:
-
-micro_wake_word:
-  id: mww
-  models:
-    - okay_nabu
-    - hey_mycroft
-    - hey_jarvis
-  on_wake_word_detected:
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
-
-voice_assistant:
-  id: va
-  microphone: tab5_microphone
-  media_player: speaker_player
-  micro_wake_word: mww
-  on_end:
-    # Wait a short amount of time to see if an announcement starts
-    - wait_until:
-        condition:
-          - media_player.is_announcing:
-        timeout: 0.5s
-    # Announcement is finished and the I2S bus is free
-    - wait_until:
-        - and:
-            - not:
-                media_player.is_announcing:
-            - not:
-                speaker.is_playing:
-    - micro_wake_word.start:
-  on_client_connected:
-    - micro_wake_word.start:
-  on_client_disconnected:
-    - micro_wake_word.stop:
-```
-
-## RTC
-
-RX8130 Time Source
-
-```yaml
-esphome:
-  on_boot:
-    then:
-      # read the RTC time once when the system boots
-      rx8130.read_time:
-time:
-  - platform: rx8130
-    id: rtc_time
-    i2c_id: bsp_bus
-    # repeated synchronization is not necessary unless the external RTC
-    # is much more accurate than the internal clock
-    update_interval: never
-    timezone: UTC
-  - platform: homeassistant
-    id: ha_time
-    # instead try to synchronize via network repeatedly ...
-    on_time_sync:
-      then:
-        # ... and update the RTC when the synchronization was successful
-        rx8130.write_time:
+```yaml file=voice-assistant.yaml
 ```

@@ -72,7 +72,7 @@ pcf8574:
 
 # Config of 433MHz Receiver
 remote_receiver:
-  # see https://esphome.io/components/remote_transmitter.html#setting-up-rf-devices
+  # see https://esphome.io/guides/setting_up_rmt_devices/#remote-setting-up-rf
   # for details on discovering the correct codes for your devices
   - id: receiver_rf
     pin:

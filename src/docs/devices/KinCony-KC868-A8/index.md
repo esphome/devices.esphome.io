@@ -18,8 +18,8 @@ board: esp32
 | GPIO13 | 1-Wire GPIO        |
 | GPIO32 | 1-Wire GPIO        |
 | GPIO33 | 1-Wire GPIO        |
-| GPIO15 | 433MHz Transmitter |
-| GPIO2  | 433MHz Receiver    |
+| GPIO2 | 433MHz Transmitter |
+| GPIO15  | 433MHz Receiver    |
 
 [Additional pinout/design details](https://www.kincony.com/arduino-esp32-8-channel-relay-module-kc868-a8.html)
 

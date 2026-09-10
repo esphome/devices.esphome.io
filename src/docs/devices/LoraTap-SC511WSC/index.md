@@ -51,12 +51,12 @@ esphome:
 #  platform: ESP8266
 
 esp8266:
-  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome.html#esp8266-restore-from-flash
+  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
   board: esp01_1m
 
 # Enable logging
 logger:
-  esp8266_store_log_strings_in_flash: False # recommanded for ESP8266 https://esphome.io/components/sensor/custom.html
+  esp8266_store_log_strings_in_flash: False # recommanded for ESP8266
   #  baud_rate : 115200
   baud_rate: 0
 

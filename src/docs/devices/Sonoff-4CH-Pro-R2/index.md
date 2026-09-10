@@ -102,7 +102,7 @@ switch:
 Use _one_ of the following three configurations to adjust the led to your needs. Note: Using the Status LED on the 4CH
 Pro may cause relay 4 to activate on power up.
 
-### Status LED (see [https://esphome.io/components/status_led.html](https://esphome.io/components/status_led.html))
+### Status LED (see [https://esphome.io/components/status_led/](https://esphome.io/components/status_led/))
 
 ```yaml
 status_led:

@@ -30,6 +30,11 @@ The Apollo Automation PLT-1 is a plant quality sensor with the following feature
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/PLT-1/blob/main/Integrations/ESPHome/PLT-1.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/plt-1-ultimate-plant-sensor-for-home-assistant)

@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3S3zypi)
+[Amazon Link](https://www.amazon.com/dp/B07SQB5PKQ)
 
 [Manufacturer Link](https://mygeeni.com/products/outdoor-duo-dual-outlet-smart-wi-fi-plug-grey)
 

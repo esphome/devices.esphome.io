@@ -28,7 +28,7 @@ Available pre-flashed with ESPHome or Tasmota.
 | GPIO5  | BL0937 SEL |
 | GPIO6  | Relay Led  |
 
-## Basic Configuration
+## Configuration
 
-The [Latest configuration](https://github.com/Smartpadza/Device_Configs/blob/main/smartpad-em32-smart-plug.yaml)
-can be found on Smartpad South Africas GitHub repo.
+```yaml url=https://github.com/Smartpadza/Device_Configs/blob/main/smartpad-em32-smart-plug.yaml
+```

@@ -65,6 +65,11 @@ It's like having a Swiss Army knife for your digital workspace, but way cooler a
 4. In Home Assistant, look at discovered devices.
 5. Customize button functions and add modular attachments as needed.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/BTN-1/blob/main/Integrations/ESPHome/BTN-1.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/btn-1-macro-deck)

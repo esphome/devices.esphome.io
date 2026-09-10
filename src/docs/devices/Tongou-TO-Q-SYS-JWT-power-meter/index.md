@@ -28,7 +28,7 @@ inside. Some aspects to consider:
   [HC32F460](https://m.huazhoucn.com/upFiles/common/2023/04/HC32F460%20series%20Datasheet%20Rev1.3.pdf) and is
   accessible via UART1 of the CBU board (the same UART that is used for flashing). It runs the firmware that complies
   with the standard
-  [Tuya MCU protocol](https://developer.tuya.com/en/docs/mcu-standard-protocol/MCUSDK-wifi-base?id=Kd2bxu84567gk);
+  [Tuya MCU protocol](https://developer.tuya.com/docs/mcu-standard-protocol/MCUSDK-wifi-base?id=Kd2bxu84567gk);
 - The MCU firmware actually interfaces with the metering sensors and so calibration is not required.
 - Some MCU settings are only possible to configure remotely (like the prepaid switch ones), some are only possible to
   set via the physical buttons (like the period of time for which the measured parameters must stay above/below the

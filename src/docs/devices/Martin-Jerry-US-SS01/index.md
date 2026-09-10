@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3RAaQhx)
+[Amazon Link](https://www.amazon.com/dp/B09C1R7PDK)
 
 [Device on Martin Jerry](https://www.martinjerry.com/us-ss01-support)
 

@@ -118,7 +118,7 @@ sensor:
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   # - platform: total_daily_energy
   #   name: ${friendly_name} Total Daily Energy
   #   icon: mdi:circle-slice-3
@@ -171,7 +171,7 @@ light:
     output: ${devicename}_red_output
     id: ${devicename}_red_led
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the blue light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the blue light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms

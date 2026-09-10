@@ -95,7 +95,7 @@ sensor:
       name: ${friendly_name} Voltage
       unit_of_measurement: V
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -159,7 +159,7 @@ light:
   output: brilliant_smartplug_1_blue_output
   id: brilliant_smartplug_1_blue_led
 
-# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the blue light for other things as well.
+# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the blue light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms

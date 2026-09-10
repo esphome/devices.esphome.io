@@ -18,12 +18,11 @@ Original version uses ESP8266 controller.
 
 ### Series 2
 
-Newer revision uses BK7231T controller on the Tuya
-[WB3S module](https://developer.tuya.com/en/docs/iot/wb3s-module-datasheet?id=K9dx20n6hz5n4).
+Newer revision uses BK7231T controller on the Tuya WB3S module.
 
 ### Series 3
 
-revision uses BK7231N controller on the Tuya [CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076)
+revision uses BK7231N controller on the Tuya [CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076)
 
 ## GPIO Pinout
 

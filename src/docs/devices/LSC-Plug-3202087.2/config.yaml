@@ -1,0 +1,105 @@
+substitutions:
+  name: lsc-plug-3202087-2
+  friendly_name: LSC Smart Power Plug 3202087.2
+  current_resistor: "0.00107"
+  voltage_divider: "803.059"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  platformio_options:
+    custom_versions.beken-bdk: 3.0.78
+
+bk72xx:
+  board: generic-bk7238-tuya
+  family: BK7238
+  framework:
+    version: 0.0.0
+    source: https://github.com/libretiny-eu/libretiny#feature/bk7238
+
+logger:
+  baud_rate: 0
+
+wifi:
+  ap:
+
+status_led:
+  pin:
+    number: P11
+    inverted: true
+
+output:
+  - platform: gpio
+    id: relay_led_output
+    pin:
+      number: P9
+      inverted: true
+
+switch:
+  - platform: gpio
+    name: "None"
+    id: relay_1
+    pin:
+      number: P24
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - output.turn_on: relay_led_output
+    on_turn_off:
+      - output.turn_off: relay_led_output
+
+binary_sensor:
+  - platform: gpio
+    name: Button
+    id: button_1
+    internal: true
+    pin:
+      number: P26
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      - switch.toggle: relay_1
+
+sensor:
+  - platform: internal_temperature
+    name: Internal Temperature
+    entity_category: diagnostic
+
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: P1
+      inverted: true
+    cf_pin:
+      number: P6
+      inverted: true
+    cf1_pin:
+      number: P8
+      inverted: true
+    current_resistor: ${current_resistor}
+    voltage_divider: ${voltage_divider}
+    current:
+      name: Current
+      id: plug_current
+      unit_of_measurement: A
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.450158
+    voltage:
+      name: Voltage
+      id: plug_voltage
+      unit_of_measurement: V
+      accuracy_decimals: 1
+    power:
+      name: Power
+      id: plug_power
+      unit_of_measurement: W
+      accuracy_decimals: 1
+    energy:
+      name: Energy
+      id: plug_energy
+      unit_of_measurement: kWh
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.001
+    update_interval: 2s
+    change_mode_every: 2

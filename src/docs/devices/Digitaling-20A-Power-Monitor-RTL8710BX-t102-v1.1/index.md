@@ -6,7 +6,7 @@ standard: EU
 board: rtl87xx
 ---
 
-Bought from: [Aliexpress](https://de.aliexpress.com/item/1005005374840269.html)
+Bought from: [AliExpress](https://de.aliexpress.com/item/1005005374840269.html)
 
 Board/Pinout: [libretiny.eu](https://docs.libretiny.eu/boards/t102-v1.1/#pinout)
 
@@ -26,10 +26,10 @@ MCU: RTL8710BX
 
 Flash: GD25Q16ETIG 2 M x 8 NOR Flash
 
-Power Sensor: [BL0937](https://developer.tuya.com/en/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc)
+Power Sensor: [BL0937](https://developer.tuya.com/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc)
 
 Relay:
-[JIEYING JY3FF-S-DC5V-A(K)](https://www.lcsc.com/datasheet/lcsc_datasheet_2309121625_JIEYING-RELAY-JY3FF-S-DC5V-A-K_C17702442.pdf)
+[JIEYING JY3FF-S-DC5V-A(K)](https://wmsc.lcsc.com/wmsc/upload/file/pdf/v2/C17702442.pdf)
 
 ## Flashing
 
@@ -69,7 +69,7 @@ substitutions:
   devicename: smartplug
   friendly_name: t102-v1.1-2
   device_description: Digitaling 20A Power Monitor RTL8710BX t102-v1.1
-  current_res: "0.001" # Power monitoring calibration https://esphome.io/components/sensor/hlw8012.html
+  current_res: "0.001" # Power monitoring calibration https://esphome.io/components/sensor/hlw8012/
   voltage_div: "1600" # Power monitoring calibration
 
 esphome:
@@ -169,7 +169,7 @@ sensor:
     change_mode_every: 8
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: Total Daily Energy
     icon: mdi:circle-slice-3

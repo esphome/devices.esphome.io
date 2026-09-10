@@ -42,21 +42,21 @@ api:
 ota:
 web_server:
   port: 80
-  # https://esphomelib.com/esphomeyaml/components/web_server.html
+  # https://esphome.io/web-api/
 
 time:
   - platform: homeassistant
-    # https://esphome.io/components/time
+    # https://esphome.io/components/time/
     id: homeassistant_time
 
 status_led:
-  # https://esphome.io/components/status_led
+  # https://esphome.io/components/status_led/
   pin:
     number: GPIO0
     inverted: True
 
 output:
-  # https://esphome.io/components/output/esp8266_pwm.html
+  # https://esphome.io/components/output/esp8266_pwm/
   - platform: esp8266_pwm
     id: blue_led_output
     pin:
@@ -64,7 +64,7 @@ output:
       inverted: True
 
 light:
-  # https://esphome.io/components/light/monochromatic.html
+  # https://esphome.io/components/light/monochromatic/
   - platform: monochromatic
     name: SP10 Blue LED
     output: blue_led_output
@@ -89,7 +89,7 @@ text_sensor:
 
 binary_sensor:
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     pin:
       number: GPIO13
     id: button
@@ -100,13 +100,13 @@ binary_sensor:
 
 switch:
   - platform: gpio
-    # https://esphome.io/components/switch/gpio
+    # https://esphome.io/components/switch/gpio/
     pin: GPIO15
     id: relay
 
   # tie the led & relay operation together and report status based on relay state
   - platform: template
-    # https://esphome.io/components/switch/template.html
+    # https://esphome.io/components/switch/template/
     name: SP10
     id: relay_template
     lambda: |-

@@ -54,6 +54,11 @@ visible trim ring ≈ Ø 82 mm.
 
 Please check our [full documentation and Quick Start Guide](https://smarthomeshop.io/quick-start-ceilsense)
 
+## Configuration
+
+```yaml url=https://github.com/smarthomeshop/ceilsense/blob/main/ceilsense-v1/ceilsense-basic-wifi-ld2412.yaml
+```
+
 ## Support & Links
 
 - [Shop](https://ceilsense.nl/en)

@@ -1,0 +1,26 @@
+binary_sensor:
+  - platform: status
+    name: Status
+    entity_category: diagnostic
+
+sensor:
+  - platform: wifi_signal
+    name: WiFi Signal
+    entity_category: diagnostic
+    update_interval: 60s
+
+  - platform: uptime
+    name: Uptime
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+    ssid:
+      name: Connected SSID
+
+button:
+  - platform: restart
+    name: Restart
+    entity_category: diagnostic

@@ -29,8 +29,9 @@ I bought it from: [https://www.aliexpress.com/item/1005008876629425.html](https:
 | GPIO26 | Input 2   |
 | GPIO27 | Input 3   |
 | GPIO33 | Input 4   |
-| GPIO19 | ModBUS TX |
-| GPIO18 | ModBUS RX |
+| GPIO19 | RS485 TX  |
+| GPIO18 | RS485 RX  |
+| GPIO32 | RS485 DE  |
 | GPIO15 | LED       |
 | GPIO16 | Pad RX2   |
 | GPIO17 | Pad TX2   |
@@ -156,11 +157,12 @@ binary_sensor:
     name: "Pad TX2 as input"
 
 # ==========================
-# MODBUS UART
+# RS485 (MODBUS) UART
 # ==========================
 uart:
-  rx_pin: 18 # Modbus RX
-  tx_pin: 19 # Modbus TX
+  rx_pin: 18 # RS485 RX
+  tx_pin: 19 # RS485 TX
+  flow_control_pin: 32 # RS485 DE
   baud_rate: 9600
 
 # ==========================

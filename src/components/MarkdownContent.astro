@@ -1,0 +1,13 @@
+---
+import Default from "@astrojs/starlight/components/MarkdownContent.astro";
+import FrontmatterDisplay from "@components/FrontmatterDisplay.astro";
+
+const { entry } = Astro.locals.starlightRoute;
+const isDevicePage =
+  entry.id.startsWith("devices/") &&
+  entry.id !== "devices/adding-devices" &&
+  entry.id !== "devices/tuya-convert";
+---
+
+{isDevicePage && <FrontmatterDisplay frontmatter={entry.data as Record<string, any>} />}
+<Default><slot /></Default>

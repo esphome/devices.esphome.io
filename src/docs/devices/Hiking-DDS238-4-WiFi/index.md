@@ -298,7 +298,7 @@ sensor:
 
 ### Configuration variables
 
-- **update_interval** (_Optional_, [Time](https://esphome.io/components/time/index.html)): Delay between data requests,
+- **update_interval** (_Optional_, [Time](https://esphome.io/components/time/)): Delay between data requests,
   minimum 3s.
 
 ## Sensor
@@ -457,7 +457,7 @@ on_...:
     - dxs238xw.meter_state_on
 ```
 
-This action can also be expressed in [lambdas](https://esphome.io/guides/automations.html#config-lambda):
+This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
 ```yaml
 id(smart_meter).meter_state_on();
@@ -473,7 +473,7 @@ on_...:
     - dxs238xw.meter_state_off
 ```
 
-This action can also be expressed in [lambdas](https://esphome.io/guides/automations.html#config-lambda):
+This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
 ```yaml
 id(smart_meter).meter_state_off();
@@ -489,7 +489,7 @@ on_...:
     - dxs238xw.meter_state_toggle
 ```
 
-This action can also be expressed in [lambdas](https://esphome.io/guides/automations.html#config-lambda):
+This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
 ```yaml
 id(smart_meter).meter_state_toggle();
@@ -526,7 +526,7 @@ binary_sensor:
 ### Actions For the Status Led in the Meter
 
 For the status led present on the meter, it must be configured with the following code. This configuration connects the
-led on the meter with the EspHome status control. [Status Led](https://esphome.io/components/status_led)
+led on the meter with the EspHome status control. [Status Led](https://esphome.io/components/status_led/)
 
 ```yaml
 status_led:
@@ -537,7 +537,7 @@ status_led:
 
 ## UART Connection for update firmware
 
-Communication with the energy meters is through [UART](https://esphome.io/components/uart.html). The following image
+Communication with the energy meters is through [UART](https://esphome.io/components/uart/). The following image
 shows the internal ESP8266 module in the energy meter, and its connections.
 
 ![dxs238xw_uart](https://github.com/user-attachments/assets/d71fc2be-8287-41cb-8a9e-cf4c6997e70c)
@@ -545,7 +545,7 @@ shows the internal ESP8266 module in the energy meter, and its connections.
 ## Add External Component in ESPHome
 
 Until the pull request is accepted, and since this component (`dxs238xw`) is not native to ESPHome, you must integrate
-it in the following way in the code editor. [External Component](https://esphome.io/components/external_components)
+it in the following way in the code editor. [External Component](https://esphome.io/components/external_components/)
 Afterwards it should be merged into the main branch.
 
 ```yaml

@@ -13,7 +13,7 @@ board: esp32
 This device requires a triangle screw driver bit to [remove the cover and use the serial header][1] for the first
 upload.
 
-[1]: https://www.digiblur.com/2021/03/how-to-flash-wyze-outdoor-plug-esphome.html
+[1]: https://digiblur.com/2021/03/27/how-to-flash-the-wyze-outdoor-plug-esphome-or-tasmota-local-control/
 
 ### Software Flashing
 
@@ -44,7 +44,7 @@ and then flashing ESPHome OTA for the first upload.
 
 - The Lux sensor is a binary sensor and can be used like a daylight sensor. (e.g. turn on lights when it gets dark)
 - This device can be used as a Bluetooh proxy in Home Assistant see the
-  [docs on how to enable](https://esphome.io/components/bluetooth_proxy)
+  [docs on how to enable](https://esphome.io/components/bluetooth_proxy/)
 
 ## Basic Configuration
 

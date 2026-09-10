@@ -5,7 +5,6 @@ type: misc
 standard: us
 board: esp32
 difficulty: 3
-project-url: https://github.com/esphome/esphome-devices
 ---
 
 *Contributed by [Tim Irvin](https://github.com/irvintim)*
@@ -20,7 +19,7 @@ With ESPHome, the device can be locally controlled in Home Assistant without clo
 
 This integration provides full speed and mode control via ESPHome while preserving the physical paddle switch functionality.
 
-[Amazon link](https://amzn.to/3KLg2y0)
+[Amazon link](https://www.amazon.com/dp/B0DT67QMT1)
 
 ---
 
@@ -38,15 +37,15 @@ This integration provides full speed and mode control via ESPHome while preservi
 ## CN2 Pinout (Confirmed)
 
 | CN2 Pin | ESP32-C3 Pin | Function                                     |
-|----------|---------------|----------------------------------------------|
-| 1 | GPIO2 | Status LED / indicator (unused for flashing) |
-| 2 | EN | Reset / Enable                               |
-| 3 | GPIO9 | Boot select                                  |
-| 4 | GPIO8 | Pin (unused for flashing)                    |
-| 5 | 3.3V | Power                                        |
-| 6 | GND | Ground                                       |
-| 7 | GPIO21 | UART RX (to TX of USB-TTL)                   |
-| 8 | GPIO22 | UART TX (to RX of USB-TTL)                   |
+| ------- | ------------ | -------------------------------------------- |
+| 1       | GPIO2        | Status LED / indicator (unused for flashing) |
+| 2       | EN           | Reset / Enable                               |
+| 3       | GPIO9        | Boot select                                  |
+| 4       | GPIO8        | Pin (unused for flashing)                    |
+| 5       | 3.3V         | Power                                        |
+| 6       | GND          | Ground                                       |
+| 7       | GPIO21       | UART RX (to TX of USB-TTL)                   |
+| 8       | GPIO22       | UART TX (to RX of USB-TTL)                   |
 
 ---
 
@@ -70,11 +69,11 @@ When flashing the ESP32-C3 directly, use the following steps to enter boot mode:
 ## Flashing Connections
 
 | USB-TTL Adapter | CN2 Pin | Notes             |
-|------------------|----------|-------------------|
-| TX → | GPIO21 | RX on CN2 (UART0) |
-| RX ← | GPIO22 | TX on CN2 (UART0) |
-| GND | GND | Common ground     |
-| 3.3V | 3.3V | Power supply      |
+| --------------- | ------- | ----------------- |
+| TX →            | GPIO21  | RX on CN2 (UART0) |
+| RX ←            | GPIO22  | TX on CN2 (UART0) |
+| GND             | GND     | Common ground     |
+| 3.3V            | 3.3V    | Power supply      |
 
 ---
 

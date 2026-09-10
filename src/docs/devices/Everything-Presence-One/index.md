@@ -43,6 +43,11 @@ Compatible mmWave sensors (validated only):
 5. In Home Assistant, check the discovered devices for the auto discovered Everything Presence One using the esphome
    integration.
 
+## Configuration
+
+```yaml url=https://github.com/EverythingSmartHome/everything-presence-one/blob/main/everything-presence-one.yaml
+```
+
 ## Support
 
 - [Shop](https://shop.everythingsmart.io/products/everything-presence-one-kit)

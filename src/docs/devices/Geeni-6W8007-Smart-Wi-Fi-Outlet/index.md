@@ -7,7 +7,7 @@ board: bk72xx
 difficulty: 3
 ---
 
-[Amazon Link](https://amzn.to/4bL2H0S)
+[Amazon Link](https://www.amazon.com/dp/B07STG73VS)
 
 ## Product Image
 

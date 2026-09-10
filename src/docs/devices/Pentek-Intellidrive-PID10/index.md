@@ -12,7 +12,7 @@ Data can be gathered from your Pentair Pentek Intellidrive PID Variable Frequenc
 with a PID10 Device.
 
 The Intellidrive provides a 2-wire RS485 interface. Wire up a an RS485 transceiver like MAX485 to an ESP32 to interface
-with the device using Esphome's [Modbus Component](https://esphome.io/components/modbus.html)
+with the device using Esphome's [Modbus Component](https://esphome.io/components/modbus/)
 
 ## Modbus Interface Notes
 

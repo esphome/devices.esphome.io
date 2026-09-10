@@ -27,6 +27,11 @@ It synchronizes the type/color with bambu 3d printers.
 
 ![PCB](./PCB.png "PCB")
 
+## Configuration
+
+```yaml url=https://github.com/spuder/OpenSpool/blob/main/firmware/openspool-mini.yaml
+```
+
 ## Resources
 
 - Documentation/Firmware: [https://openspool.io](https://openspool.io)

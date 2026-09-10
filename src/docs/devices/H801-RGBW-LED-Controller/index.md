@@ -10,15 +10,15 @@ If you have an H802, read this page, then scroll down to the [H802 section](#h80
 
 The H801 is pretty affordable and easy to hack and adapt to your needs.
 It can be found on [AliExpress](https://s.click.aliexpress.com/e/bbnUDBZW) and other sites.
-The board is based on an [ESP8266EX](https://www.espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf)
+The board is based on an [ESP8266EX](https://documentation.espressif.com/0a-esp8266ex_datasheet_en.pdf)
 chip.
 
-It has 5 seperate PWM outputs (each driven by a [DTU35N06](http://www.din-tek.jp/Upload/Product%20Doc/Datasheet/DTU35N06.pdf)
-MOSFET rated for 106W max power), and can be used as a [RGB](https://esphome.io/components/light/rgb.html) /
-[RGBW](https://esphome.io/components/light/rgbw.html) / [RGBWW](https://esphome.io/components/light/rgbww.html) /
-[RGBCT](https://esphome.io/components/light/rgbct.html)
+It has 5 seperate PWM outputs (each driven by a DTU35N06
+MOSFET rated for 106W max power), and can be used as a [RGB](https://esphome.io/components/light/rgb/) /
+[RGBW](https://esphome.io/components/light/rgbw/) / [RGBWW](https://esphome.io/components/light/rgbww/) /
+[RGBCT](https://esphome.io/components/light/rgbct/)
 controller or configured with any combination of up to five
-[individual monochromatic PWM](https://esphome.io/components/light/monochromatic.html) lights.
+[individual monochromatic PWM](https://esphome.io/components/light/monochromatic/) lights.
 
 See [A closer look at the H801 LED WiFi
 Controller](https://tinkerman.cat/post/closer-look-h801-led-wifi-controller)
@@ -28,8 +28,8 @@ for more details on the hardware.
 
 ## Sample configuration
 
-You can use the [RGBWW](https://esphome.io/components/light/rgbww.html) and the
-[ESP8266 Software PWM output](https://esphome.io/components/output/esp8266_pwm.html) components using below configuration:
+You can use the [RGBWW](https://esphome.io/components/light/rgbww/) and the
+[ESP8266 Software PWM output](https://esphome.io/components/output/esp8266_pwm/) components using below configuration:
 
 ```yaml
 esphome:
@@ -77,7 +77,7 @@ light:
     warm_white: pwm_w2
 ```
 
-For [RGBW](https://esphome.io/components/light/rgbw.html)
+For [RGBW](https://esphome.io/components/light/rgbw/)
 lights, the `pwm_w2` output is not used (and can be removed):
 
 ```yaml

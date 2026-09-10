@@ -26,7 +26,7 @@ is currently at that stop.
 | GPIO7  | LEDs for display |
 | GPIO48 | Status Led       |
 
-## Basic Configuration
+## Configuration
 
-The [Latest configuration](https://github.com/denes44/BudapestMetroDisplay/tree/main/esphome)
-can be found on the project's GitHub repo.
+```yaml url=https://github.com/denes44/BudapestMetroDisplay/blob/main/esphome/metro-display.yaml
+```

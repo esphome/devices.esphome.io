@@ -5,7 +5,7 @@ type: light
 standard: us
 board: bk72xx
 ---
-[Amazon Link](https://amzn.to/4flQsK3)
+[Amazon Link](https://www.amazon.com/dp/B08S71TCWY)
 
 ## Flashing With Cloudcutter
 
@@ -24,7 +24,7 @@ board: bk72xx
 
 [WB3L Information](https://docs.libretiny.eu/boards/wb3l/)
 
-[Amazon Product Page](https://amzn.to/4flQsK3)
+[Amazon Product Page](https://www.amazon.com/dp/B08S71TCWY)
 
 [Esphome Discord Discussion](https://discord.com/channels/429907082951524364/1297343211836280906/1297343213148835881)
 

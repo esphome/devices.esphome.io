@@ -34,7 +34,7 @@ substitutions:
   scale_a_power: '1.143207411'
   scale_b_power: '1.143207411'
   # Consider calibrating CT clamps, measurements were closer to the stock Shelly EM firmware for me without calibration
-  # See: https://community.home-assistant.io/t/anyone-using-shelly-em/149867
+  # See: https://community.home-assistant.io/t/149867
 
 esphome:
   name: $devicename
@@ -80,7 +80,7 @@ i2c:
 
 sensor:
   - platform: ade7953_i2c
-    # WARNING: Prevent overheating by setting this IRQ pin! - See https://esphome.io/components/sensor/ade7953.html
+    # WARNING: Prevent overheating by setting this IRQ pin! - See https://esphome.io/components/sensor/ade7953/
     irq_pin: GPIO13
     voltage:
       name: Voltage

@@ -86,7 +86,7 @@ wifi:
 
 captive_portal:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time

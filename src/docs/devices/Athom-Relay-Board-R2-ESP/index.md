@@ -41,7 +41,7 @@ The board can be powered either via 7-30 VDC or 5 VDC (separate terminals and Ty
 | GPIO15 | Led      |
 | GPIO16 | RF33     |
 
-## Basic Configuration
+## Configuration
 
-The [Latest configuration](https://github.com/athom-tech/esp32-configs/blob/main/athom-2ch-relay-board.yaml)
-can be found on Athom's GitHub repo.
+```yaml url=https://github.com/athom-tech/esp32-configs/blob/main/athom-2ch-relay-board.yaml
+```

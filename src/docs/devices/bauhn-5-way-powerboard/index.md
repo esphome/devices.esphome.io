@@ -20,7 +20,7 @@ only repogramming options.
 The unit is easy to open with "Triangle" socket screws on the back. The CBU module is fairly accessable to solder on the
 5 required wires.
 
-[https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
+[https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
 
 ![Product picture 2](20240712_102657.jpg "Product with back removed")
 ![Product picture 3](20240712_102703.jpg "Close up of control board")
@@ -41,7 +41,7 @@ Other features of the board are:
 
 This powerboard incorporates the CBU module
 
-[https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
+[https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
 
 ![cbu module pinout](cbu_module_pinout.png "CBU module showing pins to connect for programming")
 

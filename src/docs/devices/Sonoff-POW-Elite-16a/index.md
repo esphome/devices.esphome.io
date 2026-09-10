@@ -41,6 +41,8 @@ esphome:
 
 esp32:
   variant: esp32
+  framework:
+    type: esp-idf
 
 wifi:
   ssid: !secret wifi_ssid
@@ -58,7 +60,7 @@ logger:
 api:
 
 ota:
-  password: !secret ota_pwd
+  - platform: esphome
 
 #optional
 web_server:
@@ -137,22 +139,15 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
     id: esp32_temp
-    lambda: return temperatureRead();
 
   - platform: template
     name: $friendly_name Power Factor
     device_class: power_factor
     id: power_factor
     lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
-
-  - platform: esp32_hall
-    name: $friendly_name ESP32 Hall Sensor
-    update_interval: 60s
 
 binary_sensor:
   - platform: gpio

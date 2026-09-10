@@ -75,7 +75,7 @@ wifi:
 # RGB LED Strip - The 4 Colorful LEDs
 # ============================================================================
 # The ATOM S3 Lite has 4 RGB LEDs built-in on GPIO35
-# Documentation: https://esphome.io/components/light/fastled
+# Documentation: https://esphome.io/components/light/fastled/
 light:
   # Use FastLED library for addressable LED control
   - platform: fastled_clockless

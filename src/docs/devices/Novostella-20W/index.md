@@ -25,7 +25,7 @@ This template has been updated with "comment:" and "captive_portal:" feautures a
 ## Basic Configuration
 
 ```yaml
-#Novostella 20W Flood Light, https://amzn.to/3d6NVEY
+#Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
 #https://blakadder.github.io/templates/novostella_20W_flood.html
 substitutions:
@@ -175,7 +175,7 @@ In novoflood_common.yaml:
 ```yaml
 # Common code for Novostella 20W Flood Lights
 
-#Novostella 20W Flood Light, https://amzn.to/3d6NVEY
+#Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
 #https://blakadder.github.io/templates/novostella_20W_flood.html
 

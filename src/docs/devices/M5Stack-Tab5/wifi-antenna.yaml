@@ -1,0 +1,19 @@
+# A friendlier UI on top of the `wifi_antenna_int_ext` GPIO switch defined in
+# config.yaml. Lets the user pick "Internal" / "External" rather than toggling
+# a raw on/off switch.
+select:
+  - platform: template
+    id: wifi_antenna_select
+    name: "WiFi Antenna"
+    options:
+      - "Internal"
+      - "External"
+    optimistic: true
+    on_value:
+      - if:
+          condition:
+            lambda: return i == 0;
+          then:
+            - switch.turn_off: wifi_antenna_int_ext
+          else:
+            - switch.turn_on: wifi_antenna_int_ext

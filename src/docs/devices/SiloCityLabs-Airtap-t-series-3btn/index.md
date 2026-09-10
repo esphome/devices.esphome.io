@@ -27,10 +27,10 @@ work with ESPHome and is compatible with the ESP32. This board supports the 3 bu
 | GPIO9     | Button Down   | D9       |
 | GPIO10    | Button Toggle | D10      |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is
-[available on GitHub](https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml).
+```yaml url=https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml
+```
 
 ## Pictures
 

@@ -9,9 +9,9 @@ difficulty: 3
 
 ## Notes
 
-- Uses [BL0942](https://esphome.io/components/sensor/bl0942.html) for energy monitoring, which requires
-  [calibration](https://esphome.io/components/sensor/bl0942.html#calibration)
-- Uses an [H-Bridge](https://esphome.io/components/switch/hbridge.html) for controlling the output instead of a standard
+- Uses [BL0942](https://esphome.io/components/sensor/bl0942/) for energy monitoring, which requires
+  [calibration](https://esphome.io/components/sensor/bl0942/#calibration)
+- Uses an [H-Bridge](https://esphome.io/components/switch/hbridge/) for controlling the output instead of a standard
   relay. One key difference is that the H-Bridge retains the last position upon power off without the need of
   `restore_mode`
 

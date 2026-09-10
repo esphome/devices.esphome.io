@@ -5,8 +5,10 @@ type: Task
 body:
   - type: markdown
     attributes:
-      value: |
-        Thank you for helping keep our device configurations up to date! Use this template to report configurations that need updating due to ESPHome changes, deprecated components, or improved practices.
+      value: >
+        Thank you for helping keep our device configurations up to date!
+        Use this template to report configurations that need updating due to
+        ESPHome changes, deprecated components, or improved practices.
 
   - type: textarea
     id: what-needs-changing

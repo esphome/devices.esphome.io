@@ -17,9 +17,7 @@ A module composed of:
 
 Powered by USB-C  
 Also has a battery charging circuit.  
-Documentation:
-
-- [Product details](./Pinouts.webp)
+![Product pinout details](./Pinouts.webp)
 
 ## GPIO Pinout
 

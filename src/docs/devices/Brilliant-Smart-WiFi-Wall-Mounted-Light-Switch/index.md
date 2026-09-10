@@ -28,8 +28,8 @@ This YAML is cobbled together from:
 - [ESPHome Tuya switch documentation][brilliant-tuya-switch]
 
 [brilliant-deta]: https://devices.esphome.io/devices/DETA-Grid-Connect-Smart-Switch/
-[brilliant-tuya]: https://esphome.io/components/tuya.html
-[brilliant-tuya-switch]: https://esphome.io/components/switch/tuya.html
+[brilliant-tuya]: https://esphome.io/components/tuya/
+[brilliant-tuya-switch]: https://esphome.io/components/switch/tuya/
 
 ```yaml
 substitutions:

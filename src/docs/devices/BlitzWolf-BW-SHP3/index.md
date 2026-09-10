@@ -81,7 +81,7 @@ sensor:
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${propername} Total Daily Energy
     icon: mdi:circle-slice-3

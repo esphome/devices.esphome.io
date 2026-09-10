@@ -149,7 +149,7 @@ component has default calibration values but they may not be accurate for
 every device. Add in new calibration values based on measurements with a
 quality digital multimeter and a simple resistive load.
 
-_See [ESPHome Documentation](https://esphome.io/components/sensor/bl0942.html) for more details._
+_See [ESPHome Documentation](https://esphome.io/components/sensor/bl0942/) for more details._
 
 ### Safety Shutdown Option
 

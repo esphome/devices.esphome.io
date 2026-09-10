@@ -1,0 +1,49 @@
+name: Made for ESPHome Review Command
+
+# Lets a PR author or an org member re-run the Made for ESPHome review by
+# commenting `@esphome[bot] review` (useful when the upstream config, manifest,
+# or firmware was fixed without pushing a new commit to the PR).
+#
+# SECURITY: this workflow runs on `issue_comment`, i.e. in the base-repo
+# context with a writable token — so it must NEVER check out or compile the
+# PR's code. It only validates the command + commenter and RE-RUNS the existing
+# "Made for ESPHome Review" workflow run. That re-run executes in the original
+# secret-free `pull_request` context (no secrets, contents: read), exactly like
+# a fresh push would, so contributor-controlled code never runs with secrets.
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions: {}
+
+jobs:
+  rerun:
+    name: Re-run review on command
+    runs-on: ubuntu-latest
+    # Cheap pre-filter: only PR comments that mention the bot and "review".
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, 'esphome') &&
+      contains(github.event.comment.body, 'review')
+    permissions:
+      actions: write  # to re-run the review workflow run
+      contents: read  # to resolve the commenter's repo permission level
+      pull-requests: write  # to acknowledge with a reaction / note
+    steps:
+      # Check out the base repo (default branch, trusted) only to load the
+      # command handler — no PR code is fetched or executed here.
+      - name: Checkout scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Validate command and re-run review
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/mfe-review-command.cjs');
+            await script({ github, context, core });

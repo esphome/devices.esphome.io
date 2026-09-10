@@ -38,4 +38,9 @@ portal to easily setup your local Wi-Fi network credentials.
 
 Additionally a Light-Dependent Resistor (LDR) can be installed to add a light sensor to the board.
 
-[Read more about the PCB](https://github.com/rrooggiieerr/esphome-axaremote/blob/master/PCB.md)
+[Read more about the PCB](https://github.com/rrooggiieerr/esphome-axaremote/blob/main/PCB/README.md)
+
+## Configuration
+
+```yaml url=https://github.com/rrooggiieerr/esphome-axaremote/blob/main/axa-remote-pcb.yaml
+```

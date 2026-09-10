@@ -1,0 +1,72 @@
+name: Update date-published on approval
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+# This workflow runs in the (untrusted) fork-PR context and therefore has no
+# access to secrets or variables. It only discovers which device pages were
+# newly added and hands that data to commit-date-published.yml via an
+# artifact; the privileged token generation and commit happen there, in the
+# trusted workflow_run context.
+jobs:
+  collect:
+    name: Collect newly added device pages
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.review.state == 'approved' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association)
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Find newly added device pages
+        id: find
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const pattern = /^src\/docs\/devices\/[^/]+\/index\.md$/;
+            const pages = files
+              .filter(f => f.status === 'added' && pattern.test(f.filename))
+              .map(f => f.filename);
+            core.info(
+              `Found ${pages.length} newly added device page(s): ` +
+              `${pages.join(', ') || '(none)'}`
+            );
+            core.setOutput('pages', pages.join('\n'));
+            if (pages.length === 0) return;
+            // Capture the PR coordinates the trusted workflow needs. The
+            // commit workflow cannot recover these from github.event.workflow_run
+            // for fork PRs (its pull_requests array is empty), so pass them
+            // explicitly through the artifact.
+            const metadata = {
+              prNumber: Number(process.env.PR_NUMBER),
+              headRepo: process.env.HEAD_REPO,
+              headRef: process.env.HEAD_REF,
+              headSha: process.env.HEAD_SHA,
+              pages,
+            };
+            fs.mkdirSync('metadata', { recursive: true });
+            fs.writeFileSync('metadata/info.json', JSON.stringify(metadata));
+
+      - name: Upload metadata
+        if: steps.find.outputs.pages != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: date-published-metadata
+          path: metadata/info.json
+          retention-days: 1

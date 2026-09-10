@@ -18,7 +18,7 @@ difficulty: 3
 Tuya Convert was not able to work for this device (with firmware v3.1.4). If your device has an older firmware, it may
 be worth a try.
 
-This device is powered by a [TYWE1S](https://developer.tuya.com/en/docs/iot/wifie1smodule?id=K9605thnvg3e7) board
+This device is powered by a [TYWE1S](https://developer.tuya.com/docs/iot/wifie1smodule?id=K9605thnvg3e7) board
 (ESP8266EX with 2MB flash), you can boot it in flash mode by grounding IO0. Then you can use U0TX and U0RX. You can
 either power the device using the built-in USB, or power it through the 3.3V pin.
 

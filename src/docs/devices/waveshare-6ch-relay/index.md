@@ -29,7 +29,11 @@ It can bought from: [https://www.waveshare.com/esp32-s3-relay-6ch.htm](https://w
 ## Basic Config
 
 ```yaml
-# based on https://github.com/ryansch/esphome-config/blob/main/waveshare-esp32-s3-relay-6ch.yaml
+# Home Assistant ESPHome yaml config file for Waveshare ESP32 S3 6ch relay box
+# 04/29/2026
+# Your secrets file needs to have these entries:
+# wifi_ssid: "SSID"
+# wifi_password: "PASS"
 
 esphome:
   name: waveshare-6ch-relay
@@ -43,10 +47,7 @@ esp32:
 # Enable logging
 logger:
   level: DEBUG
-# Enable Home Assistant API
 api:
-    password: !secret api_password
-  # RTTTL play can be called from Dev Tools or from Scritps.
   actions:
   - action: rtttl_play
     variables:
@@ -57,7 +58,6 @@ api:
 
 ota:
   - platform: esphome
-    password: !secret ota_password
     id: zone_controller_ota
 
 wifi:
@@ -93,6 +93,25 @@ binary_sensor:
       then:
         - button.press: restart_button
 
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    update_interval: 60s
+    
+text_sensor:
+  - platform: version
+    name: "Firmware Version"
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      entity_category: diagnostic
+    mac_address:
+      name: "Mac Address"
+      entity_category: diagnostic        
+
 
 switch:
   - platform: gpio
@@ -123,6 +142,16 @@ switch:
       ignore_strapping_warning: true
     id: relay6
     name: Relay 6
+  - platform: template
+    name: Buzzer
+    icon: mdi:volume-high
+    turn_on_action:
+      - rtttl.play:
+          id: rtttl_buzzer
+          rtttl: 'beep:d=4,o=5,b=100:16e6'
+    turn_off_action:
+      - rtttl.stop:
+          id: rtttl_buzzer
 
 uart:
   tx_pin: GPIO17
@@ -130,16 +159,15 @@ uart:
   baud_rate: 9600
   id: modbus_uart
 
-# buzzer
 output:
   - platform: ledc
     pin: GPIO21
-    id: buzzer
+    id: buzzer_output
 
 rtttl:
-  output: buzzer
+  output: buzzer_output
   id: rtttl_buzzer
-  gain: 30%
+  gain: 40%
 
 light:
   - platform: esp32_rmt_led_strip

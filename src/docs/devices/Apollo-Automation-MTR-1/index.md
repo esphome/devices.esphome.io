@@ -30,6 +30,11 @@ The Apollo Automation MTR-1 is a multi-target radar sensor with the following fe
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/MTR-1/blob/main/Integrations/ESPHome/MTR-1.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/mtr-1)

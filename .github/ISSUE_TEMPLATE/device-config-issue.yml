@@ -5,8 +5,10 @@ type: Bug
 body:
   - type: markdown
     attributes:
-      value: |
-        Thank you for reporting an issue with a device configuration! Please provide as much detail as possible to help us resolve the problem.
+      value: >
+        Thank you for reporting an issue with a device configuration!
+        Please provide as much detail as possible to help us resolve the
+        problem.
 
   - type: input
     id: device-name
@@ -21,7 +23,7 @@ body:
     id: device-url
     attributes:
       label: Device Page URL
-      description: Please provide the URL to the device page on esphome-devices.com
+      description: Please provide the URL to the device page on devices.esphome.io
       placeholder: https://devices.esphome.io/devices/...
     validations:
       required: true

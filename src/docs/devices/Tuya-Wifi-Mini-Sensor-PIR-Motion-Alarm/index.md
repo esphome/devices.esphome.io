@@ -44,7 +44,7 @@ captive_portal:
 
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
   services:
     - service: pir_notification
       then:

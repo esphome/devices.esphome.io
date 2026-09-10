@@ -1,0 +1,228 @@
+---
+import { splitValues } from "../utils/deviceUtils";
+import {
+  VALID_TYPES,
+  VALID_BOARDS,
+  VALID_STANDARDS,
+} from "../utils/validFrontmatter";
+import { getSlugIfValid } from "../utils/validSlugs";
+
+interface Props {
+  frontmatter: Record<string, any>;
+}
+
+const { frontmatter } = Astro.props;
+
+const frontmatterIsMadeForESPHome = frontmatter["made-for-esphome"];
+const isMadeForESPHome =
+  frontmatterIsMadeForESPHome === true
+    ? true
+    : typeof frontmatterIsMadeForESPHome === "string"
+    ? frontmatterIsMadeForESPHome.toLowerCase() === "true"
+    : false;
+
+const difficultyLabels: Record<number, string> = {
+  1: "Comes with ESPhome",
+  2: "Plug-n-flash",
+  3: "Disassembly required",
+  4: "Soldering required",
+  5: "Chip needs replacement",
+};
+
+function difficultyLabel(v: string | number): string {
+  const n = typeof v === "string" ? parseInt(v, 10) : v;
+  return difficultyLabels[n] ?? `Level ${n}`;
+}
+
+type TagField = "type" | "standard" | "board";
+const tagValidSets: Record<TagField, ReadonlySet<string>> = {
+  type: VALID_TYPES,
+  standard: VALID_STANDARDS,
+  board: VALID_BOARDS,
+};
+const tagLinkBase: Record<TagField, string> = {
+  type: "type",
+  standard: "standards",
+  board: "board",
+};
+
+function tagsFor(field: TagField, raw: unknown) {
+  const values = splitValues(raw as string | string[] | undefined);
+  const base = tagLinkBase[field];
+  return values.map((value) => {
+    const slug = getSlugIfValid(value, tagValidSets[field]);
+    return { value, href: slug ? `/${base}/${slug}` : null };
+  });
+}
+
+const typeTags = frontmatter.type ? tagsFor("type", frontmatter.type) : [];
+const standardTags = frontmatter.standard
+  ? tagsFor("standard", frontmatter.standard)
+  : [];
+const boardTags = frontmatter.board ? tagsFor("board", frontmatter.board) : [];
+
+const hasDisplayable =
+  typeTags.length > 0 ||
+  standardTags.length > 0 ||
+  boardTags.length > 0 ||
+  frontmatter.difficulty !== undefined ||
+  frontmatter["project-url"];
+
+const showAnything = hasDisplayable || isMadeForESPHome;
+---
+
+{showAnything && (
+  <div>
+    {isMadeForESPHome && (
+      <div class="made-for-esphome-logo">
+        <a
+          href="https://esphome.io/guides/made_for_esphome/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="logo-link"
+        >
+          <img
+            src="/img/made-for-esphome-black-on-white.svg"
+            alt="Made for ESPHome"
+            class="logo-image"
+          />
+        </a>
+      </div>
+    )}
+    {hasDisplayable && (
+      <div class="frontmatter-display">
+        {typeTags.length > 0 && (
+          <div class="frontmatter-item">
+            <span class="frontmatter-label">Device Type:</span>
+            <span class="frontmatter-value frontmatter-tag-list">
+              {typeTags.map(({ value, href }) =>
+                href ? (
+                  <a href={href} class="frontmatter-tag">{value}</a>
+                ) : (
+                  <span class="frontmatter-tag">{value}</span>
+                )
+              )}
+            </span>
+          </div>
+        )}
+        {standardTags.length > 0 && (
+          <div class="frontmatter-item">
+            <span class="frontmatter-label">Electrical Standard:</span>
+            <span class="frontmatter-value frontmatter-tag-list">
+              {standardTags.map(({ value, href }) =>
+                href ? (
+                  <a href={href} class="frontmatter-tag">{value}</a>
+                ) : (
+                  <span class="frontmatter-tag">{value}</span>
+                )
+              )}
+            </span>
+          </div>
+        )}
+        {boardTags.length > 0 && (
+          <div class="frontmatter-item">
+            <span class="frontmatter-label">Board:</span>
+            <span class="frontmatter-value frontmatter-tag-list">
+              {boardTags.map(({ value, href }) =>
+                href ? (
+                  <a href={href} class="frontmatter-tag">{value}</a>
+                ) : (
+                  <span class="frontmatter-tag">{value}</span>
+                )
+              )}
+            </span>
+          </div>
+        )}
+        {frontmatter.difficulty !== undefined && (
+          <div class="frontmatter-item">
+            <span class="frontmatter-label">Difficulty:</span>
+            <span class="frontmatter-value">
+              {difficultyLabel(frontmatter.difficulty)} ({frontmatter.difficulty}/5)
+            </span>
+          </div>
+        )}
+        {frontmatter["project-url"] && (
+          <div class="frontmatter-item">
+            <span class="frontmatter-label">Project URL:</span>
+            <span class="frontmatter-value">
+              <a
+                href={frontmatter["project-url"]}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {frontmatter["project-url"]}
+              </a>
+            </span>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
+
+<style>
+  .frontmatter-display {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    background-color: var(--sl-color-gray-6);
+    font-size: 0.875rem;
+  }
+  .frontmatter-item {
+    display: block;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+  }
+  .frontmatter-item:last-child {
+    margin-bottom: 0;
+  }
+  .frontmatter-label {
+    font-weight: 600;
+    color: var(--sl-color-text);
+    margin-right: 0.5rem;
+  }
+  .frontmatter-value a {
+    color: var(--sl-color-text-accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .frontmatter-value a:hover {
+    text-decoration: underline;
+  }
+  .frontmatter-tag-list {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .frontmatter-tag {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1;
+    background-color: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    border: 1px solid var(--sl-color-gray-5);
+  }
+  a.frontmatter-tag:hover {
+    border-color: var(--sl-color-text-accent);
+  }
+  .made-for-esphome-logo {
+    border-radius: 0.25rem;
+  }
+  .logo-link {
+    display: inline-flex;
+    align-items: center;
+  }
+  .logo-image {
+    height: 3rem;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  :global([data-theme="dark"]) .logo-image {
+    content: url("/img/made-for-esphome-white-on-black.svg");
+  }
+</style>

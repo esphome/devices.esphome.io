@@ -42,6 +42,11 @@ The Everything Presence Zone Configurator makes it easy to setup zones and exclu
 3. Hit add and enter WiFi details
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/EverythingSmartHome/everything-presence-lite/blob/main/everything-presence-lite-ha.yaml
+```
+
 ## Support
 
 - [Shop](https://shop.everythingsmart.io/products/everything-presence-lite)
