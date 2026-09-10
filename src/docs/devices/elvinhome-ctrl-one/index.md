@@ -81,11 +81,10 @@ or higher.
 
 ## Basic Configuration
 
-This configuration is taken from the elvinhome GitHub repository, which is not
-guaranteed to be up to date. For the latest configuration, go to the
-[Codeberg repository](https://codeberg.org/elvinhome/ctrl-one).
+This configuration is taken from the elvinhome [Codeberg repository](https://codeberg.org/elvinhome/ctrl-one).
+For the source code of all sub-packages, check the repository.
 
-```yaml url=https://github.com/elvinhome-io/esphome-configs/blob/main/ctrl-one.yaml
+```yaml url=https://codeberg.org/elvinhome/ctrl-one/src/branch/main/esphome/ctrl-one.yaml
 ```
 
 ## Notes
