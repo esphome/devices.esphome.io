@@ -7,7 +7,7 @@ standard: us
 
 [Virage Laboratories](https://www.viragelabs.com)
 
-[KS-7012 Dimmer](https://www.viragelabs.com/product/viragedimmer/)![image](virage_labs_KS-7012.jpg)
+[KS-7012 Dimmer](https://www.viragelabs.com/)![image](virage_labs_KS-7012.jpg)
 
 ## General Notes
 
