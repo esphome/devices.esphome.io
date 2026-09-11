@@ -1,0 +1,72 @@
+esphome:
+  name: mousepad
+  friendly_name: Mousepad
+  on_boot:
+    priority: -100
+    then:
+      - delay: 1s
+      - light.turn_on:
+          id: pad_leds
+          red: 1
+          green: 1
+          blue: 1
+      - delay: 5s
+      - light.turn_off:
+  board: generic-bk7231n-qfn32-tuya
+logger:
+  baud_rate: 0
+api:
+  encryption:
+    key:
+ota:
+  - platform: esphome
+    encryption:
+wifi:
+  power_save_mode: NONE
+  ap:
+    ssid: Mousepad Fallback Hotspot
+    password:
+captive_portal:
+e131:
+  method: UNICAST
+wled:
+light:
+  - platform: beken_spi_led_strip
+    chipset: WS2812
+    num_leds: 2
+    pin: 16
+    name: Lights
+    id: pad_leds
+    channel_colors: RGB
+    max_refresh_rate: 5ms
+    icon: mdi:trackpad
+    default_transition_length: 500ms
+    gamma_correct: 1.7
+    effects:
+      - pulse:
+      - strobe:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - wled:
+      - e131:
+          universe: 1
+          channels: RGB
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 6
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: Mousepad Button
+    id: light_button
+    filters:
+      - delayed_on_off: 40ms
+    on_click:
+      then:
+        - light.toggle: pad_leds
