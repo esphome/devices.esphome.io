@@ -2,6 +2,7 @@ esphome:
   name: philips-series-900
   friendly_name: Philips Series 900
   name_add_mac_suffix: true
+  min_version: 2026.5.3
 
 esp32:
   board: seeed_xiao_esp32c3
@@ -33,8 +34,8 @@ uart:
 philips:
   id: purifier
   # AC0951 is the verified model. The AC0950 is the same protocol without the
-  # particulate sensor — use model: AC0950 and drop the two pm entities plus
-  # the standby sensor switch below. Untested on hardware.
+  # particulate sensor: use model: AC0950 and drop the pm2_5 and allergen_index
+  # sensors plus the standby_sensor switch, which are AC0951-only. Untested.
   model: AC0951
 
 fan:

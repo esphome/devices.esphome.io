@@ -31,9 +31,9 @@ The MCU link turned out to be the same protocol the component already spoke for 
 — decoded from logic-analyzer captures with every write frame checked against them.
 
 Verified on an **AC0951** running MCU firmware `0.3.3` (internal model string
-`AC0951/13`). The **AC0950** uses the same configuration with `model: AC0950` and
-without the particulate entities, but has never been observed on hardware — treat it
-as untested.
+`AC0951/13`). The **AC0950** uses the same configuration with `model: AC0950`, minus
+the two particulate entities and the standby sensor monitoring switch, all three of
+which are AC0951-only. It has never been observed on hardware — treat it as untested.
 
 On stock firmware these units can also be driven locally over encrypted CoAP without
 opening the case, using the
@@ -62,7 +62,9 @@ Manufacturer: [Philips](https://www.philips.com) / [Versuni](https://www.versuni
 > **Unplug the unit first.** Part of the control board is on mains.
 
 Twist the top cap counter-clockwise and lift it off — no screws — to reach the
-control PCB. Every connection is on the top edge of the MXCHIP module.
+control PCB. The two UART lines and the module's reset pad are on the top edge of the
+MXCHIP module itself; `+5V` and `GND` come off a separate 4-pin through-hole header
+beside it.
 
 ![Annotated MXCHIP module pads](./module-pads.jpg "Annotated MXCHIP module pads")
 
