@@ -1,0 +1,58 @@
+esphome:
+  name: geekmagic-smalltv-pro
+  friendly_name: GeekMagic SmallTV Pro
+
+esp32:
+  variant: esp32
+
+esp32_touch:
+  setup_mode: false
+  iir_filter: 10ms
+
+binary_sensor:
+  - platform: esp32_touch
+    name: "Touch"
+    pin: GPIO32
+    threshold: 1450
+    filters:
+      - delayed_on: 50ms
+      - delayed_off: 300ms
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  interface: hardware
+  id: spihwd
+
+output:
+  - platform: ledc
+    pin: GPIO25
+    inverted: true
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Backlight"
+    id: backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 1s
+
+display:
+  - platform: mipi_spi
+    id: my_display
+    model: ST7789V
+    spi_id: spihwd
+    dc_pin: GPIO02
+    reset_pin: GPIO04
+    dimensions:
+      width: 240
+      height: 240
+      offset_width: 0
+      offset_height: 0
+    invert_colors: true
+    color_depth: 16
+    spi_mode: MODE3
+    data_rate: 40MHz
+    update_interval: 1s
+    show_test_card: true
