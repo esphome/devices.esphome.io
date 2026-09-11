@@ -10,7 +10,8 @@ made-for-esphome: false
 
 ## Installation
 
-You have to disamble the front panel and solder two cable to the RX1 and TX1 pins.
+You have to disassemble the front panel, it is stuck on and can be removed by prying it forward from the back plate.  Then solder two cables to the RX1 and TX1 pins.  Note the RX1 and TX1 are NOT the ones labelled RXD1 and TXD1 on the 5 pin header in the top right corner, they are pins 15 and 16 on the module itself (bottom 2 pins on the right side)
+
 I suggest to flash the device based on this video.
 
 [Flash tutorial](https://www.youtube.com/watch?v=t0o8nMbqOSA)
