@@ -11,7 +11,7 @@ difficulty: 3
 
 The [myStrom WiFi Button](https://mystrom.ch/wifi-button/) is controlled by ESP8266EX.
 
-The board exposes a header with all needed connections:
+The board exposes a header with all needed connections:  
 ![alt text](header.png "Header")
 
 You can solder the wires for the initial flash, but it's not required. I've had success just inserting breadboard pins
@@ -67,120 +67,5 @@ This configuration is set up to call an http request on boot, then go to sleep.
 Before/during connection the led pulses white
 If successful request, it lights the green led. If unsuccessful, it flashes the red led.
 
-```yaml
-esphome:
-  name: button
-  friendly_name: button
-  on_boot:
-    - priority: 550
-      then:
-        - light.turn_on:
-            id: white_light
-            effect: "Connecting"
-    - priority: 225.0
-      then:
-        - output.turn_on: cap_charge
-        - http_request.get:
-            url: http://url.to.my.http/api/
-            on_response:
-              then:
-                - if:
-                    condition:
-                      lambda: "return status_code == 200;"
-                    then:
-                      - light.turn_off:
-                          id: white_light
-                      - light.turn_on:
-                          id: green_light
-                      - delay: 2s
-                      - deep_sleep.enter:
-                          id: deep_sleep_forever
-                    else:
-                      - light.turn_off:
-                          id: white_light
-                      - light.turn_on:
-                          id: red_light
-                          effect: "Error"
-                      - delay: 2s
-                      - deep_sleep.enter:
-                          id: deep_sleep_forever
-
-deep_sleep:
-  id: deep_sleep_forever
-  run_duration: 20s #This is ignored when the deep_sleep.enter is called above
-  # not setting a sleep duration means sleep forever
-
-http_request:
-  useragent: esphome/device
-  timeout: 10s
-
-esp8266:
-  board: esp_wroom_02
-
-# Enable logging
-logger:
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: "***"
-
-ota:
-  password: "***"
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Button Fallback Hotspot"
-    password: "****"
-
-captive_portal:
-
-output:
-  - platform: esp8266_pwm
-    pin: GPIO5
-    id: pwm_white
-    inverted: true
-  - platform: esp8266_pwm
-    pin: GPIO13
-    id: pwm_green
-    inverted: true
-  - platform: esp8266_pwm
-    pin: GPIO14
-    id: pwm_red
-    inverted: true
-  - platform: gpio
-    id: cap_charge
-    pin: GPIO4
-
-light:
-  - platform: monochromatic
-    id: white_light
-    output: pwm_white
-    name: "White LED"
-    effects:
-      - pulse:
-          name: "Connecting"
-          transition_length: 0.5s
-          update_interval: 0.5s
-          min_brightness: 10%
-          max_brightness: 60%
-  - platform: monochromatic
-    id: green_light
-    output: pwm_green
-    name: "Green LED"
-  - platform: monochromatic
-    id: red_light
-    output: pwm_red
-    name: "Red LED"
-    effects:
-      - pulse:
-          name: "Error"
-          transition_length: 0.2s
-          update_interval: 0.2s
-          min_brightness: 0%
-          max_brightness: 100%
+```yaml file=config.yaml
 ```
