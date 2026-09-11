@@ -29,11 +29,13 @@ To unscrew them you either need to damage the bottom sticker or remove it and ha
 
 To flash the controller, open up the controller and take the board out.
 
-On the back of the board there are 2 pins on the Tuya CBU module you need to solder wires to.
-
 ![Picture of the board](board.jpg "Picture of the board")
 
-Alternatively if you are a bit crative you can try to use some wires and some pins and hold them to the required points.
+On the back of the board there are 2 pins on the Tuya CBU module you need to solder wires to.
+Please look up a Tuya CBU Module Pinout
+You will need to solder to the `TX1` and `RX1` pins (optionally also the `CEN` pin)
+
+Alternatively if you are a bit creative you can try to use some wires and some pins and hold them to the required points.
 This is not recommended but is an option if you are very bad with soldering or can't for some reason.
 
 Remember that you will still need another jumper wire to short the ground and the CEN pin on the module to begin the flashing
