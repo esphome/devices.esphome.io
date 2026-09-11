@@ -7,11 +7,16 @@ board: esp32
 difficulty: 2
 ---
 
-![NOUS B3T](B3T_mockup.jpg "Nous B3T WiFi Tasmota Switch Module(2 channel with PM) / Curtain module(1 channel) (ESP32)")
+![NOUS B3T](B3T_mockup.jpg "Nous B3T WiFi Tasmota Switch Module (2 channel with PM) / Curtain module (1 channel) (ESP32)")
 
-This device comes pre-installed with Tasmota. To flash it with ESPHome, refer to the
-[**Migrating from Tasmota**](https://esphome.io/guides/migrate_sonoff_tasmota/)guide. Alternatively, you can
-disassemble the device and solder wires to the test pads ([see pinout](#pinout)) for manual flashing.
+This device comes pre-installed with Tasmota.
+To flash it with ESPHome over the air, refer to the [**Migrating from Tasmota**](https://esphome.io/guides/migrate_sonoff_tasmota/)
+guide and follow the steps for ESP32 devices with Tasmota v12 or higher.
+Alternatively, you can disassemble the device and solder wires to the test pads ([see pinout](#pinout)) for manual flashing.
+
+> [!WARNING]
+If you want to avoid having to disassemble your device in the future, make sure the initial ESPHome firmware uploaded
+to the Tasmota firmware upgrade page has the option `allow_partition_access: true` configured!
 
 ## GPIO Pinout
 
@@ -50,6 +55,7 @@ api:
 
 ota:
   - platform: esphome
+    allow_partition_access: true  # Only needed when converting from Tasmota over the air, can be removed after the partition table update
 
 wifi:
   ssid: !secret wifi_ssid
@@ -349,7 +355,6 @@ binary_sensor:
 
 ## Pinout
 
-Because the built-in button is connected to GPIO4, unlike on other devices, you also need to solder a wire to GPIO0 and
-pull it to GND to enter flash mode.
+You need to solder a wire to GPIO0 and connect it to GND to enter flash mode.
 
 ![NOUS B3T Pinout](pinout.png "Nous B3T Pinout")

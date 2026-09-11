@@ -11,8 +11,14 @@ difficulty: 3
 ## General Notes
 
 This device contains an ESP32 and ships with Tasmota firmware.
-To flash it, the device can be disassembled by unscrewing the screw in the hole at the bottom side of the plug.
-Alternatively, this procedure by kadam12g works as well—start at step 21: [https://github.com/kadam12g/ESPHome-Shelly-Plus-Plug-S?tab=readme-ov-file](https://github.com/kadam12g/ESPHome-Shelly-Plus-Plug-S?tab=readme-ov-file)
+To flash it with ESPHome over the air, refer to the [**Migrating from Tasmota**](https://esphome.io/guides/migrate_sonoff_tasmota/)
+guide and follow the steps for ESP32 devices with Tasmota v12 or higher.
+Alternatively, the device can be disassembled by unscrewing the screw in
+the hole at the bottom side of the plug for serial flashing.
+
+> [!WARNING]
+If you want to avoid having to disassemble your device in the future, make sure the initial ESPHome firmware uploaded
+to the Tasmota firmware upgrade page has the option `allow_partition_access: true` configured!
 
 ### Example Configuration
 
@@ -58,6 +64,7 @@ api:
 # Allow Over-The-Air updates
 ota:
   - platform: esphome
+    allow_partition_access: true  # Only needed when converting from Tasmota over the air, can be removed after the partition table update
 
 # Allow provisioning Wi-Fi via serial
 improv_serial:
