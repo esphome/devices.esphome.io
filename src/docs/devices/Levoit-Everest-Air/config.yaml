@@ -99,6 +99,11 @@ binary_sensor:
     id: levoit_filter_low
     name: "Filter Low"
     type: filter_low
+  - platform: levoit
+    levoit: purifier
+    id: levoit_cover_open
+    name: "Cover Open"
+    type: cover_open
 
 number:
   - platform: levoit
@@ -106,6 +111,11 @@ number:
     id: levoit_timer
     name: "Timer (min)"
     type: timer
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_lifetime
+    name: "Filter Months"
+    type: filter_lifetime_months
   - platform: levoit
     levoit: purifier
     id: levoit_vent_angle
