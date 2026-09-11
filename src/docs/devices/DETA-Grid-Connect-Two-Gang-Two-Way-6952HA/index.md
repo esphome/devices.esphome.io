@@ -4,7 +4,6 @@ date-published: 2025-01-18
 type: switch
 standard: au
 board: bk72xx
-made-for-esphome: False
 difficulty: 3
 ---
 
@@ -18,8 +17,8 @@ is part of the [Grid Connect ecosystem](https://grid-connect.com.au/), and is so
 Also known as:
 
 - Smart Double Gang 2 Way Touch Light Switch
-  ([Deta website](https://detaelectrical.com.au/product/deta-grid-connect-smart-double-gang-2-way-touch-light-switch/))
-- Twin Gang 2 Way Touch Light Switch ([Grid Connect website](https://grid-connect.com.au/download/6952ha/))
+  ([Deta website](https://detaelectrical.com.au/products/deta-grid-connect-smart-double-gang-2-way-touch-light-switch))
+- Twin Gang 2 Way Touch Light Switch ([Grid Connect website](https://grid-connect.com.au/products/deta-grid-connect-smart-double-gang-2-way-touch-light-switch))
 
 ### Variations
 
@@ -67,133 +66,12 @@ _See
 
 ### Series 2 (CB3S) Configuration Examples
 
-```yaml
-substitutions:
-  device_name: "deta-2-way-2-gang-switch"
-
-  friendly_name: "DETA 2 Way 2 Gang Switch"
-  light_1_name: "${friendly_name} 1"
-  light_2_name: "${friendly_name} 2"
-  light_1_icon: "mdi:light-recessed"
-  light_2_icon: "mdi:light-recessed"
-
-esphome:
-  name: ${device_name}
-  friendly_name: ${friendly_name}
-
-bk72xx:
-  board: cb3s
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-
-status_led:
-  pin:
-    number: P24
-    inverted: true
-
-light:
-  - platform: binary
-    output: filter_1
-    id: light_1
-    name: "${light_1_name}"
-    icon: "${light_1_icon}"
-
-  - platform: binary
-    output: filter_2
-    id: light_2
-    name: "${light_2_name}"
-    icon: "${light_2_icon}"
-
-binary_sensor:
-  # Buttons
-  - platform: gpio
-    id: button_1
-    pin:
-      number: P26
-      inverted: true
-      mode: INPUT_PULLUP
-    on_press:
-      then:
-        - light.toggle: light_1
-    internal: true
-
-  - platform: gpio
-    id: button_2
-    pin:
-      number: P23
-      inverted: true
-      mode: INPUT_PULLUP
-    on_press:
-      then:
-        - light.toggle: light_2
-    internal: true
-
-  # Activation statuses
-  # Represents the "local" relay (this device) XOR the "remote" relay (another device).
-  # It only shows TRUE if one of the "local" or "remote" relays are active, but not both.
-  - platform: gpio
-    id: activation_status_1
-    pin:
-      number: P7
-      mode: INPUT
-      inverted: true
-    internal: true
-
-  - platform: gpio
-    id: activation_status_2
-    pin:
-      number: P8
-      mode: INPUT
-      inverted: true
-    internal: true
-
-switch:
-  # Relays
-  - platform: gpio
-    id: relay_1
-    pin: P14
-    internal: true
-
-  - platform: gpio
-    id: relay_2
-    pin: P6
-    internal: true
-
-output:
-  # Filters
-  # Triggered when the "light" entity is turned on or off. Will only toggle
-  # the associated relay if the "light" entity is out of sync with the
-  # "activation status"; otherwise do nothing as the state is already correct.Z
-  - platform: template
-    type: binary
-    id: filter_1
-    write_action:
-      then:
-        - if:
-            condition:
-              - lambda: "return state != id(activation_status_1).state;"
-            then:
-              - switch.toggle: relay_1
-
-  - platform: template
-    type: binary
-    id: filter_2
-    write_action:
-      then:
-        - if:
-            condition:
-              - lambda: "return state != id(activation_status_2).state;"
-            then:
-              - switch.toggle: relay_2
+```yaml file=config.yaml
 ```
 
 ### Add Reboot button to HA
 
-```yaml
+```yaml inline
 switch:
   - platform: restart
     name: ${friendlyname} REBOOT
