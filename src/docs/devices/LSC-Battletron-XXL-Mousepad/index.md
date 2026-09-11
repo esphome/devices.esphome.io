@@ -13,7 +13,8 @@ This configuration is for the LSC Battletron XXL Mousepad
 
 ## Warning
 
-The LEDs on this product are quite dim and not resembling of the picture on the box, if you're buying this product, maybe reconsider. If you are fine with this then proceed.
+The LEDs on this product are quite dim and not resembling of the picture on the box, if you're buying this product, maybe reconsider.
+If you are fine with this then proceed.
 
 ## Disassembly
 
@@ -31,7 +32,8 @@ On the back of the board there are 2 pins on the Tuya CBU module you need to sol
 
 ![Picture of the board](board.jpg "Picture of the board")
 
-Alternatively if you are a bit crative you can try to use some wires and some pins and hold them to the required points. This is not recommended but is an option if you are very bad with soldering or can't for some reason.
+Alternatively if you are a bit crative you can try to use some wires and some pins and hold them to the required points.
+This is not recommended but is an option if you are very bad with soldering or can't for some reason.
 
 Remember that you will still need another jumper wire to short the ground and the CEN pin on the module to begin the flashing
 

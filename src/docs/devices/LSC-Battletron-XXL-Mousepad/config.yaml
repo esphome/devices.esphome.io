@@ -1,21 +1,13 @@
 esphome:
   name: mousepad
   friendly_name: Mousepad
-
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
-
 logger:
   baud_rate: 0
-
 wifi:
-  ssid:
-  password:
-  power_save_mode: NONE # To prevent issues with E1.31
+  power_save_mode: NONE
   ap:
-    
-captive_portal:
-
 light:
   - platform: beken_spi_led_strip
     chipset: WS2812
@@ -25,19 +17,18 @@ light:
     id: pad_leds
     channel_colors: RGB
     max_refresh_rate: 5ms
-    icon: "mdi:trackpad"
+    icon: mdi:trackpad
     default_transition_length: 500ms
-    gamma_correct: 1.7 # Needed so the LEDs don't turn off at 10%
-
+    gamma_correct: 1.7
 binary_sensor:
   - platform: gpio
-    pin: 
+    pin:
       number: 6
       inverted: true
-      mode: 
+      mode:
         input: true
-        pullup: true 
+        pullup: true
     name: Mousepad Button
     id: light_button
-    filters: 
+    filters:
       - delayed_on_off: 40ms
