@@ -68,12 +68,24 @@ binary_sensor:
     name: "Filter Low"
     type: filter_low
 
+select:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_nightlight
+    name: "Night Light"
+    type: nightlight
+
 number:
   - platform: levoit
     levoit: purifier
     id: levoit_timer
     name: "Timer (min)"
     type: timer
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_lifetime
+    name: "Filter Months"
+    type: filter_lifetime_months
 
 button:
   - platform: levoit
