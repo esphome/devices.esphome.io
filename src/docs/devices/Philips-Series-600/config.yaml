@@ -2,6 +2,7 @@ esphome:
   name: philips-series-600
   friendly_name: Philips Series 600
   name_add_mac_suffix: true
+  min_version: 2026.5.3
 
 esp32:
   board: seeed_xiao_esp32c3
