@@ -40,7 +40,7 @@ The UART Pinout is the same as other Shelly Plus Mini.
 
 ```yaml
 esphome:
-  name: "sehlly-1pm-mini-gen3"
+  name: "shelly-1pm-mini-gen3"
   friendly_name: "Shelly 1PM Mini Gen3"
 
 esp32:
