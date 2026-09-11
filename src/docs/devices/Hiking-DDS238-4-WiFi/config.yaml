@@ -1,0 +1,144 @@
+---
+#------------------------------------------------------------------------
+# Common setting for the 1 and 3 Phase Meter (DDS238-4 W and DTS238-7 W).
+# All possible entities are shown, but the idea is to only place the ones
+# that are going to be used.
+#
+# The following code only shows the properties needed to configure the
+# meter to access the measurements. Everything related to Wifi, MQTT, API,
+# Time, etc., see directly in the ESPHome options, because it is not the
+# scope of this Readme.
+#------------------------------------------------------------------------
+
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+uart:
+  tx_pin: 1
+  rx_pin: 3
+  baud_rate: 9600
+
+dxs238xw:
+  update_interval: 3s
+
+sensor:
+  - platform: dxs238xw
+    frequency:
+      name: "Frequency"
+
+    import_active_energy:
+      name: "Import Active Energy"
+    export_active_energy:
+      name: "Export Active Energy"
+    total_energy:
+      name: "Total Energy"
+
+    energy_purchase_balance:
+      name: "Energy Purchase - Balance"
+
+    phase_count:
+      name: "Phases N°"
+
+    energy_purchase_price:
+      name: "Energy Purchase Price"
+
+    total_energy_price:
+      name: "Total Energy Price"
+    contract_total_energy:
+      name: "Total Energy Contract"
+
+    price_kWh:
+      name: "kWh Price"
+
+text_sensor:
+  - platform: dxs238xw
+    meter_state_detail:
+      name: "State - Detail"
+      filters:
+        - substitute:
+            - "Off by Over Voltage -> INACTIVE - Over Voltage"
+            - "Off by Under Voltage -> INACTIVE - Under Voltage"
+            - "Off by Over Current -> INACTIVE - Over Current"
+            - "Off by End Purchase -> INACTIVE - End Purchase"
+            - "Off by End Delay -> INACTIVE - End Delay"
+            - "Off by User -> INACTIVE - By User"
+            - "Off by Unknown -> INACTIVE - Unknown"
+            - "Power Ok -> ACTIVE"
+    delay_value_remaining:
+      name: "Remaining Delay Time"
+    meter_id:
+      name: "Serial N°"
+
+number:
+  - platform: dxs238xw
+    max_current_limit:
+      name: "Maximum Current"
+    max_voltage_limit:
+      name: "Maximum Voltage"
+    min_voltage_limit:
+      name: "Minimum Voltage"
+    energy_purchase_value:
+      name: "Energy Purchase"
+    energy_purchase_alarm:
+      name: "Energy Purchase Alarm"
+    delay_value_set:
+      name: "Delay Time"
+    starting_kWh:
+      name: "kWh Start"
+    price_kWh:
+      name: "kWh Price"
+
+switch:
+  - platform: dxs238xw
+    energy_purchase_state:
+      name: "Activate Energy Purchase"
+    meter_state:
+      name: "State SmartMeter"
+    delay_state:
+      name: "Activate Delay"
+
+button:
+  - platform: dxs238xw
+    reset_data:
+      name: "Restart Consumption"
+
+binary_sensor:
+  - platform: gpio
+    internal: true
+    id: button_0
+    pin:
+      number: GPIO13
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    on_multi_click:
+      - timing:
+          - ON for at least 1s
+        then:
+          - dxs238xw.meter_state_toggle
+        invalid_cooldown: 0ms
+
+  - platform: dxs238xw
+    warning_off_by_over_voltage:
+      name: "Over Voltage Alert"
+    warning_off_by_under_voltage:
+      name: "Under Voltage Alert"
+    warning_off_by_over_current:
+      name: "Over Current Alert"
+    warning_off_by_end_purchase:
+      name: "End Purchase Alert"
+    warning_off_by_end_delay:
+      name: "End Delay Alert"
+    warning_off_by_user:
+      name: "Off by User Alert"
+    warning_purchase_alarm:
+      name: "Balance Purchase Alert"
+    meter_state:
+      name: "Relay State"
+
+status_led:
+  pin:
+    number: GPIO14
+    inverted: no
