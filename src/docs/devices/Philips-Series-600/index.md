@@ -48,12 +48,21 @@ Manufacturer: [Philips](https://www.philips.com) / [Versuni](https://www.versuni
 
 ## Wiring
 
+> **Unplug the unit before touching the PCB.** This is a mains appliance and part of
+> the control board sits on the mains side. Do all of the soldering below with the
+> purifier disconnected from the wall.
+
 The stock module cannot be reflashed, so an ESP32-C3 of your own goes on the MCU UART
 alongside it. A Seeed XIAO ESP32-C3 fits the space well.
 
 Four wires — `+5V`, `GND`, `RX`, `TX`. The RX/TX points are test pads near the
 original module, not the pin header. Pull the original module's `EN` pin to `GND` so
 it stops driving the bus, otherwise the two modules collide.
+
+The `+5V` pad carries 5 V, so it must go to a **regulated 5 V input** — the `5V`
+(VBUS) pad on a XIAO ESP32-C3, which feeds the board's onboard regulator. Never
+connect it to a `3V3` pin: 5 V on a 3.3 V rail will destroy the module. If your board
+has no 5 V input, add your own 3.3 V regulator instead.
 
 The device
 [guide](https://github.com/tuct/levoit/tree/main/devices/philips-600-series) has
@@ -74,10 +83,11 @@ photographs of the teardown, the pads, and the `EN`-to-`GND` link.
 On the sensor-equipped build, change `model: AC0650` to `model: AC0651` in the
 `philips:` block of `config.yaml` — that alone adds the Auto fan preset.
 
-Then add the entities below. **Merge the list items into the `sensor:` and `switch:`
-blocks that `config.yaml` already has** — do not append this file whole. A second
-top-level `sensor:` key would replace the base filter sensors rather than add to
-them.
+Then add the entities below. The two sensors are **merged into the `sensor:` list
+that `config.yaml` already has** — do not append a second top-level `sensor:` key, or
+it will replace the base filter sensors rather than add to them. `config.yaml` has no
+`switch:` block, so the standby-sensor switch is added as a **new top-level `switch:`
+block**.
 
 ```yaml file=sensor-model.yaml
 ```

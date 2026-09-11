@@ -1,8 +1,9 @@
 # Extra entities for the sensor-equipped build (model: AC0651).
 #
-# Merge these list items into the `sensor:` and `switch:` blocks of config.yaml.
-# Do not append this file as-is: config.yaml already defines `sensor:`, and a
-# duplicate top-level key would drop the base filter sensors.
+# Merge the two sensors into the `sensor:` list config.yaml already has — do not
+# append a second top-level `sensor:` key, which would drop the base filter
+# sensors. config.yaml has no `switch:` block, so add that one as a new
+# top-level block.
 sensor:
   - platform: philips
     philips: purifier
