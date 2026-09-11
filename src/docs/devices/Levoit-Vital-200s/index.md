@@ -40,14 +40,26 @@ Manufacturer: [Levoit](https://www.levoit.com)
 
 ## Flashing
 
-The top cover pries off to expose the PCB — no screws to start with. The device
-[guide](https://github.com/tuct/levoit/tree/main/devices/levoit-vital200s) walks through opening
-the case without breaking the hooks, the UART pad locations, and the alternative of
-wiring in a replacement ESP32 rather than reflashing the original.
+The stock ESP32 is flashed over its UART pads. The device
+[guide](https://github.com/tuct/levoit/tree/main/devices/levoit-vital200s) covers that
+path end to end — prerequisites, backing up the stock firmware, flashing, using the
+ESPHome web builder or dashboard, and restoring the original image if you want to go
+back.
 
-Take a backup of the stock firmware before writing anything over it.
+Take a backup of the stock firmware before writing anything over it; the guide's
+restore steps depend on having it.
+
+The teardown steps, the debug-header pinout and the wiring for a replacement ESP32 are
+not documented for this model yet. The case opens much like the
+[Vital 100S](/devices/levoit-vital-100s/), which is worth reading first, but treat the
+specifics as unverified on the 200S.
 
 ## Basic Configuration
+
+> The configuration below is hardware-only, which is what this site's pages carry.
+> It has no `wifi:` credentials and no `api:` or `ota:` blocks, so add your own before
+> flashing — without them the device will not reach Home Assistant or accept OTA
+> updates.
 
 ```yaml file=config.yaml
 ```
