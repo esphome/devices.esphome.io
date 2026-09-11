@@ -35,7 +35,9 @@ Manufacturer: [Levoit](https://www.levoit.com)
 * Fan with 4 speeds and Manual / Auto / Sleep presets
 * Fan Operating Mode select — the active mode as a plain select, for dashboards that don't render fan presets
 * Auto Mode select — Default / Quiet / Room Size
-* Auto Mode Room Size number, 9–38 m²
+* Auto Mode Room Size number, 9–38 m² — the value the MCU reports
+* Auto Mode Room Size Preset number, 9–38 m² — the remembered target actually sent when
+  Room Size is selected, since the reported value reads 0 under Default/Quiet
 * Display and Child Lock switches
 * PM2.5 and AQI sensors
 * Current CADR sensor in m³/h, updated every 5 s
