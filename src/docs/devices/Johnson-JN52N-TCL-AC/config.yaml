@@ -1,0 +1,27 @@
+esphome:
+  name: ac-jn52n
+  friendly_name: "Johnson JN52N AC"
+
+esp8266:
+  board: esp01_1m
+
+external_components:
+  - source: github://gnacho/esphome-tcl-ac/components
+    components: [tcl_climate]
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+  parity: EVEN
+
+climate:
+  - platform: tcl_climate
+    id: tcl_custom_climate
+    uart_id: uart_bus
+    name: "Johnson JN52N"
+    icon: "mdi:fan"
+
+wifi:
+  ap:
