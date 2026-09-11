@@ -72,8 +72,12 @@ photographs of the teardown, the pads, and the `EN`-to-`GND` link.
 ## Sensor Model
 
 On the sensor-equipped build, change `model: AC0650` to `model: AC0651` in the
-`philips:` block of `config.yaml` — that alone adds the Auto fan preset — then append
-these extra entities to the same file:
+`philips:` block of `config.yaml` — that alone adds the Auto fan preset.
+
+Then add the entities below. **Merge the list items into the `sensor:` and `switch:`
+blocks that `config.yaml` already has** — do not append this file whole. A second
+top-level `sensor:` key would replace the base filter sensors rather than add to
+them.
 
 ```yaml file=sensor-model.yaml
 ```
