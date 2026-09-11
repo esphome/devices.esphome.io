@@ -120,6 +120,10 @@ logger:
 web_server:
   port: 80
 
+api:
+  encryption:
+    key: !secret encryption_key
+
 globals:
   - id: scoops_count
     type: int
