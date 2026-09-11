@@ -14,7 +14,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: 1.4.2
     components: [levoit]
 
 wifi:
@@ -122,3 +122,8 @@ text_sensor:
     id: levoit_mcu_version
     name: "MCU Version"
     type: mcu_version
+  - platform: levoit
+    levoit: purifier
+    id: levoit_error
+    name: "Error"
+    type: error_message
