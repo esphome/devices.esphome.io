@@ -1,0 +1,24 @@
+# Basic Config
+esphome:
+  name: shelly_1
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# Hardware
+switch:
+
+  - platform: gpio
+    pin: GPIO4
+    id: shelly_1_relay
+    name: Output (Relay)
+
+binary_sensor:
+
+  - platform: gpio
+    pin: GPIO5
+    id: shelly_1_input
+    name: Input (SW)
