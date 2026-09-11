@@ -1,0 +1,90 @@
+esphome:
+  name: levoit-core200s
+  friendly_name: Levoit Core 200S
+  name_add_mac_suffix: true
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: main
+    components: [levoit]
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin: GPIO16
+    rx_pin: GPIO17
+    baud_rate: 115200
+
+levoit:
+  id: purifier
+  model: CORE200S
+
+fan:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_fan
+    name: "Fan"
+
+switch:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_display
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: purifier
+    id: levoit_child_lock
+    name: "Child Lock"
+    type: child_lock
+
+sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_cadr
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_life
+    name: "Filter %"
+    type: filter_life_left
+
+binary_sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_low
+    name: "Filter Low"
+    type: filter_low
+
+number:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_timer
+    name: "Timer (min)"
+    type: timer
+
+button:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_reset_filter
+    name: "Filter Reset"
+    type: reset_filter_stats
+
+text_sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_mcu_version
+    name: "MCU Version"
+    type: mcu_version
