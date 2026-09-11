@@ -1,0 +1,70 @@
+substitutions:
+  name: rowi-plug
+  friendly_name: "Rowi Plug"
+
+esphome:
+  name: ${name}
+  project:
+    name: "kiwi-warmer.rowi-plug"
+    version: "1.0"
+
+esp32:
+  variant: esp32
+
+logger:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "${friendly_name} Button"
+    disabled_by_default: true
+    on_click:
+      - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    name: "${friendly_name}"
+    pin: GPIO2
+    id: relay
+
+output:
+  - platform: ledc
+    id: red
+    pin:
+      number: GPIO18
+      inverted: true
+  - platform: ledc
+    id: green
+    pin:
+      number: GPIO19
+      inverted: true
+  - platform: ledc
+    id: blue
+    pin:
+      number: GPIO21
+      inverted: true
+
+light:
+  - platform: rgb
+    name: ${friendly_name}
+    disabled_by_default: true
+    id: rgb_light
+    red: red
+    green: green
+    blue: blue
+
+i2c:
+  sda: GPIO16
+  scl: GPIO17
+
+sensor:
+  - platform: shtcx
+    temperature:
+      name: "${friendly_name} Temperature"
+    humidity:
+      name: "${friendly_name} Humidity"
