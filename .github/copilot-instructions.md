@@ -167,11 +167,12 @@ The configuration contains components that should not be included on device page
 
 ## Workflow Integration
 
-The repository has an automated workflow that:
+The repository has automated workflows that:
 
-1. Detects when `made-for-esphome: true` is added to device frontmatter
-2. Automatically adds `made-for-esphome` and `made-for-esphome-pending` labels
-3. Adds the checklist to the PR description
-4. Requests changes for manual review
+1. Detect when `made-for-esphome: true` is added to device frontmatter
+2. Add the `made-for-esphome` label and convert the PR to a draft while the automation runs
+3. Run the Made for ESPHome checklist as automated checks on every push, compiling the linked configuration
+4. Request changes with a report when a check fails
+5. Mark the PR ready for review and add the `made-for-esphome-pending` label once every automated check passes, which is the signal that a human reviewer should pick it up
 
 As a reviewer, ensure all checklist items are satisfied before approving Made for ESPHome devices.

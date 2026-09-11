@@ -4,6 +4,8 @@
  * ESPHome review workflows:
  *   .github/scripts/mfe-review-feedback.cjs  (supersede-and-repost / dismiss)
  *   .github/scripts/mfe-review-command.cjs   (`@esphome[bot] review` command)
+ *   .github/scripts/mfe-intake.cjs           (draft + label a new submission)
+ *   .github/scripts/mfe-promote.cjs          (ready for review + pending label)
  *
  * They are exercised with a recording GitHub client mock — no network. Run
  * with `npm test`.
@@ -18,6 +20,8 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const feedbackScript = require("../.github/scripts/mfe-review-feedback.cjs");
 const commandScript = require("../.github/scripts/mfe-review-command.cjs");
+const intakeScript = require("../.github/scripts/mfe-intake.cjs");
+const promoteScript = require("../.github/scripts/mfe-promote.cjs");
 
 type Call = { method: string; args: unknown };
 
@@ -468,4 +472,585 @@ test("command: a permission lookup failure denies (fail-closed)", async () => {
     core: freshCore(),
   });
   assert.equal(calls.filter((c) => c.method === "reRunWorkflow").length, 0);
+});
+
+// --- intake script ---------------------------------------------------------
+
+type ChangedFile = {
+  filename: string;
+  status?: string;
+  patch?: string;
+  previous_filename?: string;
+};
+
+// A device page with the given frontmatter flag (null = no flag key at all).
+const page = (flag: string | null) =>
+  `---\ntitle: Some Device\n${flag === null ? "" : `made-for-esphome: ${flag}\n`}---\n\n# Some Device\n`;
+
+// Mock for the intake script. `files` seeds paginate(pulls.listFiles) and
+// `pages` maps "<ref>:<path>" to file content for repos.getContent; a path that
+// isn't in `pages` 404s the way GitHub does. `contentError` makes every
+// getContent throw with that status instead.
+function makeIntakeGithub(
+  opts: {
+    files?: ChangedFile[];
+    pages?: Record<string, string>;
+    contentError?: number;
+  } = {}
+) {
+  const calls: Call[] = [];
+  const listFiles = Object.assign(() => {}, { _kind: "files" });
+  const github = {
+    paginate: async (fn: { _kind?: string }, args: unknown) => {
+      calls.push({ method: `paginate:${fn._kind}`, args });
+      return opts.files ?? [];
+    },
+    graphql: async (query: string, vars: unknown) => {
+      calls.push({ method: "graphql", args: { query, vars } });
+      return {};
+    },
+    rest: {
+      pulls: { listFiles },
+      repos: {
+        getContent: async (args: unknown) => {
+          calls.push({ method: "getContent", args });
+          if (opts.contentError) {
+            throw Object.assign(new Error("getContent failed"), {
+              status: opts.contentError,
+            });
+          }
+          const { ref, path: filePath } = args as { ref: string; path: string };
+          const content = (opts.pages ?? {})[`${ref}:${filePath}`];
+          if (content === undefined) {
+            throw Object.assign(new Error("Not Found"), { status: 404 });
+          }
+          return { data: content };
+        },
+      },
+      issues: {
+        addLabels: async (args: unknown) => {
+          calls.push({ method: "addLabels", args });
+          return { data: {} };
+        },
+        createComment: async (args: unknown) => {
+          calls.push({ method: "createComment", args });
+          return { data: {} };
+        },
+      },
+    },
+  };
+  return { github, calls };
+}
+
+const MFE = "made-for-esphome";
+const PENDING = "made-for-esphome-pending";
+
+const PAGE = "src/docs/devices/Some-Device/index.md";
+const ADDS_FLAG = "@@ -1,3 +1,4 @@\n title: Some Device\n+made-for-esphome: true\n";
+
+// The pull_request payload intake sees.
+const intakeContext = (opts: { labels?: string[]; draft?: boolean } = {}) => ({
+  repo: { owner: "esphome", repo: "esphome-devices" },
+  payload: {
+    pull_request: {
+      number: 42,
+      node_id: "PR_node",
+      draft: opts.draft ?? false,
+      head: { sha: "head1" },
+      base: { sha: "base1" },
+      labels: (opts.labels ?? []).map((name) => ({ name })),
+    },
+  },
+});
+
+const getContentCalls = (calls: Call[]) => calls.filter((c) => c.method === "getContent");
+
+test("intake: a new made-for-esphome page is labeled, drafted and explained", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added", patch: ADDS_FLAG }],
+    pages: { [`head1:${PAGE}`]: page("true") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  const added = calls.filter((c) => c.method === "addLabels");
+  assert.equal(added.length, 1);
+  assert.deepEqual((added[0].args as { labels: string[] }).labels, [MFE]);
+  const graphql = calls.filter((c) => c.method === "graphql");
+  assert.equal(graphql.length, 1);
+  const gql = graphql[0].args as { query: string; vars: { id: string } };
+  assert.ok(gql.query.includes("convertPullRequestToDraft"));
+  assert.equal(gql.vars.id, "PR_node");
+  const comment = calls.filter((c) => c.method === "createComment");
+  assert.equal(comment.length, 1);
+  assert.ok((comment[0].args as { body: string }).body.includes("<!-- made-for-esphome-intake -->"));
+  // An added file needs no base lookup.
+  assert.equal(getContentCalls(calls).length, 1);
+});
+
+test("intake: a page too large for GitHub to return a patch is still detected", async () => {
+  // What esphome/devices.esphome.io#419 (3,911 added lines) actually looks
+  // like from pulls.listFiles: status added, no patch at all.
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added" }],
+    pages: { [`head1:${PAGE}`]: page("true") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(getContentCalls(calls).length, 1);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("intake: a quoted 'true' counts as flagged", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added" }],
+    pages: { [`head1:${PAGE}`]: page("'true'") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("intake: a patch that never touches the flag is settled without a fetch", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [
+      { filename: PAGE, status: "modified", patch: "@@ -9,3 +9,3 @@\n-old\n+new\n" },
+      // The flag added somewhere that isn't a device page.
+      { filename: "src/docs/guides/index.md", status: "modified", patch: ADDS_FLAG },
+      // A device page one level too deep.
+      { filename: "src/docs/devices/Other/sub/index.md", status: "added", patch: ADDS_FLAG },
+      // A device page being deleted.
+      { filename: "src/docs/devices/Gone/index.md", status: "removed" },
+    ],
+    pages: { [`head1:${PAGE}`]: page("true") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(getContentCalls(calls).length, 0);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  assert.equal(calls.filter((c) => c.method === "createComment").length, 0);
+});
+
+test("intake: a page that was already made-for-esphome is not a new submission", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "modified" }],
+    pages: { [`head1:${PAGE}`]: page("true"), [`base1:${PAGE}`]: page("true") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(getContentCalls(calls).length, 2);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("intake: a renamed page is compared against its old path", async () => {
+  const OLD = "src/docs/devices/Old-Name/index.md";
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "renamed", previous_filename: OLD }],
+    pages: { [`head1:${PAGE}`]: page("true"), [`base1:${OLD}`]: page("true") },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  const base = getContentCalls(calls)[1].args as { path: string; ref: string };
+  assert.equal(base.path, OLD);
+  assert.equal(base.ref, "base1");
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("intake: a page that gains the flag on an existing device is a submission", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "modified", patch: ADDS_FLAG }],
+    pages: { [`head1:${PAGE}`]: page("true"), [`base1:${PAGE}`]: page(null) },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("intake: a page missing at the head ref is skipped", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "modified" }],
+    pages: {},
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("intake: a page without a truthy flag is skipped", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [
+      { filename: PAGE, status: "added" },
+      { filename: "src/docs/devices/Two/index.md", status: "added" },
+    ],
+    pages: {
+      [`head1:${PAGE}`]: page("false"),
+      // The words appear, but not in the frontmatter block.
+      "head1:src/docs/devices/Two/index.md": "# Two\n\nmade-for-esphome: true\n",
+    },
+  });
+  await intakeScript({ github, context: intakeContext(), core: freshCore() });
+  assert.equal(getContentCalls(calls).length, 2);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("intake: an already-labeled PR is left alone", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added", patch: ADDS_FLAG }],
+  });
+  await intakeScript({
+    github,
+    context: intakeContext({ labels: [MFE] }),
+    core: freshCore(),
+  });
+  assert.equal(calls.length, 0);
+});
+
+test("intake: an already-draft PR is labeled and explained but not re-drafted", async () => {
+  const { github, calls } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added", patch: ADDS_FLAG }],
+    pages: { [`head1:${PAGE}`]: page("true") },
+  });
+  await intakeScript({
+    github,
+    context: intakeContext({ draft: true }),
+    core: freshCore(),
+  });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  assert.equal(calls.filter((c) => c.method === "createComment").length, 1);
+});
+
+test("intake: a non-404 error from the contents API propagates", async () => {
+  const { github } = makeIntakeGithub({
+    files: [{ filename: PAGE, status: "added" }],
+    contentError: 500,
+  });
+  await assert.rejects(
+    () => intakeScript({ github, context: intakeContext(), core: freshCore() }),
+    /getContent failed/
+  );
+});
+
+// --- promote script --------------------------------------------------------
+
+type CheckRun = {
+  status: string;
+  conclusion?: string | null;
+  app?: { slug: string };
+};
+
+type PullRequest = {
+  state?: string;
+  draft?: boolean;
+  node_id?: string;
+  head?: { sha: string };
+  labels?: { name: string }[];
+};
+
+// Mock for the promote script. `pr` seeds pulls.get, `checks` seeds
+// paginate(checks.listForRef), `events` seeds paginate(issues.listEvents) and
+// `removeError` makes removeLabel throw with that HTTP status.
+function makePromoteGithub(
+  opts: {
+    pr?: PullRequest;
+    checks?: CheckRun[];
+    events?: unknown[];
+    removeError?: number;
+    graphqlError?: string;
+  } = {}
+) {
+  const calls: Call[] = [];
+  const listForRef = Object.assign(() => {}, { _kind: "checks" });
+  const listEvents = Object.assign(() => {}, { _kind: "events" });
+  const github = {
+    paginate: async (fn: { _kind?: string }, args: unknown) => {
+      calls.push({ method: `paginate:${fn._kind}`, args });
+      return fn._kind === "checks" ? opts.checks ?? [] : opts.events ?? [];
+    },
+    graphql: async (query: string, vars: unknown) => {
+      calls.push({ method: "graphql", args: { query, vars } });
+      if (opts.graphqlError) throw new Error(opts.graphqlError);
+      return {};
+    },
+    rest: {
+      checks: { listForRef },
+      pulls: {
+        get: async (args: unknown) => {
+          calls.push({ method: "pulls.get", args });
+          return { data: opts.pr ?? makePr([]) };
+        },
+      },
+      issues: {
+        listEvents,
+        addLabels: async (args: unknown) => {
+          calls.push({ method: "addLabels", args });
+          return { data: {} };
+        },
+        removeLabel: async (args: unknown) => {
+          calls.push({ method: "removeLabel", args });
+          if (opts.removeError) {
+            throw Object.assign(new Error("removeLabel failed"), {
+              status: opts.removeError,
+            });
+          }
+          return { data: {} };
+        },
+      },
+    },
+  };
+  return { github, calls };
+}
+
+function makePr(
+  labelNames: string[],
+  extra: { state?: string; draft?: boolean } = {}
+): PullRequest {
+  return {
+    state: extra.state ?? "open",
+    draft: extra.draft ?? false,
+    node_id: "PR_node",
+    head: { sha: "sha1" },
+    labels: labelNames.map((name) => ({ name })),
+  };
+}
+
+// A GitHub Actions check run in the given state.
+const ga = (status: string, conclusion: string | null = null): CheckRun => ({
+  status,
+  conclusion,
+  app: { slug: "github-actions" },
+});
+
+const draftedBy = (type: string) => [
+  { event: "labeled" },
+  { event: "convert_to_draft", actor: { type } },
+];
+
+// The promote script only needs pr-number.txt out of the review artifact.
+const withPrNumber = (prNumber: string) => withArtifact(prNumber, null, "pass");
+
+test("promote: all checks green -> adds the pending label", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE]),
+    checks: [
+      ga("completed", "success"),
+      ga("completed", "skipped"),
+      ga("completed", "neutral"),
+    ],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  const added = calls.filter((c) => c.method === "addLabels");
+  assert.equal(added.length, 1);
+  assert.deepEqual((added[0].args as { labels: string[] }).labels, [PENDING]);
+  assert.equal((added[0].args as { issue_number: number }).issue_number, 42);
+  // Not a draft, so nothing to mark ready.
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+});
+
+test("promote: a green draft the bot created is marked ready for review", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  const graphql = calls.filter((c) => c.method === "graphql");
+  assert.equal(graphql.length, 1);
+  const gql = graphql[0].args as { query: string; vars: { id: string } };
+  assert.ok(gql.query.includes("markPullRequestReadyForReview"));
+  assert.equal(gql.vars.id, "PR_node");
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("promote: a draft a human created stays a draft", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("User"),
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  // The label still goes on: the checks did pass.
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("promote: a draft with no draft-state history stays a draft", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: [{ event: "labeled" }],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+});
+
+test("promote: a re-draft after the bot's is respected", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    // Bot drafted, bot marked ready, then someone drafted it again by hand.
+    events: [
+      { event: "convert_to_draft", actor: { type: "Bot" } },
+      { event: "ready_for_review", actor: { type: "Bot" } },
+      { event: "convert_to_draft" }, // no actor on the payload
+    ],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+});
+
+test("promote: a green PR that is already promoted is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE, PENDING]),
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  assert.equal(calls.filter((c) => c.method === "removeLabel").length, 0);
+});
+
+test("promote: a failing check removes an existing pending label", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE, PENDING]),
+    checks: [ga("completed", "success"), ga("completed", "failure")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  const removed = calls.filter((c) => c.method === "removeLabel");
+  assert.equal(removed.length, 1);
+  assert.equal((removed[0].args as { name: string }).name, PENDING);
+});
+
+test("promote: a still-running check leaves the label off", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE]),
+    checks: [ga("completed", "success"), ga("in_progress")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  assert.equal(calls.filter((c) => c.method === "removeLabel").length, 0);
+});
+
+test("promote: no check runs at all is not a pass", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE, PENDING]),
+    checks: [],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "removeLabel").length, 1);
+});
+
+test("promote: non-Actions check runs are ignored", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE]),
+    checks: [
+      ga("completed", "success"),
+      { status: "in_progress", app: { slug: "netlify" } },
+      { status: "completed", conclusion: "failure" }, // no app at all
+    ],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+test("promote: a PR without the made-for-esphome label is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr(["new-device"]),
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method.startsWith("paginate:")).length, 0);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("promote: a PR with no labels array is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: { state: "open", head: { sha: "sha1" } },
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("promote: a closed PR is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { state: "closed" }),
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+});
+
+test("promote: an unreadable PR number -> setFailed", async () => {
+  withPrNumber("not-a-number");
+  const { github, calls } = makePromoteGithub({ pr: makePr([MFE]) });
+  const core = freshCore();
+  await promoteScript({ github, context, core });
+  assert.equal(core._failed.length, 1);
+  assert.equal(calls.length, 0);
+});
+
+test("promote: a 404 from removeLabel is swallowed", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE, PENDING]),
+    checks: [ga("completed", "failure")],
+    removeError: 404,
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "removeLabel").length, 1);
+});
+
+test("promote: any other removeLabel error propagates", async () => {
+  withPrNumber("42");
+  const { github } = makePromoteGithub({
+    pr: makePr([MFE, PENDING]),
+    checks: [ga("completed", "failure")],
+    removeError: 500,
+  });
+  await assert.rejects(
+    () => promoteScript({ github, context, core: freshCore() }),
+    /removeLabel failed/
+  );
+});
+
+test("promote: falls back to ./artifact when MFE_ARTIFACT_DIR is unset", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-cwd-"));
+  fs.mkdirSync(path.join(dir, "artifact"));
+  fs.writeFileSync(path.join(dir, "artifact", "pr-number.txt"), "42\n");
+  delete process.env.MFE_ARTIFACT_DIR;
+  const cwd = process.cwd();
+  process.chdir(dir);
+  try {
+    const { github, calls } = makePromoteGithub({
+      pr: makePr([MFE]),
+      checks: [ga("completed", "success")],
+    });
+    await promoteScript({ github, context, core: freshCore() });
+    assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+  } finally {
+    process.chdir(cwd);
+  }
+});
+
+test("promote: a failed ready-for-review mutation warns instead of throwing", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+    graphqlError: "Pull request is not a draft",
+  });
+  const core = freshCore();
+  await promoteScript({ github, context, core });
+  assert.equal(core._warned.length, 1);
+  assert.ok(core._warned[0].includes("not a draft"));
+  // The label still goes on.
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
 });
