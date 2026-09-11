@@ -61,13 +61,19 @@ photographs of the teardown, the pads, and the `EN`-to-`GND` link.
 
 ## Basic Configuration
 
+> The configuration below is hardware-only, which is what this site's pages carry.
+> It has no `wifi:` credentials and no `api:` or `ota:` blocks, so add your own before
+> flashing — without them the device will not reach Home Assistant or accept OTA
+> updates.
+
 ```yaml file=config.yaml
 ```
 
 ## Sensor Model
 
-On the sensor-equipped build, set `model: AC0651` instead of `AC0650` — that alone
-adds the Auto fan preset — and append the extra entities:
+On the sensor-equipped build, change `model: AC0650` to `model: AC0651` in the
+`philips:` block of `config.yaml` — that alone adds the Auto fan preset — then append
+these extra entities to the same file:
 
 ```yaml file=sensor-model.yaml
 ```

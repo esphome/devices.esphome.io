@@ -1,7 +1,5 @@
-philips:
-  id: purifier
-  model: AC0651
-
+# Extra entities for the sensor-equipped build. Append these to config.yaml
+# after changing `model: AC0650` to `model: AC0651` in its `philips:` block.
 sensor:
   - platform: philips
     philips: purifier
