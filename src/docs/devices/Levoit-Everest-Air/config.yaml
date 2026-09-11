@@ -2,6 +2,7 @@ esphome:
   name: levoit-everest-air
   friendly_name: Levoit Everest Air
   name_add_mac_suffix: true
+  min_version: 2026.5.3
 
 esp32:
   board: esp32dev
