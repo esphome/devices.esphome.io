@@ -1,0 +1,48 @@
+substitutions:
+  board_model: "bk7231n"
+# OR
+#  board_model: "bk7231t"
+
+packages:
+  hardware: !include device-${board_model}.yaml
+
+esphome:
+  name: lsc-plug-1
+
+wifi:
+  ap:
+    
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 60s
+    
+status_led:
+  pin: ${pin.led1}
+
+binary_sensor:
+  - platform: gpio
+    id: button_1
+    name: lsc-plug-1_button
+    pin:
+      number: ${pin.sw1}
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    on_press:
+      - switch.toggle: relay_1
+
+output:
+  - platform: gpio
+    id: relay_1_led
+    pin: ${pin.led2}
+    
+switch:
+  - platform: gpio
+    id: relay_1
+    name: lsc-plug-1_relay
+    pin: ${pin.ry1}
+    on_turn_on:
+      - output.turn_on: relay_1_led
+    on_turn_off:
+      - output.turn_off: relay_1_led
