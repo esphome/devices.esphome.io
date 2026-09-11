@@ -1,0 +1,20 @@
+external_components:
+  - source: github://flax2000/esp_nrf24l01
+    components: [nrf24]
+
+spi:
+  clk_pin: GPIO09
+  mosi_pin: GPIO11
+  miso_pin: GPIO10
+
+nrf24:
+  id: my_nrf24
+  ce_pin: GPIO53
+  csn_pin: GPIO54
+  # Optional IRQ connection, if supported by the external component:
+  # irq_pin: GPIO15
+packet_transport:
+  - platform: custom # Or the platform name provided by the specific external component
+    nrf24_id: my_nrf24
+    sensors:
+      - sensor_to_transmit

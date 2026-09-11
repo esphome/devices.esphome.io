@@ -1,0 +1,44 @@
+# Wi-Fi via ESP32-C6 using ESP-Hosted SPI full duplex (1-wire)
+esp32_hosted:
+  variant: ESP32C6
+  active_high: true
+
+  # SPI Full Duplex (Don't use half-duplex)
+  type: spi
+  reset_pin: GPIO2  # EN Wireless Module Reset
+  cs_pin: GPIO14  # GPIO19 Wireless Module CS
+  clk_pin: GPIO15  # GPIO18 Wireless Module CLK
+  mosi_pin: GPIO7  # GPIO20 Wireless Module MOSI
+  miso_pin: GPIO9  # GPIO21 Wireless Module MISO
+  data_ready_pin: GPIO10 # GPIO22 Wireless Module Ready
+  handshake_pin: GPIO11 # GPIO23 Wireless Module Handshake
+
+# This requires the custom C6 build. Point it to your own compiled binary.
+# update:
+#   - platform: esp32_hosted
+#     path: network_adapter.bin
+#     sha256: 622980747c593d340e29fc08221da6bc6dd64b8ee7d7773b75796b17de7ecb3f
+#     id: esp32update
+#     on_update_available:
+#       - lvgl.label.update:
+#           id: version_label
+#           text: "Update Available!"
+#           text_color: 0xFFFF00
+
+# button:
+#   - platform: template
+#     name: "Update ESP32-C6 Firmware"
+#     on_press:
+#       - lambda: |-
+#           printf("Pressed!");
+
+wifi:
+  ssid: REPLACE_ME
+  # SECURITY: credential omitted from documentation example
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${device_name} Fallback"
+    # SECURITY: credential omitted from documentation example
+
+
+captive_portal:

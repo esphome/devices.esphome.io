@@ -1,0 +1,5 @@
+binary_sensor:
+  # 9. Hall Effect Sensor
+  - platform: gpio
+    pin: GPIO7
+    name: "Magnetic Sensor"

@@ -1,0 +1,125 @@
+# Individual Output Definitions
+output:
+  - platform: gpio
+    pin: GPIO41
+    id: out_41
+  - platform: gpio
+    pin: GPIO45
+    id: out_45
+  - platform: gpio
+    pin: GPIO46
+    id: out_46
+  - platform: gpio
+    pin: GPIO14
+    id: out_14
+  - platform: gpio
+    pin: GPIO11
+    id: out_11
+  - platform: gpio
+    pin: GPIO10
+    id: out_10
+  - platform: gpio
+    pin: GPIO09
+    id: out_09
+  - platform: gpio
+    pin: GPIO53
+    id: out_53
+  - platform: gpio
+    pin: GPIO54
+    id: out_54
+  - platform: gpio
+    pin: GPIO15
+    id: out_15
+  - platform: gpio
+    pin: GPIO07
+    id: out_07
+  - platform: gpio
+    pin: GPIO08
+    id: out_08
+  - platform: gpio
+    pin: GPIO06
+    id: out_06
+  - platform: gpio
+    pin: GPIO05
+    id: out_05
+  - platform: gpio
+    pin: GPIO47
+    id: out_47
+  - platform: gpio
+    pin: GPIO48
+    id: out_48
+
+# Expose them as simple Light entities
+light:
+  - platform: binary
+    name: "Pin 41"
+    output: out_41
+  - platform: binary
+    name: "Pin 45"
+    output: out_45
+  - platform: binary
+    name: "Pin 46"
+    output: out_46
+  - platform: binary
+    name: "Pin 14"
+    output: out_14
+  - platform: binary
+    name: "Pin 11"
+    output: out_11
+  - platform: binary
+    name: "Pin 10"
+    output: out_10
+  - platform: binary
+    name: "Pin 09"
+    output: out_09
+  - platform: binary
+    name: "Pin 53"
+    output: out_53
+  - platform: binary
+    name: "Pin 54"
+    output: out_54
+  - platform: binary
+    name: "Pin 15"
+    output: out_15
+  - platform: binary
+    name: "Pin 07"
+    output: out_07
+  - platform: binary
+    name: "Pin 08"
+    output: out_08
+  - platform: binary
+    name: "Pin 06"
+    output: out_06
+  - platform: binary
+    name: "Pin 05"
+    output: out_05
+  - platform: binary
+    name: "Pin 47"
+    output: out_47
+  - platform: binary
+    name: "Pin 48"
+    output: out_48
+
+# Automation to make them all blink
+script:
+  - id: blink_all
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: 'return true;'
+          then:
+            - lambda: |-
+                for (auto *o : {out_41, out_45, out_46, out_14, out_11, out_10,
+                                out_09, out_53, out_54, out_15, out_07, out_08,
+                                out_06, out_05, out_47, out_48}) {
+                  o->turn_on();
+                }
+            - delay: 500ms
+            - lambda: |-
+                for (auto *o : {out_41, out_45, out_46, out_14, out_11, out_10,
+                                out_09, out_53, out_54, out_15, out_07, out_08,
+                                out_06, out_05, out_47, out_48}) {
+                  o->turn_off();
+                }
+            - delay: 500ms

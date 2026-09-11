@@ -1,0 +1,16 @@
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+
+sensor:
+  - platform: bh1750
+    address: 0x5C
+    name: "Illuminance"
+    update_interval: 5s
+    on_value_range:
+      - below: 10
+        then:
+          - logger.log: "It's dark!"
+      - above: 500
+        then:
+          - logger.log: "It's bright!"

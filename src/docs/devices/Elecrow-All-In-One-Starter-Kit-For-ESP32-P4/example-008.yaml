@@ -1,0 +1,18 @@
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+  scan: true
+
+sensor:
+  - platform: aht10
+    variant: AHT20
+    address: 0x38
+    temperature:
+      name: "Temperature"
+      filters:
+        - offset: 0.0
+    humidity:
+      name: "Humidity"
+      filters:
+        - offset: 0.0
+    update_interval: 10s

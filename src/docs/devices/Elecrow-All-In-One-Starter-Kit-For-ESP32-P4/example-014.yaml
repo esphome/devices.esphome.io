@@ -1,0 +1,16 @@
+output:
+  - platform: gpio
+    pin: GPIO06
+    id: led_06_output
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO24
+    name: "Motion Sensor"
+    device_class: motion
+    on_press:
+      - output.turn_off: led_06_output
+      - logger.log: "Motion detected - LED OFF"
+    on_release:
+      - output.turn_on: led_06_output
+      - logger.log: "Motion stopped - LED ON"

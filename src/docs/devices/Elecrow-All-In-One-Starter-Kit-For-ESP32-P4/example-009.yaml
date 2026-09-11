@@ -1,0 +1,60 @@
+# MIPI-DSI Display Configuration (EK79007 Controller)
+# Parameters verified from official Elecrow ESP-IDF code
+display:
+  - platform: mipi_dsi
+    id: main_display
+    model: CUSTOM  # EK79007 controller
+    rotation: 0  # Set to 180 if needed
+    update_interval: never
+    auto_clear_enabled: false
+    lanes: 2
+    lane_bit_rate: 1000Mbps  # Tested custom AIO configuration
+    color_order: rgb
+    pclk_frequency: 51MHz   # Official: 51 MHz DPI clock
+    dimensions:
+      width: 1024
+      height: 600
+    # Timing parameters from official code
+    hsync_back_porch: 160
+    hsync_pulse_width: 70
+    hsync_front_porch: 160
+    vsync_back_porch: 23
+    vsync_pulse_width: 10   # Official code uses 10, not 1
+    vsync_front_porch: 12
+    # Display initialization sequence
+    # This uses model: CUSTOM, so the board-specific EK79007 sequence must be
+    # supplied here; it is not provided automatically by the generic driver.
+    init_sequence:
+      - [0xB2, 0x10]
+      - [0x80, 0x8B]
+      - [0x81, 0x78]
+      - [0x82, 0x84]
+      - [0x83, 0x88]
+      - [0x84, 0xA8]
+      - [0x85, 0xE3]
+      - [0x86, 0x88]
+      - delay: 120ms
+      - [0x29]  # Display on
+
+# LDO Regulator Configuration
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+
+# GPIO Control for Display
+# UPDN: GPIO32 (vertical scan direction: 0=normal, 1=inverted)
+# SHLR: GPIO33 (horizontal scan direction: 0=normal, 1=inverted)
+switch:
+  - platform: gpio
+    pin: GPIO32
+    name: "Display UPDN"
+    id: display_updn
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: gpio
+    pin: GPIO33
+    name: "Display SHLR"
+    id: display_shlr
+    internal: true
+    restore_mode: RESTORE_DEFAULT_ON  # Official code sets this to 1
