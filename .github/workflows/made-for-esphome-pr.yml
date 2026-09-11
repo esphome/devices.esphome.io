@@ -1,0 +1,187 @@
+name: Made for ESPHome PR
+
+# The write side of the Made for ESPHome flow: everything that touches the pull
+# request itself. The checks are run by the "Made for ESPHome Review" workflow,
+# which stays secret-free because it compiles contributor-supplied configs.
+#
+# intake (pull_request_target)
+#   A PR that adds `made-for-esphome: true` to a device page is labeled
+#   `made-for-esphome` and converted to a draft, with a comment explaining what
+#   happens next. The draft is the merge gate while the automation runs.
+#
+# feedback (workflow_run: Made for ESPHome Review)
+#   Once the review finishes, its report becomes an esphome[bot]
+#   REQUEST_CHANGES review, and when every automated check on the head commit
+#   is green the PR is marked ready for review and labeled
+#   `made-for-esphome-pending` for a human reviewer.
+#
+# promote (workflow_run: CI)
+#   The same promotion, re-evaluated when CI finishes. The review is normally
+#   the last check to settle, but this way the PR still leaves draft if CI
+#   finishes after it or a failed CI job is re-run later.
+#
+# SECURITY: every job here runs in the base-repo context with a writable
+# token, so none of them ever checks out or executes the PR's code. Intake
+# reads the diff through the API, and the workflow_run jobs read only the
+# artifact and the GitHub API. The one checkout is of the trusted base repo,
+# to load the handler scripts.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - "src/docs/devices/**"
+  workflow_run:
+    workflows:
+      - CI
+      - Made for ESPHome Review
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  intake:
+    name: Draft and label new submissions
+    runs-on: ubuntu-latest
+    # Intake is a one-shot: the `made-for-esphome` label records that it ran.
+    if: >-
+      github.event_name == 'pull_request_target'
+      && !contains(github.event.pull_request.labels.*.name, 'made-for-esphome')
+    permissions:
+      contents: read  # to check out the script below and read the changed pages
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # to convert the PR to a draft and comment on it
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      # Uses the default GITHUB_TOKEN rather than the app token: intake reads
+      # the changed pages through the contents API, and pull_request_target
+      # already runs in the base-repo context with write access.
+      - name: Draft and label the pull request
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/mfe-intake.cjs');
+            await script({ github, context, core });
+
+  feedback:
+    name: Post review and promote when green
+    runs-on: ubuntu-latest
+    # Only act on review runs triggered by pull requests.
+    if: >-
+      github.event_name == 'workflow_run'
+      && github.event.workflow_run.name == 'Made for ESPHome Review'
+      && github.event.workflow_run.event == 'pull_request'
+    permissions:
+      actions: read  # to list/download the triggering run's artifacts
+      checks: read  # to read the check runs on the PR head commit
+      contents: read  # to check out the scripts below
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # to mark the PR ready for review
+    steps:
+      # Check out the base repo (default branch, trusted) only to load the
+      # handler scripts, never the PR's code.
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Download review artifact
+        id: download
+        # A cancelled review run (concurrency cancel-in-progress) uploads
+        # nothing, so a missing artifact is expected. Don't fail over it, the
+        # outcome check below skips the remaining steps instead.
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: mfe-review-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifact
+
+      - name: Generate a token
+        if: steps.download.outcome == 'success'
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Supersede and repost review
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const script = require('./.github/scripts/mfe-review-feedback.cjs');
+            await script({ github, context, core });
+
+      # The review workflow is the slowest check on the PR (it compiles the
+      # linked config), so by the time this runs the rest of the checks have
+      # settled. Only when they are all green does the PR come out of draft and
+      # get the `made-for-esphome-pending` label. This step uses the default
+      # GITHUB_TOKEN rather than the app token: it needs `checks: read`, and
+      # workflow_run already runs in the base-repo context.
+      - name: Promote the pull request when checks pass
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/mfe-promote.cjs');
+            await script({ github, context, core });
+
+  promote:
+    name: Promote when CI settles last
+    runs-on: ubuntu-latest
+    # The review is normally the last check to finish, so this is the safety
+    # net for the other order (and for a failed CI job re-run later). When the
+    # review is still running it simply finds a check in flight and does
+    # nothing.
+    if: >-
+      github.event_name == 'workflow_run'
+      && github.event.workflow_run.name == 'CI'
+      && github.event.workflow_run.event == 'pull_request'
+    permissions:
+      actions: read  # to list/download the triggering run's artifacts
+      checks: read  # to read the check runs on the PR head commit
+      contents: read  # to check out the script below
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # to mark the PR ready for review
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      # Only for the PR number it carries; the validation report itself is
+      # handled by the pr-validation-feedback workflow.
+      - name: Download validation artifact
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: validation-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifact
+
+      - name: Promote the pull request when checks pass
+        if: steps.download.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/mfe-promote.cjs');
+            await script({ github, context, core });
