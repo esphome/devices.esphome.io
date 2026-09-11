@@ -1,0 +1,9 @@
+remote_receiver:
+  pin:
+    number: 8
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+  tolerance: 55%
+  dump: pronto

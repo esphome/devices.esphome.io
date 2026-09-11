@@ -1,0 +1,11 @@
+api:
+  encryption:
+    key: "xxxxxxx"
+  services:
+    - service: send_raw_command
+      variables:
+        command: int[]
+      then:
+        - remote_transmitter.transmit_raw:
+            code: !lambda "return command;"
+            carrier_frequency: !lambda "return 38000.0;"
