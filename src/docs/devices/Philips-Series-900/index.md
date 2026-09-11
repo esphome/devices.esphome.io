@@ -91,6 +91,11 @@ again without unsoldering.
 
 ## Basic Configuration
 
+> The configuration below is hardware-only, which is what this site's pages carry.
+> It has no `wifi:` credentials and no `api:` or `ota:` blocks, so add your own before
+> flashing — without them the device will not reach Home Assistant or accept OTA
+> updates.
+
 ```yaml file=config.yaml
 ```
 
