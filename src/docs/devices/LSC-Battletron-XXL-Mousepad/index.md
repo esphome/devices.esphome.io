@@ -13,7 +13,8 @@ This configuration is for the LSC Battletron XXL Mousepad
 
 ## Warning
 
-The LEDs on this product are quite dim and not resembling of the picture on the box, if you're buying this product, maybe reconsider.
+The LEDs on this product are quite dim and not resembling of the picture on the box,
+if you're buying this product, maybe reconsider.
 If you are fine with this then proceed.
 
 ## Disassembly
