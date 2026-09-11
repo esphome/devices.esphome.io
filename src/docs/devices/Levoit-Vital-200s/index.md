@@ -51,8 +51,8 @@ restore steps depend on having it.
 
 The teardown steps, the debug-header pinout and the wiring for a replacement ESP32 are
 not documented for this model yet. The case opens much like the
-[Vital 100S](/devices/levoit-vital-100s/), which is worth reading first, but treat the
-specifics as unverified on the 200S.
+[Vital 100S](https://github.com/tuct/levoit/tree/main/devices/levoit-vital100s), whose
+guide is worth reading first, but treat the specifics as unverified on the 200S.
 
 ## Basic Configuration
 

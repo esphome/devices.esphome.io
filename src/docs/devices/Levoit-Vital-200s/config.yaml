@@ -15,7 +15,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: 1.4.2
     components: [levoit]
 
 wifi:
@@ -83,6 +83,11 @@ sensor:
     id: levoit_filter_life
     name: "Filter %"
     type: filter_life_left
+  - platform: levoit
+    levoit: purifier
+    id: levoit_efficiency_counter
+    name: "Efficiency Counter"
+    type: efficiency_counter
 
 binary_sensor:
   - platform: levoit
@@ -123,3 +128,13 @@ text_sensor:
     id: levoit_mcu_version
     name: "MCU Version"
     type: mcu_version
+  - platform: levoit
+    levoit: purifier
+    id: levoit_high_fan_time
+    name: "Auto Mode High Fan Time"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: purifier
+    id: levoit_error
+    name: "Error"
+    type: error_message
