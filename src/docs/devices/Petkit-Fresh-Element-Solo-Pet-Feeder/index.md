@@ -120,6 +120,10 @@ logger:
 web_server:
   port: 80
 
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
 globals:
   - id: scoops_count
     type: int
