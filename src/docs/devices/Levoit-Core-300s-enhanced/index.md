@@ -6,6 +6,7 @@ standard: eu, us, uk
 board: esp32
 made-for-esphome: False
 difficulty: 4
+project-url: https://github.com/tuct/levoit/tree/main/devices/levoit-core300s
 ---
 
 ## Features
@@ -20,9 +21,11 @@ difficulty: 4
 
 ## General Notes
 
-A smart air purifier with 3-stage filtration. The ESP32 talks to the Tuya MCU using standard 8N1 115200-baud UART. Code
-and configuration were obtained from
-[Tuct's 'esphome-projects' repo](https://github.com/tuct/esphome-projects/tree/main/projects/levoit-core300s).
+A smart air purifier with 3-stage filtration. The ESP32 talks to the purifier's own
+control MCU over a standard 8N1 115200-baud UART link. Code and configuration come
+from the [`levoit`](https://github.com/tuct/levoit/tree/main/components/levoit)
+external component in
+[Tuct's 'levoit' repo](https://github.com/tuct/levoit/tree/main/devices/levoit-core300s).
 
 I had issues with those two implementations:
 [acvigue's 'esphome-levoit-air-purifier' repo](https://github.com/acvigue/esphome-levoit-air-purifier)
@@ -41,4 +44,4 @@ Manufacturer: [Levoit](http://www.levoit.com)
 
 ## Details and instructions
 
-[Tuct's 'esphome-projects' repo](https://github.com/tuct/esphome-projects/tree/main/projects/levoit-core300s).
+[Tuct's 'levoit' repo](https://github.com/tuct/levoit/tree/main/devices/levoit-core300s).
