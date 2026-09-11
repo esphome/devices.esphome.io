@@ -3,11 +3,12 @@ title: VirageDimmer KS-7012
 date-published: 2022-01-25
 type: dimmer
 standard: us
+board: esp8266
 ---
 
-[Virage Laboratories](https://www.viragelabs.com)
+Manufacturer: Virage Laboratories (seems to no longer exist)
 
-[KS-7012 Dimmer](https://www.viragelabs.com/product/viragedimmer/)![image](virage_labs_KS-7012.jpg)
+![image](virage_labs_KS-7012.jpg)
 
 ## General Notes
 
