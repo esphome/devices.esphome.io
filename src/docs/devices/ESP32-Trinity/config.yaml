@@ -1,0 +1,46 @@
+substitutions:
+  name: esp32-trinity
+  friendly_name: ESP32 Trinity
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+
+logger:
+  level: INFO
+
+wifi:
+  # Fallback hotspot only — add your own ssid/password when you adopt this.
+  ap:
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_clock
+    size: 16
+
+# The `board: esp32-trinity` preset supplies the whole HUB75 pinout, so no pins
+# are listed here. Set panel_width/panel_height to match your panel.
+display:
+  - platform: hub75
+    id: matrix
+    board: esp32-trinity
+    panel_width: 64
+    panel_height: 64
+    brightness: 80
+    bit_depth: 5
+    gamma_correct: CIE1931
+    update_interval: 250ms
+    lambda: |-
+      it.clear();
+      auto now = id(sntp_time).now();
+      if (now.is_valid()) {
+        it.strftime(it.get_width() / 2, it.get_height() / 2, id(font_clock),
+                    Color(255, 255, 255), TextAlign::CENTER, "%H:%M", now);
+      }
