@@ -6,6 +6,7 @@ standard: eu, us, uk
 board: esp32
 made-for-esphome: False
 difficulty: 4
+project-url: https://github.com/tuct/levoit/tree/main/devices/levoit-mini
 ---
 
 ## Features
@@ -20,12 +21,14 @@ difficulty: 4
 
 ## General Notes
 
-A air purifier with 3-stage filtration.
+An air purifier with 3-stage filtration.
 
-This project requires a custom PCB and 3D Printed parts to convert the Levoit Mini into  Levoit Mini-s (Smartified version)
+This project requires a custom PCB and 3D printed parts to convert the Levoit Mini
+into a Levoit Mini-S (smartified version). The original PCB is bypassed rather than
+modified, so the change is reversible.
 
 Manufacturer: [Levoit](http://www.levoit.com)
 
-More details and isntructionscan be found here:
+More details and instructions can be found here:
 
-[Tuct's 'esphome-projects' repo](https://github.com/tuct/esphome-projects/tree/main/projects/levoit-mini).
+[Tuct's 'levoit' repo](https://github.com/tuct/levoit/tree/main/devices/levoit-mini).
