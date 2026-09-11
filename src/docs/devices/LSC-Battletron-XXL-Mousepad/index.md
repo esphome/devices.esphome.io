@@ -12,19 +12,23 @@ This configuration is for the LSC Battletron XXL Mousepad
 ![Picture of the product](product.png "Picture of the product")
 
 ## Warning
-The LEDs on this product are quite dim and not resembling of the picture on the box, if you're buying this product, maybe reconsider. If you are fine with this then proceed
+The LEDs on this product are quite dim and not resembling of the picture on the box, if you're buying this product, maybe reconsider. If you are fine with this then proceed.
 
 ## Disassembly
 
 To get into this product you need to unscrew 7 Philips head screws hidden beneath the bottom sticker.
+
 To unscrew them you either need to damage the bottom sticker or remove it and have to glue it again.
+
 ![Location of the screws](screws.jpg "Location of the screws")
  
 ## How to flash
 
 To flash the controller, open up the controller and take the board out.
+
 On the back of the board there are 2 pins on the Tuya CBU module you need to solder wires to.
-![Picture of the board](newboard.jpg "Picture of the board")
+
+![Picture of the board](board.jpg "Picture of the board")
 
 Alternatively if you are a bit crative you can try to use some wires and some pins and hold them to the required points. This is not recommended but is an option if you are very bad with soldering or can't for some reason.
 
@@ -57,11 +61,24 @@ ltchiptool flash write <firmwarefile>
 | P6 | Button     |
 | P16 | 2 WS2812 Leds |
 
+### YAML Config
+Keep in mind some parts of this config are optional and can be removed
 
 ```yaml
 esphome:
   name: mousepad
   friendly_name: Mousepad
+  on_boot: # Light up briefly to signal that the mousepad is on
+    priority: -100
+    then:
+      - delay: 1s
+      - light.turn_on:
+          id: pad_leds
+          red: 1
+          green: 1
+          blue: 1
+      - delay: 5s
+      - light.turn_off:
 
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
@@ -71,23 +88,25 @@ logger:
     
 api:
   encryption:
-    key: ""
+    key: 
     
 ota:
   - platform: esphome
-    encryption:
+    encryption: # Encryption OTA is reccomended over a password
 
-    
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  power_save_mode: NONE # To prevent issues with E1.31
   ap:
-    ssid: "Mousepad Fallback Hotspot"
-    password: ""
+    ssid: Mousepad Fallback Hotspot
+    password: !secret mousepad__ap_password
     
 captive_portal:
 
 e131:
+  method: UNICAST
+  
 wled:
   
 light:
@@ -95,9 +114,12 @@ light:
     chipset: WS2812
     num_leds: 2
     pin: 16
-    name: Mousepad RGB
+    name: Lights
     id: pad_leds
-    channel_colors: GRB
+    channel_colors: RGB
+    max_refresh_rate: 5ms
+    icon: "mdi:trackpad"
+    default_transition_length: 500ms
     gamma_correct: 1.7 # Needed so the LEDs don't turn off at 10%
     effects:
       - pulse:
@@ -112,11 +134,19 @@ light:
       - e131:
           universe: 1
           channels: RGB
-          
+
 binary_sensor:
   - platform: gpio
-    pin: 6
+    pin: 
+      number: 6
+      inverted: true
+      mode: 
+        input: true
+        pullup: true 
+    name: Mousepad Button
     id: light_button
+    filters: 
+      - delayed_on_off: 40ms
     on_click:
       then:
         - light.toggle: pad_leds
