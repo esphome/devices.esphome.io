@@ -1,0 +1,40 @@
+# Board: Generic - BK7238 (Tuya T1)
+# Definition: definitions/boards/generic-bk7238-tuya/manifest.yaml
+
+esphome:
+  name: led_strip
+  friendly_name: LED Strip
+
+bk72xx:
+  board: generic-bk7238-tuya
+
+logger:
+
+wifi:
+  ap:
+
+mdns:
+
+power_supply:
+  - id: led_power
+    pin: P6
+
+light:
+  - platform: beken_spi_led_strip
+    name: "LED Strip"
+    pin: P16
+    chipset: SM16703
+    num_leds: 24
+    channel_colors: RBG
+    power_supply: led_power
+    effects:
+      - random:
+      - pulse:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
