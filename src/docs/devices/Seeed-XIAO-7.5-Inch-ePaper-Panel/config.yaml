@@ -1,0 +1,55 @@
+substitutions:
+  name: xiao-epaper-panel
+  friendly_name: XIAO ePaper Panel
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    # The panel is set to refresh only when asked, so draw once on boot.
+    priority: -10
+    then:
+      - component.update: epaper
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  framework:
+    type: arduino
+
+logger:
+  level: INFO
+
+wifi:
+  # Fallback hotspot only - add your own ssid/password when you adopt this.
+  ap:
+
+spi:
+  clk_pin: GPIO8
+  mosi_pin: GPIO10
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_title
+    size: 56
+  - file: "gfonts://Roboto"
+    id: font_body
+    size: 24
+
+display:
+  - platform: waveshare_epaper
+    id: epaper
+    model: 7.50inv2
+    cs_pin: GPIO3
+    dc_pin: GPIO5
+    reset_pin: GPIO2
+    busy_pin:
+      number: GPIO4
+      inverted: true
+    # E-paper should be redrawn deliberately, not on a timer. Trigger it with
+    # component.update from whatever actually changes.
+    update_interval: never
+    lambda: |-
+      it.fill(Color(255, 255, 255));
+      it.printf(400, 200, id(font_title), TextAlign::CENTER, "XIAO ePaper Panel");
+      it.printf(400, 270, id(font_body), TextAlign::CENTER, "800 x 480, black and white");
