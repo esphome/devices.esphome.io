@@ -120,6 +120,10 @@ logger:
 web_server:
   port: 80
 
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
 globals:
   - id: scoops_count
     type: int
