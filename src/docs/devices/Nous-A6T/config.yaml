@@ -1,0 +1,131 @@
+substitutions:
+  devicename: nous-a6t
+  # Higher value gives lower watt readout
+  current_res: "0.00280"
+  # Lower value gives lower voltage readout
+  voltage_div: "775"
+
+esphome:
+  name: $devicename
+  comment: "Nous Smart Wifi Socket A6T (Tasmota)"
+  name_add_mac_suffix: true
+  project:
+    name: "NOUS.Smart-Wifi-Socket"
+    version: "A6T"
+
+esp32:
+  variant: esp32
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# see: https://esphome.io/components/time/
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Amsterdam
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+
+light:
+  - platform: status_led
+    id: led
+    restore_mode: RESTORE_DEFAULT_ON
+    pin:
+      number: GPIO02
+      inverted: true
+
+binary_sensor:
+  - platform: status
+    name: "${devicename} - Status"
+
+  # toggle relay on/off
+  - platform: gpio
+    pin:
+      number: GPIO04
+      mode: INPUT_PULLUP
+    id: "button_state"
+    on_press:
+      - switch.toggle: "relay"
+
+switch:
+  - platform: gpio
+    pin: GPIO13
+    id: relay
+    name: "Relay"
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power
+    on_turn_on:
+      - light.turn_on: led
+    on_turn_off:
+      - light.turn_off: led
+
+sensor:
+  - platform: wifi_signal
+    name: "${devicename} - Wifi Signal"
+    update_interval: 60s
+    icon: mdi:wifi
+
+  - platform: uptime
+    name: "${devicename} - Uptime"
+    update_interval: 60s
+    icon: mdi:clock-outline
+
+  - platform: total_daily_energy
+    name: "${devicename} - Electric Consumption [kWh]"
+    power_id: "nous_a1t_watt"
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    icon: mdi:calendar-clock
+
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: GPIO14
+      inverted: true
+    cf_pin: GPIO26
+    cf1_pin: GPIO27
+    change_mode_every: 1
+    current_resistor: ${current_res}
+    voltage_divider: ${voltage_div}
+    update_interval: 5s
+
+    current:
+      id: current
+      name: "Current"
+      unit_of_measurement: A
+      accuracy_decimals: 3
+      icon: mdi:current-ac
+
+    voltage:
+      id: voltage
+      name: "Voltage"
+      unit_of_measurement: V
+      accuracy_decimals: 1
+      icon: mdi:flash-outline
+
+    power:
+      name: "Power"
+      id: "nous_a1t_watt"
+      unit_of_measurement: W
+      icon: mdi:gauge
+      force_update: true
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "Wi-Fi SSID"
+    bssid:
+      name: "Wi-Fi BSSID"
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
