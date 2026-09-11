@@ -1,0 +1,45 @@
+esphome:
+  name: agl-2-gang-switch
+  friendly_name: AGL 2 Gang Switch
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO16
+      inverted: True
+    name: AGL 2 Gang Button 1
+    on_press:
+      - switch.toggle: relay_1
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "AGL 2 Gang Button 2"
+    on_press:
+      - switch.toggle: relay_2
+
+switch:
+  - platform: gpio
+    name: "AGL 2 Gang Switch 1"
+    pin: GPIO13
+    id: relay_1
+  - platform: gpio
+    name: "AGL 2 Gang Switch 2"
+    pin: GPIO12
+    id: relay_2
+
+light:
+  - platform: status_led
+    id: blue_led
+    restore_mode: ALWAYS_ON
+    pin:
+      number: GPIO2
+      inverted: true
+    internal: true

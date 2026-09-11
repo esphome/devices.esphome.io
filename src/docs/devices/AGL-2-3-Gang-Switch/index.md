@@ -7,10 +7,9 @@ board: esp8266
 difficulty: 3
 ---
 
-The AGL Switch is available in Brazil.
-[AGL](https://www.aglbrasil.com/smarthome)
-
 ## General Notes
+
+The [AGL](https://www.aglbrasil.com/en/produtos/smart-home) Switch is available in Brazil.
 
 This config was created based on the 2 gang switch that I had.
 
@@ -51,76 +50,5 @@ PCB
 
 ## Basic Configuration (2-Gang)
 
-```yaml
-esphome:
-  name: agl-2-gang-switch
-  friendly_name: AGL 2 Gang Switch
-
-esp8266:
-  board: esp01_1m
-
-# Enable logging
-logger:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-api:
-  reboot_timeout: 15min
-  encryption:
-    key: !secret api_encryption_key
-
-ota:
-  password: !secret ota_password
-
-sensor:
-  - platform: uptime
-    name: AGL 2 Gang Uptime
-    update_interval: 60s
-
-text_sensor:
-  - platform: version
-    name: AGL 2 Gang Version
-
-binary_sensor:
-  - platform: status
-    name: AGL 2 Gang Status
-  - platform: gpio
-    pin:
-      number: GPIO16
-      inverted: True
-    name: AGL 2 Gang Button 1
-    on_press:
-      - switch.toggle: relay_1
-  - platform: gpio
-    pin:
-      number: GPIO5
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "AGL 2 Gang Button 2"
-    on_press:
-      - switch.toggle: relay_2
-
-switch:
-  - platform: restart
-    name: AGL 2 Gang Restart
-  - platform: gpio
-    name: "AGL 2 Gang Switch 1"
-    pin: GPIO13
-    id: relay_1
-  - platform: gpio
-    name: "AGL 2 Gang Switch 2"
-    pin: GPIO12
-    id: relay_2
-
-light:
-  - platform: status_led
-    id: blue_led
-    restore_mode: ALWAYS_ON
-    pin:
-      number: GPIO2
-      inverted: true
-    internal: true
+```yaml file=config.yaml
 ```
