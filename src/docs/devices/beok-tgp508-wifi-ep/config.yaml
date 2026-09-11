@@ -1,0 +1,199 @@
+esphome:
+  name: "beok-uf-heating"
+  name_add_mac_suffix: true
+  friendly_name: "Beok TGP508-WIFI-EP"
+  platformio_options:
+    build_flags:
+      - "-DPIN_SERIAL0_RX=13u"
+      - "-DPIN_SERIAL0_TX=14u"
+
+rtl87xx:
+  board: "wbr3"
+
+preferences:
+  flash_write_interval: never
+
+# logger:
+
+# debug:
+#  update_interval: 30s
+
+mdns:
+
+# time:
+#  - platform: homeassistant
+#    id: homeassistant_time
+
+button:
+  - platform: restart
+    name: "Reboot"
+    entity_category: "diagnostic"
+
+#  - platform: template
+#    name: "Factory reset"
+#    entity_category: "diagnostic"
+#    on_press:
+#      - switch.turn_on: factory_reset
+#      - delay: 1s
+#      - switch.turn_off: factory_reset
+#    icon: "mdi:cogs"
+
+text_sensor:
+  - platform: libretiny
+    version:
+      name: "LibreTiny version"
+      entity_category: "diagnostic"
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP address"
+      entity_category: "diagnostic"
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    entity_category: "diagnostic"
+
+  - platform: tuya
+    name: "Current temperature"
+    sensor_datapoint: 3
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      multiply: 0.1
+
+uart:
+  id: uart_bus
+  rx_pin: GPIO13
+  tx_pin: GPIO14
+  baud_rate: 9600
+#  debug:
+#    direction: BOTH
+#    dummy_receiver: true
+#    after:
+#      timeout: 50ms
+
+tuya:
+  id: "tuya_device"
+  uart_id: uart_bus
+  time_id: homeassistant_time
+
+climate:
+  - platform: tuya
+    name: "Office underfloor heating"
+    switch_datapoint: 1
+    target_temperature_datapoint: 2
+    target_temperature_multiplier: 0.1
+    current_temperature_datapoint: 3
+    current_temperature_multiplier: 0.1
+    supports_heat: true
+    active_state:
+      datapoint: 5
+
+switch:
+  - platform: tuya
+    name: "Child lock"
+    switch_datapoint: 9
+    icon: "mdi:account-lock"
+
+  - platform: tuya
+    name: "Power"
+    switch_datapoint: 1
+
+  - platform: tuya
+    name: "Sound"
+    switch_datapoint: 109
+    icon: "mdi:volume-high"
+
+  - platform: tuya
+    name: "Inverse output"
+    switch_datapoint: 108
+    icon: "mdi:gate-not"
+
+  - platform: tuya
+    name: "Frost protection"
+    switch_datapoint: 103
+    icon: "mdi:snowflake-thermometer"
+
+  - platform: tuya
+    id: factory_reset
+    internal: true
+    switch_datapoint: 104
+
+number:
+  - platform: tuya
+    name: "External sensor temperature limit"
+    number_datapoint: 102
+    min_value: 35
+    max_value: 60
+    step: 1
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer"
+
+  - platform: tuya
+    name: "Maximum setting temperature"
+    number_datapoint: 15
+    min_value: 15
+    max_value: 95
+    step: 1
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer-chevron-up"
+
+  - platform: tuya
+    name: "Temperature control switch difference"
+    number_datapoint: 101
+    min_value: 5
+    max_value: 100
+    step: 5
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer-auto"
+
+  - platform: tuya
+    name: "Temperature calibration"
+    number_datapoint: 19
+    min_value: -99
+    max_value: 99
+    step: 1
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer-lines"
+
+select:
+  - platform: tuya
+    name: "Display brightness"
+    enum_datapoint: 106
+    options:
+      0: "Off"
+      1: "Low"
+      2: "Medium"
+      3: "High"
+    icon: "mdi:brightness-6"
+
+  - platform: "tuya"
+    name: "Mode"
+    enum_datapoint: 4
+    options:
+      0: "Manual"
+      1: "Program"
+      2: "Temporary program"
+    icon: "mdi:calendar"
+
+  - platform: "tuya"
+    name: "Temperature sensor selection"
+    enum_datapoint: 110
+    options:
+      0: "Internal"
+      1: "External"
+      2: "Both"
+    icon: "mdi:home-thermometer-outline"
+
+  - platform: "tuya"
+    name: "Working day settings"
+    enum_datapoint: 107
+    options:
+      0: "Off"
+      1: "5+2"
+      2: "6+1"
+      3: "7"
+    icon: "mdi:calendar-clock"
