@@ -1,0 +1,156 @@
+esphome:
+  name: waveshare-esp32-s3-epaper-154
+  friendly_name: Waveshare ESP32-S3-ePaper-1.54
+  on_boot:
+    priority: 800
+    then:
+      - pcf85063.read_time:
+          id: rtc_time
+      # GPIO17 must be held HIGH when running on battery power, or the
+      # onboard protection circuit shuts the board off immediately.
+      - lambda: |-
+          gpio_config_t io_conf = {};
+          io_conf.intr_type = GPIO_INTR_DISABLE;
+          io_conf.mode = GPIO_MODE_OUTPUT;
+          io_conf.pin_bit_mask = (1ULL << GPIO_NUM_17);
+          gpio_config(&io_conf);
+          gpio_set_level(GPIO_NUM_17, 1);
+          gpio_hold_en(GPIO_NUM_17);
+      - output.turn_on: epd_power
+      - output.turn_on: pa_en
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+wifi:
+  ap:
+
+spi:
+  clk_pin: GPIO12
+  mosi_pin: GPIO13
+
+i2c:
+  sda: GPIO47
+  scl: GPIO48
+  scan: true
+
+output:
+  - platform: gpio
+    pin: GPIO6
+    id: epd_power
+  - platform: gpio
+    pin: GPIO42
+    id: pa_en
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO38
+    i2s_bclk_pin: GPIO15
+    i2s_mclk_pin: GPIO14
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    bits_per_sample: 16bit
+    sample_rate: 16000
+    use_microphone: true
+    mic_gain: 24DB
+
+speaker:
+  - platform: i2s_audio
+    id: board_speaker
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO16
+    dac_type: external
+    audio_dac: es8311_dac
+    channel: left
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    buffer_duration: 100ms
+    timeout: never
+
+microphone:
+  - platform: i2s_audio
+    id: board_mic
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO45
+    adc_type: external
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    pdm: false
+
+switch:
+  - platform: gpio
+    name: "Speaker Amplifier"
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_ON
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_roboto
+    size: 20
+
+display:
+  - platform: waveshare_epaper
+    id: epaper_display
+    model: 1.54inv2
+    cs_pin: GPIO11
+    dc_pin: GPIO10
+    reset_pin: GPIO9
+    busy_pin:
+      number: GPIO8
+      inverted: false
+    full_update_every: 30
+    update_interval: 60s
+    lambda: |-
+      it.print(0, 0, id(font_roboto), "Hello World!");
+
+time:
+  - platform: pcf85063
+    id: rtc_time
+    update_interval: never
+
+sensor:
+  - platform: shtcx
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+    update_interval: 60s
+
+  - platform: adc
+    pin: GPIO4
+    name: "Battery Voltage"
+    id: battery_voltage
+    attenuation: auto
+    update_interval: 60s
+    filters:
+      - multiply: 2.0
+
+binary_sensor:
+  - platform: gpio
+    name: "Boot Button"
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+
+  - platform: gpio
+    name: "PWR Button"
+    pin:
+      number: GPIO18
+      inverted: true
+      mode:
+        input: true
+        pullup: true
