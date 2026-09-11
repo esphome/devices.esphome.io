@@ -1,0 +1,60 @@
+esphome:
+  name: wall-dimmer-touch
+  friendly_name: Wall Dimmer Touch
+
+bk72xx:
+  board: wb3s
+
+# Enable logging
+logger:
+
+uart:
+  rx_pin: RX1
+  tx_pin: TX1
+  baud_rate: 115200
+
+# Register the Tuya MCU connection
+tuya:
+
+# Main light entity
+light:
+  - platform: "tuya"
+    id: dimmer
+    name: "Wall Dimmer"
+    dimmer_datapoint: 2        # Brightness
+    switch_datapoint: 1        # On/Off
+    min_value: 10              # adjust if min brightness is too high/low
+    max_value: 1000            # DP2 scale (check by dimming in app/original fw)
+
+
+# Minimum brightness (user adjustable)
+number:
+  - platform: "tuya"
+    id: min_brightness
+    name: "Min Brightness"
+    number_datapoint: 3
+    min_value: 0
+    max_value: 1000
+    step: 10
+    entity_category: config
+
+select:
+  - platform: "tuya"
+    id: load_type
+    name: "Load Type"
+    enum_datapoint: 4
+    options:
+      0: "LED"
+      1: "Incandescent"
+      2: "Halogen"
+    entity_category: config
+
+  - platform: "tuya"
+    id: indicator_led
+    name: "Indicator LED"
+    enum_datapoint: 21
+    options:
+      0: "On"
+      1: "Follow Load"
+      2: "Off"
+    entity_category: config
