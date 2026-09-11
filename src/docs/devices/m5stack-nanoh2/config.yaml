@@ -1,0 +1,65 @@
+esphome:
+  name: m5stack-nanoh2
+  friendly_name: M5Stack NanoH2
+  name_add_mac_suffix: true
+
+esp32:
+  variant: esp32h2
+  framework:
+    type: esp-idf
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: blue_status_led
+    entity_category: diagnostic
+    pin: GPIO4
+
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO11
+    num_leds: 1
+    chipset: ws2812
+    name: "RGB LED"
+    id: rgb_led
+    power_supply: rgb_pwr
+
+power_supply:
+  - id: rgb_pwr
+    pin: GPIO10
+
+    # According to the datasheet of the Awinic AW35122FDR, it takes the load
+    # switch 0.5ms to fully turn on (it has slew rate control), see "Switch
+    # turn on time".
+    enable_time: 5ms
+    keep_on_time: 10ms
+
+binary_sensor:
+  - platform: gpio
+    name: Button
+    id: case_button
+    pin:
+      number: GPIO9
+
+      # M5Stack intended to use GPIO9 for the button to allow the user to
+      # force the ESP into download mode. Acknowledge the warning from ESPHome.
+      # See "Download Mode" in https://docs.m5stack.com/en/core/NanoH2
+      ignore_strapping_warning: true
+
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+
+remote_transmitter:
+  id: ir_tx
+  pin: GPIO3
+  carrier_duty_percent: 50%
+
+infrared:
+  - platform: ir_rf_proxy
+    name: IR Proxy Transmitter
+    id: ir_proxy_tx
+    remote_transmitter_id: ir_tx
