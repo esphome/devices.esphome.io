@@ -26,7 +26,8 @@ own ESP32-C3 onto the MCU's UART and park the stock module** by holding its rese
 low. The module stays fitted and nothing is cut, so the change is reversible.
 
 The MCU link turned out to be the same protocol the component already spoke for the
-[Series 600](/devices/philips-series-600/) — 115200 8N1, near-identical datapoint map
+[Series 600](https://github.com/tuct/levoit/tree/main/devices/philips-600-series) —
+115200 8N1, near-identical datapoint map
 — decoded from logic-analyzer captures with every write frame checked against them.
 
 Verified on an **AC0951** running MCU firmware `0.3.3` (internal model string
