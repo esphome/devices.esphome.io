@@ -5,9 +5,10 @@ esphome:
   platformio_options:
     # The stock ESP32-C3-SOLO-1 needs these; esp32-c3-devkitm-1 defaults to
     # QIO at 80 MHz, which builds fine but can fail to boot on the original
-    # module.
+    # module. board_build.f_flash is the key PlatformIO reads — flash_freq is
+    # silently ignored.
     board_build.flash_mode: dio
-    board_build.flash_freq: 40m
+    board_build.f_flash: 40000000L
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -21,7 +22,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: main
+      ref: 1.4.2
     components: [levoit]
 
 wifi:
@@ -89,6 +90,11 @@ sensor:
     id: levoit_filter_life
     name: "Filter %"
     type: filter_life_left
+  - platform: levoit
+    levoit: purifier
+    id: levoit_efficiency_counter
+    name: "Efficiency Counter"
+    type: efficiency_counter
 
 binary_sensor:
   - platform: levoit
@@ -129,3 +135,13 @@ text_sensor:
     id: levoit_mcu_version
     name: "MCU Version"
     type: mcu_version
+  - platform: levoit
+    levoit: purifier
+    id: levoit_high_fan_time
+    name: "Auto Mode High Fan Time"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: purifier
+    id: levoit_error
+    name: "Error"
+    type: error_message
