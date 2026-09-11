@@ -1,0 +1,22 @@
+philips:
+  id: purifier
+  model: AC0651
+
+sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_pm25
+    name: "PM2.5"
+    type: pm2_5
+  - platform: philips
+    philips: purifier
+    id: philips_allergen_index
+    name: "Allergen Index"
+    type: allergen_index
+
+switch:
+  - platform: philips
+    philips: purifier
+    id: philips_standby_sensor
+    name: "Standby Sensor Monitoring"
+    type: standby_sensor
