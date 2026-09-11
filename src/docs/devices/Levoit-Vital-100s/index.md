@@ -24,9 +24,11 @@ Manufacturer: [Levoit](https://www.levoit.com)
 ## Features
 
 * Fan with 4 speeds and Manual / Auto / Sleep / Pet presets
-* Auto Mode select — Default / Quiet / Efficient
-* Auto Mode Room Size number (9–52 m²)
-* Efficiency counter sensor and a remaining high-fan-time text sensor for Efficient mode
+* Auto Mode select — Default / Quiet / Room Size
+* Auto Mode Room Size number, 9–52 m² — the value the MCU reports
+* Auto Mode Room Size Preset number, 9–52 m² — the remembered target actually sent when
+  Room Size is selected, since the reported value reads 0 under Default/Quiet
+* Efficiency counter sensor and a remaining high-fan-time text sensor for Room Size mode
 * Display, Child Lock and Light Detect switches — the last auto-dims the display in the dark
 * PM2.5 and AQI sensors
 * Current CADR sensor in m³/h, updated every 5 s
