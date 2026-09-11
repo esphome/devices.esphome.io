@@ -2,6 +2,12 @@ esphome:
   name: levoit-vital100s
   friendly_name: Levoit Vital 100S
   name_add_mac_suffix: true
+  platformio_options:
+    # The stock ESP32-C3-SOLO-1 needs these; esp32-c3-devkitm-1 defaults to
+    # QIO at 80 MHz, which builds fine but can fail to boot on the original
+    # module.
+    board_build.flash_mode: dio
+    board_build.flash_freq: 40m
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -99,9 +105,16 @@ number:
     type: timer
   - platform: levoit
     levoit: purifier
+    id: levoit_filter_lifetime
+    name: "Filter Months"
+    type: filter_lifetime_months
+  - platform: levoit
+    levoit: purifier
     id: levoit_room_size
     name: "Auto Mode Room Size"
     type: efficiency_room_size
+    min_value: 9
+    max_value: 52
 
 button:
   - platform: levoit
