@@ -1,0 +1,59 @@
+substitutions:
+  device_name: esp32-s3-jab5-player
+  friendly_name: ESP32-S3 JAB5 Player
+  pin_i2s_bclk: GPIO11
+  pin_i2s_lrclk: GPIO13
+  pin_i2s_dout: GPIO12
+  pin_i2s_mclk: GPIO10
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.9.0-dev
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+  ignore_not_found: false
+
+# Temporary until https://github.com/esphome/esphome/pull/18806 is released.
+external_components:
+  - source: github://Fctoni/esphome@618e26c2be6137c01addc2488451f82ec0bac677
+    components: [i2s_audio]
+
+i2s_audio:
+  - id: i2s_output
+    i2s_bclk_pin: ${pin_i2s_bclk}
+    i2s_lrclk_pin: ${pin_i2s_lrclk}
+    i2s_mclk_pin: ${pin_i2s_mclk}
+
+speaker:
+  - platform: i2s_audio
+    id: jab5_output
+    i2s_audio_id: i2s_output
+    i2s_dout_pin: ${pin_i2s_dout}
+    dac_type: external
+    channel: stereo
+    sample_rate: 48000
+    bits_per_sample: 32bit
+    expand_to_slot_width: true
+    i2s_comm_fmt: stand_i2s
+    mclk_multiple: 256
+    timeout: never
+    buffer_duration: 60ms
