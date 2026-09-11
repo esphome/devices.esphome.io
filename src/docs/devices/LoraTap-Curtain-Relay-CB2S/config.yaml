@@ -1,0 +1,93 @@
+esphome:
+  name: loratap-curtain-cb2s
+  friendly_name: LoraTap Curtain Relay CB2S
+
+bk72xx:
+  board: cb2s
+
+switch:
+  - platform: gpio
+    id: relay_up
+    name: "Relay Up"
+    pin: P24
+    restore_mode: always off
+    internal: true
+    on_turn_on:
+      - script.execute: safety_timeout
+    on_turn_off:
+      - script.stop: safety_timeout
+
+  - platform: gpio
+    id: relay_down
+    name: "Relay Down"
+    pin: P26
+    restore_mode: always off
+    internal: true
+    on_turn_on:
+      - script.execute: safety_timeout
+    on_turn_off:
+      - script.stop: safety_timeout
+
+binary_sensor:
+  - platform: gpio
+    id: button_up
+    name: "Button Up"
+    pin:
+      number: P23
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - script.execute: open_script
+
+  - platform: gpio
+    id: button_down
+    name: "Button Down"
+    pin:
+      number: P21
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - script.execute: close_script
+
+  - platform: gpio
+    id: button_stop
+    name: "Button Stop"
+    pin:
+      number: P7
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      then:
+        - script.execute: stop_script
+
+script:
+  - id: open_script
+    mode: restart
+    then:
+      - switch.turn_off: relay_down
+      - delay: 500ms
+      - switch.turn_on: relay_up
+
+  - id: close_script
+    mode: restart
+    then:
+      - switch.turn_off: relay_up
+      - delay: 500ms
+      - switch.turn_on: relay_down
+
+  - id: stop_script
+    then:
+      - switch.turn_off: relay_up
+      - switch.turn_off: relay_down
+
+  - id: safety_timeout
+    mode: restart
+    then:
+      - delay: 60s
+      - switch.turn_off: relay_up
+      - switch.turn_off: relay_down
+
+wifi:
+  ap:
