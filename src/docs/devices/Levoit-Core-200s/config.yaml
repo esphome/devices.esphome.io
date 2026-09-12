@@ -2,6 +2,7 @@ esphome:
   name: levoit-core200s
   friendly_name: Levoit Core 200S
   name_add_mac_suffix: true
+  min_version: 2026.5.3
 
 esp32:
   board: esp32dev
@@ -14,7 +15,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: 1.4.2
+      ref: 1.4.3
     components: [levoit]
 
 wifi:
