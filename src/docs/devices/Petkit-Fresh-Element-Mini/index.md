@@ -65,20 +65,17 @@ Actual serving weight varies with kibble size, density, and hopper level.
 
 ## Installation
 
-Do not upload the configuration below directly to the stock firmware. The
-stock bootloader uses Espressif's paired non-OS SDK layout, so installation
-uses the feeder's stock OTA client and an intermediate transition image.
+Build and flash this configuration as with any other ESPHome device; a manual
+UART flash works. On a feeder that still runs the stock firmware, a wireless
+install needs the project's Kickstart transition image first, because the stock
+bootloader uses Espressif's paired non-OS SDK layout (the "V2 user-bin" layout)
+rather than ESPHome's eboot layout.
 
-Follow the project's [wireless installation
+Follow the project's [installation
 guide](https://github.com/wrobelda/petkit-element-mini-esphome#installation).
 The guided installer provisions the feeder, installs Kickstart, saves a recovery
 image, and uploads the final ESPHome firmware. The guide also provides a manual
 procedure for development and diagnosis.
-
-The [Petkit compatibility server](https://github.com/wrobelda/petkit-compat-server)
-handles provisioning and the stock-format update. Kickstart then performs the
-non-OS V2 to eboot V1 layout transition, relocating to the upper application
-slot automatically when needed.
 
 ## Configuration
 
