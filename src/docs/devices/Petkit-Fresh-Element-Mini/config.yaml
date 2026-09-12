@@ -27,7 +27,7 @@ logger:
   level: INFO
 
 external_components:
-  - source: github://wrobelda/petkit-element-mini-esphome
+  - source: github://wrobelda/petkit-element-mini-esphome/esphome/components@master
     components:
       - petkit_feeder
 
