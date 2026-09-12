@@ -42,8 +42,17 @@ Three screws in the top get you to the control board. The device
 the teardown, the UART test points, and the alternative of wiring in a replacement
 ESP32 rather than reflashing the original.
 
-The UART pins in the configuration below follow the original ESP32-SOLO-1 mapping —
-RX on TP82, TX on TP33. Verify them against your own board before flashing.
+### GPIO Pinout
+
+The UART mapping below follows the original ESP32-SOLO-1. Verify it against your own
+board before flashing.
+
+| ESPHome pin | Test point | Function |
+|-------------|-----------|----------|
+| `GPIO16` | `TP82` | UART RX — MCU TX to ESP RX |
+| `GPIO17` | `TP33` | UART TX — ESP TX to MCU RX |
+
+Baud rate is 115200 8N1.
 
 Take a backup of the stock firmware before writing anything over it.
 
