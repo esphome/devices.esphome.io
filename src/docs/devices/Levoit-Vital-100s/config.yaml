@@ -23,7 +23,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/tuct/levoit
-      ref: 1.4.2
+      ref: 1.4.3
     components: [levoit]
 
 wifi:
@@ -103,10 +103,6 @@ binary_sensor:
     id: levoit_filter_low
     name: "Filter Low"
     type: filter_low
-    # The pinned 1.4.2 component defaults this to device_class: battery, which
-    # Home Assistant renders as a low-battery warning. Fixed upstream; override
-    # here until this page pins a release that carries the fix.
-    device_class: problem
 
 number:
   - platform: levoit
