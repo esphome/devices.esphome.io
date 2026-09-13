@@ -54,9 +54,6 @@ you leave alone. The adapter connects to RX, TX and GND only.
 
 ![J1 pinout](NixieClockV4.1_PinLayout.jpg "J1 pinout")
 
-Example Device viewable here:
-https://m.media-amazon.com/images/I/71jcHDEDdkL._AC_SX522_.jpg
-
 ## Hardware
 
 | Item        | Detail                                                       |
