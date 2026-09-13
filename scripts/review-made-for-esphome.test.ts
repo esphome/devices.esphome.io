@@ -23,6 +23,10 @@ import {
   collectSecretRefs,
   placeholderSecretsYaml,
   runChecklist,
+  improvBleCheck,
+  IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY_ALLOWED,
   pageBlocks,
   buildReport,
   stripAnsi,
@@ -259,7 +263,7 @@ const GOOD_CFG = {
   wifi: {
     ap: { password: "" },
   },
-  esp32_improv: {},
+  improv_ble: {},
   improv_serial: {},
   dashboard_import: { package_import_url: "github://acme/widget/widget.yaml" },
   ota: [{ platform: "esphome", password: "" }],
@@ -294,7 +298,7 @@ test("runChecklist flags a non-compliant config", () => {
     esphome: { name: "esphome-thing" }, // name violation
     esp8266: {}, // wrong platform
     wifi: { manual_ip: { static_ip: "10.0.0.5" } }, // static IP + wifi present
-    // no esp32_improv, no dashboard_import, no ota, no update
+    // no improv_ble, no dashboard_import, no ota, no update
     switch: [{ platform: "gpio", name: "Relay" }], // missing id
     api: { password: "hunter2" }, // baked password
   };
@@ -302,7 +306,7 @@ test("runChecklist flags a non-compliant config", () => {
   const byItem = new Map(checks.map((c) => [c.item, c.status]));
   assert.equal(byItem.get("ESP32 or supported variant"), "FAIL");
   assert.equal(byItem.get('Project name free of "ESPHome"'), "FAIL");
-  assert.equal(byItem.get("esp32_improv (Wi-Fi provisioning)"), "MISSING");
+  assert.equal(byItem.get("improv_ble (Wi-Fi provisioning)"), "MISSING");
   assert.equal(byItem.get("dashboard_import"), "MISSING");
   assert.equal(byItem.get("ota: `- platform: esphome`"), "MISSING");
   assert.equal(byItem.get("update: `- platform: http_request`"), "MISSING");
@@ -392,11 +396,72 @@ test("placeholderSecretsYaml keeps the compile step working", () => {
   assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
 });
 
-test("esp32_improv is N/A when there is no wifi", () => {
+test("improv_ble is N/A when there is no wifi", () => {
   const cfg = { esphome: { name: "x" }, esp32: { board: "b" } };
   const checks = runChecklist(cfg, "", "x", "SKIPPED");
-  const improv = checks.find((c) => c.item.startsWith("esp32_improv"));
+  const improv = checks.find((c) => c.item.startsWith(IMPROV_BLE_KEY));
   assert.equal(improv?.status, "N/A");
+  assert.match(improv!.detail, /not applicable/);
+});
+
+// Two-phase `esp32_improv` -> `improv_ble` rename (ESPHome 2026.10.0, alias
+// removed in 2027.4.0). Phase 1 accepts both keys; flipping
+// LEGACY_IMPROV_BLE_KEY_ALLOWED to false starts failing the legacy one.
+test("improv_ble: the current key passes", () => {
+  const check = improvBleCheck({ [IMPROV_BLE_KEY]: {} }, true);
+  assert.equal(check.status, "OK");
+  assert.match(check.detail, /`improv_ble:` present/);
+  // The current key is unaffected by the migration switch.
+  assert.equal(improvBleCheck({ [IMPROV_BLE_KEY]: {} }, true, false).status, "OK");
+});
+
+test("improv_ble: the legacy key passes with a deprecation nudge while allowed", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true, true);
+  assert.equal(check.status, "OK");
+  assert.match(check.detail, /deprecated/);
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+  assert.match(check.detail, /2027\.4\.0/);
+});
+
+test("improv_ble: the legacy key fails once the switch is flipped off", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true, false);
+  assert.equal(check.status, "FAIL");
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+});
+
+test("improv_ble: neither key is MISSING", () => {
+  const check = improvBleCheck({}, true);
+  assert.equal(check.status, "MISSING");
+  assert.match(check.detail, /no `improv_ble:` block/);
+});
+
+// The two tests above pin both phases explicitly. These last two follow
+// whatever LEGACY_IMPROV_BLE_KEY_ALLOWED currently says, so flipping that one
+// constant stays the whole of phase 2 - no test needs editing with it.
+test("improv_ble: the legacy key follows the module-level switch by default", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true);
+  assert.equal(check.status, LEGACY_IMPROV_BLE_KEY_ALLOWED ? "OK" : "FAIL");
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+});
+
+test("runChecklist routes the legacy improv key through the switch", () => {
+  const cfg: Record<string, unknown> = {
+    ...GOOD_CFG,
+    [LEGACY_IMPROV_BLE_KEY]: {},
+  };
+  delete cfg[IMPROV_BLE_KEY];
+  const checks = runChecklist(cfg, "wifi:\n  ap: {}\n", "Widget", "PASS");
+  const improv = checks.find((c) => c.item.startsWith(IMPROV_BLE_KEY))!;
+  assert.equal(improv.status, LEGACY_IMPROV_BLE_KEY_ALLOWED ? "OK" : "FAIL");
+  assert.match(improv.detail, /rename it to `improv_ble:`/);
+  // Nothing else about an otherwise-compliant config changes: the legacy key
+  // is the only item the switch can turn red.
+  assert.deepEqual(
+    checks
+      .filter((c) => c.status === "MISSING" || c.status === "FAIL")
+      .map((c) => c.item),
+    LEGACY_IMPROV_BLE_KEY_ALLOWED ? [] : [improv.item]
+  );
 });
 
 test("pageBlocks: fence/fatal/config/compile gate correctly", () => {

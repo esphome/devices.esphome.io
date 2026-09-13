@@ -5,7 +5,7 @@
 - [ ] Project name cannot contain **ESPHome** except in the case of _ending with_ **for ESPHome**
 - [ ] ESPHome configuration is open source and available for end users to modify/update
 - If the device uses Wi-Fi:
-  - [ ] Configuration contains `esp32_improv:` ([documentation](https://esphome.io/components/esp32_improv))
+  - [ ] Configuration contains `improv_ble:` ([documentation](https://esphome.io/components/improv_ble/))
   - [ ] Configuration contains `improv_serial:` if there is a USB port ([documentation](https://esphome.io/components/improv_serial))
 - Users should be able to apply updates to your device:
   - [ ] Device can be "taken control" of by the user using the ESPHome Builder
