@@ -5,7 +5,7 @@ type: light
 standard: global
 board: esp8266
 difficulty: 4
-project-url: https://github.com/CHANGE-ME/clocteck-esphome
+project-url: https://github.com/GitHubStefan13/devices.esphome.io
 alias:
   - title: ClocTeck Nixie Clock V4.1
     slug: ClocTeck-Nixie-Clock-V4-1
@@ -53,6 +53,9 @@ The same board with the J1 pads labelled. Pin 1 is the square pad and is VBUS, w
 you leave alone. The adapter connects to RX, TX and GND only.
 
 ![J1 pinout](NixieClockV4.1_PinLayout.jpg "J1 pinout")
+
+Example Device viewable here:
+https://m.media-amazon.com/images/I/71jcHDEDdkL._AC_SX522_.jpg
 
 ## Hardware
 
@@ -169,6 +172,19 @@ you normally would, or build it in the ESPHome Device Builder.
 ```yaml file=config.yaml
 ```
 
+## Features
+
+| Control | Type | Notes |
+|---|---|---|
+| Display | switch | display on/off |
+| Effect | select | 8 effects: Clock, Rainbow, Fire, Breathe, Rainbow sweep, Colour fade, Colour (sliders), Alarm red |
+| Brightness | number | 10–100 % |
+| Colour R / G / B | numbers | the colour used by the two "Colour" effects |
+| Next Effect | button | cycle effects |
+| Mode / Time / Up | buttons on the case | next effect · back to Clock · brightness +10 % |
+| Buzzer | switch | buzzer on/off |
+| Restart | button | reboot |
+
 ## Notes if you build on this
 
 - In `addressable_set`, `range_to` is inclusive. One LED is
@@ -198,3 +214,47 @@ you normally would, or build it in the ESPHome Device Builder.
   Wi-Fi. The stock firmware has the same limitation.
 - The buzzer is on GPIO15, which is also a boot strap. It needs
   `restore_mode: ALWAYS_OFF`.
+
+## Notes on the hardware
+
+- `addressable_set`'s `range_to` is **inclusive** (ESPHome adds `+1` internally):
+  one LED is `range_from: N, range_to: N`.
+- All colour lambdas must return **0–1**; returning 0–255 triggers
+  `Lambda for parameter red ... should return values in range 0-1` and mis-scales
+  the output.
+- `Color(r,g,b)` takes **0–255 uint8**, so `Color(1.0f, 0.25f, 0.0f)` is
+  essentially **black**. Use `ESPHSVColor::to_rgb()` for real colours.
+- `gamma_correct` defaults to **2.8** and applies to the light's *own* brightness,
+  not to `color_brightness`. The config therefore pins the light at brightness
+  100 % and does all dimming with `color_brightness` (linear, full range).
+- `esp8266_uart` / `esp8266_dma` only work on **GPIO2**; the data pin here is
+  GPIO13, so **`bit_bang`** is required.
+
+## Stock firmware notes
+
+Worth knowing before replacing it:
+
+- `GET /config` and `GET`/`POST /wificonf` are **unauthenticated** and return the
+  Wi-Fi passphrase in plaintext to anyone on the LAN.
+- OTA is hardcoded to a China-hosted bucket over **plain HTTP**:
+  `http://clocteck.oss-cn-shanghai.aliyuncs.com/`
+- The clock **downloads its display code at runtime** (`6tubes.ino.bin`,
+  `6tubes_ver.json`, `/fwlink`, `/upserver`, `/changeupdate`).
+- Build string: `SDK ver: %s compiled @ Jul 3 2019`; the vendor firmware is itself
+  built on the **Arduino core for ESP8266**.
+
+Consider blocking the device from WAN regardless of which firmware you run.
+
+## Needed work
+
+- **A flashable image that can be installed *without* a USB-UART adapter would be a
+  big win.** Every unit is flashed at the factory over the 6-pad J1 header, and the
+  USB-C port carries power only, so today the conversion needs soldering or pogo
+  pins. Since the stock firmware has an **unauthenticated plain-HTTP OTA endpoint**,
+  it may be possible to build an image that the **stock firmware itself will accept
+  over OTA** — letting people convert with only a browser. Contributions very
+  welcome.
+- **Identifying the `Down` button.** If you have a scope, the useful measurement is
+  the voltage on the Up pin while pressing Up vs Down; a distinct non-zero reading
+  would confirm a resistor divider and allow an ADC threshold.
+
