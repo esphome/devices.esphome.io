@@ -1,0 +1,1139 @@
+esphome:
+  name: clocteck
+  friendly_name: ClocTeck Clock
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on: { id: tubes, effect: "None", brightness: 100% }
+
+esp8266:
+  board: esp8285
+  restore_from_flash: false
+
+logger:
+  baud_rate: 0
+  level: WARN
+
+wifi:
+  ap:
+
+# ===========================================================================
+# MEASURED HARDWARE MAP (do not change without re-measuring)
+#
+#   LED block  0- 9  seconds ones   (RIGHTMOST)   inside-tube: slot = 9 - digit
+#   LED block 10-19  seconds tens                 inside-tube: slot = 9 - digit
+#   LED block 20-29  minutes ones                 inside-tube: slot = 9 - digit
+#   LED block 30-39  minutes tens                 inside-tube: slot = 9 - digit
+#   LED block 40-49  HOURS TENS  (LEFTMOST)       inside-tube: slot = digit
+#   LED block 50-59  HOURS ONES                   inside-tube: slot = digit
+#
+# Other hard-won facts:
+#  - addressable_set's range_to is INCLUSIVE (ESPHome adds +1 internally)
+#  - All colour lambdas MUST return 0-1; 0-255 triggers the "should return
+#    values in range 0-1" warning and mis-scales the output.
+#  - Color(r,g,b) takes 0-255 uint8, so Color(1.0f, ...) is essentially black.
+#    Use ESPHSVColor::to_rgb() when a real colour is needed.
+#  - gamma_correct defaults to 2.8 and applies to the light's own brightness,
+#    NOT to color_brightness. The light is pinned at brightness 100% and
+#    color_brightness carries all dimming (linear, full range).
+#  - esp8266_uart/esp8266_dma only work on GPIO2; our data pin is GPIO13, so
+#    bit_bang is mandatory.
+# ===========================================================================
+globals:
+  - id: bright_pct
+    type: float
+    restore_value: true
+    initial_value: '100'
+  - id: col_r
+    type: float
+    restore_value: true
+    initial_value: '255'
+  - id: col_g
+    type: float
+    restore_value: true
+    initial_value: '180'
+  - id: col_b
+    type: float
+    restore_value: true
+    initial_value: '80'
+  # 0 Clock | 1 Rainbow | 2 Fire | 3 Breathe | 4 Rainbow sweep
+  # 5 Sparkle | 6 Comet | 7 Colour fade | 8 Colour (sliders) | 9 Alarm red
+  - id: mode_idx
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: cur_h
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: cur_m
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: cur_s
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: time_ok
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: alarm_hour_g
+    type: int
+    restore_value: false
+    initial_value: '7'
+  - id: alarm_min_g
+    type: int
+    restore_value: false
+    initial_value: '30'
+
+time:
+  - platform: sntp
+    id: ntp
+    timezone: Europe/Berlin
+    servers: [pool.ntp.org, time.cloudflare.com]
+    on_time_sync:
+      - logger.log: "NTP synced"
+    on_time:
+      # ALARM - change alarm_hour_g / alarm_min_g above to move the time.
+      # It just selects the "Alarm red" effect; automations can do the same.
+      - seconds: 0
+        then:
+          - if:
+              condition:
+                lambda: |-
+                  auto t = id(ntp).now();
+                  return t.is_valid() &&
+                         t.hour == id(alarm_hour_g) &&
+                         t.minute == id(alarm_min_g);
+              then:
+                - lambda: 'id(mode_idx) = 7;'
+
+light:
+  - platform: neopixelbus
+    id: tubes
+    name: "Display lights"
+    type: GRB
+    variant: WS2812
+    pin: GPIO13
+    num_leds: 60
+    method: { type: bit_bang }
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    internal: true
+
+# ---------------------------------------------------------------------------
+# RENDERER - 10x per second so the animated effects are smooth
+# ---------------------------------------------------------------------------
+interval:
+  - interval: 500ms
+    then:
+      - lambda: |-
+          auto t = id(ntp).now();
+          id(time_ok) = t.is_valid();
+          if (t.is_valid()) {
+            id(cur_h) = t.hour;
+            id(cur_m) = t.minute;
+            id(cur_s) = t.second;
+          }
+
+  - interval: 100ms
+    then:
+      - light.addressable_set:
+          id: tubes
+          range_from: 0
+          range_to: 59
+          red: 0%
+          green: 0%
+          blue: 0%
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+
+      # ---- seconds ones -> LED block 0 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 0 + (9 - (id(cur_s) % 10));'
+          range_to:   !lambda 'return 0 + (9 - (id(cur_s) % 10));'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 5 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 5 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 5 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 5)
+                                 + 0.40f * sinf(ms / 830.0f + 5 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 5);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 5 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.60f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 5 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 5 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 5 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 5)
+                                 + 0.40f * sinf(ms / 830.0f + 5 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 5);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 5 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 5 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 5 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 5 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 5)
+                                 + 0.40f * sinf(ms / 830.0f + 5 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 5);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 5 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+      # ---- seconds tens -> LED block 10 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 10 + (9 - (id(cur_s) / 10));'
+          range_to:   !lambda 'return 10 + (9 - (id(cur_s) / 10));'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 4 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 4 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 4 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 4)
+                                 + 0.40f * sinf(ms / 830.0f + 4 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 4);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 4 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.60f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 4 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 4 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 4 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 4)
+                                 + 0.40f * sinf(ms / 830.0f + 4 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 4);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 4 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 4 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 4 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 4 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 4)
+                                 + 0.40f * sinf(ms / 830.0f + 4 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 4);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 4 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+      # ---- minutes ones -> LED block 20 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 20 + (9 - (id(cur_m) % 10));'
+          range_to:   !lambda 'return 20 + (9 - (id(cur_m) % 10));'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 3 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 3 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 3 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 3)
+                                 + 0.40f * sinf(ms / 830.0f + 3 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 3);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 3 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.25f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 3 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 3 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 3 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 3)
+                                 + 0.40f * sinf(ms / 830.0f + 3 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 3);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 3 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 3 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 3 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 3 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 3)
+                                 + 0.40f * sinf(ms / 830.0f + 3 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 3);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 3 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+      # ---- minutes tens -> LED block 30 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 30 + (9 - (id(cur_m) / 10));'
+          range_to:   !lambda 'return 30 + (9 - (id(cur_m) / 10));'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 2 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 2 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 2 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 2)
+                                 + 0.40f * sinf(ms / 830.0f + 2 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 2);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 2 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.25f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 2 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 2 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 2 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 2)
+                                 + 0.40f * sinf(ms / 830.0f + 2 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 2);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 2 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 2 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 2 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 2 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 2)
+                                 + 0.40f * sinf(ms / 830.0f + 2 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 2);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 2 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+      # ---- hours tens -> LED block 40 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 40 + id(cur_h) / 10;'
+          range_to:   !lambda 'return 40 + id(cur_h) / 10;'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 0 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 0 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 0 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 0)
+                                 + 0.40f * sinf(ms / 830.0f + 0 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 0);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 0 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.25f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 0 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 0 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 0 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 0)
+                                 + 0.40f * sinf(ms / 830.0f + 0 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 0);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 0 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 0 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 0 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 0 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 0)
+                                 + 0.40f * sinf(ms / 830.0f + 0 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 0);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 0 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+      # ---- hours ones -> LED block 50 ----
+      - light.addressable_set:
+          id: tubes
+          range_from: !lambda 'return 50 + id(cur_h) % 10;'
+          range_to:   !lambda 'return 50 + id(cur_h) % 10;'
+          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          red: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cr;
+            // 7 = Alarm red
+            if (m == 7) return 1.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 1.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 1 * 0.35f));
+              return cr * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 1 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 1 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 1)
+                                 + 0.40f * sinf(ms / 830.0f + 1 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 1);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 1 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.r / 255.0f;
+          green: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cg;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.25f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 1 * 0.35f));
+              return cg * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 1 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 1 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 1)
+                                 + 0.40f * sinf(ms / 830.0f + 1 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 1);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 1 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.g / 255.0f;
+          blue: !lambda |-
+            const int m = id(mode_idx);
+            const int ms = (int) millis();
+            const float cr = id(col_r) / 255.0f;
+            const float cg = id(col_g) / 255.0f;
+            const float cb = id(col_b) / 255.0f;
+
+            // 6 = Colour (sliders): the chosen colour, steady
+            if (m == 6) return cb;
+            // 7 = Alarm red
+            if (m == 7) return 0.0f;
+            // 0 = Clock: fixed nixie palette
+            if (m == 0) return 0.0f;
+            // 5 = Colour fade: the chosen colour, slowly breathing
+            if (m == 5) {
+              const float f = 0.22f + 0.78f * fabsf(sinf(ms / 2400.0f + 1 * 0.35f));
+              return cb * f;
+            }
+
+            const int ts = id(cur_h) * 3600 + id(cur_m) * 60 + id(cur_s);
+            float h = 200.0f;
+            float v = 1.0f;
+
+            if (m == 1) {
+              // Rainbow: one hue per tube, rotating through the spectrum
+              h = (float) ((ts * 3 + 1 * 42) % 360);
+            } else if (m == 2) {
+              // Fire: slow, organic candle flicker (deliberately unhurried)
+              h = 16.0f + 10.0f * sinf(ms / 2600.0f + 1 * 1.3f);
+              v = 0.70f + 0.30f * (0.60f * sinf(ms / 1900.0f + 1)
+                                 + 0.40f * sinf(ms / 830.0f + 1 * 2.1f));
+            } else if (m == 3) {
+              // Breathe: teal-green, slow
+              h = 155.0f + 25.0f * sinf(ms / 1400.0f + 1);
+              v = 0.55f + 0.45f * sinf(ms / 900.0f + 1 * 1.7f);
+            } else if (m == 4) {
+              // Rainbow sweep: whole clock rotates through the spectrum
+              h = (float) ((ts * 2) % 360);
+            }
+
+            if (v < 0.0f) v = 0.0f;
+            if (v > 1.0f) v = 1.0f;
+            float hn = fmodf(h, 360.0f);
+            if (hn < 0.0f) hn += 360.0f;
+            ESPHSVColor hsv;
+            hsv.h = (uint8_t) (hn * 255.0f / 360.0f);
+            hsv.s = 255;
+            hsv.v = (uint8_t) (v * 255.0f);
+            const Color c = hsv.to_rgb();
+            return c.b / 255.0f;
+
+
+# ---------------------------------------------------------------------------
+output:
+  - platform: gpio
+    id: buzzer_out
+    pin: { number: GPIO15, mode: { output: true } }
+
+switch:
+  - platform: output
+    name: "Buzzer"
+    id: buzzer
+    output: buzzer_out
+    restore_mode: ALWAYS_OFF
+binary_sensor:
+  # Mode = GPIO0 (also the download strap - hold at power-on to re-flash)
+  - platform: gpio
+    id: btn_mode
+    name: "Mode"
+    pin: { number: GPIO0, mode: { input: true, pullup: true }, inverted: true }
+    on_press:
+      - lambda: 'id(mode_idx) = (id(mode_idx) + 1) % 8;'
+
+  - platform: gpio
+    id: btn_time
+    name: "Time"
+    pin: { number: GPIO2, mode: { input: true, pullup: true }, inverted: true }
+    on_press:
+      - lambda: 'id(mode_idx) = 0;'
+
+  # Up = GPIO16, active LOW (no pull-up / no interrupts on ESP8266 for GPIO16)
+  - platform: gpio
+    id: btn_up
+    name: "Up"
+    pin: { number: GPIO16, mode: { input: true, pulldown: true }, inverted: true }
+    on_press:
+      - lambda: |-
+          float b = id(bright_pct) + 10.0f;
+          if (b > 100.0f) b = 100.0f;
+          id(bright_pct) = b;
+
+button:
+  - platform: restart
+    name: Restart
+sensor:
+  - platform: wifi_signal
+    name: WiFi Signal
+    update_interval: 120s
