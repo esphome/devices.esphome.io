@@ -3,6 +3,11 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
 import { VALID_TYPES, VALID_BOARDS } from "../src/utils/validFrontmatter";
+import {
+  findAliasConflicts,
+  parseAliases,
+  type DeviceAliasRecord,
+} from "../src/utils/deviceAliases";
 
 interface Frontmatter {
   title?: string;
@@ -17,6 +22,8 @@ const HELP_FOLDER =
   "See https://devices.esphome.io/devices/adding-devices#create-device-folder-and-markdown-file for help.";
 const HELP_FRONTMATTER =
   "See https://devices.esphome.io/devices/adding-devices#yaml-front-matter for help.";
+const HELP_ALIAS =
+  "See https://devices.esphome.io/devices/adding-devices#alternate-names-alias for help.";
 
 function fail(msg: string, help?: string): never {
   console.error(msg);
@@ -40,6 +47,8 @@ function main(): void {
     .map((d) => d.name);
 
   console.log(`Validating ${deviceDirs.length} device directories…`);
+
+  const aliasRecords: DeviceAliasRecord[] = [];
 
   for (const deviceDir of deviceDirs) {
     if (!/^[a-zA-Z0-9_.+\-]+$/.test(deviceDir)) {
@@ -136,6 +145,21 @@ function main(): void {
       }
     }
 
+    if (frontmatter.alias !== undefined) {
+      const { aliases, errors } = parseAliases(frontmatter.alias);
+      if (errors.length > 0) {
+        fail(
+          `Invalid alias in ${targetFile}:\n  ${errors.join("\n  ")}`,
+          HELP_ALIAS
+        );
+      }
+      aliasRecords.push({
+        folder: deviceDir,
+        file: targetFile,
+        aliases,
+      });
+    }
+
     if (frontmatter.difficulty !== undefined) {
       const n =
         typeof frontmatter.difficulty === "string"
@@ -148,6 +172,11 @@ function main(): void {
         );
       }
     }
+  }
+
+  const aliasConflicts = findAliasConflicts(aliasRecords, deviceDirs);
+  if (aliasConflicts.length > 0) {
+    fail(`Conflicting device aliases:\n  ${aliasConflicts.join("\n  ")}`, HELP_ALIAS);
   }
 
   console.log(`Validated ${deviceDirs.length} devices successfully.`);

@@ -12,14 +12,16 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
+import yaml from "js-yaml";
 
 import {
-  parseGitHubYamlUrl,
+  archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
   collectBakedPasswords,
   collectManualIps,
-  collectStraySecrets,
+  collectSecretRefs,
+  placeholderSecretsYaml,
   runChecklist,
   pageBlocks,
   buildReport,
@@ -37,48 +39,39 @@ import {
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
-test("parseGitHubYamlUrl accepts the canonical shapes", () => {
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://github.com/Owner/Repo/blob/main/path/to/main.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "main", filePath: "path/to/main.yaml" }
+test("archiveUrl builds the codeload/Codeberg/GitLab archive URL per host", () => {
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/main"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl("https://github.com/Owner/Repo/raw/v1.2.3/cfg.yml"),
-    { owner: "Owner", repo: "Repo", ref: "v1.2.3", filePath: "cfg.yml" }
+  assert.equal(
+    archiveUrl({ host: "codeberg.org", scheme: "codeberg", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://codeberg.org/Owner/Repo/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/main/a/b.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "main", filePath: "a/b.yaml" }
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://gitlab.com/Owner/Repo/-/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://github.com/Owner/Repo/blob/refs/heads/dev/c.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "dev", filePath: "c.yaml" }
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://gitlab.com/group/sub/Repo/-/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/refs/tags/v9/d.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "v9", filePath: "d.yaml" }
+  // A ref containing `/` (e.g. a branch named `feature/foo`) keeps its slash
+  // in the archive URL rather than being escaped to `%2F`.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "feature/foo", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/feature/foo"
   );
-});
-
-test("parseGitHubYamlUrl rejects non-canonical URLs", () => {
-  for (const bad of [
-    "https://github.com/Owner/Repo", // repo root
-    "https://github.com/Owner/Repo/tree/main/dir", // directory, not blob
-    "https://github.com/Owner/Repo/blob/main/README.md", // not yaml
-    "https://gitlab.com/Owner/Repo/blob/main/x.yaml", // wrong host
-    "http://github.com/Owner/Repo/blob/main/x.yaml", // not https
-    "not a url",
-  ]) {
-    assert.equal(parseGitHubYamlUrl(bad), null, bad);
-  }
+  // A ref with a space is percent-encoded.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "v 1", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/v%201"
+  );
+  // A nested GitLab owner keeps its slash.
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "v1", filePath: "x.yaml" }),
+    "https://gitlab.com/group/sub/Repo/-/archive/v1.tar.gz"
+  );
 });
 
 test("nameViolatesEsphomeRule allows a trailing 'for ESPHome' only", () => {
@@ -125,29 +118,45 @@ test("collectMissingIds requires id on every component, incl. buses/hubs", () =>
   assert.equal(uptime.name, "Uptime");
 });
 
-test("collectBakedPasswords distinguishes secrets, empties and literals", () => {
+test("collectBakedPasswords flags every non-empty password, secrets included", () => {
   const cfg = {
     ota: [
       { platform: "esphome", password: "" }, // empty -> fine
-      { platform: "http_request", password: "!secret ota_pw" }, // non-wifi secret on a password key -> flag
+      { platform: "http_request", password: "!secret ota_pw" }, // secret ref -> flag
     ],
     wifi: {
-      ap: { password: "!secret wifi_password" }, // allowed wifi secret -> fine
-      password: "!secret wifi_password", // allowed wifi secret -> fine
+      // The Wi-Fi pair is NOT exempt: a shipped config must carry no
+      // credentials at all, so both of these are flagged.
+      ap: { password: "!secret wifi_password" },
+      password: "!secret wifi_password",
     },
     // `key:` is not a password/psk key, so this is NOT a collectBakedPasswords
-    // concern — a non-wifi secret here is caught by collectStraySecrets and by
-    // `esphome config` failing to resolve it.
+    // concern: a secret here is caught by collectSecretRefs instead.
     api: { encryption: { key: "!secret api_key" } },
     mqtt: { password: "hunter2" }, // literal -> flag
     some: { psk: "0011aabb" }, // psk literal -> flag
   };
   const out: string[] = [];
   collectBakedPasswords(cfg, [], out);
-  assert.equal(out.length, 3, out.join(" | "));
+  assert.equal(out.length, 5, out.join(" | "));
   assert.ok(out.some((s) => s.includes("ota.1.password") && s.includes("ota_pw")));
+  assert.ok(
+    out.some(
+      (s) => s.includes("wifi.password") && s.includes("!secret wifi_password")
+    )
+  );
+  assert.ok(
+    out.some(
+      (s) =>
+        s.includes("wifi.ap.password") && s.includes("!secret wifi_password")
+    )
+  );
   assert.ok(out.some((s) => s.includes("mqtt.password")));
   assert.ok(out.some((s) => s.includes("some.psk")));
+  // A password key that is only whitespace still counts as empty.
+  const blank: string[] = [];
+  collectBakedPasswords({ ota: [{ password: "  " }] }, [], blank);
+  assert.deepEqual(blank, []);
 });
 
 test("collectManualIps finds static IPs under wifi/ethernet only", () => {
@@ -161,13 +170,47 @@ test("collectManualIps finds static IPs under wifi/ethernet only", () => {
   assert.deepEqual(collectManualIps({ wifi: {} }), []);
 });
 
-test("collectStraySecrets ignores the wifi pair, catches others", () => {
-  assert.equal(
-    collectStraySecrets("a: !secret wifi_ssid\nb: !secret 'wifi_password'").size,
-    0
+test("collectSecretRefs catches every secret, wifi pair included", () => {
+  assert.deepEqual(
+    [
+      ...collectSecretRefs("a: !secret wifi_ssid\nb: !secret 'wifi_password'"),
+    ].sort(),
+    ["wifi_password", "wifi_ssid"]
   );
-  const stray = collectStraySecrets("k: !secret api_key\nj: !secret ota_pw");
-  assert.deepEqual([...stray].sort(), ["api_key", "ota_pw"]);
+  const refs = collectSecretRefs("k: !secret api_key\nj: !secret ota_pw");
+  assert.deepEqual([...refs].sort(), ["api_key", "ota_pw"]);
+  assert.equal(collectSecretRefs("wifi:\n  ap: {}\n").size, 0);
+});
+
+// Secret names are arbitrary YAML keys. A name-character class of
+// `[A-Za-z0-9_]` truncated hyphenated names (merging `ha-key` and `ha-token`
+// into one `ha`) and matched no double-quoted name at all, which made the
+// check silently pass on `!secret "wifi_ssid"`.
+test("collectSecretRefs handles quoted, hyphenated and flow-style names", () => {
+  assert.deepEqual([...collectSecretRefs('a: !secret "wifi_ssid"')], [
+    "wifi_ssid",
+  ]);
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret ha-key\nb: !secret ha-token")].sort(),
+    ["ha-key", "ha-token"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret 'ha-key'")], ["ha-key"]);
+  // Flow sequences and trailing comments must not swallow the terminator.
+  assert.deepEqual(
+    [...collectSecretRefs("a: [!secret one, !secret two]")].sort(),
+    ["one", "two"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret three # comment")], [
+    "three",
+  ]);
+  // The same name in different quoting styles is one secret.
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret k\nb: !secret 'k'\nc: !secret \"k\"")],
+    ["k"]
+  );
+  // The regex is module-level; a previous call must not leave lastIndex set.
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
 });
 
 test("stripAnsi removes literal and real escape sequences", () => {
@@ -211,9 +254,9 @@ const GOOD_CFG = {
     project: { name: "Acme.Widget" },
   },
   esp32: { board: "esp32dev", variant: "ESP32" },
+  // A compliant shipped config provisions Wi-Fi over Improv and carries no
+  // credentials at all: no `ssid:`/`password:`, no `!secret` references.
   wifi: {
-    ssid: "!secret wifi_ssid",
-    password: "!secret wifi_password",
     ap: { password: "" },
   },
   esp32_improv: {},
@@ -226,12 +269,7 @@ const GOOD_CFG = {
 };
 
 test("runChecklist passes a compliant config", () => {
-  const checks = runChecklist(
-    GOOD_CFG,
-    "wifi:\n  password: !secret wifi_password",
-    "Widget",
-    "PASS"
-  );
+  const checks = runChecklist(GOOD_CFG, "wifi:\n  ap: {}\n", "Widget", "PASS");
   const bad = checks.filter(
     (c) => c.status === "MISSING" || c.status === "FAIL"
   );
@@ -269,10 +307,89 @@ test("runChecklist flags a non-compliant config", () => {
   assert.equal(byItem.get("ota: `- platform: esphome`"), "MISSING");
   assert.equal(byItem.get("update: `- platform: http_request`"), "MISSING");
   assert.equal(byItem.get("No passwords in the configuration"), "FAIL");
-  assert.equal(byItem.get("No references to non-standard secrets"), "FAIL");
+  assert.equal(byItem.get("No references to secrets in the configuration"), "FAIL");
   assert.equal(byItem.get("No static IP addresses"), "FAIL");
   assert.equal(byItem.get("Every entity/component has an `id:`"), "MISSING");
   assert.equal(byItem.get("Compiles without user changes"), "FAIL");
+});
+
+// The rule the programme actually enforces: a manufacturer's shipped config
+// must contain NO secrets, the `wifi_ssid`/`wifi_password` pair included.
+// Users provision their own Wi-Fi credentials, so baking the pair in only
+// leaves dummy values in device storage; secrets belong in the config the user
+// ends up with after taking control.
+test("runChecklist fails a shipped config that references the Wi-Fi secrets", () => {
+  const cfg = {
+    ...GOOD_CFG,
+    wifi: {
+      ssid: "!secret wifi_ssid",
+      password: "!secret wifi_password",
+      ap: { password: "" },
+    },
+  };
+  const expanded = [
+    "wifi:",
+    "  ssid: !secret wifi_ssid",
+    "  password: !secret wifi_password",
+    "",
+  ].join("\n");
+  const checks = runChecklist(cfg, expanded, "Widget", "PASS");
+  const byItem = new Map(checks.map((c) => [c.item, c]));
+
+  const passwords = byItem.get("No passwords in the configuration")!;
+  assert.equal(passwords.status, "FAIL");
+  assert.ok(passwords.detail.includes("wifi.password"));
+  assert.ok(passwords.detail.includes("!secret wifi_password"));
+
+  const secrets = byItem.get("No references to secrets in the configuration")!;
+  assert.equal(secrets.status, "FAIL");
+  assert.ok(secrets.detail.includes("!secret wifi_ssid"));
+  assert.ok(secrets.detail.includes("!secret wifi_password"));
+
+  // Everything else about the config is fine; these two are the only
+  // failures, and they are enough to block the page.
+  assert.deepEqual(
+    checks
+      .filter((c) => c.status === "FAIL" || c.status === "MISSING")
+      .map((c) => c.item),
+    [
+      "No passwords in the configuration",
+      "No references to secrets in the configuration",
+    ]
+  );
+  const result: PageResult = {
+    page: "p",
+    url: "u",
+    fenceMissing: false,
+    fatalError: null,
+    configOk: true,
+    configInconclusive: false,
+    configError: null,
+    compile: "PASS",
+    compileLog: null,
+    checks,
+  };
+  assert.equal(pageBlocks(result), true);
+});
+
+// The placeholder secrets are the review tool's own, written so that a config
+// referencing the Wi-Fi pair still expands and compiles; they must never
+// double as an allowlist for the checks above.
+test("placeholderSecretsYaml keeps the compile step working", () => {
+  const body = placeholderSecretsYaml();
+  assert.equal(
+    body,
+    'wifi_ssid: "placeholder_ssid"\nwifi_password: "placeholder_password"\n'
+  );
+  const parsed = yaml.load(body) as Record<string, string>;
+  assert.deepEqual(Object.keys(parsed).sort(), ["wifi_password", "wifi_ssid"]);
+  // Exactly the names the checklist now flags: supplying them lets
+  // `esphome config`/`compile` run, while the config is still reported as
+  // non-compliant.
+  const flagged = collectSecretRefs(
+    "a: !secret wifi_ssid\nb: !secret wifi_password"
+  );
+  assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
 });
 
 test("esp32_improv is N/A when there is no wifi", () => {
