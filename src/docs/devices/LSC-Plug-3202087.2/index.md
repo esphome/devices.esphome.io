@@ -80,16 +80,6 @@ after you add networking.
 ```yaml file=advanced.yaml
 ```
 
-## BK7238 Support Status
-
-At the time of writing, BK7238 support is still being worked on in ESPHome/LibreTiny. The example configuration
-therefore pins the Beken SDK version and pulls LibreTiny from the BK7238 feature branch:
-
-```yaml file=bk7238-note.yaml
-```
-
-Once BK7238 support lands in regular releases, these overrides may no longer be required.
-
 ## BL0937 Calibration
 
 Start with the values shown in `config.yaml` and calibrate them with a trusted external meter plus a resistive load
