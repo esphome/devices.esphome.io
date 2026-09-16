@@ -1,0 +1,5 @@
+switch:
+  # 15. Relay
+  - platform: gpio
+    pin: GPIO42
+    name: "Relay"

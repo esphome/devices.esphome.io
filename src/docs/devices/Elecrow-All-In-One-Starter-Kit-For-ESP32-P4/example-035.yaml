@@ -1,0 +1,58 @@
+external_components:
+  # - source:
+  #     type: git
+  #     url: https://github.com/youkorr/webdavbox3
+  #     ref: main
+  #   components: [sd_mmc_card, storage, webdavbox3]
+  #   refresh: 0s
+  - source: github://p1ngb4ck/esphome@dev
+    components:
+      - audio
+      - binary_storage
+      - http_file_browser
+      - nfs_client
+      - picture_viewer
+      - uart
+      - usb_host
+      - usb_uart
+      - usb_storage
+      - sd_storage
+      - smb_client
+      - storage
+      - transcoder
+      - video_player
+      - webdav_server
+    refresh: 0s
+sd_storage:
+  id: sd_card
+  clk_pin: GPIO43
+  cmd_pin: GPIO44
+  data0_pin: GPIO39
+  #data1_pin: GPIO1
+  #data2_pin: GPIO6
+  #data3_pin: GPIO5
+  mode_1bit: true
+  # power_ctrl_pin: GPIO43
+storage:
+  id: storage_id
+
+webdav_server:
+  id: webdav_sdcard
+  storage_id: storage_id
+  root_path: "/"
+  url_prefix: "/"
+  port: 81
+  username: REPLACE_ME
+  # SECURITY: credential omitted from documentation example
+
+http_file_browser:
+  storage_id: storage_id
+  url_prefix: "/files"
+  root_path: "/"
+  auth_enabled: true
+  username: REPLACE_ME
+  # SECURITY: credential omitted from documentation example
+  # Safer defaults: enable uploads and deletion only on a trusted network.
+  enable_upload: false
+  enable_download: true
+  enable_deletion: false

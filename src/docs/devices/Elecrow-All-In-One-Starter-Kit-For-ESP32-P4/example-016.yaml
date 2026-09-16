@@ -1,0 +1,34 @@
+servo:
+  - id: my_servo
+    output: servo_pwm
+
+output:
+  - platform: ledc
+    id: servo_pwm
+    pin: GPIO25
+    frequency: 50Hz
+
+interval:
+  - interval: 2s
+    then:
+      # Forward direction at different speeds
+      - servo.write:
+          id: my_servo
+          level: -100%  # Full speed reverse
+      - delay: 2s
+      - servo.write:
+          id: my_servo
+          level: -50%   # Half speed reverse
+      - delay: 2s
+      - servo.write:
+          id: my_servo
+          level: 0%     # Stop
+      - delay: 2s
+      - servo.write:
+          id: my_servo
+          level: 50%    # Half speed forward
+      - delay: 2s
+      - servo.write:
+          id: my_servo
+          level: 100%   # Full speed forward
+      - delay: 2s

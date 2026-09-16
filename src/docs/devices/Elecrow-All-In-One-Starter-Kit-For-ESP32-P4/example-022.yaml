@@ -1,0 +1,7 @@
+sensor:
+  # 10. ADC Buttons
+  - platform: adc
+    pin: GPIO16
+    name: "Button ADC"
+    update_interval: 100ms
+    attenuation: 12db

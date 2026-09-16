@@ -1,0 +1,10 @@
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+
+sensor:
+  # 2. Light Sensor
+  - platform: bh1750
+    address: 0x5C
+    name: "Illuminance"
+    update_interval: 10s

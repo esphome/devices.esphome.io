@@ -1,0 +1,5 @@
+binary_sensor:
+  # 11. Touch Button
+  - platform: gpio
+    pin: GPIO2
+    name: "Touch Button"

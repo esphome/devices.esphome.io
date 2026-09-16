@@ -1,0 +1,103 @@
+i2c:
+  - id: i2c_bus
+    sda: GPIO18
+    scl: GPIO19
+    frequency: 400kHz
+
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    i2c_id: i2c_bus
+    address: 0x5D  # GT911 backup address (IDF driver tries this first)
+    reset_pin: GPIO40
+    interrupt_pin:
+      number: GPIO41
+      mode: INPUT  # SPI ESP-Hosted Wi-Fi may conflict with this interrupt.
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    calibration:
+      x_min: 0
+      x_max: 1024
+      y_min: 0
+      y_max: 600
+    update_interval: 50ms  # Required when SPI ESP-Hosted Wi-Fi is enabled.
+    on_touch:
+      - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+
+# LDO Regulators - both required (LDO3 for DSI PHY, LDO4 for 3.3V peripherals)
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+
+display:
+  - platform: mipi_dsi
+    id: main_display
+    model: CUSTOM
+    reset_pin:
+      number: GPIO05
+      inverted: false
+    rotation: 0
+    #show_test_card: true
+    auto_clear_enabled: false
+    lanes: 2
+    lane_bit_rate: 1000Mbps
+    color_order: rgb
+    #invert_colors: true
+
+    pclk_frequency: 51MHz
+    dimensions:
+      width: 1024
+      height: 600
+    hsync_back_porch: 160
+    hsync_pulse_width: 70
+    hsync_front_porch: 160
+    vsync_back_porch: 23
+    vsync_pulse_width: 10
+    vsync_front_porch: 12
+    init_sequence:
+      - [0xB2, 0x10] # PAD_CONTROL register: configures the DSI pad for 2-lane operation (0x10 = 2 lanes)
+      - [0x80, 0x8B] # DSI timing/PLL register, sets lane speed or clock divider parameter
+      - [0x81, 0x78] # DSI timing register, typically horizontal timing or PLL multiplier
+      - [0x82, 0x84] # DSI timing register, typically vertical timing or PLL divider
+      - [0x83, 0x88] # DSI timing register, front/back porch or sync width parameter
+      - [0x84, 0xA8] # DSI timing register, another porch/sync parameter
+      - [0x85, 0xE3] # DSI timing register, likely horizontal active or blanking period
+      - [0x86, 0x88] # DSI timing register, last of the timing chain parameters
+      - [0x11]       # MIPI DCS Sleep Out; wakes the panel for normal operation.
+
+output:
+  - platform: ledc
+    pin: GPIO20
+    id: backlight_pwm
+    frequency: 30000Hz  # IDF default is 30kHz (CONFIG_BLIGHT_PWM_Hz)
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+
+# UPDN=0 (normal vertical), SHLR=1 (mirrored horizontal) per IDF gpio_set_level calls
+switch:
+  - platform: gpio
+    pin: GPIO32
+    name: "Display UPDN"
+    id: display_updn
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF   # UPDN = 0
+
+  - platform: gpio
+    pin: GPIO33
+    name: "Display SHLR"
+    id: display_shlr
+    internal: true
+    restore_mode: RESTORE_DEFAULT_ON    # SHLR = 1
