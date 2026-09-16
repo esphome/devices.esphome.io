@@ -254,4 +254,3 @@ Consider blocking the device from WAN regardless of which firmware you run.
 - **Identifying the `Down` button.** If you have a scope, the useful measurement is
   the voltage on the Up pin while pressing Up vs Down; a distinct non-zero reading
   would confirm a resistor divider and allow an ADC threshold.
-
