@@ -1,0 +1,141 @@
+substitutions:
+  name: paperdink-merlot
+  friendly_name: Paperd.ink Merlot
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    priority: -10
+    then:
+      # The panel is powered through a load switch — it has to be enabled
+      # before the display component can talk to it.
+      - output.turn_on: epd_enable
+      - delay: 2s
+      - component.update: epaper
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+  level: INFO
+
+wifi:
+  # Fallback hotspot only — add your own ssid/password when you adopt this.
+  ap:
+
+time:
+  - platform: sntp
+    id: sntp_time
+
+output:
+  # Power enable for the e-paper panel. Active low.
+  - platform: gpio
+    id: epd_enable
+    pin:
+      number: GPIO12
+      inverted: true
+  # Power enable for the battery voltage divider. Active low — leave it off
+  # except while sampling, or the divider drains the battery continuously.
+  - platform: gpio
+    id: batt_enable
+    pin:
+      number: GPIO25
+      inverted: true
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19
+
+font:
+  - file: "gfonts://Inter@400"
+    id: font_body
+    size: 28
+
+sensor:
+  - platform: adc
+    id: batt_voltage
+    name: Battery Voltage
+    pin: GPIO39
+    attenuation: 11db
+    update_interval: 60min
+    # The pin sits on a 2:1 divider.
+    filters:
+      - multiply: 2.0
+
+binary_sensor:
+  - platform: gpio
+    id: charging
+    name: Charging
+    pin:
+      number: GPIO36
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    id: btn_1
+    name: Button 1
+    pin: &btn_pin
+      number: GPIO14
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+
+  - platform: gpio
+    id: btn_2
+    name: Button 2
+    pin:
+      <<: *btn_pin
+      number: GPIO27
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+
+  - platform: gpio
+    id: btn_3
+    name: Button 3
+    pin:
+      <<: *btn_pin
+      number: GPIO4
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+
+  - platform: gpio
+    id: btn_4
+    name: Button 4
+    pin:
+      <<: *btn_pin
+      number: GPIO2
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+
+display:
+  - platform: waveshare_epaper
+    id: epaper
+    model: 4.20in-bV2-bwr
+    cs_pin: GPIO22
+    dc_pin: GPIO15
+    busy_pin: GPIO34
+    reset_pin: GPIO13
+    rotation: 0
+    update_interval: 30min
+    lambda: |-
+      const auto BLK = Color(0, 0, 0);
+      const auto WHT = Color(255, 255, 255);
+      const auto RED = Color(255, 0, 0);
+      it.fill(WHT);
+      auto now = id(sntp_time).now();
+      if (now.is_valid()) {
+        it.strftime(10, 10, id(font_body), BLK, "%Y-%m-%d %H:%M", now);
+      }
+      it.printf(10, 50, id(font_body), RED, "%.2f V", id(batt_voltage).state);
