@@ -1,0 +1,92 @@
+substitutions:
+  devicename: awow_eu3s_plug_1
+  friendly_name: Awow EU3S Plug 1
+  device_description: Awow EU3S Power Monitoring Plug with button and Blue led.
+  current_res: "0.00221" # Random value. Requires power monitoring calibration
+  voltage_div: "955" # Random value. Requires power monitoring calibration
+
+esphome:
+  name: ${devicename}
+  comment: ${device_description}
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+sensor:
+# Reports the Current, Voltage, and Power used by the plugged-in device
+  - platform: hlw8012
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO05
+    cf1_pin: GPIO14
+    change_mode_every: 8
+    update_interval: 10s
+    current:
+      name: ${friendly_name} Amperage
+      icon: mdi:current-ac
+      unit_of_measurement: A
+    voltage:
+      name: ${friendly_name} Voltage
+      icon: mdi:flash-circle
+      unit_of_measurement: V
+    power:
+      id: wattage
+      name: ${friendly_name} Wattage
+      icon: mdi:flash-outline
+      unit_of_measurement: W
+    current_resistor: ${current_res}
+    voltage_divider: ${voltage_div}
+
+binary_sensor:
+# Button on the front is pressed and then toggle relay
+  - platform: gpio
+    device_class: power
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: True
+    name: ${friendly_name} Button # Name to make button visible in HA
+    on_press:
+      - switch.toggle: relay
+
+switch:
+# Relay itself
+  - platform: gpio
+    name: ${friendly_name}
+    pin: GPIO15
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF #Try to restore relay state after reboot/power-loss event.
+    on_turn_on: # Action when relay is turned on
+      - script.execute: led_power_on
+    on_turn_off: # Action when relay is turned off
+      - script.execute: led_relay_off
+
+output:
+# Output GPIOs for blue led
+  - platform: esp8266_pwm # Blue
+    id: ${devicename}_blue_output
+    pin:
+      number: GPIO02
+      inverted: True
+
+light:
+# RGB light
+  - platform: monochromatic
+    name: ${friendly_name} Light
+    output: ${devicename}_blue_output
+    id: ${devicename}_blue_led
+
+script:
+  - id: led_relay_off # Normal operation when relay is off
+    then:
+      - light.turn_off:
+          id: ${devicename}_blue_led
+  - id: led_power_on # Normal operation when relay is on
+    then:
+      - light.turn_on:
+          id: ${devicename}_blue_led
+          brightness: 80%
