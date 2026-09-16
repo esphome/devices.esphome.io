@@ -1,6 +1,6 @@
 ---
 title: KinCony-B2 (ESP32-S3 2CH Relay board)
-date-published: 2026-08-17
+date-published: 2026-09-16
 
 type: relay
 standard: global
