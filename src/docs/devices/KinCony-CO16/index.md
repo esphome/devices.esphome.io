@@ -11,7 +11,7 @@ board: esp32
 
 ## Resources
 
-- [ESP32 pin define details](https://www.kincony.com/forum/showthread.php?tid=9778)
+- [ESP32 pin definition details](https://www.kincony.com/forum/showthread.php?tid=9778)
 
 ## ESPHome Configuration
 
