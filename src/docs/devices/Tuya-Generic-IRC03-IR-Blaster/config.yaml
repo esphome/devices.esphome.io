@@ -1,0 +1,35 @@
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+output:
+  - platform: libretiny_pwm
+    id: led
+    pin: 24
+
+light:
+  - platform: monochromatic
+    name: LED
+    output: led
+
+binary_sensor:
+  - platform: gpio
+    id: btn
+    pin:
+      number: 9
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+
+remote_transmitter:
+  pin: 7
+  carrier_duty_percent: 50%
+
+remote_receiver:
+  pin:
+    number: 8
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+  tolerance: 55%
