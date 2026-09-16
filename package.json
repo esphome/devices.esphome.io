@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^5.4.1",
     "tsx": "^4.23.13",
     "vfile": "^6.0.3"
   }
