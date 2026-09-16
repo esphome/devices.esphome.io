@@ -1,0 +1,109 @@
+esphome:
+  name: waveshare-esp32-s3-touch-lcd-7b
+  platformio_options:
+    board_build.esp-idf.memory_type: qio_opi
+    board_build.flash_mode: dio
+  on_boot:
+    - priority: 600
+      then:
+        - lambda: |-
+            // The onboard IO expander uses the vendor's own protocol, not the
+            // ESPHome ch422g: component - see the note above this config for why.
+            // Single I2C address 0x24, 2-byte packets [command, data]:
+            //   0x02 = mode register (1 = pins 0-7 output mode)
+            //   0x03 = output register (bit N -> EXIO N)
+            uint8_t mode_cmd[2] = {0x02, 0x01};
+            id(bus_a).write(0x24, mode_cmd, 2);
+            delay(5);
+            // EXIO1=touch reset, EXIO2=backlight, EXIO3=lcd reset, EXIO6=LCD_VDD_EN.
+            // Release touch/lcd reset (high) and enable backlight + VDD.
+            uint8_t out_cmd[2] = {0x03, 0b01000110};
+            id(bus_a).write(0x24, out_cmd, 2);
+            delay(5);
+    - priority: -100
+      then:
+        - delay: 500ms
+        - lambda: |-
+            // Re-assert once the I2C bus is fully settled after boot.
+            uint8_t out_cmd[2] = {0x03, 0b01000110};
+            id(bus_a).write(0x24, out_cmd, 2);
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+# Enable logging
+logger:
+
+# Shared by the onboard IO expander and the GT911 touch controller.
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO9
+    scan: true
+    frequency: 100kHz
+
+display:
+  - platform: mipi_rgb
+    model: RPI
+    id: main_display
+    color_order: RGB
+    dimensions:
+      width: 1024
+      height: 600
+    de_pin: GPIO5
+    pclk_pin: GPIO7
+    pclk_frequency: 16MHz
+    hsync_pin:
+      number: GPIO46
+      ignore_strapping_warning: true
+    vsync_pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+    hsync_back_porch: 145
+    hsync_front_porch: 170
+    hsync_pulse_width: 30
+    vsync_back_porch: 23
+    vsync_front_porch: 12
+    vsync_pulse_width: 2
+    data_pins:
+      red:
+        - GPIO1 #r3
+        - GPIO2 #r4
+        - GPIO42 #r5
+        - GPIO41 #r6
+        - GPIO40 #r7
+      green:
+        - GPIO39 #g2
+        - number: GPIO0
+          ignore_strapping_warning: true
+        - GPIO45 #g4
+        - GPIO48 #g5
+        - GPIO47 #g6
+        - GPIO21 #g7
+      blue:
+        - GPIO14 #b3
+        - GPIO38 #b4
+        - GPIO18 #b5
+        - GPIO17 #b6
+        - GPIO10 #b7
+
+touchscreen:
+  - platform: gt911
+    id: touch_7b
+    display: main_display
+    interrupt_pin: GPIO4
+    # Touch reset (EXIO1) is already released (driven high) by the on_boot
+    # lambda above - see the warning note for why ch422g: isn't used here.
