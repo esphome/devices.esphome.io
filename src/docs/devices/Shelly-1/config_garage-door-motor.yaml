@@ -1,0 +1,52 @@
+substitutions:
+  friendly_name: Garage Door
+
+esphome:
+  name: shelly_garage_door
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# The door contact sensor that is attached to SW on the
+# Shelly 1. Not exposed to HA, instead used to set the
+# state of the cover.
+binary_sensor:
+
+  - platform: gpio
+    pin: GPIO5  # Input connected to GND = Open; invert for opposite configuration
+    id: contact_sensor
+    filters:  # Debounce the contact sensor to prevent rapid on/off/on events
+      - delayed_on_off: 500ms
+
+# The relay in the Shelly 1 that will deliver the pulse to
+# the garage door opener (not exposed to HA)
+output:
+
+  - platform: gpio
+    pin: GPIO4
+    id: relay
+
+# This creates the actual garage door in HA. The state is based
+# on the contact sensor. Opening/closing the garage door simply
+# turns the relay on/off with a 0.5s delay in between.
+cover:
+
+  - platform: template
+    device_class: garage
+    name: None
+    id: template_cov
+    lambda: |-
+      if (id(contact_sensor).state) {
+        return COVER_OPEN;
+      } else {
+        return COVER_CLOSED;
+      }
+    open_action: &buttonPressTemplate
+      - output.turn_on: relay
+      - delay: 500ms
+      - output.turn_off: relay
+    close_action: *buttonPressTemplate
+    stop_action: *buttonPressTemplate

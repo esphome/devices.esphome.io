@@ -1,0 +1,43 @@
+# Basic config
+esphome:
+  name: shelly_detached_toggle
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# Shelly 1 detached switch config with fallback in case of wifi or api fail
+switch:
+
+  - platform: gpio
+    name: None
+    pin: GPIO4
+    id: shelly_relay
+
+binary_sensor:
+
+  - platform: gpio
+    pin: GPIO5
+    name: Switch
+    # small delay to debounce
+    filters:
+      - delayed_on_off: 50ms
+    # config for state change of input button
+    on_state:
+      then:
+        - if:
+            condition:
+              and:
+                - wifi.connected:
+                - api.connected:
+            # toggle smart light if wifi and api are connected and relay is on
+            then:
+              - homeassistant.service:
+                  service: light.toggle
+                  data:
+                    entity_id: light.kitchen
+            # else, toggle relay
+            else:
+              - switch.toggle: shelly_relay

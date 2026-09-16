@@ -1,0 +1,85 @@
+substitutions:
+  device_name: Shelly 1  # For event text later
+
+# Basic config
+esphome:
+  name: shelly_detached_momentary
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# Shelly 1 detached switch config with multi click options and fallback in case of wifi or api fail
+switch:
+
+  - platform: gpio
+    name: None
+    pin: GPIO4
+    id: shelly_relay
+
+binary_sensor:
+
+  - platform: gpio
+    pin: GPIO5
+    # config for multi click actions
+    on_multi_click:
+      # double click
+      - timing:
+          - ON for at most 1s
+          - OFF for at most 1s
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - if:
+              condition:
+                and:
+                  - wifi.connected:
+                  - api.connected:
+              # send double click event in case wifi and api are conncected
+              then:
+                - homeassistant.event:
+                    event: esphome.button_pressed
+                    data:
+                      title: shelly ${device_name} double click
+              # toggle relay in case either wifi or api are not connected
+              else:
+                - switch.toggle: shelly_relay
+      # long click
+      - timing:
+          - ON for at least 1.5s
+        then:
+          - if:
+              condition:
+                and:
+                  - wifi.connected:
+                  - api.connected:
+              # send long click event in case wifi and api are conncected
+              then:
+                - homeassistant.event:
+                    event: esphome.button_pressed
+                    data:
+                      title: shelly ${device_name} long click
+              # toggle relay in case either wifi or api are not connected
+              else:
+                - switch.toggle: shelly_relay
+      # single click
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.5s
+        then:
+          - if:
+              condition:
+                and:
+                  - wifi.connected:
+                  - api.connected:
+              # send single click event in case wifi and api are conncected
+              then:
+                - homeassistant.event:
+                    event: esphome.button_pressed
+                    data:
+                      title: shelly ${device_name} short click
+              # toggle relay in case either wifi or api are not connected
+              else:
+                - switch.toggle: shelly_relay
