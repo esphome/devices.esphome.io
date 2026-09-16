@@ -15,7 +15,8 @@ board: bk72xx
   * The version of the LED board is v1.1 dated 2019-01-19 in both cases
   * Some versions feature the BK7231S board (`WB3S` label on the chip)
   * Some versions feature the BK7231N board (`CB3S` label on the chip)
-  * The LED pins are different for the two boards (see the configuration below)
+  * Newer versions feature the BK7238 board (`CB3S-V200` label on the RF shield)
+  * The LED pins are different for the three boards (see the configuration below)
 * Requires disassembly and soldering to flash, see instructions here: [https://youtu.be/-a5hV1y5aIU?t=85](https://youtu.be/-a5hV1y5aIU?t=85)
 
 The 2 way switch does not have a power sense pin. To solve this issue, and allow the smart switch to be smart, this code
@@ -54,91 +55,27 @@ If flashing with the `esphome` tool does not work, you can try the `ltchiptool` 
 
 ![BK7231N Flashing](BK7231N-flashing.jpg "BK7231N, aka CB3s board and flashing setup")
 
+### CB3S-V200 Board
+
+![BK7238](BK7238.jpg "BK7238, aka CB3S-V200 board")
+
 ## GPIO Pinout
 
-| Function                              | WB3S Pins | CB3S Pins |
-|---------------------------------------|-----------|-----------|
-| White LED (Power Sensor)              | P9        | P8        |
-| Status LED                            | P8        | P7        |
-| Relay 1                               | P24       | P24       |
-| Button 1                              | P6        | P6        |
+| Function                              | WB3S Pins | CB3S Pins | CB3S-V200 Pins |
+|---------------------------------------|:---------:|:---------:|:--------------:|
+| White LED (Power Sensor)              | P9        | P8        | P8             |
+| Status LED                            | P8        | P7        | P26            |
+| Relay 1                               | P24       | P24       | P24            |
+| Button 1                              | P6        | P6        | P9             |
 
 ## Basic Configuration
 
-```yaml
-substitutions:
-  device_name: treatlifeswitch #change
-  friendly_name: "Treatlife Light Switch" #change
-  icon: "mdi:light-switch"
-
-bk72xx:
-  board: generic-bk7231t-qfn32-tuya # WB3S board Ref: https://docs.libretiny.eu/boards/generic-bk7231t-qfn32-tuya/
-  # board: cb3s # CB3S board Ref: https://docs.libretiny.eu/boards/cb3s/
-esphome:
-  name: ${device_name}
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
-  ap:
-    ssid: ${device_name}
-    password: !secret esphome_ap_password
-
-logger:
-
-api:
-  encryption:
-    key: !secret api_encryption_key
-
-ota:
-  password: !secret esphome_ota_password
-
-output:
-  - platform: gpio
-    id: switch_output
-    pin: P24
-
-  - platform: gpio
-    id: white_led_output
-    pin:
-      number: P9 # WB3S board
-      # number: P8 # CB3S board
-
-light:
-  - platform: binary
-    id: ${device_name}
-    name: ${friendly_name}
-    output: switch_output
-    on_turn_on:
-      - light.turn_on: white_led
-    on_turn_off:
-      - light.turn_off: white_led
-
-  - platform: binary
-    id: white_led
-    output: white_led_output
-
-binary_sensor:
-  - platform: gpio
-    id: ${device_name}_button
-    name: ${friendly_name} Button
-    pin:
-      number: P6
-    on_press:
-      - light.toggle: ${device_name}
-
-status_led:
-  # Red LED
-  pin:
-    number: P8 # WB3S board
-    # number: P7 # CB3S board
-    inverted: yes
+```yaml file=config.yaml
 ```
 
 ## Home Assistant light entity (Converts it from a switch to a Light Entity)
 
-```yaml
+```yaml inline
 light:
   - platform: switch
     name: "Treatlife Light Switch"
