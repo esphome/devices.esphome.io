@@ -1,6 +1,6 @@
 ---
 title: KinCony-CO16 (ESP32-S3 16CH Analog Input board)
-date-published: 2026-09-02
+date-published: 2026-09-16
 
 type: relay
 standard: global
