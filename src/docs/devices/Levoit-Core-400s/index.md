@@ -1,31 +1,71 @@
 ---
-title: Levoit's Core 400s 
+title: "Levoit's Core 400s"
 date-published: 2025-12-20
 type: misc
 standard: eu, us, uk
 board: esp32
 made-for-esphome: False
 difficulty: 4
+project-url: https://github.com/tuct/levoit/tree/main/devices/levoit-core400s
 ---
+
+## Description
+
+A smart air purifier with 4-stage filtration, four fan speeds and a PM2008MS
+particulate sensor, rated at 442 m³/h. The Wi-Fi module and the purifier's own
+control MCU are separate chips joined by a 115200 8N1 UART link, so flashing ESPHome
+onto the stock Wi-Fi ESP32 keeps every hardware function working — the
+[`levoit`](https://github.com/tuct/levoit/tree/main/components/levoit) external
+component speaks the MCU's binary protocol.
+
+Tested against MCU firmware 3.0.0. The stock module is an ESP32-SOLO-1C on a
+CORE400S Ctrl V1.2 board.
+
+The component started from two community projects —
+[acvigue's esphome-levoit-air-purifier](https://github.com/acvigue/esphome-levoit-air-purifier)
+and [mulcmu's esphome-levoit-core300s](https://github.com/mulcmu/esphome-levoit-core300s)
+— and grew into a generic component covering the Core, Vital and Everest ranges.
+
+Manufacturer: [Levoit](https://www.levoit.com)
+
+![Home Assistant UI](./ha.png "Home Assistant UI")
 
 ## Features
 
-* Fan component with modes (Manual, Auto, Sleep)
-* Display current and avg CFM value
-* Filter life time
-  * Tracking based on current CFM value
-  * Configurable via Home Assistant (1-12 Months)
-  * Reset via Home Assistant
-* Display run time in Home Assistant
+* Fan with 4 speeds and Manual / Auto / Sleep presets
+* Fan Operating Mode select — the active mode as a plain select, for dashboards that don't render fan presets
+* Auto Mode select — Default / Quiet / Room Size
+* Auto Mode Room Size number, 9–38 m² — the value the MCU reports
+* Auto Mode Room Size Preset number, 9–38 m² — the remembered target actually sent when
+  Room Size is selected, since the reported value reads 0 under Default/Quiet
+* Display and Child Lock switches
+* PM2.5 and AQI sensors
+* Current CADR sensor in m³/h, updated every 5 s
+* Filter life remaining sensor and a Filter Low binary sensor that trips under 5 %
+* Configurable filter lifetime in months, with a counter reset button
+* Run timer in minutes
+* MCU firmware version and error-status text sensors
 
-## General Notes
+## Flashing
 
-A smart air purifier with 4-stage filtration. The ESP32 talks to the Tuya MCU using standard 8N1 115200-baud UART. Code
-and configuration were obtained from
-[Tuct's 'esphome-projects' repo](https://github.com/tuct/esphome-projects/tree/main/projects/levoit-core400s).
+The stock ESP32 can be flashed directly over its UART pads. The device
+[guide](https://github.com/tuct/levoit/tree/main/devices/levoit-core400s) covers the
+teardown, the pad locations and the alternative of wiring in a replacement ESP32,
+which keeps the original module and its firmware intact.
 
-Manufacturer: [Levoit](http://www.levoit.com)
+Take a backup of the stock firmware before writing anything over it.
+
+## Basic Configuration
+
+> The configuration below is hardware-only, which is what this site's pages carry.
+> It has no `wifi:` credentials and no `api:` or `ota:` blocks, so add your own before
+> flashing — without them the device will not reach Home Assistant or accept OTA
+> updates.
+
+```yaml file=config.yaml
+```
 
 ## Details and instructions
 
-[Tuct's 'esphome-projects' repo](https://github.com/tuct/esphome-projects/tree/main/projects/levoit-core400s).
+Full teardown, PCB photos, wiring and the complete entity list:
+[tuct/levoit — Core 400S](https://github.com/tuct/levoit/tree/main/devices/levoit-core400s).
