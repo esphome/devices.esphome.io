@@ -3,11 +3,12 @@ title: VirageBridge VB-001
 date-published: 2022-01-25
 type: misc
 standard: global
+board: esp8266
 ---
 
-[Virage Laboratories](https://www.viragelabs.com)
+Manufacturer: Virage Laboratories (seems to no longer exist)
 
-[VB-001 433 MHz to WiFi Bridge](https://www.viragelabs.com/product/viragebridge/)![image](virage_labs_VB-001.jpg)
+![image](virage_labs_VB-001.jpg)
 
 ## General Notes
 
