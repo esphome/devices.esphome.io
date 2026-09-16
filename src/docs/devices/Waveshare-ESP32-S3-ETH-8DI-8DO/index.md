@@ -1,5 +1,5 @@
 ---
-title: WAVESHARE ESP32-S3-ETH-8DI-8DO
+title: Waveshare ESP32-S3-ETH-8DI-8DO
 date-published: 2025-10-10
 type: sensor
 standard: global
