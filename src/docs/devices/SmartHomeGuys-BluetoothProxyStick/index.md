@@ -30,6 +30,6 @@ We designed these to look good, be as small as possible and blend in with your h
 
 ## Support
 
-- [Shop](https://www.ebay.co.uk/itm/227206771185)
+- [Shop](https://smarthomeguys.uk/products/bluetooth-proxy-stick-for-home-assistant)
 - [Official Documentation](https://smarthomeguys.github.io/Bluetooth-Proxy/)
 - [GitHub](https://github.com/SmartHomeGuys/Bluetooth-Proxy)
