@@ -1,0 +1,319 @@
+esphome:
+  name: "ekf-connect-rce-2-wf"
+  on_boot:
+    then:
+      - script.execute: check_relays_state
+
+wifi:
+  ap:
+
+logger:
+  baud_rate: 0
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+uart:
+  id: uart_bus
+  tx_pin: P11
+  rx_pin: P10
+  baud_rate: 4800
+  stop_bits: 1
+
+globals:
+  - id: is_relays_on
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+light:
+  - platform: status_led
+    id: wifi_led
+    pin:
+      number: P6
+      inverted: true
+    internal: false
+
+switch:
+  - platform: gpio
+    id: relay_1
+    name: "socket1"
+    icon: mdi:fridge-variant-outline  # icon: mdi:power-socket-eu
+    pin: P7
+    on_turn_on:
+      - script.execute: check_relays_state
+    on_turn_off:
+      - script.execute: check_relays_state
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay_2
+    name: "socket2"
+    icon: mdi:water-pump  # icon: mdi:power-socket-eu
+    pin: P22
+    on_turn_on:
+      - script.execute: check_relays_state
+    on_turn_off:
+      - script.execute: check_relays_state
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay_3
+    name: "socket3"
+    icon: mdi:air-humidifier
+    pin: P20
+    on_turn_on:
+      - script.execute: check_relays_state
+    on_turn_off:
+      - script.execute: check_relays_state
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay_4
+    name: "socket4"
+    icon: mdi:robot-vacuum  # icon: mdi:power-socket-eu
+    pin: P8
+    on_turn_on:
+      - script.execute: check_relays_state
+    on_turn_off:
+      - script.execute: check_relays_state
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    id: relay_5
+    name: "USB"
+    icon: mdi:cellphone  # icon: mdi:usb
+    pin: P26
+    on_turn_on:
+      - script.execute: check_relays_state
+    on_turn_off:
+      - script.execute: check_relays_state
+    restore_mode: RESTORE_DEFAULT_OFF
+
+binary_sensor:
+  - platform: gpio
+    id: toggle_relays
+    name: toggle_elays
+    device_class: plug
+    internal: true
+    pin:
+      number: P24
+      inverted: true
+      mode: INPUT_PULLDOWN
+    filters:
+      - delayed_off: 10ms
+    on_multi_click:
+      - timing:
+          - ON for at most 0.5s
+          - OFF for at least 0.5s
+        then:
+          - lambda: |-
+              id(relays_toggle).execute();
+      - timing:
+          - ON for at least 1s
+        then:
+          - lambda: |-
+              if (id(is_relays_on) == true) {
+                id(off_relays).execute();
+              } else {
+                id(on_relays).execute();
+              }
+      - timing:
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+          - ON for at most 0.5s
+          - OFF for at least 0.5s
+        then:
+          - lambda: |-
+              id(off_relays).execute();
+
+  - platform: analog_threshold
+    name: "current overload"
+    sensor_id: current
+    device_class: problem
+    threshold: 16
+    id: current_overload
+    on_press:
+      then:
+        - switch.turn_off: relay_1
+        - switch.turn_off: relay_2
+        - switch.turn_off: relay_3
+        - switch.turn_off: relay_4
+        - switch.turn_off: relay_5
+
+  - platform: analog_threshold
+    name: "voltage overload"
+    sensor_id: voltage
+    device_class: problem
+    threshold: 253
+    id: voltage_overload
+    on_press:
+      then:
+        - switch.turn_off: relay_1
+        - switch.turn_off: relay_2
+        - switch.turn_off: relay_3
+        - switch.turn_off: relay_4
+        - switch.turn_off: relay_5
+
+script:
+  - id: on_relays
+    then:
+      - switch.turn_on: relay_1
+      - delay: 30ms
+      - switch.turn_on: relay_2
+      - delay: 30ms
+      - switch.turn_on: relay_3
+      - delay: 30ms
+      - switch.turn_on: relay_4
+      - delay: 30ms
+      - switch.turn_on: relay_5
+      - delay: 30ms
+      - light.turn_on: wifi_led
+  - id: off_relays
+    then:
+      - switch.turn_off: relay_1
+      - delay: 30ms
+      - switch.turn_off: relay_2
+      - delay: 30ms
+      - switch.turn_off: relay_3
+      - delay: 30ms
+      - switch.turn_off: relay_4
+      - delay: 30ms
+      - switch.turn_off: relay_5
+      - delay: 30ms
+      - light.turn_off: wifi_led
+  - id: check_relays_state
+    then:
+      - if:
+          condition:
+            or:
+              - switch.is_on: relay_1
+              - switch.is_on: relay_2
+              - switch.is_on: relay_3
+              - switch.is_on: relay_4
+              - switch.is_on: relay_5
+          then:
+            - lambda: "id(is_relays_on) = true;"
+            - light.turn_on: wifi_led
+          else:
+            - lambda: "id(is_relays_on) = false;"
+            - light.turn_off: wifi_led
+
+  - id: relays_toggle
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_off: relay_1
+              - switch.is_off: relay_2
+              - switch.is_off: relay_3
+              - switch.is_off: relay_4
+              - switch.is_off: relay_5
+          then:
+            - switch.turn_on: relay_1
+            - lambda: "id(is_relays_on) = true;"
+            - light.turn_on: wifi_led
+          else:
+            - if:
+                condition:
+                  and:
+                    - switch.is_on: relay_1
+                    - switch.is_off: relay_2
+                    - switch.is_off: relay_3
+                    - switch.is_off: relay_4
+                    - switch.is_off: relay_5
+                then:
+                  - switch.turn_on: relay_2
+                  - lambda: "id(is_relays_on) = true;"
+                  - light.turn_on: wifi_led
+                else:
+                  - if:
+                      condition:
+                        and:
+                          - switch.is_on: relay_1
+                          - switch.is_on: relay_2
+                          - switch.is_off: relay_3
+                          - switch.is_off: relay_4
+                          - switch.is_off: relay_5
+                      then:
+                        - switch.turn_on: relay_3
+                        - lambda: "id(is_relays_on) = true;"
+                        - light.turn_on: wifi_led
+                      else:
+                        - if:
+                            condition:
+                              and:
+                                - switch.is_on: relay_1
+                                - switch.is_on: relay_2
+                                - switch.is_on: relay_3
+                                - switch.is_off: relay_4
+                                - switch.is_off: relay_5
+                            then:
+                              - switch.turn_on: relay_4
+                              - lambda: "id(is_relays_on) = true;"
+                              - light.turn_on: wifi_led
+                            else:
+                              - if:
+                                  condition:
+                                    and:
+                                      - switch.is_on: relay_1
+                                      - switch.is_on: relay_2
+                                      - switch.is_on: relay_3
+                                      - switch.is_on: relay_4
+                                      - switch.is_off: relay_5
+                                  then:
+                                    - switch.turn_on: relay_5
+                                    - lambda: "id(is_relays_on) = true;"
+                                    - light.turn_on: wifi_led
+                                  else:
+                                    - switch.turn_off: relay_1
+                                    - switch.turn_off: relay_2
+                                    - switch.turn_off: relay_3
+                                    - switch.turn_off: relay_4
+                                    - switch.turn_off: relay_5
+                                    - lambda: "id(is_relays_on) = false;"
+                                    - light.turn_off: wifi_led
+
+button:
+  - platform: template
+    id: toggle_relays_btn
+    name: "Toggle"
+    icon: mdi:toggle-switch
+    on_press:
+      then:
+        - lambda: |-
+            if (id(is_relays_on) == true) {
+              id(off_relays).execute();
+            } else {
+              id(on_relays).execute();
+            }
+
+sensor:
+  - platform: bl0942
+    uart_id: uart_bus
+    voltage:
+      id: voltage
+      name: voltage
+      filters:
+        - delta: 0.5
+    voltage_reference: 15170
+    current:
+      id: current
+      name: current
+      filters:
+        - delta: 0.1
+    power:
+      id: power
+      name: power
+      filters:
+        - multiply: -1
+        - delta: 1
+    energy:
+      id: energy
+      name: energy
+      filters:
+        - delta: 5
+    frequency:
+      id: frequency
+      name: frequency
+      accuracy_decimals: 0
+      filters:
+        - delta: 1
+    update_interval: 0.5s
+
