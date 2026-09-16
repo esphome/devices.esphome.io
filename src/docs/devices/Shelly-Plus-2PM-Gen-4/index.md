@@ -21,7 +21,11 @@ board: esp32
 | GPIO10 | Relay 2        |
 | GPIO11 | Relay 1        |
 | GPIO12 | Button         |
-| GPIO33 | ade7953 IRQ    |
+| GPIO19 | ade7953 IRQ    |
+| GPIO4? | Add-on module Digital in |
+| GPIO16 | Add-on module Data in    |
+| GPIO9  | Add-on module Data out   |
+| GPIO17 | Add-on module Analog in  (duty_cycle)|
 
 The Shelly Plus 2PM Gen 4 is based on the ESP32-C6 (Single core, 160MHz, 8MB embedded flash)
 
