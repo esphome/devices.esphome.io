@@ -1,0 +1,92 @@
+esphome:
+  name: ZY-HPS01 Human presence sensor
+  friendly_name: Human presence sensor
+
+bk72xx:
+  board: cb3s
+
+uart:
+  - baud_rate: 9600
+    tx_pin: 11
+    rx_pin: 10
+tuya:
+
+sensor:
+  - platform: tuya
+    name: "Light Intensity"
+    id: light_intensity
+    sensor_datapoint: 103
+    unit_of_measurement: "lx"
+    device_class: "illuminance"
+    icon: "mdi:brightness-5"
+    state_class: "measurement"
+
+number:
+  - platform: "tuya"
+    name: "Far Detection"
+    number_datapoint: 109
+    min_value: 0
+    max_value: 600
+    step: 1
+    mode: slider
+    unit_of_measurement: "cm"
+    icon: "mdi:signal-distance-variant"
+  - platform: "tuya"
+    name: "Presence Delay"
+    number_datapoint: 104
+    min_value: 1
+    max_value: 255
+    step: 1
+    mode: slider
+    unit_of_measurement: "s"
+    icon: "mdi:timer"
+  - platform: "tuya"
+    name: "Sensitivity"
+    number_datapoint: 105
+    min_value: 0
+    max_value: 10
+    step: 1
+    mode: slider
+    icon: "mdi:ray-vertex"
+  - platform: "tuya"
+    name: "Micro Sensitivity"
+    number_datapoint: 107
+    min_value: 0
+    max_value: 10
+    step: 1
+    mode: slider
+    icon: "mdi:ray-vertex"
+  - platform: "tuya"
+    name: "Min Range"
+    number_datapoint: 110
+    min_value: 0
+    max_value: 600
+    step: 1
+    mode: slider
+    unit_of_measurement: "cm"
+    icon: "mdi:signal-distance-variant"
+  - platform: "tuya"
+    name: "Micro Max Range"
+    number_datapoint: 111
+    min_value: 0
+    max_value: 600
+    step: 1
+    mode: slider
+    unit_of_measurement: "cm"
+    icon: "mdi:signal-distance-variant"
+  - platform: "tuya"
+    name: "Micro Min Range"
+    number_datapoint: 112
+    min_value: 0
+    max_value: 600
+    step: 1
+    mode: slider
+    unit_of_measurement: "cm"
+    icon: "mdi:signal-distance-variant"
+binary_sensor:
+  - platform: "tuya"
+    name: "Presence State"
+    sensor_datapoint: 101
+    device_class: occupancy
+    filters:
+      - invert:
