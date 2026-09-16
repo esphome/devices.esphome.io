@@ -4,7 +4,7 @@ esphome:
   on_boot:
     priority: -100
     then:
-      - light.turn_on: { id: tubes, effect: "None", brightness: 100% }
+      - light.turn_on: {id: tubes, effect: "None", brightness: 100%}
 
 esp8266:
   board: esp8285
@@ -78,6 +78,26 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
+  # Display on/off. MUST live here rather than using light.turn_off: the
+  # addressable output scales every write by current_values.get_state(), so
+  # turning the light off multiplies all later addressable_set calls by zero
+  # and the strip goes permanently black (an ON press could not recover it).
+  - id: display_on
+    type: bool
+    restore_value: false
+    initial_value: 'true'
+  # Alarm state. The schedule only LATCHES the alarm; it must also remember
+  # what effect was showing so it can go back, and flag that the mode change
+  # was ours. Without this the alarm fires at 07:30 and the clock silently
+  # stays on "Alarm red" forever, which reads as the mode switching by itself.
+  - id: alarm_on
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: mode_before_alarm
+    type: int
+    restore_value: false
+    initial_value: '0'
   - id: alarm_hour_g
     type: int
     restore_value: false
@@ -91,6 +111,9 @@ time:
   - platform: sntp
     id: ntp
     timezone: Europe/Berlin
+    # Re-sync every 30 min. The default is 15 min, but each resync briefly
+    # blanks has_time, and a WDT reboot was resetting the clock anyway.
+    update_interval: 30min
     servers: [pool.ntp.org, time.cloudflare.com]
     on_time_sync:
       - logger.log: "NTP synced"
@@ -107,7 +130,13 @@ time:
                          t.hour == id(alarm_hour_g) &&
                          t.minute == id(alarm_min_g);
               then:
-                - lambda: 'id(mode_idx) = 7;'
+                # latch: remember where we were, only if not already alarming
+                - lambda: |-
+                    if (!id(alarm_on)) {
+                      id(mode_before_alarm) = id(mode_idx);
+                      id(alarm_on) = true;
+                    }
+                - lambda: 'id(alarm_on) = true; id(mode_idx) = 7;'
 
 light:
   - platform: neopixelbus
@@ -117,13 +146,22 @@ light:
     variant: WS2812
     pin: GPIO13
     num_leds: 60
-    method: { type: bit_bang }
+    method: {type: bit_bang}
     restore_mode: ALWAYS_ON
     default_transition_length: 0s
     internal: true
 
 # ---------------------------------------------------------------------------
-# RENDERER - 10x per second so the animated effects are smooth
+# RENDERER - 3x per second.
+#
+# Do NOT raise this back to 10 Hz. NeoPixelBus' bit_bang method wraps every
+# send in noInterrupts()/interrupts(), and one 60-LED WS2812 frame is 1440 bits
+# x 1.65us = ~2.38 ms with EVERY interrupt disabled. At 10 Hz that is 24 ms of
+# blocked interrupts per second, which starves the WiFi driver until the
+# hardware watchdog fires and reboots the chip:
+#     [E][esp8266:171]: *** CRASH DETECTED ON PREVIOUS BOOT ***
+#     Reason: Hardware WDT - Level1Int (exccause=4)  PC: wDev_ProcessFiq
+# 3 Hz keeps it to ~7 ms/s. A nixie clock does not need 10 fps.
 # ---------------------------------------------------------------------------
 interval:
   - interval: 500ms
@@ -137,8 +175,9 @@ interval:
             id(cur_s) = t.second;
           }
 
-  - interval: 100ms
+  - interval: 330ms
     then:
+      # Fill every LED black each frame so stale LEDs never linger.
       - light.addressable_set:
           id: tubes
           range_from: 0
@@ -146,14 +185,14 @@ interval:
           red: 0%
           green: 0%
           blue: 0%
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
 
       # ---- seconds ones -> LED block 0 ----
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 0 + (9 - (id(cur_s) % 10));'
-          range_to:   !lambda 'return 0 + (9 - (id(cur_s) % 10));'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 0 + (9 - (id(cur_s) % 10));'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -309,8 +348,8 @@ interval:
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 10 + (9 - (id(cur_s) / 10));'
-          range_to:   !lambda 'return 10 + (9 - (id(cur_s) / 10));'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 10 + (9 - (id(cur_s) / 10));'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -466,8 +505,8 @@ interval:
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 20 + (9 - (id(cur_m) % 10));'
-          range_to:   !lambda 'return 20 + (9 - (id(cur_m) % 10));'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 20 + (9 - (id(cur_m) % 10));'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -623,8 +662,8 @@ interval:
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 30 + (9 - (id(cur_m) / 10));'
-          range_to:   !lambda 'return 30 + (9 - (id(cur_m) / 10));'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 30 + (9 - (id(cur_m) / 10));'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -780,8 +819,8 @@ interval:
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 40 + id(cur_h) / 10;'
-          range_to:   !lambda 'return 40 + id(cur_h) / 10;'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 40 + id(cur_h) / 10;'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -937,8 +976,8 @@ interval:
       - light.addressable_set:
           id: tubes
           range_from: !lambda 'return 50 + id(cur_h) % 10;'
-          range_to:   !lambda 'return 50 + id(cur_h) % 10;'
-          color_brightness: !lambda 'return id(bright_pct) / 100.0f;'
+          range_to: !lambda 'return 50 + id(cur_h) % 10;'
+          color_brightness: !lambda 'return id(display_on) ? id(bright_pct) / 100.0f : 0.0f;'
           red: !lambda |-
             const int m = id(mode_idx);
             const int ms = (int) millis();
@@ -1095,7 +1134,7 @@ interval:
 output:
   - platform: gpio
     id: buzzer_out
-    pin: { number: GPIO15, mode: { output: true } }
+    pin: {number: GPIO15, mode: {output: true}}
 
 switch:
   - platform: output
@@ -1108,27 +1147,27 @@ binary_sensor:
   - platform: gpio
     id: btn_mode
     name: "Mode"
-    pin: { number: GPIO0, mode: { input: true, pullup: true }, inverted: true }
+    pin: {number: GPIO0, mode: {input: true, pullup: true}, inverted: true}
     on_press:
-      - lambda: 'id(mode_idx) = (id(mode_idx) + 1) % 8;'
+      - lambda: |-
+          id(alarm_on) = false;
+          id(mode_idx) = (id(mode_idx) + 1) % 7;
 
   - platform: gpio
     id: btn_time
     name: "Time"
-    pin: { number: GPIO2, mode: { input: true, pullup: true }, inverted: true }
+    pin: {number: GPIO2, mode: {input: true, pullup: true}, inverted: true}
     on_press:
-      - lambda: 'id(mode_idx) = 0;'
+      - lambda: 'id(alarm_on) = false; id(mode_idx) = 0;'
 
   # Up = GPIO16, active LOW (no pull-up / no interrupts on ESP8266 for GPIO16)
   - platform: gpio
     id: btn_up
     name: "Up"
-    pin: { number: GPIO16, mode: { input: true, pulldown: true }, inverted: true }
+    pin: {number: GPIO16, mode: {input: true, pulldown: true}, inverted: true}
     on_press:
       - lambda: |-
-          float b = id(bright_pct) + 10.0f;
-          if (b > 100.0f) b = 100.0f;
-          id(bright_pct) = b;
+          id(bright_pct) = fminf(100.0f, id(bright_pct) + 10.0f);
 
 button:
   - platform: restart
