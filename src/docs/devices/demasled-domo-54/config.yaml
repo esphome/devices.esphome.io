@@ -1,0 +1,70 @@
+substitutions:
+  name: "demasled-domo-54"
+  friendly_name: "DEMASLED DOMO-54"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+logger:
+
+wifi:
+  ap:
+
+switch:
+  - platform: gpio
+    name: "Relay"
+    id: relay
+    pin: P8
+    restore_mode: RESTORE_DEFAULT_OFF
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    id: physical_button
+    pin:
+      number: P6
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        - switch.toggle: relay
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+
+    cf_pin:
+      number: P24
+      inverted: true
+
+    cf1_pin:
+      number: P26
+      inverted: true
+
+    sel_pin:
+      number: P10
+      inverted: true
+
+    current:
+      name: "Current"
+      filters:
+        - multiply: 0.4331
+
+    voltage:
+      name: "Voltage"
+
+    power:
+      name: "Power"
+
+    energy:
+      name: "Energy"
+
+    current_resistor: 0.001156
+    voltage_divider: 761.68
+
+    update_interval: 2s
+    change_mode_every: 1
