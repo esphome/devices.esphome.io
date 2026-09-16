@@ -1,0 +1,16 @@
+# Derives a 0–100% reading from the onboard battery voltage divider on GPIO4.
+# Adjust min/max voltages to match your cell chemistry and load conditions.
+sensor:
+  - platform: template
+    name: "Battery Percentage"
+    lambda: |-
+      float voltage = id(battery_voltage).state;
+      float min_voltage = 3.3;
+      float max_voltage = 4.2;
+      float percentage = (voltage - min_voltage) / (max_voltage - min_voltage) * 100.0;
+      if (percentage > 100.0) return 100.0;
+      if (percentage < 0.0) return 0.0;
+      return percentage;
+    update_interval: 60s
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
