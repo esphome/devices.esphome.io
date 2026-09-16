@@ -12,6 +12,9 @@ difficulty: 4
 - This device is advertised in eWelink as _Coolkit 0185_, which is a generic name used for more devices
 - Has a red LED attached to the relay output that cannot be controlled independently
 - Has a button for RF pairing, but the unit tested had no RF radio meaning it's a useless button
+- **Important:** *newer versions* of this device (e.g., labelled as `EWL-B04`) use a Bouffalo based MCU, such as the `BL602`.
+  You can *not* flash ESPHome on them, but could use OpenBeken and MQTT for an integration with Home Assistant.
+  See [this thread](https://www.elektroda.com/rtvforum/topic3889041.html) for a comprehensive discussion on the topic.
 
 ## Product Images
 
