@@ -3,11 +3,12 @@ title: VirageSwitch KS-602H
 date-published: 2022-01-25
 type: switch
 standard: us
+board: esp8266
 ---
 
-[Virage Laboratories](https://www.viragelabs.com)
+Manufacturer: Virage Laboratories (seems to no longer exist)
 
-[KS-602H Switch](https://www.viragelabs.com/product/virageswitch/)![image](virage_labs_KS-602H.jpg)
+![image](virage_labs_KS-602H.jpg)
 
 ## General Notes
 
