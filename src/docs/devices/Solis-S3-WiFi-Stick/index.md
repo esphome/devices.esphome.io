@@ -10,7 +10,7 @@ difficulty: 3
 
 ## General Notes
 
-This configuration is for the [Solis S3 WiFi Stick](https://www.solisinverters.com/us/accessories5/WiFi_Data_Logging_Stick_us.html)
+This configuration is for the [Solis S3 WiFi Stick](https://www.solisinverters.com/global/accessories5/WiFi_Data_Logging_Stick_gl.html)
 which reads usage data from Ginlong Solis solar inverters.
 
 ## Flashing Instuctions
