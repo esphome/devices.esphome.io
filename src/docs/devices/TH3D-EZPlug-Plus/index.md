@@ -1,6 +1,6 @@
 ---
 title: TH3D EZPlug+
-date-published: 2023-02-20
+date-published: 2026-07-27
 type: plug
 standard: us
 board: esp8266
@@ -13,7 +13,7 @@ board: esp8266
 | Pin    | Function                            |
 | -----  | ------------                        |
 | GPIO3  | Button Input                        |
-| GPIO4  | BL0937 Ennergy Meter CF             |
+| GPIO4  | BL0937 Energy Meter CF             |
 | GPIO5  | HLW8012 Power Sensor CF1            |
 | GPIO12 | HLW8012 Power Sensor SEL (Inverted) |
 | GPIO13 | Status LED (Inverted)               |
@@ -22,33 +22,50 @@ board: esp8266
 ## Configuration Notes
 
 * This includes basic overcurrent protection in the form of an automation
-* Voltage divider is configured as I found mine, but you will need to verify your own voltage/current/power calibration
+* Voltage divider is configured to be roughly around 120v, but you will need to verify your own voltage/current/power calibration
+* 
 
 ## Basic Configuration
 
 ```yaml
+#Based on https://devices.esphome.io/devices/th3d-ezplug-plus/
+
 esphome:
-  name: TH3D_EZPlug_Plus
-  restore_from_flash: true
-  early_pin_init: true
+  name: th3d-ezplug-plus
+  friendly_name: "TH3D EZPlug Plus"
 
 esp8266:
   board: esp01_1m
+  restore_from_flash: true
+  early_pin_init: true
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "TH3D EZPlug+ Fallback Hotspot"
+    password: !secret wifi_password
+
 logger:
 api:
+  encryption:
+    key: !secret th3d_ezplug_plus_encryption_key
+
 ota:
+  - platform: esphome
+    password: !secret th3d_ezplug_plus_ota_password
+
+captive_portal:
+
+web_server:
+  port: 80
 
 time:
   - platform: homeassistant
+    id: homeassistant_time
 
-switch:
-  - platform: restart
-    name: Restart
 text_sensor:
   - platform: version
     name: Version
@@ -63,7 +80,10 @@ text_sensor:
       name: MAC Address
     scan_results:
       name: Scan Results
+
 switch:
+  - platform: restart
+    name: Restart
   - platform: gpio
     pin: GPIO14
     id: relay
@@ -90,22 +110,21 @@ sensor:
     cf_pin: GPIO4
     cf1_pin: GPIO5
     model: BL0937
-    voltage_divider: 512
+    voltage_divider: 1776
     current:
       name: Current
       unit_of_measurement: A
       accuracy_decimals: 3
-    # Overcurrent protection.  Device is rated for 15A
-    on_value_range:
+      # Overcurrent protection. Device is rated for 15A
+      on_value_range:
         - above: 15
           then:
             - switch.turn_off: relay
             - homeassistant.service:
                 service: persistent_notification.create
                 data:
-                  title: Message from TH3D_EZPlug_Plus
-                data_template:
-                  message: Switch turned off because power exceeded 15A
+                  title: "Message from TH3D_EZPlug_Plus"
+                  message: "Switch turned off because power exceeded 15A"
     voltage:
       name: Voltage
       unit_of_measurement: V
