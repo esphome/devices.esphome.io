@@ -11,7 +11,11 @@ project-url: https://github.com/jensenbox/waveshare-esp32-s3-audio
 
 ## Product Description
 
-The [Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/esp32-s3-audio-board.htm) is a compact development board built around the ESP32-S3R8 module, designed for audio applications such as voice assistants, media players, and intercom systems. It integrates a quad-channel audio ADC (ES7210), a mono audio DAC/codec (ES8311), a Class-D speaker amplifier (NS4150B), a 7-LED WS2812B RGB ring, an RTC, and a TCA9555 I/O expander. Optional accessories include SPI/QSPI displays (1.47" to 3.5"), a DVP camera module, and an SD card.
+The [Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/esp32-s3-audio-board.htm) is a compact development
+board built around the ESP32-S3R8 module, designed for audio applications such as voice assistants, media players,
+and intercom systems. It integrates a quad-channel audio ADC (ES7210), a mono audio DAC/codec (ES8311), a Class-D
+speaker amplifier (NS4150B), a 7-LED WS2812B RGB ring, an RTC, and a TCA9555 I/O expander. Optional accessories
+include SPI/QSPI displays (1.47" to 3.5"), a DVP camera module, and an SD card.
 
 ## Hardware Specs
 
@@ -109,7 +113,12 @@ The [Waveshare ESP32-S3 Audio Board](https://www.waveshare.com/esp32-s3-audio-bo
 
 ## Basic ESPHome Configuration
 
-This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Wake word restart happens in `on_tts_stream_end` (after the speaker finishes playing TTS audio) rather than `on_end`, which avoids an I2S bus conflict where restarting the microphone in `on_end` would preempt the speaker. For a full-featured configuration with LED animations for each voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
+This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a
+voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because
+`micro_wake_word` handles wake word detection directly. Wake word restart happens in `on_tts_stream_end` (after the
+speaker finishes playing TTS audio) rather than `on_end`, which avoids an I2S bus conflict where restarting the
+microphone in `on_end` would preempt the speaker. For a full-featured configuration with LED animations for each
+voice assistant state, see the [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
 ```yaml
 esphome:
