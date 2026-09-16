@@ -5,17 +5,7 @@ bk72xx:
 
 logger:
 
-web_server:
-
-captive_portal:
-
-api:
-
-ota:
-
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
   ap:
 
 text_sensor:
