@@ -1,0 +1,200 @@
+esphome:
+  name: waveshare-audio
+  friendly_name: Waveshare Audio
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: DEBUG
+
+wifi:
+  ap:
+
+# --- I2C bus (shared by ES8311, ES7210, TCA9555, PCF85063) ---
+i2c:
+  scl: GPIO10
+  sda: GPIO11
+
+# --- RTC ---
+time:
+  - platform: pcf85063
+    id: pcf85063_time
+
+# --- I2S audio bus ---
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_mclk_pin: GPIO12
+    i2s_bclk_pin: GPIO13
+    i2s_lrclk_pin: GPIO14
+
+# --- Audio ADC (ES7210 quad-channel mic input) ---
+audio_adc:
+  - platform: es7210
+    id: es7210_adc
+
+# --- Microphone ---
+microphone:
+  - platform: i2s_audio
+    id: mic
+    i2s_audio_id: i2s_audio_bus
+    i2s_din_pin: GPIO15
+    adc_type: external
+
+# --- Audio DAC (ES8311 speaker output) ---
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+
+# --- Speaker ---
+speaker:
+  - platform: i2s_audio
+    id: spkr
+    i2s_audio_id: i2s_audio_bus
+    i2s_dout_pin: GPIO16
+    dac_type: external
+    audio_dac: es8311_dac
+
+# --- TCA9555 I/O expander ---
+tca9555:
+  - id: exio
+    address: 0x20
+
+# --- Speaker amplifier enable (TCA9555 pin 8) ---
+switch:
+  - platform: gpio
+    id: pa_enable
+    name: "Speaker Amplifier"
+    pin:
+      tca9555: exio
+      number: 8
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+
+# --- Media player ---
+media_player:
+  - platform: speaker
+    id: audio_player
+    name: "Audio Player"
+    announcement_pipeline:
+      speaker: spkr
+    on_announcement:
+      - micro_wake_word.stop:
+      - delay: 500ms
+      - wait_until:
+          not:
+            media_player.is_announcing:
+      - delay: 500ms
+      - lambda: id(va).set_use_wake_word(false);
+      - micro_wake_word.start:
+
+# --- Buttons via TCA9555 ---
+binary_sensor:
+  - platform: gpio
+    name: "Key1"
+    pin:
+      tca9555: exio
+      number: 9
+      mode: INPUT
+      inverted: true
+
+  - platform: gpio
+    name: "Key2"
+    pin:
+      tca9555: exio
+      number: 10
+      mode: INPUT
+      inverted: true
+
+  - platform: gpio
+    name: "Key3"
+    pin:
+      tca9555: exio
+      number: 11
+      mode: INPUT
+      inverted: true
+
+# --- WS2812B LED ring ---
+light:
+  - platform: esp32_rmt_led_strip
+    id: rgb_ring
+    name: "RGB Ring"
+    pin: GPIO38
+    num_leds: 7
+    chipset: ws2812
+    rgb_order: RGB
+
+# --- Fallback script: restarts wake word after silent commands ---
+# When a voice command produces no TTS response, on_tts_stream_end never
+# fires, so the wake word engine stays stopped. This script is called from
+# on_end as a safety net: it waits 5 s (giving on_tts_stream_end time to
+# act first), then restarts wake word only if it is not already running.
+script:
+  - id: restart_mww_fallback
+    mode: restart
+    then:
+      - delay: 5s
+      - if:
+          condition:
+            not:
+              micro_wake_word.is_running:
+          then:
+            - wait_until:
+                not:
+                  speaker.is_playing:
+            - delay: 500ms
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start:
+
+# --- Wake word + voice assistant ---
+micro_wake_word:
+  id: mww
+  microphone: mic
+  vad:
+    model: github://esphome/micro-wake-word-models/models/v2/vad.json
+  models:
+    - okay_nabu
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone: mic
+  speaker: spkr
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 2
+  volume_multiplier: 2.0
+
+  on_client_connected:
+    - delay: 2s
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  on_tts_stream_end:
+    - wait_until:
+        not:
+          speaker.is_playing:
+    - delay: 500ms
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  on_end:
+    - light.turn_off: rgb_ring
+    - script.execute: restart_mww_fallback
+
+  on_error:
+    - wait_until:
+        not:
+          speaker.is_playing:
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
