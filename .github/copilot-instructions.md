@@ -79,7 +79,7 @@ When a device has `made-for-esphome: true` in its frontmatter, it must meet ALL 
 
 #### Wi-Fi Device Requirements (if applicable)
 
-- ✅ **`esp32_improv:` component** must be included in configuration
+- ✅ **`improv_ble:` component** must be included in configuration
 - ✅ **`improv_serial:` component** must be included if device has USB port
 
 #### User Control & Updates
@@ -130,7 +130,7 @@ The device must allow users to "take control" via ESPHome Builder:
 ```
 This device is marked as `made-for-esphome: true` but is missing some required components:
 
-- [ ] Missing `esp32_improv:` component - required for Wi-Fi devices ([documentation](https://esphome.io/components/esp32_improv))
+- [ ] Missing `improv_ble:` component - required for Wi-Fi devices ([documentation](https://esphome.io/components/improv_ble/))
 - [ ] Missing `dashboard_import:` component - required for user adoption ([documentation](https://esphome.io/components/esphome.html#adding-the-mac-address-as-a-suffix-to-the-device-name))
 - [ ] Some entities are missing `id` definitions (e.g., line 45 sensor)
 

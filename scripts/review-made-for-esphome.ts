@@ -96,6 +96,25 @@ function placeholderSecretsYaml(): string {
 const CHECKLIST_URL =
   "https://github.com/esphome/esphome-devices/blob/main/.github/made-for-esphome-checklist.md";
 
+// ---------------------------------------------------------------------------
+// Improv-over-BLE key migration (two-phase)
+// ---------------------------------------------------------------------------
+// The `esp32_improv` component was renamed to `improv_ble` in ESPHome
+// 2026.10.0 (esphome/esphome#19264). Nothing about the schema changed: the old
+// key is kept as an alias that ESPHome rewrites internally while warning, and
+// that alias is removed in 2027.4.0.
+//
+//   Phase 1 (now): both keys pass, the legacy one with a deprecation nudge.
+//   Phase 2 (when 2027.4.0 nears): set LEGACY_IMPROV_BLE_KEY_ALLOWED to false
+//     and a config that only has the legacy key FAILS, telling the
+//     manufacturer to rename it. That flag is the entire switch - no other
+//     line in this repo needs to change.
+const IMPROV_BLE_KEY: string = "improv_ble";
+const LEGACY_IMPROV_BLE_KEY: string = "esp32_improv";
+const LEGACY_IMPROV_BLE_KEY_ALLOWED: boolean = true;
+// ESPHome version that drops the legacy alias, quoted in the review detail.
+const LEGACY_IMPROV_BLE_REMOVAL_VERSION: string = "2027.4.0";
+
 // Made for ESPHome requires an `id:` on every component — not just named
 // entities, but buses and hubs too (uart, i2c, spi, canbus, modbus, …). We
 // therefore check EVERY top-level list domain rather than a curated entity
@@ -669,6 +688,51 @@ function collectManualIps(cfg: Record<string, unknown>): string[] {
   return found;
 }
 
+// Improv-over-BLE provisioning, honouring the two-phase key migration above.
+// `legacyAllowed` defaults to the module-level switch; tests pass it
+// explicitly to exercise the post-migration behaviour.
+function improvBleCheck(
+  cfg: Record<string, unknown>,
+  hasWifi: boolean,
+  legacyAllowed: boolean = LEGACY_IMPROV_BLE_KEY_ALLOWED
+): CheckResult {
+  const item = `${IMPROV_BLE_KEY} (Wi-Fi provisioning)`;
+  if (!hasWifi) {
+    return {
+      item,
+      status: "N/A",
+      detail: "no `wifi:` block - Improv-over-BLE not applicable",
+    };
+  }
+  if (cfg[IMPROV_BLE_KEY] !== undefined) {
+    return { item, status: "OK", detail: `\`${IMPROV_BLE_KEY}:\` present` };
+  }
+  if (cfg[LEGACY_IMPROV_BLE_KEY] !== undefined) {
+    const rename =
+      `rename it to \`${IMPROV_BLE_KEY}:\` (renamed in ESPHome 2026.10.0, ` +
+      `the \`${LEGACY_IMPROV_BLE_KEY}:\` alias is removed in ` +
+      `${LEGACY_IMPROV_BLE_REMOVAL_VERSION})`;
+    return legacyAllowed
+      ? {
+          item,
+          status: "OK",
+          detail: `\`${LEGACY_IMPROV_BLE_KEY}:\` present, but deprecated - ${rename}`,
+        }
+      : {
+          item,
+          status: "FAIL",
+          detail: `config still uses the deprecated \`${LEGACY_IMPROV_BLE_KEY}:\` key - ${rename}`,
+        };
+  }
+  return {
+    item,
+    status: "MISSING",
+    detail:
+      `device uses Wi-Fi but has no \`${IMPROV_BLE_KEY}:\` block - ` +
+      "users cannot provision Wi-Fi over BLE",
+  };
+}
+
 function runChecklist(
   cfg: Record<string, unknown>,
   expandedText: string,
@@ -734,23 +798,8 @@ function runChecklist(
       : "no disallowed use of “ESPHome” in the project-facing names",
   });
 
-  // 4. esp32_improv (when wifi present).
-  if (hasWifi) {
-    const present = cfg.esp32_improv !== undefined;
-    checks.push({
-      item: "esp32_improv (Wi-Fi provisioning)",
-      status: present ? "OK" : "MISSING",
-      detail: present
-        ? "`esp32_improv:` present"
-        : "device uses Wi-Fi but has no `esp32_improv:` block — users cannot provision Wi-Fi over BLE",
-    });
-  } else {
-    checks.push({
-      item: "esp32_improv (Wi-Fi provisioning)",
-      status: "N/A",
-      detail: "no `wifi:` block — Improv-over-BLE not applicable",
-    });
-  }
+  // 4. improv_ble (when wifi present).
+  checks.push(improvBleCheck(cfg, hasWifi));
 
   // 5. improv_serial (needs USB port to be meaningful).
   const improvSerial = cfg.improv_serial !== undefined;
@@ -1723,6 +1772,10 @@ export {
   collectSecretRefs,
   placeholderSecretsYaml,
   runChecklist,
+  improvBleCheck,
+  IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY_ALLOWED,
   pageBlocks,
   buildReport,
   buildMultiDeviceReport,
