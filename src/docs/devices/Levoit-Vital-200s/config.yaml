@@ -1,0 +1,148 @@
+esphome:
+  name: levoit-vital200s
+  friendly_name: Levoit Vital 200S
+  name_add_mac_suffix: true
+  min_version: 2026.5.3
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: 1.4.3
+    components: [levoit]
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+uart:
+  - id: uart_mcu2esp
+    tx_pin: GPIO19
+    rx_pin: GPIO18
+    baud_rate: 115200
+
+levoit:
+  id: purifier
+  model: VITAL200S
+
+fan:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_fan
+    name: "Fan"
+
+switch:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_display
+    name: "Display"
+    type: display
+  - platform: levoit
+    levoit: purifier
+    id: levoit_child_lock
+    name: "Child Lock"
+    type: child_lock
+  - platform: levoit
+    levoit: purifier
+    id: levoit_light_detect
+    name: "Light Detect"
+    type: light_detect
+
+select:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_auto_mode
+    name: "Auto Mode"
+    type: auto_mode
+
+sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_pm25
+    name: "AQ - PM 2.5"
+    type: pm25
+  - platform: levoit
+    levoit: purifier
+    id: levoit_aqi
+    name: "AQI"
+    type: aqi
+  - platform: levoit
+    levoit: purifier
+    id: levoit_cadr
+    name: "Current CADR"
+    type: current_cadr
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_life
+    name: "Filter %"
+    type: filter_life_left
+  - platform: levoit
+    levoit: purifier
+    id: levoit_efficiency_counter
+    name: "Efficiency Counter"
+    type: efficiency_counter
+
+binary_sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_low
+    name: "Filter Low"
+    type: filter_low
+
+number:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_timer
+    name: "Timer (min)"
+    type: timer
+  - platform: levoit
+    levoit: purifier
+    id: levoit_filter_lifetime
+    name: "Filter Months"
+    type: filter_lifetime_months
+  - platform: levoit
+    levoit: purifier
+    id: levoit_room_size
+    name: "Auto Mode Room Size"
+    type: efficiency_room_size
+    min_value: 9
+    max_value: 87
+  - platform: levoit
+    levoit: purifier
+    id: levoit_room_size_target
+    name: "Auto Mode Room Size Preset"
+    type: auto_profile_room_size_input
+    min_value: 9
+    max_value: 87
+
+button:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_reset_filter
+    name: "Filter Reset"
+    type: reset_filter_stats
+
+text_sensor:
+  - platform: levoit
+    levoit: purifier
+    id: levoit_mcu_version
+    name: "MCU Version"
+    type: mcu_version
+  - platform: levoit
+    levoit: purifier
+    id: levoit_high_fan_time
+    name: "Auto Mode High Fan Time"
+    type: auto_mode_room_size_high_fan
+  - platform: levoit
+    levoit: purifier
+    id: levoit_error
+    name: "Error"
+    type: error_message
