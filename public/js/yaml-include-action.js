@@ -1,7 +1,9 @@
 // <yaml-include-action data-include="…"> — renders a small button that
-// copies an ESPHome `!include github://…@branch` directive to the user's
-// clipboard. The remark-yaml-include build-time plugin emits one of these
-// right after every yaml code block that came from a `file=` fence.
+// copies an ESPHome `!include github://…@branch` (or `codeberg://…@branch` /
+// `gitlab://…@branch`) directive to the user's clipboard. The
+// remark-yaml-include build-time plugin emits one of these right after every
+// yaml code block that came from a `file=` fence, and after every `url=`
+// block whose URL can be expressed as such a directive.
 //
 // Loaded globally via Starlight's head config; plain ES2017+ to keep the
 // bundle tiny (no framework, no transpilation).
