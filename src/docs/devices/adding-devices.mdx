@@ -263,16 +263,16 @@ because `.yaml` files are mirrored into the published site.
 
 The following rules are enforced by `npm run validate-devices`:
 
-| Scope                       | Rule                                                                                          |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| Every yaml file             | Must parse as valid YAML.                                                                     |
-| Every yaml file             | No passwords (literal **or** `!secret`) on any `password:`, `*_password:`, or `psk:` key.     |
-| Every yaml file             | No `!secret` references anywhere. Example configs must not depend on the user's secrets.yaml. |
-| First `file=` fence on a page | Must reference `config.yaml`. `url=` fences may appear before or after — only `file=` fences count toward this ordering rule. |
-| `config.yaml` only          | No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `improv_serial:`, `bluetooth_proxy:`, etc. |
-| `config.yaml` only          | `wifi:` is allowed for radio/hardware tunables (`country`, `power_save_mode`, `output_power`, …). It must not contain `ssid`, `password`, `networks`, `manual_ip`, `eap`, or `use_address`. An empty `ap:` block is allowed (and recommended) so the device boots into a default fallback hotspot. |
-| `config.yaml` only          | No `platform: homeassistant`, `platform: mqtt`, or `platform: template` anywhere — those are network-dependent or user-derived, not hardware. |
-| `made-for-esphome: true` pages added/modified by the PR | Must include at least one `url=` yaml fence pointing at a `.yaml`/`.yml` file in the manufacturer's GitHub repo (`github.com/<owner>/<repo>/(blob\|raw)/<ref>/...` or `raw.githubusercontent.com/<owner>/<repo>/<ref>/...`) — see [Live yaml from a GitHub URL](#live-yaml-from-a-github-url-url-form) below. |
+| Scope                                                   | Rule                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every yaml file                                         | Must parse as valid YAML.                                                                                                                                                                                                                                                                          |
+| Every yaml file                                         | No passwords (literal **or** `!secret`) on any `password:`, `*_password:`, or `psk:` key.                                                                                                                                                                                                          |
+| Every yaml file                                         | No `!secret` references anywhere. Example configs must not depend on the user's secrets.yaml.                                                                                                                                                                                                      |
+| First `file=` fence on a page                           | Must reference `config.yaml`. `url=` fences may appear before or after — only `file=` fences count toward this ordering rule.                                                                                                                                                                      |
+| `config.yaml` only                                      | No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `improv_serial:`, `bluetooth_proxy:`, etc.                                                                                                                                                                                                    |
+| `config.yaml` only                                      | `wifi:` is allowed for radio/hardware tunables (`country`, `power_save_mode`, `output_power`, …). It must not contain `ssid`, `password`, `networks`, `manual_ip`, `eap`, or `use_address`. An empty `ap:` block is allowed (and recommended) so the device boots into a default fallback hotspot. |
+| `config.yaml` only                                      | No `platform: homeassistant`, `platform: mqtt`, or `platform: template` anywhere — those are network-dependent or user-derived, not hardware.                                                                                                                                                      |
+| `made-for-esphome: true` pages added/modified by the PR | Must include at least one `url=` yaml fence pointing at a `.yaml`/`.yml` file in the manufacturer's GitHub, Codeberg or GitLab repo. The accepted URL shapes are listed under [Live yaml from an upstream URL](#live-yaml-from-an-upstream-url-url-form) below.                                    |
 
 Additional yaml files (e.g. `voice-assistant.yaml`, `battery-percentage.yaml`) can hold derived sensors,
 automations, or anything else specific to one feature — they just have to be valid YAML and follow the
@@ -301,13 +301,13 @@ Use this only for short snippets. Anything that is (or grows into) a real, runna
 `.yaml` file via `file=` — `inline` is not an escape hatch for skipping the no-passwords / no-`!secret` rules on a
 full config.
 
-### Live yaml from a GitHub URL (`url=` form)
+### Live yaml from an upstream URL (`url=` form)
 
-For made-for-ESPHome devices whose configuration lives in the manufacturer's own GitHub repository, you can point
-at the upstream yaml directly instead of vendoring a copy. `url=` is allowed on any device page, but it isn't the
-standard form outside of made-for-ESPHome — for ordinary devices, prefer `file=config.yaml` and only fall back to
-`url=` for upstream-pinned references. When a page mixes both, the first `file=` fence must still be
-`config.yaml`; `url=` fences can appear anywhere on the page.
+For made-for-ESPHome devices whose configuration lives in the manufacturer's own GitHub, Codeberg or GitLab
+repository, you can point at the upstream yaml directly instead of vendoring a copy. `url=` is allowed on any
+device page, but it isn't the standard form outside of made-for-ESPHome — for ordinary devices, prefer
+`file=config.yaml` and only fall back to `url=` for upstream-pinned references. When a page mixes both, the first
+`file=` fence must still be `config.yaml`; `url=` fences can appear anywhere on the page.
 
 ````md
 ```yaml url=https://github.com/esphome/firmware/blob/main/esp-web-tools/esp32.yaml
@@ -319,22 +319,32 @@ That fence renders live on this page as:
 ```yaml url=https://github.com/esphome/firmware/blob/main/esp-web-tools/esp32.yaml
 ```
 
-The build emits a `<remote-yaml-include>` element that fetches the file from `raw.githubusercontent.com` at visit
-time and renders it inside the same Expressive Code container as a `file=` block. An explanatory paragraph
+The build emits a `<remote-yaml-include>` element that fetches the file at visit time (from
+`raw.githubusercontent.com` for GitHub, or from the Codeberg / GitLab API raw endpoints, which are the only ones on
+those hosts that allow cross-origin fetches) and renders it inside the same Expressive Code container as a `file=`
+block. An explanatory paragraph
 ("The current firmware configuration is fetched live from the upstream repository:") is auto-injected above each
 `url=` block — pages don't need to write that sentence themselves.
 
-The host is allowlisted at build time: only `https://github.com/...` and `https://raw.githubusercontent.com/...`
-URLs are accepted. Any other host (or non-`https://` URL) triggers a build warning and the block is dropped.
+The host is allowlisted at build time, mirroring the git hosts ESPHome's own `!include` shorthand supports: only
+`https://github.com/...`, `https://raw.githubusercontent.com/...`, `https://codeberg.org/...` and
+`https://gitlab.com/...` URLs are accepted. Any other host, a non-`https://` URL, or a URL on an allowed host that
+doesn't match one of the shapes below triggers a build warning and the block is dropped.
 
 To satisfy the made-for-esphome rule, the URL must also point at an actual yaml file the renderer can fetch as
 raw bytes:
 
 - `https://github.com/<owner>/<repo>/(blob|raw)/<ref>/<path>.yaml`
 - `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>.yaml`
+- `https://codeberg.org/<owner>/<repo>/(src|raw)/(branch|tag|commit)/<ref>/<path>.yaml`
+- `https://gitlab.com/<owner>/<repo>/-/(blob|raw)/<ref>/<path>.yaml`
 
-(`.yml` works too; `refs/heads/<branch>` and `refs/tags/<tag>` are both accepted in the ref slot.) A bare repo
-URL, a tree/directory URL, or a non-yaml file all render as HTML or 404 in the browser, so they don't count.
+(`.yml` works too. On GitHub, `refs/heads/<branch>` and `refs/tags/<tag>` are both accepted in the ref slot. On
+Codeberg the `branch`, `tag` or `commit` segment is required - the older `/src/<ref>/...` form without it is
+rejected. On GitLab, nested groups such as `gitlab.com/<group>/<subgroup>/<repo>/-/...` work for rendering, but
+the "Copy `!include`" button only appears when the owner is a single segment, because ESPHome's
+`gitlab://<owner>/<repo>/...` shorthand can't express a nested group.) A bare repo URL, a tree/directory URL, or a
+non-yaml file all render as HTML or 404 in the browser, so they don't count.
 
 `url=` blocks **are not validated** by `npm run validate-yaml`. Validation only inspects the yaml referenced via
 `file=` because we can only check what's in the repo — the upstream file's contents are out of our control. If you
