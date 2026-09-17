@@ -20,7 +20,10 @@ They are sold at [Kmart NZ](https://www.kmart.co.nz/product/mirabella-genio-wi-f
 and [Kmart AU](https://www.kmart.com.au/product/mirabella-genio-wi-fi-14m-pixel-led-corner-light-43205363/).
 
 Inside is a [T103_V1.0](https://docs.libretiny.eu/boards/t103-v1.0/) module based on the RTL8710BX MCU. This
-is prossible to reflash using [LibreTiny](https://docs.libretiny.eu/docs/platform/realtek-ambz/), but both FastLED and NeoPixelBus led drivers are unsupported on this platform so it's not possible to drive the LEDs.
+is possible to reflash using [LibreTiny](https://docs.libretiny.eu/docs/platform/realtek-ambz/), but both FastLED and
+NeoPixelBus led drivers are unsupported on this platform so it's not possible to drive the LEDs.
+The buttons and microphone sensor below have been verified working; the `light:` example is included purely for
+reference and is expected to not function until driver support for this platform improves.
 
 ![Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light Teardown][2]
 
@@ -41,7 +44,11 @@ is prossible to reflash using [LibreTiny](https://docs.libretiny.eu/docs/platfor
 
 rtl87xx:
   board: t103-v1.0
+```
 
+## Example Configuration
+
+```yaml
 binary_sensor:
   - platform: gpio
     pin:
@@ -84,11 +91,14 @@ sensor:
     id: mic_raw
     update_interval: 50ms
 
+# FastLED and NeoPixelBus led drivers are unsupported on the RTL8710BX platform (see notes above), so this light
+# will not function. It is included for reference only, in case platform support is added in future.
 light:
   - platform: fastled_clockless
     id: corner_light
     name: "Corner Light"
     chipset: UCS1903
+    # LED data pin is unverified; PA23 is based on the suspected GPIO mapping above.
     pin: PA23
     rgb_order: BRG
     num_leds: 28
