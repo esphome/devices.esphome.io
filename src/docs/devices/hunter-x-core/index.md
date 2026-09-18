@@ -10,53 +10,107 @@ difficulty: 3
 
 ![Hunter X-Core Controller](hunter-xcore.jpg "Hunter X-Core Controller")
 
-This project integrates the **Hunter X-Core** irrigation controller into Home Assistant using ESPHome.
-It acts as a smart WiFi remote, preserving the controller's manual functions and physical dials while
-enabling remote control and automations.
+## General Notes
 
-## What it does
+The **Hunter X-Core** is a residential irrigation controller with 2 to 8 zones. It has no network
+connectivity of its own, but it exposes a `REM` (remote) terminal that is normally used by the Hunter ROAM
+handheld remote. This project drives that terminal from an ESP8266 or ESP32 using the Hunter SmartPort
+protocol, turning the controller into a Wi-Fi remote while keeping the physical dial and manual programs
+fully functional.
 
-By connecting an ESP8266 or ESP32 to the controller's REM (Remote) terminal, this integration enables:
+- **Remote control**: Start or stop up to 8 zones and 4 programs from Home Assistant.
+- **Status**: Exposes the active zone, remaining run time and Wi-Fi diagnostics.
+- **Platform agnostic**: Works with ESP8266 (e.g. Wemos D1 Mini) and ESP32 boards.
+- **Optional MQTT**: A second external component adds MQTT topics for non-Home-Assistant setups.
 
-- **Remote Control**: Start or stop up to 8 irrigation zones and 4 programs remotely.
-- **Real-Time Status**: Exposes zone timers, current running status, and WiFi diagnostics to Home Assistant.
-- **Platform Agnostic**: Works with both ESP8266 (e.g., Wemos D1 Mini) and ESP32 boards.
-- **Optional MQTT**: Full MQTT support for broker-based setups.
+The `REM` line is write-only, so the firmware cannot read back the controller's actual state. It can only
+report which commands it has sent.
 
 ## Pinout & Hardware Setup
 
-Connect your ESP device directly to the Hunter X-Core controller:
+Connect the ESP board directly to the controller's terminal block:
 
 | Hunter X-Core | ESP8266 (D1 Mini) | ESP32  |
 | ------------- | ----------------- | ------ |
 | **REM**       | D0 (GPIO16)       | GPIO18 |
 | **GND**       | GND               | GND    |
 
-_(Note: The REM terminal uses a one-wire, write-only data line referenced to AC#2 or GND depending on your
-exact hardware setup. Please refer to the [project repository](https://github.com/marek-polak/esphome-hunter-xcore)
-for extensive installation and grounding instructions before proceeding.)_
+The `REM` signal is referenced to `AC#2` (or `GND`, depending on your wiring). Please read the
+[installation guide](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/docs/installation.md)
+in the project repository for grounding and power-supply details before connecting anything.
 
 ## Basic Configuration
 
-Because this project utilizes custom external components for the Hunter SmartPort protocol and MQTT zone
-logic, the easiest way to deploy is by cloning the repository and flashing it directly.
+The protocol is implemented by the `hunter_roam` external component from the
+[project repository](https://github.com/marek-polak/esphome-hunter-xcore). The configuration below is the
+minimum needed to get the hardware talking to the controller; zones and programs are then driven from
+lambdas or the more complete example further down.
 
-## Configuration Options
+```yaml
+substitutions:
+  device_name: hunter-xcore
+  friendly_name: Hunter X-Core
 
-When deploying from the repository, configuration is managed via a `secrets.yaml` file (copied from `config.yaml`).
-The available options are:
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
 
-- **`zone_count`** (Important): Set this to match the number of zones your physical Hunter X-Core
-  controller supports (e.g., `4`, `6`, or `8`). Any unused zones beyond this count are automatically
-  hidden from Home Assistant and rejected by the MQTT logic.
-- **WiFi Setup**: `wifi_ssid` and `wifi_password`
-- **API Encryption**: `api_encryption_key`
-- **MQTT Setup** (Optional): `mqtt_broker`, `mqtt_username`, `mqtt_password`
-- **Web Server** (Optional): `web_username`, `web_password`
+esp8266:
+  board: d1_mini
+
+# For an ESP32 board, replace the esp8266 block with:
+# esp32:
+#   board: esp32dev
+#   framework:
+#     type: arduino
+# and set the pin number below to GPIO18.
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/marek-polak/esphome-hunter-xcore
+    components: [hunter_roam]
+
+hunter_roam:
+  id: hunter_roam_instance
+  pin:
+    number: GPIO16
+    mode: OUTPUT
+
+logger:
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+```
+
+## Full Configuration
+
+The repository ships a ready-to-flash configuration with one switch per zone, a program selector,
+a countdown sensor and optional MQTT integration:
+
+- [`hunter-xcore-esp8266.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp8266.yaml)
+- [`hunter-xcore-esp32.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp32.yaml)
+
+Both files include
+[`hunter-xcore-common.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-common.yaml)
+as a package. Clone the repository, copy `config.yaml` to `secrets.yaml` and fill in:
+
+- **`zone_count`**: Number of zones on your controller (`2`–`8`). Unused zones are hidden from
+  Home Assistant.
+- **Wi-Fi**: `wifi_ssid`, `wifi_password`
+- **API**: `api_encryption_key`
+- **MQTT** (optional): `mqtt_broker`, `mqtt_username`, `mqtt_password`
+- **Web server** (optional, ESP32 only): `web_username`, `web_password`
 
 ## Home Assistant Dashboard
 
-Once configured, the zones and countdown timers are available natively in Home Assistant. Here is an example
-of a custom Lovelace dashboard:
+Once configured, the zone switches and countdown timer are available natively in Home Assistant.
+An example Lovelace dashboard is included in the repository:
 
-![Irrigation Dashboard](dashboard.png "HA Custom Lovelace Dashboard")
+![Irrigation Dashboard](dashboard.png "Home Assistant Lovelace dashboard for the Hunter X-Core")
