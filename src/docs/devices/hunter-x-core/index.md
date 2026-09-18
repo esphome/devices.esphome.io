@@ -46,60 +46,25 @@ The protocol is implemented by the `hunter_roam` external component from the
 minimum needed to get the hardware talking to the controller; zones and programs are then driven from
 lambdas or the more complete example further down.
 
-```yaml
-substitutions:
-  device_name: hunter-xcore
-  friendly_name: Hunter X-Core
-
-esphome:
-  name: ${device_name}
-  friendly_name: ${friendly_name}
-
-esp8266:
-  board: d1_mini
-
-# For an ESP32 board, replace the esp8266 block with:
-# esp32:
-#   board: esp32dev
-#   framework:
-#     type: arduino
-# and set the pin number below to GPIO18.
-
-external_components:
-  - source:
-      type: git
-      url: https://github.com/marek-polak/esphome-hunter-xcore
-    components: [hunter_roam]
-
-hunter_roam:
-  id: hunter_roam_instance
-  pin:
-    number: GPIO16
-    mode: OUTPUT
-
-logger:
-
-api:
-
-ota:
-  - platform: esphome
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+```yaml file=config.yaml
 ```
 
 ## Full Configuration
 
 The repository ships a ready-to-flash configuration with one switch per zone, a program selector,
-a countdown sensor and optional MQTT integration:
+a countdown sensor and optional MQTT integration. Both platform files include `hunter-xcore-common.yaml`
+as a package.
 
-- [`hunter-xcore-esp8266.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp8266.yaml)
-- [`hunter-xcore-esp32.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp32.yaml)
+```yaml url=https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp8266.yaml
+```
 
-Both files include
-[`hunter-xcore-common.yaml`](https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-common.yaml)
-as a package. Clone the repository, copy `config.yaml` to `secrets.yaml` and fill in:
+```yaml url=https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-esp32.yaml
+```
+
+```yaml url=https://github.com/marek-polak/esphome-hunter-xcore/blob/main/hunter-xcore-common.yaml
+```
+
+Clone the repository, copy `config.yaml` to `secrets.yaml` and fill in:
 
 - **`zone_count`**: Number of zones on your controller (`2`–`8`). Unused zones are hidden from
   Home Assistant.
