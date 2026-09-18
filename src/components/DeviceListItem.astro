@@ -1,0 +1,49 @@
+---
+import { splitValues } from "../utils/deviceUtils";
+import {
+  VALID_TYPES,
+  VALID_BOARDS,
+  VALID_STANDARDS,
+} from "../utils/validFrontmatter";
+import { getSlugIfValid } from "../utils/validSlugs";
+
+interface Props {
+  id: string;
+  title: string;
+  path: string;
+  type?: string | string[];
+  board?: string | string[];
+  standard?: string | string[];
+}
+
+const { title, path, type, board, standard } = Astro.props;
+
+const typeValues = splitValues(type);
+const boardValues = splitValues(board);
+const standardValues = splitValues(standard);
+
+type TagGroup = { base: string; values: string[]; set: ReadonlySet<string> };
+const groups: TagGroup[] = [
+  { base: "type", values: typeValues, set: VALID_TYPES },
+  { base: "board", values: boardValues, set: VALID_BOARDS },
+  { base: "standards", values: standardValues, set: VALID_STANDARDS },
+];
+---
+
+<li class="deviceListItem">
+  <div class="deviceListContent">
+    <a href={path} class="deviceListTitle">{title}</a>
+    <div class="deviceListTags">
+      {groups.flatMap(({ base, values, set }) =>
+        values.map((value) => {
+          const slug = getSlugIfValid(value, set);
+          return slug ? (
+            <a href={`/${base}/${slug}`} class="deviceTag">{value}</a>
+          ) : (
+            <span class="deviceTag">{value}</span>
+          );
+        })
+      )}
+    </div>
+  </div>
+</li>

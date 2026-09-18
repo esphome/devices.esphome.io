@@ -30,6 +30,11 @@ Key features:
 - YAML configuration file is available for easy configuration
 - OSHWA certified
 
+## Configuration
+
+```yaml url=https://github.com/makerspacelt/temp-1w8-pro-sw/blob/master/factory.yaml
+```
+
 ## Project pages
 
 - [Tindie](https://temp-1w8-pro.makerspace.lt/shop)

@@ -8,7 +8,7 @@ difficulty: 4
 made-for-esphome: False
 ---
 
-[Amazon Link](https://amzn.to/3XcOB2Y)
+[Amazon Link](https://www.amazon.com/dp/B0D4R98V5F)
 
 ## Product Image
 

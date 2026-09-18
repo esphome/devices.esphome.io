@@ -20,7 +20,7 @@ standard: in
 
 Shorting of CEN was not required to enter flashing mode in this case as it was already in flashing mode.
 
-For how to flash with ltchiptool refer to [guide of homemate 4 node touch switch](../HomeMate-4-Gang-Touch-Switch/index.md)
+For how to flash with ltchiptool refer to [guide of homemate 4 node touch switch](/devices/homemate-4-gang-touch-switch/)
 as the procedure is same.
 
 ## ESPHome Configuration

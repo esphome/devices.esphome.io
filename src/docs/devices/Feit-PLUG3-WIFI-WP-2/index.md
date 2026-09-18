@@ -9,11 +9,11 @@ difficulty: 4
 
 This variant is marked `FCC ID: SYW-PLUG3WIFI` and `IC: 20416-PLUG3WIFI` on the bottom.
 
-[Amazon Link](https://amzn.to/3TlrpOr)
+[Amazon Link](https://www.amazon.com/dp/B0DB4BTCV3)
 
 ![Product Image](box.jpg "Product Image")
 
-The Feit Electric Triple Outlet Outdoor SmartPlug is sold on [Amazon](https://amzn.to/3TlrpOr) and at
+The Feit Electric Triple Outlet Outdoor SmartPlug is sold on [Amazon](https://www.amazon.com/dp/B0DB4BTCV3) and at
 [Costco](https://www.costco.com/feit-electric-triple-outlet-outdoor-smart-plugs-2-pack.product.4000263691.html) in the
 US. I picked up a 2-pack at Costco on sale in September 2024 for around $15. They are plastic but weatherized with a UL
 rating for wet locations.

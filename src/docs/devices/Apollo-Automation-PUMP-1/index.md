@@ -34,9 +34,14 @@ The Apollo Automation PUMP-1 is a food safe liquid pump controller with the foll
 4. In Home Assistant, look at discovered devices.
 5. If you'd like to switch to the ethernet version please follow the guide on our wiki
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/PUMP-1/blob/main/Integrations/ESPHome/PUMP-1.yaml
+```
+
 ## Links
 
-- [Shop](https://apolloautomation.com/products/pump-1-fluid-pump?utm_source=esphome&utm_medium=social)
+- [Shop](https://apolloautomation.com/products/pump-1-fluid-pump)
 - [GitHub](https://github.com/ApolloAutomation/PUMP-1)
 - [Wiki](https://wiki.apolloautomation.com/)
 - [Discord](https://dsc.gg/ApolloAutomation)

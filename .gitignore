@@ -54,10 +54,6 @@ typings/
 # dotenv environment variable files
 .env*
 
-# gatsby files
-.cache/
-public
-
 # Mac files
 .DS_Store
 
@@ -68,16 +64,11 @@ yarn-error.log
 # Yarn Integrity file
 .yarn-integrity
 
-# Production
-/build
-
-# Generated files
-.docusaurus
-.cache-loader
+# Astro build output
+dist/
+.astro/
 
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-src/data/device-metadata.json

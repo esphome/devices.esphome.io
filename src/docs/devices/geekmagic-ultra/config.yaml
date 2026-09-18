@@ -1,0 +1,70 @@
+esphome:
+  name: geek-magic-ultra
+  friendly_name: geek-magic-ultra
+
+esp8266:
+  board: esp12e
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+  interface: hardware
+  id: spihwd
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO05
+    frequency: 1000 Hz
+    id: pwm_output
+    inverted: true
+
+light:
+  - platform: monochromatic
+    output: pwm_output
+    id: backlight
+    name: "Backlight"
+    default_transition_length: 1s
+    restore_mode: ALWAYS_ON
+
+font:
+  - file: "gfonts://Roboto"
+    id: roboto
+    size: 28
+
+color:
+  - id: color_black
+    red_int: 0
+    green_int: 0
+    blue_int: 0
+    white_int: 0
+
+  - id: color_white
+    red_int: 255
+    green_int: 255
+    blue_int: 255
+    white_int: 0
+
+display:
+  - id: disp
+    platform: mipi_spi
+    model: ST7789V
+    spi_id: spihwd
+    dimensions:
+      height: 240
+      width: 240
+      offset_height: 0
+      offset_width: 0
+    dc_pin: GPIO00
+    reset_pin: GPIO02
+    buffer_size: 12.5%
+    invert_colors: true
+    color_depth: 16
+    color_order: BGR
+    spi_mode: mode3
+    data_rate: 40000000
+    rotation: 0°
+    auto_clear_enabled: false
+    update_interval: 1s
+    lambda: |-
+      it.fill(color_black);
+      it.printf(0, 0, id(roboto), color_white, "Hello World!");

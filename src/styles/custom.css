@@ -1,0 +1,84 @@
+/* ESPHome Devices custom styles (teal palette) */
+
+/*
+ * Starlight expects the accent palette to follow a low→mid→high lightness
+ * gradient that crosses the page background lightness:
+ *   accent-low  — close to page bg (light mode: light, dark mode: dark)
+ *   accent      — the mid-tone, used for buttons/icons
+ *   accent-high — far from page bg (light mode: dark, dark mode: light)
+ *
+ * text-accent defaults to accent-high, text-invert defaults to accent-low,
+ * so the active-sidebar pair (bg=accent-high, text=accent-low) needs a real
+ * luminance gap between the two ends for readable contrast.
+ */
+
+:root {
+  --sl-line-height: 1.6;
+  --sl-content-width: 55rem;
+
+  --sl-color-accent-low: #d1eeee;
+  --sl-color-accent: #007070;
+  --sl-color-accent-high: #003d3d;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #0a3d45;
+  --sl-color-accent: #2a9bab;
+  --sl-color-accent-high: #b8f1f7;
+}
+
+/* Limit logo height in header */
+.site-title img {
+  max-height: 30px;
+  width: auto;
+}
+
+/* Remove search blur overlay */
+dialog::backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Sidebar nav item spacing */
+.sidebar-content ul li summary {
+  padding-block: 0.5em;
+}
+
+.sidebar-content ul li > a {
+  padding-block: 0.5em;
+}
+
+/* Made for ESPHome splash logo */
+.made-for-esphome-logo-container {
+  margin-bottom: 1rem;
+}
+.made-for-esphome-logo-image {
+  height: 80px;
+  width: 200px;
+  background-image: url("/img/made-for-esphome-black-on-white.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left center;
+}
+:root[data-theme="dark"] .made-for-esphome-logo-image {
+  background-image: url("/img/made-for-esphome-white-on-black.svg");
+}
+.made-for-esphome-description {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Homepage helpers */
+.margin-bottom-lg {
+  margin-bottom: 2rem;
+}
+
+/* Cap inline markdown images so huge screenshots don't dominate the page */
+.sl-markdown-content img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 400px;
+  object-fit: contain;
+}

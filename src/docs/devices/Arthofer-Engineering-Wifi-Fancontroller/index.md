@@ -35,6 +35,11 @@ The Arthofer Engineering WiFi Fan Controller is a 4-channel PWM fan controller w
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/zeroflow/wifi-fancontroller/blob/main/fancontroller-rev3.3-esp32s2.yaml
+```
+
 ## Links
 
 - [Shop](https://www.elecrow.com/wifi-fancontroller1.html)

@@ -8,7 +8,7 @@ board: esp8266
 
 Treatlife DS02S Switch![image](Treatlife-DS02S.png)
 
-[Amazon Link](https://amzn.to/2RHB44M)
+[Amazon Link](https://www.amazon.com/dp/B07YKFSWJN)
 
 ## Notes
 

@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3dYflOQ)
+[Amazon Link](https://www.amazon.com/dp/B07CVFD2KC)
 
 ## GPIO Pinout
 

@@ -40,7 +40,7 @@ Credit and thanks to the following resources:
 - [FCC documentation][shelly-plug-us-fcc] including pictures of the circuits
 
 [shelly-plug-us-blakadder]: https://templates.blakadder.com/shelly_plug_US.html
-[shelly-plug-s-devices]: https://github.com/esphome/esphome-devices/blob/main/src/docs/devices/Shelly-Plug-S/index.md
+[shelly-plug-s-devices]: https://devices.esphome.io/devices/Shelly-Plug-S/
 [shelly-plug-us-reddit]: https://www.reddit.com/r/homeautomation/comments/ps9iey/
 [shelly-plug-us-aoycocr]: https://devices.esphome.io/devices/Aoycocr-X10S-Plug/
 [shelly-plug-us-fcc]: https://fccid.io/2ALAY-SHELLY

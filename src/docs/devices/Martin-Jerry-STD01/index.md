@@ -8,7 +8,7 @@ board: esp8266
 
 Martin Jerry STD01 3-Way Switch
 
-[Amazon Link](https://amzn.to/3Mik8su)
+[Amazon Link](https://www.amazon.com/dp/B07N6CJW42)
 
 ## Notes
 

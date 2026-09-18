@@ -1,0 +1,413 @@
+esphome:
+  name: mt4
+  friendly_name: MT4
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+
+ota:
+  - platform: esphome
+
+ethernet:
+  type: W5500
+  clk_pin: GPIO42
+  mosi_pin: GPIO43
+  miso_pin: GPIO44
+  cs_pin: GPIO41
+  interrupt_pin: GPIO2
+  reset_pin: GPIO1
+
+globals:
+  - id: motor1_direction
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: motor1_speed_value
+    type: float
+    restore_value: true
+    initial_value: '0.5'
+
+  - id: motor2_direction
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: motor2_speed_value
+    type: float
+    restore_value: true
+    initial_value: '0.5'
+
+  - id: motor3_direction
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: motor3_speed_value
+    type: float
+    restore_value: true
+    initial_value: '0.5'
+
+  - id: motor4_direction
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: motor4_speed_value
+    type: float
+    restore_value: true
+    initial_value: '0.5'
+
+output:
+  # Motor 1
+  - platform: gpio
+    id: motor1_in1
+    pin: GPIO39
+
+  - platform: gpio
+    id: motor1_in2
+    pin: GPIO46
+
+  - platform: ledc
+    id: motor1_pwm
+    pin: GPIO9
+    frequency: 1000Hz
+
+  # Motor 2
+  - platform: gpio
+    id: motor2_in1
+    pin: GPIO11
+
+  - platform: gpio
+    id: motor2_in2
+    pin: GPIO10
+
+  - platform: ledc
+    id: motor2_pwm
+    pin: GPIO12
+    frequency: 1000Hz
+
+  # Motor 3
+  - platform: gpio
+    id: motor3_in1
+    pin: GPIO13
+
+  - platform: gpio
+    id: motor3_in2
+    pin: GPIO47
+
+  - platform: ledc
+    id: motor3_pwm
+    pin: GPIO14
+    frequency: 1000Hz
+
+  # Motor 4
+  - platform: gpio
+    id: motor4_in1
+    pin: GPIO48
+
+  - platform: gpio
+    id: motor4_in2
+    pin: GPIO45
+
+  - platform: ledc
+    id: motor4_pwm
+    pin: GPIO21
+    frequency: 1000Hz
+
+script:
+  # Motor 1
+  - id: motor1_forward
+    then:
+      - output.turn_on: motor1_in1
+      - output.turn_off: motor1_in2
+      - output.set_level:
+          id: motor1_pwm
+          level: !lambda "return id(motor1_speed_value);"
+
+  - id: motor1_reverse
+    then:
+      - output.turn_off: motor1_in1
+      - output.turn_on: motor1_in2
+      - output.set_level:
+          id: motor1_pwm
+          level: !lambda "return id(motor1_speed_value);"
+
+  - id: motor1_stop
+    then:
+      - output.turn_off: motor1_in1
+      - output.turn_off: motor1_in2
+      - output.set_level:
+          id: motor1_pwm
+          level: 0%
+
+  # Motor 2
+  - id: motor2_forward
+    then:
+      - output.turn_on: motor2_in1
+      - output.turn_off: motor2_in2
+      - output.set_level:
+          id: motor2_pwm
+          level: !lambda "return id(motor2_speed_value);"
+
+  - id: motor2_reverse
+    then:
+      - output.turn_off: motor2_in1
+      - output.turn_on: motor2_in2
+      - output.set_level:
+          id: motor2_pwm
+          level: !lambda "return id(motor2_speed_value);"
+
+  - id: motor2_stop
+    then:
+      - output.turn_off: motor2_in1
+      - output.turn_off: motor2_in2
+      - output.set_level:
+          id: motor2_pwm
+          level: 0%
+
+  # Motor 3
+  - id: motor3_forward
+    then:
+      - output.turn_on: motor3_in1
+      - output.turn_off: motor3_in2
+      - output.set_level:
+          id: motor3_pwm
+          level: !lambda "return id(motor3_speed_value);"
+
+  - id: motor3_reverse
+    then:
+      - output.turn_off: motor3_in1
+      - output.turn_on: motor3_in2
+      - output.set_level:
+          id: motor3_pwm
+          level: !lambda "return id(motor3_speed_value);"
+
+  - id: motor3_stop
+    then:
+      - output.turn_off: motor3_in1
+      - output.turn_off: motor3_in2
+      - output.set_level:
+          id: motor3_pwm
+          level: 0%
+
+  # Motor 4
+  - id: motor4_forward
+    then:
+      - output.turn_on: motor4_in1
+      - output.turn_off: motor4_in2
+      - output.set_level:
+          id: motor4_pwm
+          level: !lambda "return id(motor4_speed_value);"
+
+  - id: motor4_reverse
+    then:
+      - output.turn_off: motor4_in1
+      - output.turn_on: motor4_in2
+      - output.set_level:
+          id: motor4_pwm
+          level: !lambda "return id(motor4_speed_value);"
+
+  - id: motor4_stop
+    then:
+      - output.turn_off: motor4_in1
+      - output.turn_off: motor4_in2
+      - output.set_level:
+          id: motor4_pwm
+          level: 0%
+
+button:
+  - platform: template
+    name: "Motor1 Forward"
+    on_press:
+      - globals.set:
+          id: motor1_direction
+          value: '1'
+      - script.execute: motor1_forward
+
+  - platform: template
+    name: "Motor1 Reverse"
+    on_press:
+      - globals.set:
+          id: motor1_direction
+          value: '-1'
+      - script.execute: motor1_reverse
+
+  - platform: template
+    name: "Motor1 Stop"
+    on_press:
+      - globals.set:
+          id: motor1_direction
+          value: '0'
+      - script.execute: motor1_stop
+
+  - platform: template
+    name: "Motor2 Forward"
+    on_press:
+      - globals.set:
+          id: motor2_direction
+          value: '1'
+      - script.execute: motor2_forward
+
+  - platform: template
+    name: "Motor2 Reverse"
+    on_press:
+      - globals.set:
+          id: motor2_direction
+          value: '-1'
+      - script.execute: motor2_reverse
+
+  - platform: template
+    name: "Motor2 Stop"
+    on_press:
+      - globals.set:
+          id: motor2_direction
+          value: '0'
+      - script.execute: motor2_stop
+
+  - platform: template
+    name: "Motor3 Forward"
+    on_press:
+      - globals.set:
+          id: motor3_direction
+          value: '1'
+      - script.execute: motor3_forward
+
+  - platform: template
+    name: "Motor3 Reverse"
+    on_press:
+      - globals.set:
+          id: motor3_direction
+          value: '-1'
+      - script.execute: motor3_reverse
+
+  - platform: template
+    name: "Motor3 Stop"
+    on_press:
+      - globals.set:
+          id: motor3_direction
+          value: '0'
+      - script.execute: motor3_stop
+
+  - platform: template
+    name: "Motor4 Forward"
+    on_press:
+      - globals.set:
+          id: motor4_direction
+          value: '1'
+      - script.execute: motor4_forward
+
+  - platform: template
+    name: "Motor4 Reverse"
+    on_press:
+      - globals.set:
+          id: motor4_direction
+          value: '-1'
+      - script.execute: motor4_reverse
+
+  - platform: template
+    name: "Motor4 Stop"
+    on_press:
+      - globals.set:
+          id: motor4_direction
+          value: '0'
+      - script.execute: motor4_stop
+
+number:
+  - platform: template
+    name: "Motor1 Speed"
+    id: motor1_speed
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 50
+    set_action:
+      - globals.set:
+          id: motor1_speed_value
+          value: !lambda "return x / 100.0;"
+      - if:
+          condition:
+            lambda: "return id(motor1_direction) == 1;"
+          then:
+            - script.execute: motor1_forward
+      - if:
+          condition:
+            lambda: "return id(motor1_direction) == -1;"
+          then:
+            - script.execute: motor1_reverse
+
+  - platform: template
+    name: "Motor2 Speed"
+    id: motor2_speed
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 50
+    set_action:
+      - globals.set:
+          id: motor2_speed_value
+          value: !lambda "return x / 100.0;"
+      - if:
+          condition:
+            lambda: "return id(motor2_direction) == 1;"
+          then:
+            - script.execute: motor2_forward
+      - if:
+          condition:
+            lambda: "return id(motor2_direction) == -1;"
+          then:
+            - script.execute: motor2_reverse
+
+  - platform: template
+    name: "Motor3 Speed"
+    id: motor3_speed
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 50
+    set_action:
+      - globals.set:
+          id: motor3_speed_value
+          value: !lambda "return x / 100.0;"
+      - if:
+          condition:
+            lambda: "return id(motor3_direction) == 1;"
+          then:
+            - script.execute: motor3_forward
+      - if:
+          condition:
+            lambda: "return id(motor3_direction) == -1;"
+          then:
+            - script.execute: motor3_reverse
+
+  - platform: template
+    name: "Motor4 Speed"
+    id: motor4_speed
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 50
+    set_action:
+      - globals.set:
+          id: motor4_speed_value
+          value: !lambda "return x / 100.0;"
+      - if:
+          condition:
+            lambda: "return id(motor4_direction) == 1;"
+          then:
+            - script.execute: motor4_forward
+      - if:
+          condition:
+            lambda: "return id(motor4_direction) == -1;"
+          then:
+            - script.execute: motor4_reverse

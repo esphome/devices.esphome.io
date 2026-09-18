@@ -48,7 +48,7 @@ The device is equipped with the following sensors:
 | IO22   | SCL               |
 | IO0    | SW0 (Boot)        |
 
-## Basic Configuration
+## Configuration
 
-The configuration is available on
-[the GitHub page.](https://github.com/performeon/LinkGearMisc/tree/main/products/lg-eca)
+```yaml url=https://github.com/performeon/LinkGearMisc/blob/main/products/lg-eca/eca_esphome_config_hwv1d1_cv2.yaml
+```

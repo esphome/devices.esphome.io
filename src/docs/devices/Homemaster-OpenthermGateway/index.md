@@ -1,50 +1,45 @@
 ---
-title: Homemaster-OpenthermGateway
+title: HomeMaster-OpenTherm-Gateway
 date-published: 2025-08-19
 type: relay
 standard: global
 board: esp32
-project-url: https://github.com/isystemsautomation/HOMEMASTER/tree/main/OpenthermGateway
+project-url: https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway
+made-for-esphome: True
 difficulty: 1
 ---
 
-## 🔥 Opentherm Gateway – DIN-Rail Smart Heating Interface for Home Assistant
-
-![alt text](./opentherm.png "HOMAMASTER MicroPLC")
+![alt text](opentherm.png "HomeMaster OpenTherm Gateway")
 
 ## Product description
 
-## 🌡️ Description
+The HomeMaster OpenTherm Gateway is an open-source DIN-rail device based on the ESP32-WROOM-32U-N16
+that interfaces with OpenTherm-compatible boilers. It provides a hardware OpenTherm interface together
+with one relay output and two 1-Wire temperature buses, and integrates directly with Home Assistant
+via the pre-installed ESPHome firmware.
 
-The Opentherm Gateway enables full bidirectional OpenTherm communication for intelligent climate control. It supports
-monitoring and control of key heating parameters such as burner status, flame modulation, setpoint temperatures, and
-system diagnostics.
+Maker: [home-master.eu](https://www.home-master.eu/)
 
-A built-in high-voltage relay allows local control of zone valves or backup heaters, while two independent **1-Wire
-interfaces** support digital temperature sensors (e.g., DS18B20) for detailed room or system temperature monitoring.
+Product page: [home-master.eu/shop/opentherm-gateway-59](https://www.home-master.eu/shop/opentherm-gateway-59)
 
-Maker: [https://www.home-master.eu/](https://www.home-master.eu/)
+Repository: [GitHub — isystemsautomation/homemaster-dev/OpenthermGateway](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway)
 
-Product page:
-[https://www.home-master.eu/shop/esp32-opentherm-gateway-59](https://www.home-master.eu/shop/esp32-opentherm-gateway-59)
+Schematics: [OpenthermGateway/Schematic](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway/Schematic)
 
-Schematics:
-[https://github.com/isystemsautomation/HOMEMASTER/tree/main/OpenthermGateway/Schematic](https://github.com/isystemsautomation/HOMEMASTER/tree/main/OpenthermGateway/Schematic)
+Datasheet: [OpenTherm_Datasheet.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/OpenthermGateway/Manuals/OpenTherm_Datasheet.pdf)
 
 ## Features
 
-## ⚙️ Key Features
-
-- **OpenTherm Interface**: Full OpenTherm communication with compatible boilers for temperature control and diagnostics
-- **ESP32-WROOM-32U**: Wi-Fi/Bluetooth-enabled microcontroller with ESPHome pre-installed
-- **Relay Output**: One high-voltage relay for local switching (e.g., heaters, zone valves)
-- **Dual 1-Wire Interfaces**: Two isolated 1-Wire buses for temperature sensors like DS18B20
-- **Power Options**: Operates on 24 VDC or 220 VAC/220VDC for flexible installation
-- **USB Type-C**: For firmware updates, serial configuration, and power
-- **OTA Updates**: Supported via ESPHome for wireless firmware management
-- **Improv**: Wi-Fi Configuration
-- **DIN-Rail Mountable**: Standardized enclosure for electrical cabinets
-- **Status LEDs**: Visual indicators for power, relay, OpenTherm, and Wi-Fi status
+- **ESP32-WROOM-32U-N16** microcontroller with Wi-Fi and Bluetooth (16 MB flash, external antenna)
+- **ESPHome compatible firmware** for seamless Home Assistant integration
+- **Hardware OpenTherm interface** (OT+ / OT-)
+- **1 × SPDT dry-contact relay output** (3 A @ 250 VAC system limit)
+- **2 × 1-Wire buses** (DS18B20 compatible)
+- **1 front-panel button + status LED**
+- **Power input options**: 24 V DC, 85–265 V AC, or 120–370 V DC
+- **USB Type-C** for programming, debugging and power
+- **Built-in web server** for local control and diagnostics
+- **DIN-rail mountable** (2 DIN modules)
 
 ## Networking
 
@@ -52,11 +47,11 @@ Wi-Fi Connectivity – Integrated Wi-Fi for wireless access and Home Assistant i
 
 ## Pinout
 
-![alt text](./pinout.png "pinout")
+![alt text](pinout.png "pinout")
 
 ## OpenTherm Gateway Functional Block Diagram
 
-![alt text](./diagram.png "System Block Diagram")
+![alt text](diagram.png "Functional Block Diagram")
 
 ## Programming
 
@@ -67,161 +62,70 @@ The OpenTherm Gateway comes with ESPHome pre-installed and can be configured via
 Wi-Fi Configuration with Improv
 
 1. Power on your HomeMaster OpenTherm Gateway.
-2. Go to 👉 improv-wifi.com (works in Chrome/Edge on desktop or mobile).
+2. Go to [improv-wifi.com](https://improv-wifi.com) (works in Chrome/Edge on desktop or mobile).
 3. Connect via USB (Serial) or Bluetooth LE.
 4. Enter your Wi-Fi SSID and password, then press Connect.
 5. The device joins your Wi-Fi and is now ready.
 
-You can then access it via its local address (e.g., [http://opentherm.local](http://opentherm.local)) or directly in
-Home Assistant.
+After provisioning, the device appears automatically in Home Assistant and
+in the ESPHome Dashboard. Its hostname (with a MAC suffix to avoid
+collisions, e.g. `homemaster-opentherm-<mac>.local`) is shown in the
+ESPHome Dashboard — the built-in web UI is reachable at that address on
+port 80.
 
 ### One-Click Import (ESPHome Dashboard Import)
 
 Once connected to Wi-Fi, the OpenTherm Gateway will be automatically discovered in ESPHome Dashboard.
-When the device appears in ESPHome Dashboard, click “Take Control”.
-The OpenTherm Gateway supports dashboard import, automatically pulling its official configuration from GitHub
+
+When the device appears in ESPHome Dashboard, click "Take Control".
+
+The device supports dashboard import, automatically pulling its official configuration from GitHub.
 
 ### USB Type-C: Use the ESPHome Dashboard to upload the configuration
 
-1. Connect the OpenTherm Gateway to your computer with a USB Type-C cable.
-2. Download the YAML configuration file from our GitHub repository.
+1. Connect the device to your computer with a USB Type-C cable.
+2. Download the YAML configuration file from our [GitHub repository](https://github.com/isystemsautomation/homemaster-dev/blob/main/OpenthermGateway/Firmware/opentherm.yaml).
 3. Open the ESPHome Dashboard, import the YAML file, and update it with your Wi-Fi SSID and password.
 4. Flash the device directly from ESPHome Dashboard.
-5. The OpenTherm Gateway supports automatic reset and boot control — there is no need to press reset or boot buttons
-   during programming.
+5. The device supports automatic reset and boot control — there is no
+   need to press reset or boot buttons during programming.
 6. After flashing, the device will reboot automatically and run the updated firmware.
+
+## GPIO map
+
+| Signal  | Function           | GPIO   |
+| ------- | ------------------ | ------ |
+| OT+     | OpenTherm output   | GPIO26 |
+| OT-     | OpenTherm input    | GPIO21 |
+| D1      | 1-Wire Bus 1       | GPIO4  |
+| D2      | 1-Wire Bus 2       | GPIO5  |
+| Relay   | SPDT dry-contact   | GPIO32 |
+| Button  | Front-panel button | GPIO35 |
+| Status  | Status LED         | GPIO33 |
 
 ## Specifications
 
-| Feature              | Details                              |
-|----------------------|--------------------------------------|
-| Microcontroller      | ESP32-WROOM-32U                      |
-| Power Supply         | 5V via USB-C for programming, 24V via terminal or 220VAC/DC via terminal      |
-| Relay Output         | 1x 16A (optically isolated)     |
-| Communication        | RS-485, Wi-Fi, Bluetooth, USB-C      |
-| 1-Wire               | 2 channels (ESD/OVP protected)        |
-| Mounting             | DIN-rail                             |
-| Firmware             | ESPHome (pre-installed), Arduino |
+| Feature           | Details                                                  |
+| ----------------- | -------------------------------------------------------- |
+| Microcontroller   | ESP32-WROOM-32U-N16 (16 MB flash, external antenna)      |
+| Power Supply      | 24 V DC, or 85–265 V AC, or 120–370 V DC (single input)  |
+| OpenTherm         | Hardware interface (OT+ / OT-)                           |
+| Relay Output      | 1 × SPDT dry-contact (3 A @ 250 VAC, 90 W @ 30 VDC)      |
+| Temperature       | 2 × 1-Wire (DS18B20 compatible)                          |
+| Communication     | Wi-Fi, Bluetooth, USB-C                                  |
+| Mounting          | 35 mm DIN rail (2 modules)                               |
+| Firmware          | ESPHome (pre-installed)                                  |
 
-## 🏠 Integration with Home Assistant
+## Example configuration
 
-When flashed with ESPHome, the Opentherm Gateway exposes the following entities in Home Assistant:
+Hardware-only example showing the OpenTherm bus, relay, button, status LED and 1-Wire buses. Network plumbing
+(`api`, `ota`, `wifi`, `captive_portal`, `improv_*`, `dashboard_import`, vendor HTTP OTA) is intentionally
+omitted here per `esphome-devices` rules and is provided by the upstream shipped configuration linked below.
 
-- Boiler on/off
-- Burner status
-- Flame modulation level (%)
-- CH/DHW setpoint temperatures
-- Boiler water temperature
-- System pressure (if supported)
-- Relay output status
-- Temperature readings from connected 1-Wire sensors
-- etc.
+```yaml file=config.yaml
+```
 
-## Basic Config
+## Full shipped firmware (factory)
 
-```yaml
-substitutions:
-  # General metadata and variables for reuse in the config
-  name: "homemaster-opentherm"                # Device hostname in ESPHome / network
-  friendly_name: "Homemaster Opentherm Gateway"  # Friendly name in Home Assistant UI
-  room: ""                                   # Optional: assign to a room in HA
-  device_description: "Homemaster Opentherm Gateway" # Description for metadata
-  project_name: "Homemaster.Opentherm Gateway" # Unique project identifier
-  project_version: "v1.0.0"                  # Firmware version
-  update_interval: 60s                       # Default sensor update frequency
-  dns_domain: ".local"                       # mDNS domain suffix
-  timezone: ""                               # Timezone (if needed different from HA server)
-  wifi_fast_connect: "false"                 # Faster reconnect if true (skips scan)
-  log_level: "DEBUG"                         # Logging level
-  ipv6_enable: "false"                       # IPv6 support toggle
-
-esphome:
-  # Device-level settings for ESPHome
-  name: "${name}"
-  friendly_name: "${friendly_name}"
-  comment: "${device_description}"
-  area: "${room}"
-  name_add_mac_suffix: true                  # Append MAC to hostname to avoid duplicates
-  min_version: 2025.7.0                      # Minimum ESPHome version required
-  project:
-    name: "${project_name}"
-    version: "${project_version}"
-
-esp32:
-  # Target hardware platform
-  variant: esp32
-  framework:
-    type: esp-idf                            # Use Espressif IDF framework
-    version: recommended
-
-logger:
-  baud_rate: 115200                          # Serial log speed
-  level: ${log_level}                        # Log level set from substitutions
-
-mdns:
-  disabled: false                            # Enable mDNS for network discovery
-
-api:                                         # Enable native ESPHome <-> Home Assistant API
-
-ota:
-  - platform: esphome
-    id: ota_esphome                          # Over-the-air updates
-
-network:
-  enable_ipv6: ${ipv6_enable}                # Enable/disable IPv6
-
-wifi:
-  ap: {}                                     # Fallback AP for first-time setup
-  fast_connect: "${wifi_fast_connect}"       # Quick reconnect option
-  domain: "${dns_domain}"                    # mDNS suffix
-
-captive_portal:                              # Captive portal for AP fallback
-
-improv_serial:
-  id: improv_serial_if                       # Enable Improv setup over serial
-
-esp32_improv:
-  authorizer: none
-  id: improv_ble_if                          # Enable Improv setup over BLE
-
-dashboard_import:
-  # Auto-import official config from GitHub into ESPHome Dashboard
-  package_import_url: github://isystemsautomation/HOMEMASTER/OpenthermGateway/Firmware/opentherm.yaml@main
-  import_full_config: true
-
-time:
-  - platform: homeassistant                  # Sync time from Home Assistant
-    id: homeassistant_time
-    on_time_sync:                            # On first sync, publish "last restart"
-      then:
-        - if:
-            condition:
-              lambda: 'return id(device_last_restart).state == "";'
-            then:
-              - text_sensor.template.publish:
-                  id: device_last_restart
-                  state: !lambda 'return id(homeassistant_time).now().strftime("%a %d %b %Y - %I:%M:%S %p");'
-
-opentherm:
-  id: ot_bus                                 # OpenTherm bus definition
-  in_pin: 21                                 # GPIO for receiving OpenTherm signal
-  out_pin: 26                                # GPIO for sending OpenTherm signal
-
-# Local button on GPIO35
-  - platform: gpio
-    id: bs_button_1
-    name: "Button #1"
-    pin: GPIO35
-
-switch:
-# Local relay output
-  - platform: gpio
-    id: sw_relay
-    pin: GPIO32
-    name: "RELAY"
-
-status_led:
-  pin:
-    number: GPIO33                          # Status LED pin
-    inverted: true                          # LED is active-low
+```yaml url=https://github.com/isystemsautomation/homemaster-dev/blob/main/OpenthermGateway/Firmware/opentherm.yaml
 ```

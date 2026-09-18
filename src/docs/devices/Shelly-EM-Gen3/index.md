@@ -646,7 +646,7 @@ binary_sensor:
 
 ## 7-pin programming header
 
-[![PCB pinout diagram](./pcb_pinout_diagram.thumb.jpg)](./pcb_pinout_diagram.jpg)
+![PCB pinout diagram](./pcb_pinout_diagram.jpg)
 
 | Pin     | Label           | Description                   | GPIO      |
 | ------- | --------------- | ----------------------------- | --------- |
@@ -665,9 +665,9 @@ Connect programming port to serial cable only if all other contacts are disconne
 
 ## CT connector
 
-[![Current transformer connector photo 1](./ct1.thumb.jpg)](./ct1.jpg)
-[![Current transformer connector photo 2](./ct2.thumb.jpg)](./ct2.jpg)
-[![Current transformer connector photo 3](./ct3.thumb.jpg)](./ct3.jpg)
+![Current transformer connector photo 1](./ct1.jpg)
+![Current transformer connector photo 2](./ct2.jpg)
+![Current transformer connector photo 3](./ct3.jpg)
 
 | Type                  | Description           |
 | --------------------- | --------------------- |
@@ -696,13 +696,13 @@ Connect programming port to serial cable only if all other contacts are disconne
 
 ### PCB photos
 
-[![PCB bottom](./pcb_bottom.thumb.jpg)](./pcb_bottom.jpg)
+![PCB bottom](./pcb_bottom.jpg)
 
-[![PCB top](./pcb_top.thumb.jpg)](./pcb_top.jpg)
-[![PCB left](./pcb_left.thumb.jpg)](./pcb_left.jpg)
-[![PCB front](./pcb_front.thumb.jpg)](./pcb_front.jpg)
-[![PCB right](./pcb_right.thumb.jpg)](./pcb_right.jpg)
-[![Voltage regulator](./pcb_top_regulator.thumb.jpg "Voltage regulator")](./pcb_top_regulator.jpg)
+![PCB top](./pcb_top.jpg)
+![PCB left](./pcb_left.jpg)
+![PCB front](./pcb_front.jpg)
+![PCB right](./pcb_right.jpg)
+![Voltage regulator](./pcb_top_regulator.jpg)
 
 ## Resources
 

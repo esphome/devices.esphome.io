@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3r3bpTx)
+[Amazon Link](https://www.amazon.com/dp/B07D8RKCYC)
 
 ## General Notes
 

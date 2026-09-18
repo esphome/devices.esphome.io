@@ -42,6 +42,11 @@ Get started quickly by adopting and flashing your Hornet Nest Alarm Panel with t
 7. Discover the Hornet Nest Alarm Panel in **Home Assistant** > **Settings** > **Devices & Services**.
 8. Click **Configure** on the new device to add it into Home Assistant.
 
+## Configuration
+
+```yaml url=https://github.com/taconsultingllc/hornet-nest-alarm-panel/blob/main/hnap-rev1.2-wifi.yaml
+```
+
 ## Links
 
 - [Crowd Supply](https://www.crowdsupply.com/technology-automation-consulting/hornet-nest-alarm-panel)
