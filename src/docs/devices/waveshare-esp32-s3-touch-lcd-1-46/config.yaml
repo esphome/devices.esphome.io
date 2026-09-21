@@ -1,0 +1,45 @@
+esphome:
+  name: waveshare-touch-lcd-146
+  friendly_name: Waveshare Touch LCD 1.46
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+logger:
+
+i2c:
+  sda: GPIO11
+  scl: GPIO10
+
+pca9554:
+  - id: board_expander
+
+spi:
+  type: quad
+  clk_pin: GPIO40
+  data_pins: [GPIO46, GPIO45, GPIO42, GPIO41]
+
+display:
+  - platform: mipi_spi
+    model: WAVESHARE-ESP32-S3-TOUCH-LCD-1.46
+    id: main_display
+
+output:
+  - platform: ledc
+    pin: GPIO5
+    id: backlight_output
+
+light:
+  - platform: monochromatic
+    name: Backlight
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+
+touchscreen:
+  - platform: spd2010
+    display: main_display
+    interrupt_pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
