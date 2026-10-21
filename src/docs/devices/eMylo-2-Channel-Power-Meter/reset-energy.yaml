@@ -1,0 +1,11 @@
+button:
+  - platform: template
+    name: Reset energy A
+    on_press:
+      then:
+        - lambda: id(meter).reset_energy_a();
+  - platform: template
+    name: Reset energy B
+    on_press:
+      then:
+        - lambda: id(meter).reset_energy_b();

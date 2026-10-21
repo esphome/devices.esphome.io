@@ -1,0 +1,57 @@
+# eMylo PW01 (T1-U-HL / BK7238) with the HLW8112 on the chip SPI controller.
+# SCK is P14, MOSI is P16, MISO is P17, and chip select is P21.
+# Unplug the meter from mains before using the UART header.
+
+esphome:
+  name: emylo-power-meter
+  friendly_name: eMylo Power Meter
+
+bk72xx:
+  board: t1-u
+
+external_components:
+  - source: github://eyal0/bk72xx_spi@main
+    components: [bk72xx_spi]
+  - source: github://eyal0/hlw8112_spi@main
+    components: [hlw8112_spi]
+
+logger:
+
+wifi:
+  ap:
+
+bk72xx_spi:
+  id: spi_bus
+
+sensor:
+  - platform: hlw8112_spi
+    id: meter
+    spi_id: spi_bus
+    cs_pin: P21
+    update_interval: 2s
+    # Clamp-meter defaults. If a current reads high, raise that channel's
+    # ratio by the same factor.
+    current_ratio_a: 0.2
+    current_ratio_b: 0.2
+    voltage_ratio: 1.0
+    meter_channel: A
+    voltage:
+      name: Voltage
+    frequency:
+      name: Frequency
+    current_a:
+      name: Current A
+    current_b:
+      name: Current B
+    power_a:
+      name: Power A
+    power_b:
+      name: Power B
+    apparent_power:
+      name: Apparent Power
+    power_factor:
+      name: Power Factor
+    energy_a:
+      name: Energy A
+    energy_b:
+      name: Energy B
