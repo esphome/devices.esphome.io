@@ -9,13 +9,17 @@ difficulty: 3
 
 ## Overview
 
-The SONOFF Basic R3 is a classic, cost-effective single-relay DIY module. It is widely used to make basic home appliances and lighting smart. 
-Based on the ESP8285 chip, it provides a reliable and straightforward way to integrate your home electronics into Home Assistant via ESPHome.
+The SONOFF Basic R3 is a classic, cost-effective single-relay DIY module.
+It is widely used to make basic home appliances and lighting smart.
+Based on the ESP8285 chip, it provides a reliable and straightforward way
+to integrate your home electronics into Home Assistant via ESPHome.
 
 ## Initial Install
 
-This device requires disassembly and a serial connection for the first ESPHome firmware upload, as it does not support tuya-convert. 
-To flash the firmware, hold down the physical button while powering on the device to put it into bootloader mode.
+This device requires disassembly and a serial connection for the first ESPHome firmware upload,
+as it does not support tuya-convert.
+To flash the firmware, hold down the physical button while powering on the device
+to put it into bootloader mode.
 
 ## GPIO Pinout
 
@@ -35,7 +39,7 @@ To flash the firmware, hold down the physical button while powering on the devic
 
 ## ESPHome Configuration
 
-The basic configuration contains the hardware definitions and core ESPHome components for the SONOFF Basic R3.
+The basic configuration contains the hardware definitions and core ESPHome components.
 
 ```yaml file=config.yaml
 ```
