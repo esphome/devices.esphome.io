@@ -28,8 +28,6 @@ logger:
 wifi:
   ap:
 
-captive_portal:
-
 i2c:
   sda: GPIO6
   scl: GPIO7

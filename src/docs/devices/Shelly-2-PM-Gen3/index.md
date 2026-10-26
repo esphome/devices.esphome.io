@@ -53,3 +53,8 @@ pins is thanks to [the Tasmota community.][2]
 
 ```yaml file=config.yaml
 ```
+
+Add a captive portal on top if you want one for initial WiFi setup — not required, just convenient:
+
+```yaml file=captive-portal.yaml
+```
