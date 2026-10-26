@@ -1,10 +1,7 @@
-# ==============================================================================
-# MERGE INSTRUCTIONS
-# When merging this file with config.yaml, please note that the following 
-# top-level blocks are duplicated in both files (wifi, binary_sensor, light, switch).
-# You MUST merge their contents manually. Do NOT simply paste this file below 
-# config.yaml without removing the duplicate keys, as it will cause YAML errors.
-# ==============================================================================
+# Merge Instructions:
+# When merging with config.yaml, merge the `wifi` block (add ssid/password), 
+# and append the `binary_sensor` to the existing list. 
+# Remove this comment block in your actual configuration.
 
 api:
   encryption:
@@ -13,10 +10,13 @@ api:
 ota:
   - platform: esphome
     encryption:
+  
 
 wifi:
-# ssid: "Your_WiFi_SSID_Here"
-# password: "Your_WiFi_Password_Here"
+  # ssid: "Your_WiFi_SSID_Here"
+  # password: "Your_WiFi_Password_Here"
+  ap:
+    ssid: "SONOFF Basic R3"
 
 captive_portal:
 
