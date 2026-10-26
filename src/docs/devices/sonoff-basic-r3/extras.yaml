@@ -1,0 +1,45 @@
+# ==============================================================================
+# MERGE INSTRUCTIONS
+# When merging this file with config.yaml, please note that the following 
+# top-level blocks are duplicated in both files (wifi, binary_sensor, light, switch).
+# You MUST merge their contents manually. Do NOT simply paste this file below 
+# config.yaml without removing the duplicate keys, as it will cause YAML errors.
+# ==============================================================================
+
+api:
+  encryption:
+    key: ""
+
+ota:
+  - platform: esphome
+    encryption:
+
+wifi:
+# ssid: "Your_WiFi_SSID_Here"
+# password: "Your_WiFi_Password_Here"
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    unit_of_measurement: minutes
+    filters:
+      - lambda: return x / 60.0;
+    entity_category: diagnostic
+
+  - platform: wifi_signal
+    id: wifi_rssi
+    name: RSSI
+    entity_category: diagnostic
+
+button:
+  - platform: restart
+    name: Restart
+
+binary_sensor:
+  - platform: status
+    name: Status
