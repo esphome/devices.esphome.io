@@ -37,7 +37,8 @@ To flash the firmware, hold down the physical button while powering on the devic
 
 The basic configuration contains the hardware definitions and core ESPHome components for the SONOFF Basic R3.
 
-```yaml file=config.yaml```
+```yaml file=config.yaml
+```
 
 ## Advanced Configuration
 
@@ -45,4 +46,5 @@ This configuration adds the Home Assistant API, OTA updates, and diagnostic sens
 
 Note: When using this configuration, please merge the contents of the two YAML blocks above into a single configuration file for your device.
 
-```yaml file=extras.yaml```
+```yaml file=extras.yaml
+```
