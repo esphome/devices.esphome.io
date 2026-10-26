@@ -16,10 +16,9 @@ binary_sensor:
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
-      inverted: True
+      inverted: true
     internal: true
     on_press:
-      # Prevents unintended LED lit states.
       if:
         condition:
           - switch.is_off: relay
@@ -32,10 +31,10 @@ binary_sensor:
 light:
   - platform: status_led
     id: blue_led
-    internal: True
+    internal: true
     pin:
       number: GPIO13
-      inverted: True
+      inverted: true
 
 switch:
   - platform: gpio
