@@ -9,7 +9,6 @@ logger:
 
 wifi:
   ap:
-    ssid: "SONOFF Basic R3"
 
 binary_sensor:
   - platform: gpio
