@@ -14,6 +14,13 @@ the ESP32-C3 with 8MB flash.
 This device includes the Belling BL0942 Energy Monitor that is supported
 by ESPHome.
 
+## Flashing
+
+Don't need the serial header for this one either. Shelly's OTA updater takes an ESPHome image
+straight over the network, no case-opening required — confirmed working on a 1PM Gen3 here.
+[free-shelly-ota](https://github.com/oxynatOr/free-shelly-ota) builds and pushes it for you.
+Serial below is still there if you need recovery or want to go that route anyway.
+
 ## Serial Pinout
 
 The Shelly 1PM Gen3 includes the six-pin "proprietary serial interface"

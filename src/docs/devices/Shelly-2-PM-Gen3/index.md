@@ -31,8 +31,13 @@ General hardware info, including serial pinout is on the
 
 ![Shelly 2 PM Gen3](../Shelly-2-PM-Gen3/shelly_2_pm_gen3_pcb.jpeg "Shelly 2 PM Gen3")
 
-These configurations may be flashable from the Shelly stock firmware OTA using mgos32-to-tasmota32, but was only tested
-via direct serial flash. OTA changes and upgrades after initial flash via ESPHome Web seem to work fine.
+## Flashing
+
+No need to crack the case open. Shelly's own OTA updater will install ESPHome straight over the
+network — confirmed on two deployed 2 PM Gen3 units, no UART touched. Use
+[free-shelly-ota](https://github.com/oxynatOr/free-shelly-ota) to build and push the image, it
+handles the signature/checksum repackaging. OTA upgrades after that (ESPHome Web or
+`esphome upload`) work fine, same as any ESPHome device.
 
 ## Basic Configuration
 
