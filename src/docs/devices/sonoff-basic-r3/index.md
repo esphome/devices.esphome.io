@@ -46,9 +46,11 @@ The basic configuration contains the hardware definitions and core ESPHome compo
 
 ## Advanced Configuration
 
-This configuration adds the Home Assistant API, OTA updates, and diagnostic sensors. You will need to provide your own Wi-Fi credentials.
+This configuration adds the Home Assistant API, OTA updates, and diagnostic sensors. 
+You will need to provide your own Wi-Fi credentials.
 
-Note: When using this configuration, please merge the contents of the two YAML blocks above into a single configuration file for your device.
+Note: When using this configuration, please merge the contents of the two YAML blocks 
+above into a single configuration file for your device.
 
 ```yaml file=extras.yaml
 ```
