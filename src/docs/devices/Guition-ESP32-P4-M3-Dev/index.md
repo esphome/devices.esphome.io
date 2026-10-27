@@ -69,82 +69,35 @@ The board uses the ESP32-C6-MINI module as a coprocessor for Wi-Fi and Bluetooth
 
 Minimum configuration required for the Guition JC-ESP32-P4-M3-Dev:
 
-```yaml
-esphome:
-  name: "esp32-p4-m3-dev"
-
-esp32:
-  variant: esp32p4
-  flash_size: 16MB
-  framework:
-    type: esp-idf
-
-logger:
-  hardware_uart: USB_SERIAL_JTAG
-
-api:
-
-ota:
-  platform: esphome
+```yaml file=config.yaml
 ```
 
 ## ESP32 Hosted Configuration
 
 ESP32 Hosted ESP32-C6 coprocessor configuration:
 
-```yaml
-esp32_hosted:
-  active_high: true
-  variant: ESP32C6
-  reset_pin: GPIO54
-  cmd_pin: GPIO19
-  clk_pin: GPIO18
-  d0_pin: GPIO14
-  d1_pin: GPIO15
-  d2_pin: GPIO16
-  d3_pin: GPIO17
+```yaml file=esp32-hosted.yaml
 ```
 
 ## Wi-Fi Configuration
 
 The ESP32-C6 coprocessor enables Wi-Fi functionality:
 
-```yaml
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+```yaml file=wifi.yaml
 ```
 
 ## Bluetooth Proxy Configuration
 
 The ESP32-C6 coprocessor enables Bluetooth proxy functionality - could require a C6 firmware update to work:
 
-```yaml
-esp32_ble_tracker:
-  scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
-
-bluetooth_proxy:
-  active: true
-  connection_slots: 3
+```yaml file=bluetooth-proxy.yaml
 ```
 
 ## Ethernet Configuration
 
 Configuration to use the onboard 100M Ethernet with IP101 PHY:
 
-```yaml
-ethernet:
-  type: IP101
-  mdc_pin: GPIO31
-  mdio_pin: GPIO52
-  power_pin: GPIO51
-  clk:
-    mode: CLK_EXT_IN
-    pin: GPIO50
-  phy_addr: 1
+```yaml file=ethernet.yaml
 ```
 
 ## Coprocessor Firmware Update
@@ -152,17 +105,60 @@ ethernet:
 The ESP32-C6 coprocessor firmware can be updated over-the-air using the esp32_hosted update platform:  
 (see [esp32_hosted component](https://esphome.io/components/esp32_hosted/))
 
-```yaml
-update:
-  - platform: esp32_hosted
-    name: "C6 Coprocessor Update"
-    path: /path/to/network_adapter.bin
-    sha256: your_sha256_hash_here
+```yaml file=c6-firmware-update.yaml
 ```
 
 The firmware binary is embedded into the ESP32-P4's flash at compile time and can be deployed to the
 coprocessor on demand. The component automatically detects the current firmware version and compares it to
 the embedded version. If they differ, an update becomes available in Home Assistant.
+
+## Example configuration: Alarmo announcements + media playback
+
+A playback satellite for this board: Home Assistant media playback and spoken
+Alarmo state announcements through the onboard speaker header, networking over
+the onboard 100M Ethernet. BLE is provided by the onboard ESP32-C6 through
+`esp32_hosted`. There is no local wake-word/Assist capture here - see the build
+note below on why - so trigger Assist from another satellite or automation
+targeting this device's `media_player` entity.
+
+Add your own `api:`, `ota:` and network credentials after adopting. Set the
+`ha_media_player` substitution to the `media_player` entity Home Assistant
+creates for this device, or TTS replies will not play.
+
+```yaml file=voice-assistant.yaml
+
+```
+
+### Build notes from running this board
+
+Audio pins in use on this board (ES8311 codec on the I2C bus):
+
+| Signal            | GPIO   |
+| ----------------- | ------ |
+| I2S LRCLK (WS)    | GPIO10 |
+| I2S BCLK          | GPIO12 |
+| I2S MCLK          | GPIO13 |
+| I2S DIN (mic)     | GPIO11 |
+| I2S DOUT (speaker)| GPIO9  |
+| Amplifier PA-CTRL | GPIO53 |
+
+Speaker output through the onboard header works reliably. Microphone capture did
+not: on the CoreBoard variant tested, the actual mic ADC is an ES7210 that never
+answered on I2C, so only the ES8311 playback path could be brought up. If you
+need wake-word capture, verify your board revision before relying on the onboard
+mic. The config above is therefore an output-and-pipeline satellite - it hears
+via a separate device and speaks through this one.
+
+If the board bricks after a bad flash and drops off the network, OTA is no longer
+an option. Recover over USB through the CH340 UART port:
+
+```bash
+esptool --chip esp32p4 write_flash 0x0 firmware.factory.bin
+```
+
+A cold-boot bricking issue was traced to the default 400MHz CPU frequency on this
+board; running at 360MHz was stable. If you see boot failures only after a full
+power cycle, that is worth trying first.
 
 ## Links
 

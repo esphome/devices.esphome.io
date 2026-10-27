@@ -1,0 +1,533 @@
+# Guition ESP32-S3-4848S040 - Alarmo alarm keypad (LVGL)
+#
+# Touch keypad for the Alarmo custom integration: code entry, arm home /
+# arm away / disarm, and a live colour-coded armed-state readout.
+#
+# Add your own api:, ota: and wifi: blocks after adopting.
+# Point alarm_entity at your Alarmo alarm_control_panel entity.
+
+substitutions:
+  name: alarmo_keypad_4848s040
+  friendly_name: "Alarmo Keypad (4848S040)"
+  alarm_entity: "alarm_control_panel.alarmo"
+  code_length: "4"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+# =========================
+# Fonts
+#  - numbers stay huge
+#  - everything else ~25% smaller
+# =========================
+font:
+  - file: "gfonts://Inter@800"
+    id: font_keypad
+    size: 52
+
+  # was 30 -> ~25% smaller => 22
+  - file: "gfonts://Inter@700"
+    id: font_action
+    size: 22
+
+  # was 22 -> ~25% smaller => 16
+  - file: "gfonts://Inter@600"
+    id: font_status
+    size: 16
+
+# =========================
+# Backlight
+# =========================
+output:
+  - platform: ledc
+    id: backlight_output
+    pin: GPIO38
+    frequency: 150Hz
+    min_power: 0.01
+    zero_means_zero: true
+
+light:
+  - platform: monochromatic
+    id: display_backlight
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+
+# =========================
+# Touch + Display buses
+# =========================
+i2c:
+  sda: GPIO19
+  scl:
+    number: GPIO45
+    ignore_strapping_warning: true
+
+spi:
+  clk_pin: GPIO48
+  mosi_pin: GPIO47
+
+# =========================
+# Display (ST7701S)
+# =========================
+display:
+  - platform: st7701s
+    id: tft_display
+    dimensions:
+      width: 480
+      height: 480
+    update_interval: never
+    auto_clear_enabled: false
+    data_rate: 2MHz
+    spi_mode: MODE3
+    color_order: RGB
+    invert_colors: false
+    cs_pin: GPIO39
+    de_pin: GPIO18
+    hsync_pin: GPIO16
+    vsync_pin: GPIO17
+    pclk_pin: GPIO21
+    pclk_frequency: 12MHz
+    pclk_inverted: false
+    hsync_pulse_width: 8
+    hsync_front_porch: 10
+    hsync_back_porch: 20
+    vsync_pulse_width: 8
+    vsync_front_porch: 10
+    vsync_back_porch: 10
+    init_sequence:
+      - 1
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x10]
+      - [0xCD, 0x00]
+    data_pins:
+      red: [11, 12, 13, 14, 0]
+      green: [8, 20, 3, 46, 9, 10]
+      blue: [4, 5, 6, 7, 15]
+
+# =========================
+# Touch (GT911)
+# =========================
+touchscreen:
+  - platform: gt911
+    id: tft_touch
+    display: tft_display
+
+# =========================
+# Alarm state + supported features from HA
+# =========================
+sensor:
+  - platform: homeassistant
+    id: alarm_supported_features
+    entity_id: ${alarm_entity}
+    attribute: supported_features
+
+text_sensor:
+  - platform: homeassistant
+    id: alarm_state
+    entity_id: ${alarm_entity}
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: status_label
+            text: !lambda |-
+              auto s = id(alarm_state).state;
+              if (s == "disarmed") return "DISARMED";
+              if (s == "armed_home") return "ARMED HOME";
+              if (s == "armed_away") return "ARMED AWAY";
+              if (s == "arming") return "ARMING…";
+              if (s == "pending") return "PENDING…";
+              if (s == "triggered") return "ALARM!";
+              return s.c_str();
+
+        - lvgl.label.update:
+            id: ready_label
+            text: !lambda |-
+              int feat = (int) id(alarm_supported_features).state;
+              bool away_ok = (feat & 2) != 0;
+
+              auto s = id(alarm_state).state;
+              if (s == "disarmed") {
+                return away_ok ? "READY: YES (AWAY OK)" : "READY: YES (NO AWAY)";
+              }
+              if (s == "arming" || s == "pending" || s == "triggered") return "READY: NO";
+              if (s == "armed_home" || s == "armed_away") return "READY: ARMED";
+              return "READY: ?";
+
+# =========================
+# PIN handling
+# =========================
+globals:
+  - id: pin_buf
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
+  - id: pin_masked_text
+    type: std::string
+    restore_value: no
+    initial_value: '"----"'
+
+script:
+  - id: pin_refresh
+    then:
+      - lambda: |-
+          int n = id(pin_buf).size();
+          id(pin_masked_text) = (n == 0) ? "----" : std::string(n, '*');
+      - lvgl.label.update:
+          id: pin_label
+          text: !lambda 'return id(pin_masked_text).c_str();'
+
+  - id: pin_add_digit
+    parameters:
+      d: string
+    then:
+      - lambda: |-
+          if (id(pin_buf).size() < (size_t) atoi("${code_length}")) id(pin_buf) += d;
+      - script.execute: pin_refresh
+
+  - id: pin_clear
+    then:
+      - lambda: id(pin_buf).clear();
+      - script.execute: pin_refresh
+
+  - id: pin_backspace
+    then:
+      - lambda: |-
+          if (!id(pin_buf).empty()) id(pin_buf).pop_back();
+      - script.execute: pin_refresh
+
+  - id: do_disarm
+    then:
+      - homeassistant.service:
+          service: alarm_control_panel.alarm_disarm
+          data:
+            entity_id: ${alarm_entity}
+            code: !lambda 'return id(pin_buf).c_str();'
+      - script.execute: pin_clear
+
+  - id: do_arm_home
+    then:
+      - homeassistant.service:
+          service: alarm_control_panel.alarm_arm_home
+          data:
+            entity_id: ${alarm_entity}
+            code: !lambda 'return id(pin_buf).c_str();'
+      - script.execute: pin_clear
+
+  # =========================
+  # ARM AWAY (robust)
+  # =========================
+  - id: do_arm_away
+    then:
+      - lambda: |-
+          ESP_LOGI("alarm", "ARM AWAY pressed. pin_len=%d", (int)id(pin_buf).size());
+
+      # Single arm call (the old "try everything" shotgun fired up to 3
+      # services per press: duplicate arms + one invalid mode string that
+      # errored in the HA log every time)
+      - if:
+          condition:
+            lambda: 'return !id(pin_buf).empty();'
+          then:
+            - homeassistant.service:
+                service: alarm_control_panel.alarm_arm_away
+                data:
+                  entity_id: ${alarm_entity}
+                  code: !lambda 'return id(pin_buf).c_str();'
+          else:
+            - homeassistant.service:
+                service: alarm_control_panel.alarm_arm_away
+                data:
+                  entity_id: ${alarm_entity}
+
+      - script.execute: pin_clear
+
+# =========================
+# UI (LVGL)
+# =========================
+lvgl:
+  displays:
+    - tft_display
+  touchscreens:
+    - tft_touch
+
+  pages:
+    - id: page_keypad
+      widgets:
+        - obj:
+            x: 0
+            y: 0
+            width: 480
+            height: 480
+            bg_color: 0x0F1419
+            bg_opa: 100%
+
+        - label:
+            text: "Alarm Keypad"
+            x: 16
+            y: 8
+            text_font: font_status
+            text_color: 0xE6EAF0
+
+        - label:
+            id: status_label
+            text: "…"
+            x: 300
+            y: 8
+            text_font: font_status
+            text_color: 0x7FE7FF
+
+        - label:
+            id: ready_label
+            text: "READY: ?"
+            x: 300
+            y: 30
+            text_font: font_status
+            text_color: 0xFFD27F
+
+        - label:
+            id: pin_label
+            text: "----"
+            x: 16
+            y: 44
+            text_font: font_keypad
+            text_color: 0xFFFFFF
+
+        # --- Row 1 ---
+        - button:
+            x: 16
+            y: 80
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "1"}
+            widgets:
+              - label:
+                  text: "1"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 168
+            y: 80
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "2"}
+            widgets:
+              - label:
+                  text: "2"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 320
+            y: 80
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "3"}
+            widgets:
+              - label:
+                  text: "3"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        # --- Row 2 ---
+        - button:
+            x: 16
+            y: 150
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "4"}
+            widgets:
+              - label:
+                  text: "4"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 168
+            y: 150
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "5"}
+            widgets:
+              - label:
+                  text: "5"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 320
+            y: 150
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "6"}
+            widgets:
+              - label:
+                  text: "6"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        # --- Row 3 ---
+        - button:
+            x: 16
+            y: 220
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "7"}
+            widgets:
+              - label:
+                  text: "7"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 168
+            y: 220
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "8"}
+            widgets:
+              - label:
+                  text: "8"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 320
+            y: 220
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "9"}
+            widgets:
+              - label:
+                  text: "9"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        # --- Row 4 ---
+        - button:
+            x: 16
+            y: 290
+            width: 145
+            height: 62
+            bg_color: 0x5A2A2A
+            on_press:
+              - script.execute: pin_clear
+            widgets:
+              - label:
+                  text: "CLR"
+                  text_font: font_action
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 168
+            y: 290
+            width: 145
+            height: 62
+            bg_color: 0x1D2630
+            on_press:
+              - script.execute: {id: pin_add_digit, d: "0"}
+            widgets:
+              - label:
+                  text: "0"
+                  text_font: font_keypad
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 320
+            y: 290
+            width: 145
+            height: 62
+            bg_color: 0x2B3A4A
+            on_press:
+              - script.execute: pin_backspace
+            widgets:
+              - label:
+                  text: "<-"
+                  text_font: font_action
+                  text_color: 0xFFFFFF
+                  align: center
+
+        # --- Actions row ---
+        - button:
+            x: 16
+            y: 365
+            width: 145
+            height: 60
+            bg_color: 0x2D5BFF
+            on_press:
+              - script.execute: do_arm_home
+            widgets:
+              - label:
+                  text: "ARM HOME"
+                  text_font: font_action
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 168
+            y: 365
+            width: 145
+            height: 60
+            bg_color: 0x4B2DFF
+            on_press:
+              - script.execute: do_arm_away
+            widgets:
+              - label:
+                  text: "ARM AWAY"
+                  text_font: font_action
+                  text_color: 0xFFFFFF
+                  align: center
+
+        - button:
+            x: 320
+            y: 365
+            width: 145
+            height: 60
+            bg_color: 0x12A36D
+            on_press:
+              - script.execute: do_disarm
+            widgets:
+              - label:
+                  text: "DISARM"
+                  text_font: font_action
+                  text_color: 0xFFFFFF
+                  align: center
