@@ -1,0 +1,40 @@
+substitutions:
+  device_name: "athom-rgbww-light"
+  friendly_name: "Athom RGBWW Light"
+
+esphome:
+  name: "${device_name}"
+
+esp8266:
+  board: esp8285
+
+logger:
+
+output:
+  - platform: esp8266_pwm
+    id: red_output
+    pin: GPIO4
+  - platform: esp8266_pwm
+    id: green_output
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: blue_output
+    pin: GPIO14
+  - platform: esp8266_pwm
+    id: warm_white_output
+    pin: GPIO13
+  - platform: esp8266_pwm
+    id: white_output
+    pin: GPIO5
+
+light:
+  - platform: rgbww
+    name: "${friendly_name}"
+    red: red_output
+    green: green_output
+    blue: blue_output
+    warm_white: warm_white_output
+    cold_white: white_output
+    cold_white_color_temperature: 6000 K
+    warm_white_color_temperature: 3000 K
+    color_interlock: true
