@@ -1,0 +1,60 @@
+esphome:
+  name: guition-esp32-s3-4848s040
+  friendly_name: Guition ESP32-S3-4848S040
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: UART0
+  baud_rate: 921600
+
+spi:
+  - type: single
+    id: id_spi
+    clk_pin: GPIO48
+    mosi_pin: GPIO47
+    miso_pin: GPIO41
+    interface: hardware
+
+i2c:
+  - id: id_touchscreen_bus
+    scl:
+      ignore_strapping_warning: true
+      number: GPIO45
+    sda: GPIO19
+
+psram:
+  mode: octal
+  speed: 80MHZ
+
+display:
+  - platform: mipi_rgb
+    model: GUITION-4848S040
+    id: id_tft_display
+    show_test_card: true
+    # uncomment for placement with down-facing USB socket:
+    # rotation: 90°
+
+touchscreen:
+  - platform: gt911
+    display: id_tft_display
+    id: id_tft_touch
+
+light:
+  - platform: monochromatic
+    default_transition_length: 1s
+    id: id_display_backlight
+    name: Backlight
+    output: id_backlight_output
+    restore_mode: RESTORE_DEFAULT_ON
+
+output:
+  - platform: ledc
+    frequency: 150Hz
+    id: id_backlight_output
+    min_power: 0.01
+    pin: GPIO38
+    zero_means_zero: true
