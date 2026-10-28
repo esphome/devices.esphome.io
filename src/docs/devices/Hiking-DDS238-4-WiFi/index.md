@@ -59,239 +59,13 @@ for you.
 
 ## Basic Configuration
 
-```yaml
----
-#------------------------------------------------------------------------
-# Common setting for the 1 and 3 Phase Meter (DDS238-4 W and DTS238-7 W).
-# All possible entities are shown, but the idea is to only place the ones
-# that are going to be used.
-#
-# The following code only shows the properties needed to configure the
-# meter to access the measurements. Everything related to Wifi, MQTT, API,
-# Time, etc., see directly in the ESPHome options, because it is not the
-# scope of this Readme.
-#------------------------------------------------------------------------
-
-logger:
-  level: DEBUG
-  baud_rate: 0
-
-uart:
-  tx_pin: 1
-  rx_pin: 3
-  baud_rate: 9600
-
-dxs238xw:
-  update_interval: 3s
-
-sensor:
-  - platform: dxs238xw
-    frequency:
-      name: "Frequency"
-
-    import_active_energy:
-      name: "Import Active Energy"
-    export_active_energy:
-      name: "Export Active Energy"
-    total_energy:
-      name: "Total Energy"
-
-    energy_purchase_balance:
-      name: "Energy Purchase - Balance"
-
-    phase_count:
-      name: "Phases N°"
-
-    energy_purchase_price:
-      name: "Energy Purchase Price"
-
-    total_energy_price:
-      name: "Total Energy Price"
-    contract_total_energy:
-      name: "Total Energy Contract"
-
-    price_kWh:
-      name: "kWh Price"
-
-text_sensor:
-  - platform: dxs238xw
-    meter_state_detail:
-      name: "State - Detail"
-      filters:
-        - substitute:
-            - "Off by Over Voltage -> INACTIVE - Over Voltage"
-            - "Off by Under Voltage -> INACTIVE - Under Voltage"
-            - "Off by Over Current -> INACTIVE - Over Current"
-            - "Off by End Purchase -> INACTIVE - End Purchase"
-            - "Off by End Delay -> INACTIVE - End Delay"
-            - "Off by User -> INACTIVE - By User"
-            - "Off by Unknown -> INACTIVE - Unknown"
-            - "Power Ok -> ACTIVE"
-    delay_value_remaining:
-      name: "Remaining Delay Time"
-    meter_id:
-      name: "Serial N°"
-
-number:
-  - platform: dxs238xw
-    max_current_limit:
-      name: "Maximum Current"
-    max_voltage_limit:
-      name: "Maximum Voltage"
-    min_voltage_limit:
-      name: "Minimum Voltage"
-    energy_purchase_value:
-      name: "Energy Purchase"
-    energy_purchase_alarm:
-      name: "Energy Purchase Alarm"
-    delay_value_set:
-      name: "Delay Time"
-    starting_kWh:
-      name: "kWh Start"
-    price_kWh:
-      name: "kWh Price"
-
-switch:
-  - platform: dxs238xw
-    energy_purchase_state:
-      name: "Activate Energy Purchase"
-    meter_state:
-      name: "State SmartMeter"
-    delay_state:
-      name: "Activate Delay"
-
-button:
-  - platform: dxs238xw
-    reset_data:
-      name: "Restart Consumption"
-
-binary_sensor:
-  - platform: gpio
-    internal: true
-    id: button_0
-    pin:
-      number: GPIO13
-      mode:
-        input: true
-        pullup: true
-      inverted: true
-    on_multi_click:
-      - timing:
-          - ON for at least 1s
-        then:
-          - dxs238xw.meter_state_toggle
-        invalid_cooldown: 0ms
-
-  - platform: dxs238xw
-    warning_off_by_over_voltage:
-      name: "Over Voltage Alert"
-    warning_off_by_under_voltage:
-      name: "Under Voltage Alert"
-    warning_off_by_over_current:
-      name: "Over Current Alert"
-    warning_off_by_end_purchase:
-      name: "End Purchase Alert"
-    warning_off_by_end_delay:
-      name: "End Delay Alert"
-    warning_off_by_user:
-      name: "Off by User Alert"
-    warning_purchase_alarm:
-      name: "Balance Purchase Alert"
-    meter_state:
-      name: "Relay State"
-
-status_led:
-  pin:
-    number: GPIO14
-    inverted: no
+```yaml file=config.yaml
 ```
 
-```yaml
----
-#------------------------------------------------------------------------
-# This setting is only for the 1 Phase Meter (DDS238-4 W).
-# All possible entities are shown, but the idea is to only place the ones
-# that are going to be used.
-#
-# The following code only shows the properties needed to configure the
-# meter to access the measurements. Everything related to Wifi, MQTT, API,
-# Time, etc., see directly in the ESPHome options, because it is not the
-# scope of this Readme.
-#------------------------------------------------------------------------
-
-sensor:
-  - platform: dxs238xw
-    current_phase_1:
-      name: "Current"
-
-    voltage_phase_1:
-      name: "Voltage"
-
-    reactive_power_phase_1:
-      name: "Reactive Power"
-
-    active_power_phase_1:
-      name: "Active Power"
-
-    power_factor_phase_1:
-      name: "Power Factor"
+```yaml file=single-phase.yaml
 ```
 
-```yaml
----
-#------------------------------------------------------------------------
-# This setting is only for the 3 Phase Meter (DTS238-7 W).
-# All possible entities are shown, but the idea is to only place the ones
-# that are going to be used.
-#
-# The following code only shows the properties needed to configure the
-# meter to access the measurements. Everything related to Wifi, MQTT, API,
-# Time, etc., see directly in the ESPHome options, because it is not the
-# scope of this Readme.
-#------------------------------------------------------------------------
-
-sensor:
-  - platform: dxs238xw
-    current_phase_1:
-      name: "Current Phase 1"
-    current_phase_2:
-      name: "Current Phase 2"
-    current_phase_3:
-      name: "Current Phase 3"
-
-    voltage_phase_1:
-      name: "Voltage Phase 1"
-    voltage_phase_2:
-      name: "Voltage Phase 2"
-    voltage_phase_3:
-      name: "Voltage Phase 3"
-
-    reactive_power_phase_1:
-      name: "Reactive Power Phase 1"
-    reactive_power_phase_2:
-      name: "Reactive Power Phase 2"
-    reactive_power_phase_3:
-      name: "Reactive Power Phase 3"
-    reactive_power_total:
-      name: "Reactive Power Total"
-
-    active_power_phase_1:
-      name: "Active Power Phase 1"
-    active_power_phase_2:
-      name: "Active Power Phase 2"
-    active_power_phase_3:
-      name: "Active Power Phase 3"
-    active_power_total:
-      name: "Active Power Total"
-
-    power_factor_phase_1:
-      name: "Power Factor Phase 1"
-    power_factor_phase_2:
-      name: "Power Factor Phase 2"
-    power_factor_phase_3:
-      name: "Power Factor Phase 3"
-    power_factor_total:
-      name: "Power Factor Total"
+```yaml file=three-phase.yaml
 ```
 
 ## Global Component Settings
@@ -451,7 +225,7 @@ Three actions related to the change of state of the energy meter have been confi
 
 This action change the state of the energy meter to On.
 
-```yaml
+```yaml inline
 on_...:
   then:
     - dxs238xw.meter_state_on
@@ -459,7 +233,7 @@ on_...:
 
 This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
-```yaml
+```yaml inline
 id(smart_meter).meter_state_on();
 ```
 
@@ -467,7 +241,7 @@ id(smart_meter).meter_state_on();
 
 This action change the state of the energy meter to Off.
 
-```yaml
+```yaml inline
 on_...:
   then:
     - dxs238xw.meter_state_off
@@ -475,7 +249,7 @@ on_...:
 
 This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
-```yaml
+```yaml inline
 id(smart_meter).meter_state_off();
 ```
 
@@ -483,7 +257,7 @@ id(smart_meter).meter_state_off();
 
 This action toggle the state of the energy meter between on off.
 
-```yaml
+```yaml inline
 on_...:
   then:
     - dxs238xw.meter_state_toggle
@@ -491,7 +265,7 @@ on_...:
 
 This action can also be expressed in [lambdas](https://esphome.io/automations/templates/):
 
-```yaml
+```yaml inline
 id(smart_meter).meter_state_toggle();
 ```
 
@@ -504,7 +278,7 @@ The following code is just a proposal that modifies the original behavior of the
 new behavior that activates or deactivates the internal relay of the meter. Feel free to configure the behavior of the
 buttons however you like. [Binary Sensor](https://esphome.io/components/binary_sensor/)
 
-```yaml
+```yaml inline
 binary_sensor:
   - platform: gpio
     internal: true
@@ -528,7 +302,7 @@ binary_sensor:
 For the status led present on the meter, it must be configured with the following code. This configuration connects the
 led on the meter with the EspHome status control. [Status Led](https://esphome.io/components/status_led/)
 
-```yaml
+```yaml inline
 status_led:
   pin:
     number: GPIO14
@@ -544,16 +318,14 @@ shows the internal ESP8266 module in the energy meter, and its connections.
 
 ## Add External Component in ESPHome
 
-Until the pull request is accepted, and since this component (`dxs238xw`) is not native to ESPHome, you must integrate
-it in the following way in the code editor. [External Component](https://esphome.io/components/external_components/)
-Afterwards it should be merged into the main branch.
+The `dxs238xw` component is not part of ESPHome, so it has to be pulled in as an
+[external component](https://esphome.io/components/external_components/). The original source
+(`rodgon81/esphome`) uses schema helpers that were removed in ESPHome 2025.11 and no longer compiles
+on current releases. The repository below is a fork of that component updated for the current schemas.
 
-```yaml
+```yaml inline
 external_components:
-  - source:
-      type: git
-      url: https://github.com/rodgon81/esphome
-      ref: dev
-    refresh: 300s
+  - source: github://kaboom748/dxs238xw
     components: [dxs238xw]
+    refresh: 1d
 ```

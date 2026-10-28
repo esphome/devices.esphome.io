@@ -1,0 +1,54 @@
+---
+#------------------------------------------------------------------------
+# This setting is only for the 3 Phase Meter (DTS238-7 W).
+# All possible entities are shown, but the idea is to only place the ones
+# that are going to be used.
+#
+# The following code only shows the properties needed to configure the
+# meter to access the measurements. Everything related to Wifi, MQTT, API,
+# Time, etc., see directly in the ESPHome options, because it is not the
+# scope of this Readme.
+#------------------------------------------------------------------------
+
+sensor:
+  - platform: dxs238xw
+    current_phase_1:
+      name: "Current Phase 1"
+    current_phase_2:
+      name: "Current Phase 2"
+    current_phase_3:
+      name: "Current Phase 3"
+
+    voltage_phase_1:
+      name: "Voltage Phase 1"
+    voltage_phase_2:
+      name: "Voltage Phase 2"
+    voltage_phase_3:
+      name: "Voltage Phase 3"
+
+    reactive_power_phase_1:
+      name: "Reactive Power Phase 1"
+    reactive_power_phase_2:
+      name: "Reactive Power Phase 2"
+    reactive_power_phase_3:
+      name: "Reactive Power Phase 3"
+    reactive_power_total:
+      name: "Reactive Power Total"
+
+    active_power_phase_1:
+      name: "Active Power Phase 1"
+    active_power_phase_2:
+      name: "Active Power Phase 2"
+    active_power_phase_3:
+      name: "Active Power Phase 3"
+    active_power_total:
+      name: "Active Power Total"
+
+    power_factor_phase_1:
+      name: "Power Factor Phase 1"
+    power_factor_phase_2:
+      name: "Power Factor Phase 2"
+    power_factor_phase_3:
+      name: "Power Factor Phase 3"
+    power_factor_total:
+      name: "Power Factor Total"
