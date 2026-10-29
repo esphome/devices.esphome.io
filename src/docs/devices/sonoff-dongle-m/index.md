@@ -67,7 +67,7 @@ The basic configuration provides Ethernet connectivity, UART over TCP, and essen
 
 The advanced configuration adds Wi-Fi, Bluetooth Proxy, RGB LED effects, button events, access point controls, and MG24 radio management.
 
-```yaml file=advanced.yaml
+```yaml file=extras.yaml
 ```
 
 ## Link
