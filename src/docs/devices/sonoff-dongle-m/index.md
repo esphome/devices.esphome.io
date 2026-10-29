@@ -11,10 +11,11 @@ project-url: https://dongle.sonoff.tech/guide/dongle-m/running-esphome-firmware-
 ## Description
 
 Dongle-M uses a dual-chip architecture consisting of an ESP32 (Wi-Fi SoC) and an MG24 (Zigbee/Thread SoC).
-The ESP32 handles functions such as Wi-Fi and Ethernet, and provides a TCP port for transmitting and receiving serial data from the MG24.
+The ESP32 handles functions such as Wi-Fi and Ethernet,
+and provides a TCP port for transmitting and receiving serial data from the MG24.
 The MG24 serves as a Zigbee NCP (Zigbee Coordinator), Zigbee Router, OpenThread RCP, or Multiprotocol RCP.
 
-**Note:** ESPHome firmware runs exclusively on Dongle-M's ESP32 Wi-Fi SoC. 
+**Note:** ESPHome firmware runs exclusively on Dongle-M's ESP32 Wi-Fi SoC.
 Flashing ESPHome firmware onto Dongle-M will not affect the functionality of the firmware on the MG24 SoC.
 
 ![SONOFF Dongle Max (Dongle-M)](dongle-max-device.png)
@@ -22,9 +23,9 @@ Flashing ESPHome firmware onto Dongle-M will not affect the functionality of the
 
 ## Quick Start
 
-1. Copy below advanced yaml into ESPHome Builder 
+1. Copy below advanced yaml into ESPHome Builder
 2. Compile and flash the firmware to Dongle-M's ESP32
-3.  Add it to Home Assistant via the ESPHome integration.
+3. Add it to Home Assistant via the ESPHome integration.
 4. (Optional) Flash the MG24 firmware and connect it to open-source platform
 
 ## GPIO Pinout
@@ -47,7 +48,8 @@ Flashing ESPHome firmware onto Dongle-M will not affect the functionality of the
 
 ## Key Features
 
-The following features are based on the advanced YAML configuration provided in this document. All parameters can be modified in ESPHome to suit your needs.
+The following features are based on the advanced YAML configuration provided in this document.
+All parameters can be modified in ESPHome to suit your needs.
 
 - **Ethernet:** Provides a wired network connection through the onboard IP101 PHY.
 - **Wi-Fi:** Supports wireless connectivity and a fallback access point for setup and recovery.
@@ -65,7 +67,8 @@ The basic configuration provides Ethernet connectivity, UART over TCP, and essen
 
 ## Advanced Configuration
 
-The advanced configuration adds Wi-Fi, Bluetooth Proxy, RGB LED effects, button events, access point controls, and MG24 radio management.
+The advanced configuration adds Wi-Fi, Bluetooth Proxy, RGB LED effects,
+button events, access point controls, and MG24 radio management.
 
 ```yaml file=extras.yaml
 ```
