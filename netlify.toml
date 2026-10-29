@@ -5,3 +5,59 @@ publish = "dist"
 # Purge Cloudflare CDN cache after successful deploy.
 [[plugins]]
   package = "@esphome/netlify-plugin-cloudflare-cache-purge"
+
+# Edge caching: changed URLs are purged from Cloudflare on each deploy, so
+# Cloudflare can hold pages for a week. Browsers revalidate after an hour.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cloudflare-CDN-Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+# Fingerprinted assets (Astro build output in /_astro/) - 1 year, immutable
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Cloudflare-CDN-Cache-Control = "public, max-age=31536000, immutable"
+
+# Static images in public/ - browser: 1 week, CDN: 1 month
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    Cloudflare-CDN-Cache-Control = "public, max-age=2592000, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    Cloudflare-CDN-Cache-Control = "public, max-age=2592000, stale-while-revalidate=604800"
+
+# Device example configs are fetched by other tools and the remote-yaml-include
+# script, so keep them fresher - browser: 1 hour, CDN: 1 day
+[[headers]]
+  for = "/devices/*.yaml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Cloudflare-CDN-Cache-Control = "public, max-age=86400"
+
+# Favicons - browser: 1 week, CDN: 1 month
+[[headers]]
+  for = "/favicon*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    Cloudflare-CDN-Cache-Control = "public, max-age=2592000"
+
+# Sitemap and robots.txt - browser: 1 hour, CDN: 1 day
+[[headers]]
+  for = "/sitemap*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Cloudflare-CDN-Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Cloudflare-CDN-Cache-Control = "public, max-age=86400"
