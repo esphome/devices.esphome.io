@@ -13,7 +13,7 @@ board: bk72xx
 As of November 2024, there are two methods of flashing this device, using a serial adapter and ltchiptool, or OTA using
 tuya-cloudcutterflash
 
-Attention: Recently purchased units (Decemeber, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.
+Attention: Recently purchased units (December, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.
 These units cannot be flashed with ESPHome.  The newly purchased units also have screw terminals on the switch body for
 the wiring.  The older units had four wires coming off of the back of the switch body.
 
@@ -100,7 +100,13 @@ Booting firmware  [#############################################################
 
 Congrats you are done! You can now disconnect it and wire in the normal switch!
 
-## Pinout
+## Hardware Variants & Pinout
+
+There are different variants of this switch, based on when it was manufactured, which determines the micro-controller within. Some of these different versions have different pins assigned to the various functions (button, switch, LED). Flashing of the different Beken based chips remains the same as described above.
+
+### Beken BK7231N
+
+This variant was available from Amazon around 2024, and is built on the BK7231N micro-controller. The pin assignments are listed below and in the example YAML configuration below.
 
 | Pin | Function  |
 |-----|-----------|
@@ -108,6 +114,17 @@ Congrats you are done! You can now disconnect it and wire in the normal switch!
 | P6  | Green LED |
 | P14 | Relay     |
 | P16 | Red LED   |
+
+### Beken BK7238
+
+This variant was available from Amazon around November 2026 and is built on the BK7238, and uses a different pinout. Additionally, the bk72xx board need to be changed to `generic-bk7238-tuya` in the YAML configuration as well. With these changes, the example YAML configuration can be used on this variant.
+
+| Pin | Function  |
+|-----|-----------|
+| P7  | Green LED |
+| P17 | Red LED   |
+| P22 | Relay     |
+| P23 | Button    |
 
 ## Example YAML Config
 
