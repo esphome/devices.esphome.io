@@ -6,17 +6,31 @@ publish = "dist"
 [[plugins]]
   package = "@esphome/netlify-plugin-cloudflare-cache-purge"
 
-# Edge caching: changed URLs are purged from Cloudflare on each deploy, so
-# Cloudflare can hold pages for a week. Browsers revalidate after an hour.
+# Edge caching: browsers revalidate every load and get a cheap 304 from
+# Cloudflare (ETags work), so deploys show at once. Cloudflare keeps pages for
+# a week and the purge plugin clears changed URLs on each deploy.
 [[headers]]
   for = "/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
     Cloudflare-CDN-Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 # Fingerprinted assets (Astro build output in /_astro/) - 1 year, immutable
 [[headers]]
   for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Cloudflare-CDN-Cache-Control = "public, max-age=31536000, immutable"
+
+# Fingerprinted Pagefind search index files - 1 year, immutable
+[[headers]]
+  for = "/pagefind/fragment/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Cloudflare-CDN-Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/pagefind/index/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
     Cloudflare-CDN-Cache-Control = "public, max-age=31536000, immutable"
