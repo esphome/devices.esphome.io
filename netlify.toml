@@ -1,3 +1,7 @@
 [build]
 command = "npm run build"
 publish = "dist"
+
+# Purge Cloudflare CDN cache after successful deploy.
+[[plugins]]
+  package = "@esphome/netlify-plugin-cloudflare-cache-purge"
