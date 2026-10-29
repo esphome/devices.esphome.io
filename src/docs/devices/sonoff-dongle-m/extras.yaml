@@ -1,0 +1,615 @@
+esphome:
+  name: dongle-m
+  friendly_name: "Dongle Max"
+  includes:
+    - <esp_wifi.h>
+
+  # Initialize runtime state, reset the MG24 radio, and indicate booting.
+  on_boot:
+    - priority: 600
+      then:
+        - switch.turn_off: radio_bootloader
+        - delay: 100ms
+        - switch.turn_on: radio_reset
+        - delay: 100ms
+        - switch.turn_off: radio_reset
+        - light.turn_on:
+            id: status_rgb
+            brightness: 100%
+            red: 0%
+            green: 0%
+            blue: 100%
+            effect: "Blink 500ms"
+
+    # Initialize connection status after ESPHome components are ready.
+    - priority: -100
+      then:
+        - text_sensor.template.publish:
+            id: uart_tcp_connection_status
+            state: "Disconnected"
+        - script.execute: update_status_led
+
+# ESP32 hardware and framework configuration.
+esp32:
+  variant: esp32
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+
+psram:
+  mode: quad
+  speed: 80MHz
+
+logger:
+
+api:
+  encryption:
+    key: # Specify the encryption key. Leave empty to let ESPHome generate one
+
+ota:
+  - platform: esphome
+    allow_partition_access: true
+    encryption:
+
+external_components:
+  - source: github://SONOFF-Technologies/esphome-stream-server
+
+network:
+  priority: # Order of preference for network interfaces when more than one is configured.
+    - ethernet # Prefer ethernet over Wi-Fi.
+    - wifi
+
+wifi:
+  id: wifi_network
+
+  ssid: # Specify the WLAN that your Dongle Max should connect to.
+  password: # Specify the password of that WLAN.
+  ap: # Fallback Access Point provided by Dongle Max.
+    ssid: "Dongle-M_ESPHome" # Name of the access point to create.
+    password: # Password for the access point. Leave empty for an open network.
+  on_connect:
+    - script.execute: update_status_led
+  on_disconnect:
+    - script.execute: update_status_led
+
+captive_portal:
+
+# Ethernet PHY configuration.
+# The PHY type, clock mode, and GPIO assignments are hardware-specific.
+ethernet:
+  id: ethernet_network
+  type: IP101
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    pin: GPIO0
+    mode: CLK_EXT_IN
+  phy_addr: 1
+  power_pin:
+    number: GPIO5
+  on_connect:
+    then:
+      - script.execute: update_status_led
+  on_disconnect:
+    then:
+      - script.execute: update_status_led
+
+# Enable ESPHome Bluetooth Proxy for BLE device discovery and forwarding.
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 320ms
+    window: 160ms
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+preferences:
+  flash_write_interval: 1s
+
+# UART interface connected to the MG24 radio.
+# The application baud rate can be changed at runtime below.
+uart:
+  id: radio_uart
+  rx_pin: GPIO13
+  tx_pin: GPIO17
+  baud_rate: 115200
+
+# Expose the MG24 UART over TCP.
+stream_server:
+  - id: radio_stream_server
+    uart_id: radio_uart
+    port: 6638
+    buffer_size: 4096
+
+# RGB status LED driven by three PWM channels.
+output:
+  - platform: ledc
+    id: status_led_red
+    pin: GPIO4
+    frequency: 5000Hz
+    channel: 0
+
+  - platform: ledc
+    id: status_led_green
+    pin: GPIO14
+    frequency: 5000Hz
+    channel: 2
+
+  - platform: ledc
+    id: status_led_blue
+    pin: GPIO2
+    frequency: 5000Hz
+    channel: 4
+
+# Status LED indications:
+# - Blinking blue: network disconnected
+# - Solid blue: network connected
+# - Blinking orange: temporary single-click indication
+light:
+  - platform: rgb
+    id: status_rgb
+    name: "LED"
+    icon: mdi:led-on
+    red: status_led_red
+    green: status_led_green
+    blue: status_led_blue
+    gamma_correct: 2.0
+    default_transition_length: 0s
+    flash_transition_length: 0s
+    restore_mode: ALWAYS_OFF
+    effects:
+      - pulse:
+          name: "Blink 500ms"
+          transition_length: 0s
+          update_interval: 500ms
+          min_brightness: 0%
+          max_brightness: 100%
+      - pulse:
+          name: "Breathing"
+          transition_length: 500ms
+          update_interval: 500ms
+          min_brightness: 0%
+          max_brightness: 100%
+
+globals:
+  - id: button_long_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: mg24_bootloader_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+event:
+  - platform: template
+    id: user_button_event
+    name: "Button"
+    icon: mdi:gesture-tap-button
+    event_types:
+      - "single click"
+      - "double click"
+      - "long press"
+      - "long release"
+
+binary_sensor:
+  - platform: stream_server
+    stream_server: radio_stream_server
+    connected:
+      id: radio_tcp_connected
+      internal: true
+      on_press:
+        - text_sensor.template.publish:
+            id: uart_tcp_connection_status
+            state: "Connected"
+      on_release:
+        - text_sensor.template.publish:
+            id: uart_tcp_connection_status
+            state: "Disconnected"
+
+  # Physical user button.
+  #
+  # Actions:
+  # - Single click: emit an event and enable the access point
+  # - Double click: emit a double-click event
+  # - Long press (5 s): emit a long-press event
+  # - Release after long press: emit a long-release event
+  - platform: gpio
+    id: user_button
+    icon: mdi:gesture-tap-button
+    pin:
+      number: GPIO34
+      mode:
+        input: true
+      inverted: true
+    filters:
+      - delayed_on_off: 20ms
+    on_press:
+      then:
+        - lambda: |-
+            id(button_long_active) = false;
+        - script.execute: button_long_press_detector
+    on_release:
+      then:
+        - script.stop: button_long_press_detector
+        - if:
+            condition:
+              lambda: |-
+                return id(button_long_active);
+            then:
+              - event.trigger:
+                  id: user_button_event
+                  event_type: "long release"
+              - lambda: |-
+                  id(button_long_active) = false;
+    on_multi_click:
+      - timing:
+          - ON for 40ms to 800ms
+          - OFF for 40ms to 400ms
+          - ON for 40ms to 800ms
+          - OFF for at least 500ms
+        then:
+          - event.trigger:
+              id: user_button_event
+              event_type: "double click"
+
+      - timing:
+          - ON for 40ms to 800ms
+          - OFF for at least 500ms
+        then:
+          - event.trigger:
+              id: user_button_event
+              event_type: "single click"
+          - script.execute: force_ap_on
+          - script.execute: single_click_indicator
+
+sensor:
+  - platform: wifi_signal
+    id: wifi_rssi
+    name: "RSSI"
+    update_interval: 30s
+    entity_category: diagnostic
+
+  - platform: uptime
+    id: device_uptime
+    name: "Uptime"
+    type: seconds
+    update_interval: 60s
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: template
+    id: uart_tcp_connection_status
+    name: "UART over TCP"
+    icon: mdi:lan-connect
+    update_interval: never
+
+switch:
+  # Internal MG24 reset control.
+  - platform: gpio
+    id: radio_reset
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO15
+      mode: OUTPUT
+      inverted: true
+
+  # Internal MG24 bootloader control.
+  - platform: gpio
+    id: radio_bootloader
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: GPIO12
+      mode: OUTPUT
+      inverted: false
+
+  # User-facing control for entering or leaving the MG24 bootloader.
+  - platform: template
+    id: mg24_bootloader_switch
+    name: "MG24 bootloader mode"
+    icon: mdi:memory
+    lambda: |-
+      return id(mg24_bootloader_active);
+    turn_on_action:
+      - script.execute: enter_radio_bootloader
+    turn_off_action:
+      - script.execute: reset_radio_to_app
+
+  # Runtime Access Point control.
+  #
+  # ESP-IDF Wi-Fi APIs are used here to enable or disable AP mode
+  # without restarting the device.
+  - platform: template
+    id: ap_control
+    name: "Access Point"
+    icon: mdi:access-point
+    lambda: |-
+      wifi_mode_t mode = WIFI_MODE_NULL;
+      const esp_err_t err = esp_wifi_get_mode(&mode);
+
+      if (err == ESP_ERR_WIFI_NOT_INIT) {
+        return {};
+      }
+
+      if (err != ESP_OK) {
+        ESP_LOGW("ap_control", "esp_wifi_get_mode failed: %s", esp_err_to_name(err));
+        return {};
+      }
+
+      return mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA;
+
+    turn_on_action:
+      - script.execute: force_ap_on
+
+    turn_off_action:
+      - script.execute: force_ap_off
+
+button:
+  - platform: template
+    id: radio_reset_button
+    name: "MG24 restart"
+    icon: mdi:restart
+    on_press:
+      - script.execute: reset_radio_to_app
+
+# Select the MG24 application baud rate.
+# The selected value is persisted across restarts.
+# Bootloader communication always uses 115200 baud.
+select:
+  - platform: template
+    id: radio_baud_rate
+    name: "MG24 baud rate"
+    icon: mdi:swap-horizontal
+    entity_category: config
+    options:
+      - "115200"
+      - "460800"
+      - "921600"
+
+    initial_option: "115200"
+    optimistic: true
+    restore_value: true
+
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return !id(mg24_bootloader_active);
+          then:
+            - script.execute: apply_radio_app_baud_rate
+
+script:
+  - id: button_long_press_detector
+    mode: restart
+    then:
+      - delay: 5s
+      - if:
+          condition:
+            binary_sensor.is_on: user_button
+          then:
+            - lambda: |-
+                id(button_long_active) = true;
+            - event.trigger:
+                id: user_button_event
+                event_type: "long press"
+
+  - id: update_status_led
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return network::is_connected();
+          then:
+            - light.turn_on:
+                id: status_rgb
+                effect: none
+            - light.turn_on:
+                id: status_rgb
+                brightness: 100%
+                red: 0%
+                green: 0%
+                blue: 100%
+                transition_length: 0s
+          else:
+            - light.turn_on:
+                id: status_rgb
+                brightness: 100%
+                red: 0%
+                green: 0%
+                blue: 100%
+                effect: "Blink 500ms"
+
+  - id: single_click_indicator
+    mode: restart
+    then:
+      - light.turn_on:
+          id: status_rgb
+          brightness: 100%
+          red: 100%
+          green: 50%
+          blue: 0%
+          effect: "Blink 500ms"
+      - delay: 10s
+      - script.execute: update_status_led
+
+  - id: force_ap_on
+    mode: restart
+    then:
+      - lambda: |-
+          wifi_mode_t current_mode = WIFI_MODE_NULL;
+          esp_err_t err = esp_wifi_get_mode(&current_mode);
+
+          if (err != ESP_OK) {
+            ESP_LOGE("ap_control", "esp_wifi_get_mode failed: %s", esp_err_to_name(err));
+            return;
+          }
+
+          wifi_mode_t target_mode = current_mode;
+
+          if (current_mode == WIFI_MODE_STA) {
+            target_mode = WIFI_MODE_APSTA;
+          } else if (current_mode == WIFI_MODE_NULL) {
+            target_mode = WIFI_MODE_AP;
+          }
+
+          if (target_mode != current_mode) {
+            err = esp_wifi_set_mode(target_mode);
+            if (err != ESP_OK) {
+              ESP_LOGE("ap_control", "Enable AP failed: %s", esp_err_to_name(err));
+              return;
+            }
+          }
+
+      # Allow the Wi-Fi mode change to take effect before applying
+      # the AP configuration.
+      - delay: 100ms
+
+      - lambda: |-
+          wifi_mode_t current_mode = WIFI_MODE_NULL;
+          esp_err_t err = esp_wifi_get_mode(&current_mode);
+
+          if (err != ESP_OK) {
+            ESP_LOGE("ap_control", "esp_wifi_get_mode failed after enabling AP: %s", esp_err_to_name(err));
+            return;
+          }
+
+          if (current_mode != WIFI_MODE_AP && current_mode != WIFI_MODE_APSTA) {
+            ESP_LOGE("ap_control", "AP mode is not active");
+            return;
+          }
+
+          const auto ap = id(wifi_network).get_ap();
+          const auto ssid = ap.get_ssid();
+          const auto password = ap.get_password();
+
+          wifi_config_t config = {};
+
+          const size_t ssid_len = std::min(ssid.size(), sizeof(config.ap.ssid));
+          std::memcpy(config.ap.ssid, ssid.c_str(), ssid_len);
+          config.ap.ssid_len = ssid_len;
+
+          const size_t password_len = std::min(password.size(), sizeof(config.ap.password) - 1);
+
+          if (password_len > 0) {
+            std::memcpy(config.ap.password, password.c_str(), password_len);
+            config.ap.password[password_len] = '\0';
+            config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+          } else {
+            config.ap.authmode = WIFI_AUTH_OPEN;
+          }
+
+          config.ap.channel = ap.has_channel() ? ap.get_channel() : 1;
+          config.ap.ssid_hidden = ap.get_hidden() ? 1 : 0;
+          config.ap.max_connection = 5;
+          config.ap.beacon_interval = 100;
+
+          err = esp_wifi_set_config(WIFI_IF_AP, &config);
+
+          if (err != ESP_OK) {
+            ESP_LOGE("ap_control", "esp_wifi_set_config(AP) failed: %s", esp_err_to_name(err));
+            return;
+          }
+
+          if (captive_portal::global_captive_portal != nullptr &&
+              !captive_portal::global_captive_portal->is_active()) {
+            captive_portal::global_captive_portal->start();
+          }
+
+          ESP_LOGI("ap_control", "Access Point enabled");
+
+  - id: force_ap_off
+    mode: restart
+    then:
+      - lambda: |-
+          wifi_mode_t current_mode = WIFI_MODE_NULL;
+          esp_err_t err = esp_wifi_get_mode(&current_mode);
+
+          if (err != ESP_OK) {
+            ESP_LOGE("ap_control", "esp_wifi_get_mode failed: %s", esp_err_to_name(err));
+            return;
+          }
+
+          if (current_mode == WIFI_MODE_APSTA) {
+            err = esp_wifi_set_mode(WIFI_MODE_STA);
+          } else if (current_mode == WIFI_MODE_AP) {
+            err = esp_wifi_set_mode(WIFI_MODE_NULL);
+          } else {
+            if (captive_portal::global_captive_portal != nullptr &&
+                captive_portal::global_captive_portal->is_active()) {
+              captive_portal::global_captive_portal->end();
+            }
+            return;
+          }
+
+          if (err != ESP_OK) {
+            ESP_LOGE("ap_control", "Disable AP failed: %s", esp_err_to_name(err));
+            return;
+          }
+
+          if (captive_portal::global_captive_portal != nullptr &&
+              captive_portal::global_captive_portal->is_active()) {
+            captive_portal::global_captive_portal->end();
+          }
+
+          ESP_LOGI("ap_control", "Access Point disabled");
+
+  - id: apply_radio_app_baud_rate
+    mode: restart
+    then:
+      - lambda: |-
+          const auto option = id(radio_baud_rate).current_option();
+
+          uint32_t baud_rate = 115200;
+          if (option == "460800")
+            baud_rate = 460800;
+          else if (option == "921600")
+            baud_rate = 921600;
+
+          if (id(radio_uart).get_baud_rate() != baud_rate) {
+            id(radio_uart).flush();
+            id(radio_uart).set_baud_rate(baud_rate);
+            id(radio_uart).load_settings();
+          }
+
+  # Enter the MG24 bootloader.
+  # Bootloader communication always uses 115200 baud without
+  # changing the saved application baud rate.
+  - id: enter_radio_bootloader
+    mode: restart
+    then:
+      - lambda: |-
+          id(mg24_bootloader_active) = true;
+
+          id(radio_uart).flush();
+          if (id(radio_uart).get_baud_rate() != 115200) {
+            id(radio_uart).set_baud_rate(115200);
+            id(radio_uart).load_settings();
+          }
+
+          id(mg24_bootloader_switch).publish_state(true);
+
+      - delay: 100ms
+      - switch.turn_on: radio_bootloader
+      - delay: 100ms
+      - switch.turn_on: radio_reset
+      - delay: 100ms
+      - switch.turn_off: radio_reset
+
+  # Reset the MG24 back into normal application mode and restore
+  # the configured application baud rate.
+  - id: reset_radio_to_app
+    mode: restart
+    then:
+      - switch.turn_off: radio_bootloader
+      - delay: 100ms
+      - switch.turn_on: radio_reset
+      - delay: 100ms
+      - switch.turn_off: radio_reset
+      - lambda: |-
+          id(mg24_bootloader_active) = false;
+          id(mg24_bootloader_switch).publish_state(false);
+      - script.execute: apply_radio_app_baud_rate
