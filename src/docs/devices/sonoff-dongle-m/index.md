@@ -17,8 +17,8 @@ The MG24 serves as a Zigbee NCP (Zigbee Coordinator), Zigbee Router, OpenThread 
 **Note:** ESPHome firmware runs exclusively on Dongle-M's ESP32 Wi-Fi SoC. 
 Flashing ESPHome firmware onto Dongle-M will not affect the functionality of the firmware on the MG24 SoC.
 
-![SONOFF Dongle Max (Dongle-M)](dongle-m.jpg)
-![SONOFF Dongle Max (Dongle-M)](dongle-m.jpg)
+![SONOFF Dongle Max (Dongle-M)](dongle-max-device.png)
+![SONOFF Dongle Max (Dongle-M)](dongle-max-in-the-box.png)
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ Flashing ESPHome firmware onto Dongle-M will not affect the functionality of the
 
 ## GPIO Pinout
 
-![SONOFF Dongle Max (Dongle-M)](dongle-m.jpg)
+![SONOFF Dongle Max (Dongle-M)](dongle-max-pcb.jpg)
 
 | Function | ESP32 GPIO | Direction | Notes |
 | --- | --- | --- | --- |
