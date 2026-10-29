@@ -10,8 +10,6 @@ logger:
 wifi:
   ap:
 
-captive_portal:
-
 # Status LED configuration
 status_led:
   pin:
