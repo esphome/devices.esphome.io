@@ -8,7 +8,7 @@ difficulty: 2
 project-url: https://dongle.sonoff.tech/guide/dongle-m/running-esphome-firmware-on-dongle-m/
 ---
 
-# Description
+## Description
 
 Dongle-M uses a dual-chip architecture consisting of an ESP32 (Wi-Fi SoC) and an MG24 (Zigbee/Thread SoC).
 The ESP32 handles functions such as Wi-Fi and Ethernet, and provides a TCP port for transmitting and receiving serial data from the MG24.
@@ -54,7 +54,7 @@ The following features are based on the advanced YAML configuration provided in 
 - **UART over TCP:** Exposes the MG24 UART interface over TCP port 6638 for compatible Zigbee or Thread open-source platform.
 - **Bluetooth Proxy:** Enables Home Assistant to discover and control nearby BLE devices.
 - **MG24 Firmware Management:** Supports entering MG24 bootloader mode and updating radio firmware.
-- **Status and Controls:** Provides RGB status indication, button events
+- **Status and Controls:** Provides RGB status indication, button events.
 
 ## Basic Configuration
 
