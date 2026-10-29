@@ -73,8 +73,8 @@ button events, access point controls, and MG24 radio management.
 ```yaml file=extras.yaml
 ```
 
-## Link
+## Links
 
 - [**Shop:** Purchase Dongle-M from the official SONOFF store.](https://sonoff.tech/products/sonoff-dongle-max-zigbee-thread-poe-dongle-dongle-m)
 - [**Guide:** Follow Running ESPHome Firmware on Dongle-M.](https://dongle.sonoff.tech/guide/dongle-m/running-esphome-firmware-on-dongle-m/)
-- [**Forum:** Post questions on the eWeLink Community Forum for our official technical support.](https://forum.ewelink.cc/t/esphome-on-sonoff-dongle-max/209243)
+- [**Forum:** Post questions on the eWeLink Community Forum for discussion and assistance.](https://forum.ewelink.cc/t/esphome-on-sonoff-dongle-max/209243)
