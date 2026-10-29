@@ -1,0 +1,30 @@
+# ST7121 revision (units made from 28 April 2026): use these two sections
+# in place of the display: and touchscreen: sections of the base configuration.
+# Requires ESPHome 2026.7.0 or later. There is no ST7121 touchscreen platform:
+# the st7123 one is used, as reported working in esphome/esphome#17471.
+display:
+  - platform: mipi_dsi
+    dimensions:
+      height: 1280
+      width: 720
+    model: M5STACK-TAB5-ST7121
+    reset_pin:
+      pi4ioe5v6408: pi4ioe1
+      number: 4
+    show_test_card: true
+
+touchscreen:
+  - platform: st7123
+    interrupt_pin: GPIO23
+    # The st7123 component sets the controller up from update();
+    # polling stops by itself once the interrupt is attached.
+    update_interval: 100ms
+    reset_pin:
+      pi4ioe5v6408: pi4ioe1
+      number: 5
+    calibration:
+      x_min: 0
+      x_max: 720
+      y_min: 0
+      y_max: 1280
+    id: touch
