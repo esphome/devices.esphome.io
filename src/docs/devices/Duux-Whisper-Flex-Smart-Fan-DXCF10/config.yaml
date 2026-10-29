@@ -1,0 +1,85 @@
+substitutions:
+  devicename: "ventilator"
+  friendly: "Ventilator"
+# Define logging level: NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
+  log_level: "WARN"
+
+esphome:
+  name: $devicename
+  comment: "Duux Whisper Flex Smart Fan (DXCF10)"
+  friendly_name: $friendly
+  project:
+    name: "Duux.Whisper-Flex-Smart-Fan"
+    version: "1.1.0"
+
+esp8266:
+  board: esp07
+
+# Enable logging
+# baud_rate: 0 is required, because the Tuya UART (GPIO15/GPIO13) is the
+# swapped hardware UART0, which the logger would otherwise also use.
+# Logs remain available via the API and the web server.
+logger:
+  baud_rate: 0
+  level: $log_level
+
+wifi:
+  ap:
+
+uart:
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+
+tuya:
+  time_id: homeassistant_time
+
+fan:
+  - platform: "tuya"
+    name: None
+    switch_datapoint: 1
+    speed_datapoint: 3
+    speed_count: 26
+    oscillation_datapoint: 4
+
+select:
+
+
+  - platform: "tuya"
+    id: "vertically"
+    internal: true
+    name: "Oscillate vertically"
+    enum_datapoint: 5
+    optimistic: true
+    options:
+      0: "off"
+      1: "on"
+
+  - platform: "tuya"
+    name: "Mode"
+    enum_datapoint: 2
+    optimistic: true
+    options:
+      0: "Manual Mode"
+      1: "Natural Mode"
+      2: "Sleep Mode"
+
+  - platform: "tuya"
+    name: "Timer"
+    icon: mdi:fan-clock
+    enum_datapoint: 6
+    optimistic: true
+    options:
+      0: "off"
+      1: "1h"
+      2: "2h"
+      3: "3h"
+      4: "4h"
+      5: "5h"
+      6: "6h"
+      7: "7h"
+      8: "8h"
+      9: "9h"
+      10: "10h"
+      11: "11h"
+      12: "12h"
