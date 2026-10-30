@@ -29,7 +29,9 @@ with or without the relay module, which does not fit into a standard EU round 60
 ## Additional Resources
 
 For a more detailed reference covering GPIO assignments, RGB display signals, ST7701S initialization, GT911 touch,
-and ESPHome setup, see the [4848S040 Pinout, GPIOs & ESPHome Setup Guide](https://embeddednerd.com/guition-esp32-s3-4848s040-pinout-esphome/).
+and ESPHome setup, see the [4848S040 Pinout, GPIOs & ESPHome Setup Guide][4848s040-guide].
+
+[4848s040-guide]: https://embeddednerd.com/guition-esp32-s3-4848s040-pinout-esphome/
 
 ## Basic Config
 
