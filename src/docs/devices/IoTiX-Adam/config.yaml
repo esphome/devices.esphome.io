@@ -1,0 +1,302 @@
+esphome:
+  name: iotix-adam
+  friendly_name: IoTiX Adam
+
+esp32:
+  board: esp32dev
+
+logger:
+
+wifi:
+  ap:
+
+i2c:
+  id: bus_a
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  frequency: 100kHz
+
+pcf8574:
+  - id: hub_out
+    address: 0x26
+    pcf8575: true
+  - id: hub_in
+    address: 0x27
+    pcf8575: true
+
+switch:
+  - platform: gpio
+    id: do_1
+    name: DO1
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 0
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_2
+    name: DO2
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 1
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_3
+    name: DO3
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 2
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_4
+    name: DO4
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 3
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_5
+    name: DO5
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 4
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_6
+    name: DO6
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 5
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_7
+    name: DO7
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 6
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_8
+    name: DO8
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 7
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_9
+    name: DO9
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 8
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_10
+    name: DO10
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 9
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_11
+    name: DO11
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 10
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_12
+    name: DO12
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 11
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_13
+    name: DO13
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 12
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_14
+    name: DO14
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 13
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_15
+    name: DO15
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 14
+      mode: OUTPUT
+      inverted: true
+  - platform: gpio
+    id: do_16
+    name: DO16
+    restore_mode: ALWAYS_OFF
+    pin:
+      pcf8574: hub_out
+      number: 15
+      mode: OUTPUT
+      inverted: true
+
+binary_sensor:
+  - platform: gpio
+    id: di_1
+    name: DI1
+    pin:
+      pcf8574: hub_in
+      number: 0
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_2
+    name: DI2
+    pin:
+      pcf8574: hub_in
+      number: 1
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_3
+    name: DI3
+    pin:
+      pcf8574: hub_in
+      number: 2
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_4
+    name: DI4
+    pin:
+      pcf8574: hub_in
+      number: 3
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_5
+    name: DI5
+    pin:
+      pcf8574: hub_in
+      number: 4
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_6
+    name: DI6
+    pin:
+      pcf8574: hub_in
+      number: 5
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_7
+    name: DI7
+    pin:
+      pcf8574: hub_in
+      number: 6
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_8
+    name: DI8
+    pin:
+      pcf8574: hub_in
+      number: 7
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_9
+    name: DI9
+    pin:
+      pcf8574: hub_in
+      number: 8
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_10
+    name: DI10
+    pin:
+      pcf8574: hub_in
+      number: 9
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_11
+    name: DI11
+    pin:
+      pcf8574: hub_in
+      number: 10
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_12
+    name: DI12
+    pin:
+      pcf8574: hub_in
+      number: 11
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_13
+    name: DI13
+    pin:
+      pcf8574: hub_in
+      number: 12
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_14
+    name: DI14
+    pin:
+      pcf8574: hub_in
+      number: 13
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_15
+    name: DI15
+    pin:
+      pcf8574: hub_in
+      number: 14
+      mode: INPUT
+      inverted: true
+  - platform: gpio
+    id: di_16
+    name: DI16
+    pin:
+      pcf8574: hub_in
+      number: 15
+      mode: INPUT
+      inverted: true
