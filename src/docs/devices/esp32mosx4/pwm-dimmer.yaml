@@ -1,0 +1,79 @@
+# The same board with every MOSFET output PWM dimmed, each one a dimmable
+# light. Choose the PWM frequency to suit the load:
+#   LED strips and lamps: lower frequencies give finer dimming steps,
+#     higher ones are kinder to cameras
+#   fans and motors: 25000 Hz is above hearing (all four outputs have been
+#     tested at 25 kHz driving 12V DC blowers)
+#
+# To run a fan on an output instead of a light, remove that output's light
+# and add, for example:
+#   fan:
+#     - platform: speed
+#       name: Output 4 Fan
+#       output: out_4
+# with that output's frequency set to 25000 Hz.
+
+esphome:
+  name: esp32-mos-x4
+  friendly_name: ESP32 MOS X4
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+
+wifi:
+  ap: {}
+
+binary_sensor:
+  - platform: status
+    name: Status
+  - platform: gpio
+    name: IO0 Button
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+
+output:
+  - platform: ledc
+    id: out_1
+    pin: GPIO16
+    frequency: 1000 Hz
+  - platform: ledc
+    id: out_2
+    pin: GPIO17
+    frequency: 1000 Hz
+  - platform: ledc
+    id: out_3
+    pin: GPIO26
+    frequency: 1000 Hz
+  - platform: ledc
+    id: out_4
+    pin: GPIO27
+    frequency: 1000 Hz
+
+light:
+  - platform: monochromatic
+    name: Output 1
+    output: out_1
+    restore_mode: ALWAYS_OFF
+  - platform: monochromatic
+    name: Output 2
+    output: out_2
+    restore_mode: ALWAYS_OFF
+  - platform: monochromatic
+    name: Output 3
+    output: out_3
+    restore_mode: ALWAYS_OFF
+  - platform: monochromatic
+    name: Output 4
+    output: out_4
+    restore_mode: ALWAYS_OFF
+  - platform: status_led
+    name: Status LED
+    pin: GPIO23
