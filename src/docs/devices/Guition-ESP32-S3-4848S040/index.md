@@ -21,10 +21,14 @@ difficulty: 2
 
 ## Product description
 
-Avalible on [AliExpress](https://www.aliexpress.com/item/3256806115962222.html) at various vendors. Can be purchased
+Available on [AliExpress](https://www.aliexpress.com/item/3256806115962222.html) at various vendors. Can be purchased
 with or without the relay module, which does not fit into a standard EU round 60mm box.
 
 ![Connector pinout](./guition-esp32-s3-4848s040-connector.jpg "Connector pinout")
+
+## Additional Resources
+
+For a more detailed reference covering GPIO assignments, RGB display signals, ST7701S initialization, GT911 touch, and ESPHome setup, see the [4848S040 Pinout, GPIOs & ESPHome Setup Guide](https://embeddednerd.com/guition-esp32-s3-4848s040-pinout-esphome/).
 
 ## Basic Config
 
