@@ -1,0 +1,39 @@
+substitutions:
+  name: shelly-duo-bulb-g3
+  friendly_name: Shelly Duo Bulb Gen3
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+wifi:
+  ap:
+
+logger:
+
+# Both white channels are plain PWM outputs: GPIO4 is warm white (module pad MTMS), GPIO5 is cold white (MTDI).
+output:
+  - platform: ledc
+    id: out_warm_white
+    pin: GPIO4
+  - platform: ledc
+    id: out_cold_white
+    pin: GPIO5
+
+light:
+  - platform: cwww
+    id: bulb
+    name: "Light"
+    cold_white: out_cold_white
+    warm_white: out_warm_white
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    default_transition_length: 0s
