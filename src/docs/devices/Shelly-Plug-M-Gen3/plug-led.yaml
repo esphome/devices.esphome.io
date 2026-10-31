@@ -1,0 +1,211 @@
+# ---------------------------------------------------------------------------
+# plug-led.yaml - optional status LED package for the Shelly Plug M Gen3.
+# Use it together with config.yaml AND plug-protection.yaml (it shows the fault state).
+#
+# The single RGB LED shows the status. Pick the light effect "Live Current",
+# "Live Power" or "Live Temperature" in Home Assistant:
+#   red breathing = fault, magenta = temperature sensor fault, amber blink = close to a limit,
+#   red pulse = no Wi-Fi, amber pulse = no API client, blue blink = OTA update.
+#
+# If you already have an `ota:` entry with platform esphome, give it `id: ota_esphome`.
+# ---------------------------------------------------------------------------
+
+substitutions:
+  warn_ratio: "0.8"  # pre-warning at this fraction of a limit
+  power_bar_min: "2"  # W, bottom of the logarithmic power scale
+  night_brightness: "0.05"  # LED brightness factor in night mode
+  max_current: "10"  # A, same value as in plug-protection.yaml
+  max_power: "2300"  # W
+  max_temp: "70"  # °C
+
+globals:
+  - id: system_status
+    type: int
+    restore_value: false
+    initial_value: "0"  # 0=OK, 1=no Wi-Fi, 2=no API client, 3=OTA update
+
+  # Pre-warning is held for 1.5 s after the last sample above the warn level
+  - id: warn_hold_until
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # One-shot LED feedback: 0=none, 1=press while locked, 2=press while faulted,
+  # 3=child lock engaged, 4=child lock released (set by plug-gestures.yaml)
+  - id: fx_kind
+    type: int
+    restore_value: false
+    initial_value: "0"
+  - id: fx_start
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Index of the running effect: 0=Current, 1=Power, 2=Temperature
+  - id: effect_idx
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+  # Night mode is active (set by an optional night add-on; stays false without it)
+  - id: night_active
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+esphome:
+  on_boot:
+    - priority: 15.0
+      then:
+        - light.turn_on:
+            id: rgb_lights
+            effect: "Live Current"
+
+wifi:
+  on_connect:
+    - lambda: |-
+        if (id(system_status) == 1) id(system_status) = 0;
+  on_disconnect:
+    - lambda: |-
+        id(system_status) = 1;
+
+api:
+  on_client_connected:
+    - lambda: |-
+        if (id(system_status) == 2) id(system_status) = 0;
+  on_client_disconnected:
+    - lambda: |-
+        // do not overwrite the Wi-Fi (1) and OTA (3) states
+        if (id(system_status) == 0) id(system_status) = 2;
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+    on_state_change:
+      - lambda: |-
+          if (state == esphome::ota::OTA_STARTED) id(system_status) = 3;
+          if (state == esphome::ota::OTA_COMPLETED || state == esphome::ota::OTA_ERROR) id(system_status) = 0;
+
+script:
+  # Render the status colour on the single RGB LED.
+  # kind: 0=Live Current, 1=Live Power, 2=Live Temperature
+  - id: led_render
+    mode: single
+    parameters:
+      kind: int
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+
+          // Live readings (fall back to harmless values until the first sample arrives)
+          const float cur = (id(bcurrent).has_state() && !std::isnan(id(bcurrent).state)) ? id(bcurrent).state : 0.0f;
+          const float pwr = (id(bpower).has_state() && !std::isnan(id(bpower).state)) ? id(bpower).state : 0.0f;
+          const float tmp = (id(ntc_temp).has_state() && !std::isnan(id(ntc_temp).state)) ? id(ntc_temp).state : 25.0f;
+
+          // Pre-warning: any value at or above warn_ratio of its limit (held for 1.5 s)
+          const float wr = (float)(${warn_ratio});
+          if (cur >= wr * (float)(${max_current}) || pwr >= wr * (float)(${max_power}) ||
+              tmp >= wr * (float)(${max_temp})) {
+            id(warn_hold_until) = now + 1500;
+          }
+
+          const float nf = id(night_active) ? (float) (${night_brightness}) : 1.0f;
+          bool dim = true;  // night-mode dimming applies unless a priority branch clears it
+          float r = 0.0f, g = 0.0f, b = 0.0f;
+
+          const int fx_k = id(fx_kind);
+          const uint32_t fx_el = now - id(fx_start);
+          const uint32_t fx_dur = (fx_k == 1) ? 1200 : (fx_k == 2) ? 3000 : (fx_k == 3) ? 900 : 700;
+          id(effect_idx) = kind;
+
+          if (fx_k != 0 && fx_el < fx_dur) {
+            // PRIO 0: one-shot feedback (button presses, child lock changes)
+            dim = false;
+            if (fx_k == 1) {          // pressed while child lock is on: orange blink
+              if ((fx_el / 200) % 2 == 0) { r = 1.0f; g = 0.35f; }
+            } else if (fx_k == 2) {   // pressed while a fault is latched: fast red blink
+              if ((fx_el / 150) % 2 == 0) r = 1.0f;
+            } else if (fx_k == 3) {   // child lock engaged: orange fades in
+              float q = fx_el / 500.0f; if (q > 1.0f) q = 1.0f;
+              r = q; g = 0.35f * q;
+            } else {                  // child lock released: green fades out
+              float q = 1.0f - fx_el / 500.0f; if (q < 0.0f) q = 0.0f;
+              g = q;
+            }
+          } else if (id(fault_active)) {
+            // PRIO 1: fault latched - red breathing
+            dim = false;
+            float p = (sinf(now * 0.004f) + 1.0f) / 2.0f;
+            r = 0.12f + p * 0.47f;
+          } else if (id(ntc_bad)) {
+            // PRIO 2: temperature sensor fault (protection is blind) - magenta slow blink
+            dim = false;
+            if ((now / 600) % 2 == 0) { r = 0.8f; b = 0.8f; }
+          } else if ((int32_t)(id(warn_hold_until) - now) > 0) {
+            // PRIO 3: pre-warning - amber blink
+            dim = false;
+            if ((now / 250) % 2 == 0) { r = 1.0f; g = 0.47f; }
+          } else if (id(system_status) == 1) {
+            // PRIO 4: no Wi-Fi - red pulse
+            r = (sinf(now * 0.005f) + 1.0f) / 2.0f;
+          } else if (id(system_status) == 2) {
+            // PRIO 4: no API client - amber pulse
+            float pulse = (sinf(now * 0.003f) + 1.0f) / 2.0f;
+            r = pulse * 0.9f;
+            g = pulse * 0.24f;
+          } else if (id(system_status) == 3) {
+            // PRIO 4: OTA update - blue blink
+            if ((now / 150) % 2 == 0) b = 1.0f; else b = 0.08f;
+          } else {
+            // PRIO 5: the effect itself
+            float frac = 0.0f;
+            if (kind == 0) {
+              // Live Current: 0 .. max_current, linear
+              frac = cur / (float)(${max_current});
+            } else if (kind == 1) {
+              // Live Power: power_bar_min .. max_power on a logarithmic scale
+              const float pmin = (float)(${power_bar_min});
+              const float pmax = (float)(${max_power});
+              if (pwr > pmin && pmax > pmin) frac = (log10f(pwr) - log10f(pmin)) / (log10f(pmax) - log10f(pmin));
+            } else {
+              // Live Temperature: 25 °C (blue) .. max_temp (red)
+              frac = (tmp - 25.0f) / ((float)(${max_temp}) - 25.0f);
+            }
+            if (frac > 1.0f) frac = 1.0f;
+            if (frac < 0.0f) frac = 0.0f;
+            if (kind == 2) {
+              // blue -> green -> red
+              if (frac < 0.5f) { g = frac * 2.0f; b = 1.0f - g; }
+              else { r = (frac - 0.5f) * 2.0f; g = 1.0f - r; }
+            } else if (id(relay).state) {
+              // relay on: green -> red (no load = green); relay off: LED dark
+              r = frac;
+              g = 1.0f - frac;
+            }
+            // child lock on: short orange flash every 3 s on top of the effect
+            if (id(button_locked) && (now % 3000) < 150) { r = 1.0f; g = 0.35f; b = 0.0f; }
+          }
+          if (fx_k != 0 && fx_el >= fx_dur) id(fx_kind) = 0;
+
+          if (dim && nf < 1.0f) { r *= nf; g *= nf; b *= nf; }
+          auto call = id(rgb_lights).turn_on();
+          call.set_transition_length(0);
+          call.set_rgb(r, g, b);
+          call.perform();
+
+light:
+  - id: !extend rgb_lights
+    default_transition_length: 0ms
+    effects:
+      - lambda:
+          name: "Live Current"
+          update_interval: 50ms
+          lambda: "id(led_render).execute(0);"
+      - lambda:
+          name: "Live Power"
+          update_interval: 50ms
+          lambda: "id(led_render).execute(1);"
+      - lambda:
+          name: "Live Temperature"
+          update_interval: 50ms
+          lambda: "id(led_render).execute(2);"

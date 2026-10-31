@@ -1,0 +1,290 @@
+# ---------------------------------------------------------------------------
+# plug-calibration.yaml - optional runtime calibration of the BL0942.
+#
+# The *_reference values are plain divisors on the ESPHome side
+# (value = raw value / reference), so they can be changed without reflashing.
+# Use it together with config.yaml:
+#   packages:
+#     base: !include config.yaml
+#     cal: !include plug-calibration.yaml
+#
+# Needs from config.yaml: bl0942_1, bvoltage, bcurrent, bpower, benergy and the substitutions
+# voltage_reference, current_reference, power_reference, energy_reference.
+#
+# Usage: enter the value of a reference meter in "Cal Target ...", then press "Calibrate ...".
+# new reference = old reference * (displayed value / reference meter value)
+# ---------------------------------------------------------------------------
+
+esphome:
+  on_boot:
+    # After the number states are restored, before the first UART packet.
+    - priority: -100
+      then:
+        - script.execute: apply_references
+
+number:
+  - platform: template
+    name: "Cal Voltage Reference"
+    id: cal_voltage_ref
+    optimistic: true
+    restore_value: true
+    initial_value: ${voltage_reference}
+    min_value: 1000
+    max_value: 50000
+    step: 0.1
+    mode: box
+    entity_category: config
+    icon: "mdi:alpha-v-circle-outline"
+    on_value:
+      - lambda: id(bl0942_1).set_voltage_reference(x);
+
+  - platform: template
+    name: "Cal Current Reference"
+    id: cal_current_ref
+    optimistic: true
+    restore_value: true
+    initial_value: ${current_reference}
+    min_value: 10000
+    max_value: 1000000
+    step: 1
+    mode: box
+    entity_category: config
+    icon: "mdi:alpha-a-circle-outline"
+    on_value:
+      - lambda: id(bl0942_1).set_current_reference(x);
+
+  - platform: template
+    name: "Cal Power Reference"
+    id: cal_power_ref
+    optimistic: true
+    restore_value: true
+    initial_value: ${power_reference}
+    min_value: 100
+    max_value: 20000
+    step: 0.1
+    mode: box
+    entity_category: config
+    icon: "mdi:transmission-tower"
+    on_value:
+      - lambda: id(bl0942_1).set_power_reference(x);
+
+  - platform: template
+    name: "Cal Energy Reference"
+    id: cal_energy_ref
+    optimistic: true
+    restore_value: true
+    initial_value: ${energy_reference}
+    min_value: 100
+    max_value: 100000
+    step: 0.01
+    mode: box
+    entity_category: config
+    icon: "mdi:lightning-bolt"
+    on_value:
+      - lambda: id(bl0942_1).set_energy_reference(x);
+
+  # Maximum allowed deviation between displayed and measured value; larger deviations abort the calibration.
+  - platform: template
+    name: "Cal Max Deviation"
+    id: cal_max_dev
+    optimistic: true
+    restore_value: true
+    initial_value: 60
+    min_value: 1
+    max_value: 90
+    step: 1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "%"
+    icon: "mdi:percent"
+
+  # Target values from the reference meter, used by the calibration buttons below.
+  - platform: template
+    name: "Cal Target Voltage"
+    id: cal_target_voltage
+    optimistic: true
+    restore_value: false
+    initial_value: 239.0
+    min_value: 0
+    max_value: 280
+    step: 0.01
+    mode: box
+    entity_category: config
+    unit_of_measurement: "V"
+
+  - platform: template
+    name: "Cal Target Current"
+    id: cal_target_current
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 20
+    step: 0.001
+    mode: box
+    entity_category: config
+    unit_of_measurement: "A"
+
+  - platform: template
+    name: "Cal Target Power"
+    id: cal_target_power
+    optimistic: true
+    restore_value: false
+    initial_value: 0
+    min_value: 0
+    max_value: 4000
+    step: 0.1
+    mode: box
+    entity_category: config
+    unit_of_measurement: "W"
+
+script:
+  # Hand over the values: number states -> BL0942 component
+  - id: apply_references
+    mode: single
+    then:
+      - lambda: |-
+          if (!std::isnan(id(cal_voltage_ref).state))
+            id(bl0942_1).set_voltage_reference(id(cal_voltage_ref).state);
+          if (!std::isnan(id(cal_current_ref).state))
+            id(bl0942_1).set_current_reference(id(cal_current_ref).state);
+          if (!std::isnan(id(cal_power_ref).state))
+            id(bl0942_1).set_power_reference(id(cal_power_ref).state);
+          if (!std::isnan(id(cal_energy_ref).state))
+            id(bl0942_1).set_energy_reference(id(cal_energy_ref).state);
+          ESP_LOGI("cal", "References applied: U=%.2f I=%.2f P=%.2f E=%.2f",
+                   id(cal_voltage_ref).state, id(cal_current_ref).state,
+                   id(cal_power_ref).state,   id(cal_energy_ref).state);
+
+  # Calibrate: new reference = old reference * (displayed value / reference meter value)
+  - id: calibrate_channel
+    mode: single
+    parameters:
+      channel: string  # "voltage" | "current" | "power" | "energy"
+      measured: float  # value from the reference meter
+    then:
+      - lambda: |-
+          if (measured <= 0.0f) {
+            ESP_LOGW("cal", "Aborted: measured value must be > 0");
+            return;
+          }
+
+          float shown   = NAN;
+          float old_ref = NAN;
+
+          if (channel == "voltage") {
+            shown = id(bvoltage).state;  old_ref = id(cal_voltage_ref).state;
+          } else if (channel == "current") {
+            shown = id(bcurrent).state;  old_ref = id(cal_current_ref).state;
+          } else if (channel == "power") {
+            shown = id(bpower).state;    old_ref = id(cal_power_ref).state;
+          } else if (channel == "energy") {
+            shown = id(benergy).state;   old_ref = id(cal_energy_ref).state;
+          } else {
+            ESP_LOGW("cal", "Unknown channel '%s'", channel.c_str());
+            return;
+          }
+
+          if (std::isnan(shown) || std::isnan(old_ref) || shown <= 0.0f) {
+            ESP_LOGW("cal", "Aborted: no valid reading for '%s'", channel.c_str());
+            return;
+          }
+
+          float new_ref = old_ref * (shown / measured);
+          float dev     = (shown / measured - 1.0f) * 100.0f;
+
+          float limit = std::isnan(id(cal_max_dev).state) ? 60.0f : id(cal_max_dev).state;
+          if (fabsf(dev) > limit) {
+            ESP_LOGW("cal", "Aborted: %s deviation %.1f%% exceeds limit %.0f%% "
+                            "(shown %.3f, measured %.3f)",
+                     channel.c_str(), dev, limit, shown, measured);
+            return;
+          }
+
+          ESP_LOGI("cal", "%s: shown %.3f vs measured %.3f (%+.2f%%) -> "
+                          "ref %.3f => %.3f",
+                   channel.c_str(), shown, measured, dev, old_ref, new_ref);
+
+          // publish_state on the optimistic number triggers its on_value
+          // (the reference is applied immediately) and stores it in flash.
+          if (channel == "voltage")      id(cal_voltage_ref).publish_state(new_ref);
+          else if (channel == "current") id(cal_current_ref).publish_state(new_ref);
+          else if (channel == "power")   id(cal_power_ref).publish_state(new_ref);
+          else if (channel == "energy")  id(cal_energy_ref).publish_state(new_ref);
+
+  # Back to the values from the YAML
+  - id: reset_references
+    mode: single
+    then:
+      - number.set:
+          id: cal_voltage_ref
+          value: ${voltage_reference}
+      - number.set:
+          id: cal_current_ref
+          value: ${current_reference}
+      - number.set:
+          id: cal_power_ref
+          value: ${power_reference}
+      - number.set:
+          id: cal_energy_ref
+          value: ${energy_reference}
+      - logger.log:
+          level: INFO
+          format: "References reset to YAML defaults"
+
+button:
+  - platform: template
+    name: "Calibrate Voltage"
+    entity_category: config
+    icon: "mdi:tune"
+    on_press:
+      - script.execute:
+          id: calibrate_channel
+          channel: "voltage"
+          measured: !lambda "return id(cal_target_voltage).state;"
+
+  - platform: template
+    name: "Calibrate Current"
+    entity_category: config
+    icon: "mdi:tune"
+    on_press:
+      - script.execute:
+          id: calibrate_channel
+          channel: "current"
+          measured: !lambda "return id(cal_target_current).state;"
+
+  - platform: template
+    name: "Calibrate Power"
+    entity_category: config
+    icon: "mdi:tune"
+    on_press:
+      - script.execute:
+          id: calibrate_channel
+          channel: "power"
+          measured: !lambda "return id(cal_target_power).state;"
+
+  - platform: template
+    name: "Reset Calibration"
+    entity_category: config
+    icon: "mdi:backup-restore"
+    on_press:
+      - script.execute: reset_references
+
+# Direct call from Home Assistant automations / developer tools:
+#   action: esphome.<device>_calibrate
+#   data: {channel: voltage, measured: 229.7}
+api:
+  actions:
+    - action: calibrate
+      variables:
+        channel: string
+        measured: float
+      then:
+        - script.execute:
+            id: calibrate_channel
+            channel: !lambda "return channel;"
+            measured: !lambda "return measured;"
+
+    - action: apply_references
+      then:
+        - script.execute: apply_references

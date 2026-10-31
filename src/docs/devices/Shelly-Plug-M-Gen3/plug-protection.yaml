@@ -1,0 +1,357 @@
+# ---------------------------------------------------------------------------
+# plug-protection.yaml - optional protection package for the Shelly Plug M Gen3.
+# Ported from the Plug S Gen3 core package. Use it together with config.yaml
+# (it extends its entities via !extend).
+#
+#   - latched protection against over-current, over-power and over-temperature
+#     (switch "Fault Lock", notification in Home Assistant)
+#   - temperature sensor watchdog (binary sensor "Temperature Sensor Fault")
+#   - staggered relay restart after a power loss
+#
+# A latched fault is cleared by holding the button for 2.5 s (only if the plug has cooled down)
+# or by switching "Fault Lock" off in Home Assistant.
+# Needs: api (Home Assistant notifications).
+# ---------------------------------------------------------------------------
+
+substitutions:
+  trip_delay: "500"  # ms a current/power limit must stay exceeded
+  trip_delay_temp: "3000"  # ms the temperature limit must stay exceeded
+  trip_instant_factor: "1.5"  # limit * factor trips immediately
+  ntc_fault_trips: "false"  # true: a broken NTC also switches the relay off
+  ntc_fail_delay: "10000"  # ms without a plausible temperature = sensor fault (min. 3x update_interval_adc)
+  startup_delay_min: "0"  # s, earliest relay-on after a power loss
+  startup_delay_max: "10"  # s, latest relay-on after a power loss
+  switch_restoremode: RESTORE_DEFAULT_OFF  # ALWAYS_ON, RESTORE_DEFAULT_ON, RESTORE_DEFAULT_OFF, ...
+  max_current: "10"  # A, adjust to your plug
+  max_power: "2300"  # W, adjust to your plug
+  max_temp: "70"  # °C
+  rearm_temp: "60"  # °C, a temperature fault clears itself below this
+
+globals:
+  - id: fault_active
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+  # Cause of the latched fault: 0=none, 1=temperature, 2=current, 3=power, 4=sensor
+  - id: fault_reason
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+  # Trip debounce: millis() at which the limit was first exceeded (0 = not exceeded)
+  - id: over_cur_since
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: over_pwr_since
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: over_tmp_since
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+  # Temperature sensor watchdog: last plausible reading, fault state, event
+  - id: ntc_last_ok
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: ntc_last_raw
+    type: float
+    restore_value: false
+    initial_value: "0.0"
+  - id: ntc_bad
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: ntc_event
+    type: int
+    restore_value: false
+    initial_value: "0"  # 0=none, 1=became bad, 2=recovered
+
+  # Pre-warning is held for 1.5 s after the last sample above the warn level
+
+  - id: relay_saved
+    type: int
+    restore_value: true
+    initial_value: "-1"
+  # set just before a software reboot, so the next boot skips the delay
+  - id: clean_reboot
+    type: bool
+    restore_value: true
+    initial_value: "false"
+  - id: boot_done
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: boot_want
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: boot_delay_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+esphome:
+  on_boot:
+    - priority: -100.0
+      then:
+        - script.execute: boot_relay
+  on_shutdown:
+    - lambda: |-
+        // software reboot (OTA, safe mode ...): next boot restores without delay
+        id(clean_reboot) = true;
+        global_preferences->sync();
+
+interval:
+  # Temperature sensor watchdog
+  - interval: 1s
+    then:
+      - script.execute: ntc_watch
+
+script:
+  # Start the relay after boot (state per switch_restoremode, staggered delay).
+  # The relay switch itself uses restore_mode DISABLED, so it stays off until here.
+  - id: boot_relay
+    mode: single
+    then:
+      - lambda: |-
+          // 1. wanted state, emulating the ESPHome restore modes
+          const std::string m = "${switch_restoremode}";
+          const int saved = id(relay_saved);
+          bool want = false;
+          if (m == "ALWAYS_ON") want = true;
+          else if (m == "RESTORE_DEFAULT_ON") want = (saved != 0);
+          else if (m == "RESTORE_DEFAULT_OFF") want = (saved == 1);
+          else if (m == "RESTORE_INVERTED_DEFAULT_ON") want = (saved != 1);
+          else if (m == "RESTORE_INVERTED_DEFAULT_OFF") want = (saved == 0);
+          id(boot_want) = want;
+          // 2. delay: none after a software reboot, random min..max seconds after power loss
+          uint32_t d = 0;
+          if (!id(clean_reboot)) {
+            const uint32_t lo = (uint32_t)(${startup_delay_min}) * 1000;
+            uint32_t hi = (uint32_t)(${startup_delay_max}) * 1000;
+            if (hi < lo) hi = lo;
+            d = lo + ((hi > lo) ? (random_uint32() % (hi - lo + 1)) : 0);
+          }
+          id(clean_reboot) = false;
+          id(boot_delay_ms) = d;
+      - delay: !lambda "return id(boot_delay_ms);"
+      - if:
+          condition:
+            lambda: "return id(boot_want) && !id(fault_active);"
+          then:
+            - switch.turn_on: relay
+      - lambda: |-
+          id(boot_done) = true;
+
+  # Latch a fault: remember the cause, lock the relay, notify Home Assistant.
+  # reason: 1=temperature, 2=current, 3=power, 4=temperature sensor
+  - id: trip
+    mode: restart
+    parameters:
+      reason: int
+    then:
+      - if:
+          condition:
+            lambda: "return !id(fault_active);"
+          then:
+            - lambda: |-
+                id(fault_reason) = reason;
+            - switch.turn_on: fault_lock
+            - homeassistant.service:
+                service: persistent_notification.create
+                data:
+                  title: "Message from ${name}"
+                  message: !lambda |-
+                    switch (reason) {
+                      case 1: return std::string("Switched off: temperature exceeded ${max_temp} °C");
+                      case 2: return std::string("Switched off: current exceeded ${max_current} A");
+                      case 4: return std::string("Switched off: temperature sensor fault");
+                      default: return std::string("Switched off: power exceeded ${max_power} W");
+                    }
+      - switch.turn_off: relay
+
+  # Temperature sensor watchdog: no plausible reading for ntc_fail_delay ms
+  # (open / shorted / stalled NTC) means the over-temperature protection is blind.
+  - id: ntc_watch
+    mode: single
+    then:
+      - lambda: |-
+          const uint32_t now = millis();
+          // the NTC only reports every update_interval: tolerate at least 3 missed samples
+          const uint32_t iv = id(temp_analog_reading).get_update_interval();
+          uint32_t limit = (uint32_t)(${ntc_fail_delay});
+          if (limit < 3 * iv) limit = 3 * iv;
+          bool bad;
+          if (id(ntc_last_ok) == 0) bad = now > (30000 + 2 * iv);  // boot grace
+          else bad = (now - id(ntc_last_ok)) > limit;
+          id(ntc_event) = 0;
+          if (bad && !id(ntc_bad)) { id(ntc_bad) = true; id(ntc_event) = 1; }
+          else if (!bad && id(ntc_bad)) { id(ntc_bad) = false; id(ntc_event) = 2; }
+      - if:
+          condition:
+            lambda: "return id(ntc_event) == 1;"
+          then:
+            - logger.log:
+                level: ERROR
+                format: "Temperature sensor fault: no plausible reading for %u ms (last raw value: %.1f)"
+                args: ["(unsigned) (millis() - id(ntc_last_ok))", "id(ntc_last_raw)"]
+            - if:
+                condition:
+                  lambda: "return ${ntc_fault_trips};"
+                then:
+                  - script.execute:
+                      id: trip
+                      reason: 4
+                else:
+                  - homeassistant.service:
+                      service: persistent_notification.create
+                      data:
+                        title: "Message from ${name}"
+                        message: >-
+                          Temperature sensor fault - the over-temperature protection is not working.
+                          The relay keeps its state.
+      - if:
+          condition:
+            lambda: "return id(ntc_event) == 2 && id(fault_active) && id(fault_reason) == 4;"
+          then:
+            - switch.turn_off: fault_lock
+
+binary_sensor:
+  # Hold the button for 2.5 s: acknowledge a latched fault
+  - id: !extend push_button
+    on_multi_click:
+      - timing:
+          - ON for at least 2.5s
+        then:
+          - if:
+              condition:
+                lambda: |-
+                  return id(fault_active) && !id(button_locked) &&
+                         (int32_t)(id(gesture_suppress_until) - millis()) <= 0;
+              then:
+                - if:
+                    condition:
+                      lambda: "return !(id(ntc_temp).state >= ${max_temp});"
+                    then:
+                      - switch.turn_off: fault_lock
+                      - logger.log:
+                          level: INFO
+                          format: "Fault acknowledged by long press"
+                    else:
+                      - logger.log:
+                          level: WARN
+                          format: "Cannot acknowledge: still too hot"
+
+  # Visible in Home Assistant when the NTC is open, shorted or stalled
+  - platform: template
+    name: "Temperature Sensor Fault"
+    id: ntc_fault_sensor
+    device_class: problem
+    entity_category: diagnostic
+    lambda: "return id(ntc_bad);"
+
+switch:
+  # restore_mode DISABLED: the relay stays off until boot_relay decides (see above)
+  - id: !extend relay
+    restore_mode: DISABLED
+    on_turn_on:
+      - lambda: |-
+          if (id(boot_done)) id(relay_saved) = 1;
+      - if:
+          condition:
+            switch.is_on: fault_lock
+          then:
+            - switch.turn_off: relay
+            - logger.log:
+                level: WARN
+                format: "Relay turn-on blocked: fault lock active"
+    on_turn_off:
+      - lambda: |-
+          if (id(boot_done)) id(relay_saved) = 0;
+
+  # Latched fault. Switch it off in Home Assistant to acknowledge.
+  - platform: template
+    id: fault_lock
+    name: "Fault Lock"
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    entity_category: diagnostic
+    icon: "mdi:alert-octagon"
+    turn_on_action:
+      - lambda: |-
+          id(fault_active) = true;
+      - logger.log:
+          level: WARN
+          format: "Fault lock activated"
+    turn_off_action:
+      - lambda: |-
+          id(fault_active) = false;
+          id(fault_reason) = 0;
+          id(over_cur_since) = 0;
+          id(over_pwr_since) = 0;
+          id(over_tmp_since) = 0;
+      - logger.log:
+          level: INFO
+          format: "Fault lock cleared"
+
+sensor:
+  - id: !extend ntc_temp
+    device_class: temperature
+    state_class: measurement
+    on_value:
+      - lambda: |-
+          id(ntc_last_raw) = x;
+          const uint32_t now = millis();
+          // plausibility: a healthy NTC reports a sane temperature; anything else
+          // (NaN, open / shorted sensor) stops this timestamp, see ntc_watch
+          if (!std::isnan(x) && x > -30.0f && x < 130.0f) id(ntc_last_ok) = now ? now : 1;
+          if (std::isnan(x)) return;
+          if (x > (float)(${max_temp})) {
+            // debounce: the limit must be exceeded for trip_delay_temp ms
+            if (id(over_tmp_since) == 0) id(over_tmp_since) = now ? now : 1;
+            if ((now - id(over_tmp_since)) >= ${trip_delay_temp}) id(trip).execute(1);
+          } else {
+            id(over_tmp_since) = 0;
+            // automatic re-arm, only for a temperature fault
+            if (x < (float)(${rearm_temp}) && id(fault_active) && id(fault_reason) == 1) {
+              id(fault_lock).turn_off();
+            }
+          }
+
+  - id: !extend bcurrent
+    on_value:
+      # Latched trip with inrush tolerance: the limit must stay exceeded for
+      # trip_delay ms; a value above limit * trip_instant_factor trips at once.
+      # No automatic re-arm: the current drops to 0 A after the relay opens.
+      - lambda: |-
+          if (std::isnan(x)) return;
+          const uint32_t now = millis();
+          const float limit = (float)(${max_current});
+          if (x > limit) {
+            if (id(over_cur_since) == 0) id(over_cur_since) = now ? now : 1;
+            if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_cur_since)) >= ${trip_delay}) {
+              id(trip).execute(2);
+            }
+          } else {
+            id(over_cur_since) = 0;
+          }
+
+  - id: !extend bpower
+    on_value:
+      - lambda: |-
+          if (std::isnan(x)) return;
+          const uint32_t now = millis();
+          const float limit = (float)(${max_power});
+          if (x > limit) {
+            if (id(over_pwr_since) == 0) id(over_pwr_since) = now ? now : 1;
+            if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_pwr_since)) >= ${trip_delay}) {
+              id(trip).execute(3);
+            }
+          } else {
+            id(over_pwr_since) = 0;
+          }
