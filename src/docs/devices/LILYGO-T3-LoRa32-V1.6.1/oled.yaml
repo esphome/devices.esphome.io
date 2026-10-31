@@ -1,0 +1,26 @@
+# I²C for OLED display
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  frequency: 400kHz
+
+# OLED Display
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    lambda: |-
+      it.printf(0, 0, id(display_font), "T3 LoRa32");
+      it.printf(0, 16, id(display_font), "V1.6.1");
+      it.printf(0, 32, id(display_font), "%.1f dBm", id(wifi_signal_db).state);
+
+font:
+  - file: "gfonts://Roboto"
+    id: display_font
+    size: 14
+
+sensor:
+  - platform: wifi_signal
+    id: wifi_signal_db
+    name: "WiFi Signal"
+    update_interval: 60s

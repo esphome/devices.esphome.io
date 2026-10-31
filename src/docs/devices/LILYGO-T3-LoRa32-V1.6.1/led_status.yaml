@@ -1,0 +1,6 @@
+light:
+  - platform: status_led
+    name: "Status"
+    pin: GPIO25
+    icon: mdi:led-off
+    entity_category: config

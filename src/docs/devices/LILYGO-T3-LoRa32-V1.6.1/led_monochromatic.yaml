@@ -1,0 +1,12 @@
+light:
+  - platform: monochromatic
+    name: "Status"
+    output: my_status_led
+    icon: mdi:led-off
+    entity_category: config
+
+output:
+  - id: my_status_led
+    pin: GPIO25
+    platform: ledc
+    frequency: 100Hz

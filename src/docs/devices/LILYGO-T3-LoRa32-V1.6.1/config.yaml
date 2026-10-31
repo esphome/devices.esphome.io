@@ -1,0 +1,19 @@
+esphome:
+  name: t3-lora32
+  friendly_name: T3 LoRa32 V1.6.1
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+    advanced:
+      flash_chip: gd
+      sram1_as_iram: true
+
+# SPI bus for radio
+spi:
+  clk_pin:
+    number: GPIO5
+    ignore_strapping_warning: true
+  mosi_pin: GPIO27
+  miso_pin: GPIO19
