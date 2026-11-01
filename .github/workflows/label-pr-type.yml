@@ -1,0 +1,48 @@
+name: Label PR by type
+
+# Reads the "Type of changes" section of the pull request description and
+# applies the matching type label (new-device / update-device / remove-device /
+# cleanup / other) based on which checkbox is ticked. Runs again whenever the
+# description is edited, so ticking or unticking a box keeps the labels in sync.
+# The labels themselves already exist in the repo.
+#
+# The section is also validated: the job fails when no box is ticked, more
+# than one box is ticked, or a tick is malformed (e.g. `[ x]` or `[x ]`).
+# Pull requests opened by bots (e.g. Dependabot) are skipped.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions: {}
+
+jobs:
+  label:
+    name: Sync type labels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # to check out the script below
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # add/remove labels on the PR
+    steps:
+      # Checks out the base repo (trusted) only to load the script below,
+      # never the PR's code - this job runs with a writable token.
+      - name: Checkout scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+          # The script only needs the file on disk; don't leave the token in
+          # .git/config for any later step to pick up.
+          persist-credentials: false
+
+      - name: Sync labels from checklist
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/label-pr-type.cjs');
+            await script({ github, context, core });

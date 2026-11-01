@@ -5,6 +5,7 @@ import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "url";
 import path from "path";
 import deviceAssets from "./src/integrations/device-assets";
+import deviceAliases from "./src/integrations/device-aliases";
 import remarkYamlInclude from "./src/integrations/remark-yaml-include";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -147,5 +148,6 @@ export default defineConfig({
     }),
     sitemap(),
     deviceAssets(),
+    deviceAliases(),
   ],
 });

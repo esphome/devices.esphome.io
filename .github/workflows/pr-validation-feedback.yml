@@ -57,8 +57,8 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const fs = require('fs');
-            // Hidden marker so we only ever touch our own review and never the
-            // made-for-esphome checklist review (also a bot REQUEST_CHANGES).
+            // Hidden marker so we only ever touch our own review and never
+            // the made-for-esphome review (also a bot REQUEST_CHANGES).
             const MARKER = '<!-- device-config-validation -->';
 
             const prNumber = parseInt(

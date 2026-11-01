@@ -79,7 +79,7 @@ When a device has `made-for-esphome: true` in its frontmatter, it must meet ALL 
 
 #### Wi-Fi Device Requirements (if applicable)
 
-- ✅ **`esp32_improv:` component** must be included in configuration
+- ✅ **`improv_ble:` component** must be included in configuration
 - ✅ **`improv_serial:` component** must be included if device has USB port
 
 #### User Control & Updates
@@ -130,7 +130,7 @@ The device must allow users to "take control" via ESPHome Builder:
 ```
 This device is marked as `made-for-esphome: true` but is missing some required components:
 
-- [ ] Missing `esp32_improv:` component - required for Wi-Fi devices ([documentation](https://esphome.io/components/esp32_improv))
+- [ ] Missing `improv_ble:` component - required for Wi-Fi devices ([documentation](https://esphome.io/components/improv_ble/))
 - [ ] Missing `dashboard_import:` component - required for user adoption ([documentation](https://esphome.io/components/esphome.html#adding-the-mac-address-as-a-suffix-to-the-device-name))
 - [ ] Some entities are missing `id` definitions (e.g., line 45 sensor)
 
@@ -167,11 +167,12 @@ The configuration contains components that should not be included on device page
 
 ## Workflow Integration
 
-The repository has an automated workflow that:
+The repository has automated workflows that:
 
-1. Detects when `made-for-esphome: true` is added to device frontmatter
-2. Automatically adds `made-for-esphome` and `made-for-esphome-pending` labels
-3. Adds the checklist to the PR description
-4. Requests changes for manual review
+1. Detect when `made-for-esphome: true` is added to device frontmatter
+2. Add the `made-for-esphome` label and convert the PR to a draft while the automation runs
+3. Run the Made for ESPHome checklist as automated checks on every push, compiling the linked configuration
+4. Request changes with a report when a check fails
+5. Mark the PR ready for review and add the `made-for-esphome-pending` label once every automated check passes, which is the signal that a human reviewer should pick it up
 
 As a reviewer, ensure all checklist items are satisfied before approving Made for ESPHome devices.
