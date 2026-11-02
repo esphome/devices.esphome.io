@@ -130,7 +130,7 @@ jobs:
         # uploaded, which signals the feedback workflow to dismiss any stale
         # review.
         if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: validation-report
           path: |
