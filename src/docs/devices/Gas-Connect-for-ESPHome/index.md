@@ -1,6 +1,6 @@
 ---
 title: Gas Connect for ESPHome
-date-published: 2026-10-23
+date-published: 2026-11-02
 type: sensor
 standard: global
 board: esp32
