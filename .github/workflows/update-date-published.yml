@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Find newly added device pages
         id: find
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload metadata
         if: steps.find.outputs.pages != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: date-published-metadata
           path: metadata/info.json
