@@ -101,4 +101,5 @@ sensor:
 ```
 
 The sensor sits inside the enclosure next to the ESP32 and the display, so it will read higher than the room
-temperature. The offset differs from unit to unit, so calibrate each device against a reference sensor, for example with a `filters:` offset.
+temperature. The offset differs from unit to unit, so calibrate each device against a reference sensor, for example
+with a `filters:` offset.
