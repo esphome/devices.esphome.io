@@ -22,6 +22,7 @@ import {
   loadPage,
   resolveBoard,
   resolveSubstitutions,
+  sourceLine,
   trimEsphomeError,
   userScaffold,
 } from "./validate-esphome-configs.ts";
@@ -221,4 +222,11 @@ test("esphome output is trimmed to the Failed config block with temp paths remov
     "Failed config\nuart: [source config.yaml:3]\n  bad id"
   );
   assert.equal(trimEsphomeError("", "INFO x\nERROR boom\n", work), "ERROR boom");
+});
+
+test("the annotation line comes from the file's own source marker", () => {
+  const out = "Failed config\nuart: [source config.yaml:14]\nx: [source extra.yaml:3]\n";
+  assert.equal(sourceLine(out, "extra.yaml"), 3);
+  assert.equal(sourceLine(out, "config.yaml"), 14);
+  assert.equal(sourceLine(out, "other.yaml"), undefined);
 });

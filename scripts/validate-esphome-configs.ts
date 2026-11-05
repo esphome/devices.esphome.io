@@ -560,6 +560,14 @@ function runEsphomeConfig(
   });
 }
 
+/** Line of the first `[source <file>:<line>]` marker for *file* in ESPHome's output. */
+export function sourceLine(output: string, file: string): number | undefined {
+  for (const m of output.matchAll(/\[source ([^\]]+):(\d+)\]/g)) {
+    if (m[1] === file) return Number(m[2]);
+  }
+  return undefined;
+}
+
 async function checkEsphome(page: Page, bin: string, timeoutMs: number): Promise<Finding[]> {
   const { targets, findings } = configTargets(page);
   const failedBases = new Set<string>();
@@ -576,6 +584,7 @@ async function checkEsphome(page: Page, bin: string, timeoutMs: number): Promise
     findings.push({
       level: "error",
       file: path.join(path.dirname(page.rel), target.file),
+      line: sourceLine(error, target.file),
       message: `ESPHome: ${how}:\n${error}`,
     });
   }
