@@ -1,38 +1,25 @@
-// Requests a Copilot code review when a draft pull request is marked ready.
-//
-// The repository ruleset asks Copilot to review a PR when it is opened, but
-// not drafts and not on later pushes. The device-config checks fail within a
-// minute of opening and the review drafter then converts the PR to a draft,
-// usually before Copilot's review starts, so those PRs never got one. This
-// fills the gap when the author marks the PR ready again.
-//
-// A failed request only warns: Copilot review is advisory and must never
-// block the PR.
-//
-// Loaded by .github/workflows/request-copilot-review.yml via
-// actions/github-script. Exported as a function so it can be linted
-// (`node --check`) and unit-tested with a mocked GitHub client.
+// Requests a Copilot code review on a pull request. A failed request only
+// warns: Copilot review is advisory and must never block the PR.
 
-const COPILOT_REVIEWER = "copilot-pull-request-reviewer[bot]";
-
-module.exports = async ({ github, context, core }) => {
-  const pull = context.payload.pull_request;
+async function requestCopilotReview({ github, core, owner, repo, pull }) {
   if (pull.user?.type === "Bot") {
-    core.info("Pull request opened by a bot; skipping.");
+    core.info(`#${pull.number} was opened by a bot; skipping the Copilot review.`);
     return;
   }
-  const { owner, repo } = context.repo;
   try {
     await github.rest.pulls.requestReviewers({
       owner,
       repo,
       pull_number: pull.number,
-      reviewers: [COPILOT_REVIEWER],
+      reviewers: ["copilot-pull-request-reviewer[bot]"],
     });
     core.info(`Requested a Copilot review on #${pull.number}.`);
   } catch (err) {
     core.warning(`Could not request a Copilot review on #${pull.number}: ${err.message}`);
   }
-};
+}
 
-module.exports.COPILOT_REVIEWER = COPILOT_REVIEWER;
+module.exports = async ({ github, context, core }) =>
+  requestCopilotReview({ github, core, ...context.repo, pull: context.payload.pull_request });
+
+module.exports.requestCopilotReview = requestCopilotReview;

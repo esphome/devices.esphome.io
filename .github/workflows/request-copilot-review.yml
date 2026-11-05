@@ -1,9 +1,11 @@
 name: Request Copilot review
 
 # Requests a Copilot code review when a draft pull request is marked ready
-# for review. The ruleset only reviews on open, and PRs drafted by the
-# review drafter right after opening otherwise never get one. Logic lives in
-# .github/scripts/request-copilot-review.cjs.
+# for review. The ruleset only reviews on open, and the review drafter usually
+# drafts a PR (after its device checks fail) before that first review starts.
+# Drafts the Made for ESPHome promotion marks ready use GITHUB_TOKEN, whose
+# events trigger no workflow, so mfe-promote.cjs requests the review itself.
+# Logic lives in .github/scripts/request-copilot-review.cjs.
 
 on:
   pull_request_target:

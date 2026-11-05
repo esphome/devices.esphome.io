@@ -1,95 +1,164 @@
-// Keeps the `has-conflicts` label in sync with whether a pull request can be
-// merged into its base branch, and fails the PR's own check while it can't.
+// Keeps the `has-conflicts` label and a "Merge conflicts" check run on the PR
+// head in sync with whether each pull request merges cleanly into its base.
 //
-// GitHub computes `mergeable` lazily: the first read after a push returns
-// `null` and starts the computation, so a `null` is retried a few times
-// before giving up. A PR whose state is still unknown is left as it is,
-// neither labelled nor failed.
-//
-// Two triggers:
-// - pull_request_target (opened / reopened / synchronize): checks that PR,
-//   syncs its label and fails the job while it conflicts, so the author sees
-//   a red "Merge conflicts" check until they merge or rebase the base branch.
-// - push to the default branch: rechecks every open PR, since a merge can
-//   create a conflict in a PR nobody touched. This only syncs labels; it
-//   can't fail another PR's check.
-//
-// Loaded by .github/workflows/merge-conflicts.yml via actions/github-script.
-// Exported as a function so it can be linted (`node --check`) and unit-tested
-// with a mocked GitHub client; the pure classifier is exported separately.
+// GitHub computes mergeability lazily: the first read after a base or head
+// change returns UNKNOWN and starts the computation. UNKNOWN PRs are re-read
+// after each delay below; one still UNKNOWN after the last is left unchanged.
+// Labels and check runs are only written when they disagree with the state.
+
+const { removeLabelIfPresent } = require("./labels.cjs");
 
 const LABEL = "has-conflicts";
-const ATTEMPTS = 6;
-const DELAY_MS = 10_000;
+const CHECK_NAME = "Merge conflicts";
+const GITHUB_ACTIONS_APP_ID = 15368;
+const PAGE_SIZE = 50;
+const RETRY_DELAYS_MS = [3_000, 5_000, 10_000, 20_000];
+// Spaces out a sweep's writes to stay under GitHub's secondary rate limit
+// (about 80 content-creating requests a minute).
+const WRITE_PACING_MS = 1_000;
 
-// "conflict" | "clean" | "unknown" from a pull request object.
-function classify(pull) {
-  if (pull.mergeable === true) return "clean";
-  if (pull.mergeable === false && pull.mergeable_state === "dirty") return "conflict";
-  return "unknown";
-}
-
-async function fetchState(github, owner, repo, number, sleep) {
-  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-    const { data } = await github.rest.pulls.get({ owner, repo, pull_number: number });
-    const state = classify(data);
-    if (state !== "unknown" || attempt === ATTEMPTS) return { state, pull: data };
-    await sleep(DELAY_MS);
-  }
-  return { state: "unknown", pull: null };
-}
-
-async function syncLabel(github, core, owner, repo, number, labels, state) {
-  const has = labels.some((l) => (typeof l === "string" ? l : l.name) === LABEL);
-  if (state === "conflict" && !has) {
-    await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [LABEL] });
-    core.info(`#${number}: added ${LABEL}`);
-  } else if (state === "clean" && has) {
-    try {
-      await github.rest.issues.removeLabel({ owner, repo, issue_number: number, name: LABEL });
-      core.info(`#${number}: removed ${LABEL}`);
-    } catch (err) {
-      if (err.status !== 404) throw err;
+const PR_FRAGMENT = `fragment Pr on PullRequest {
+  number
+  state
+  headRefOid
+  baseRefName
+  mergeable
+  labels(first: 20) { nodes { name } }
+  commits(last: 1) {
+    nodes {
+      commit {
+        oid
+        checkSuites(first: 5, filterBy: { appId: ${GITHUB_ACTIONS_APP_ID}, checkName: "${CHECK_NAME}" }) {
+          nodes { checkRuns(last: 1, filterBy: { checkName: "${CHECK_NAME}" }) { nodes { databaseId conclusion } } }
+        }
+      }
     }
   }
+}`;
+
+const OPEN_PRS_QUERY = `query ($owner: String!, $repo: String!, $base: String!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequests(states: OPEN, baseRefName: $base, first: ${PAGE_SIZE}, after: $cursor) {
+      nodes { ...Pr }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+}
+${PR_FRAGMENT}`;
+
+async function listOpen(github, owner, repo, base) {
+  const pulls = [];
+  let cursor = null;
+  do {
+    const { repository } = await github.graphql(OPEN_PRS_QUERY, { owner, repo, base, cursor });
+    const page = repository.pullRequests;
+    pulls.push(...page.nodes);
+    cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (cursor);
+  return pulls;
+}
+
+async function readByNumber(github, owner, repo, numbers) {
+  const pulls = [];
+  for (let i = 0; i < numbers.length; i += PAGE_SIZE) {
+    const fields = numbers
+      .slice(i, i + PAGE_SIZE)
+      .map((n) => `pr${n}: pullRequest(number: ${n}) { ...Pr }`)
+      .join("\n");
+    const { repository } = await github.graphql(
+      `query ($owner: String!, $repo: String!) {
+        repository(owner: $owner, name: $repo) {
+          ${fields}
+        }
+      }
+      ${PR_FRAGMENT}`,
+      { owner, repo },
+    );
+    pulls.push(...Object.values(repository).filter(Boolean));
+  }
+  return pulls;
+}
+
+// Re-reads only the UNKNOWN PRs until they settle or the delays run out.
+async function settle(github, owner, repo, pulls, sleep) {
+  const settled = [];
+  for (let round = 0; ; round++) {
+    const unknown = [];
+    for (const pull of pulls) {
+      if (pull.state !== "OPEN") continue;
+      (pull.mergeable === "UNKNOWN" ? unknown : settled).push(pull);
+    }
+    if (unknown.length === 0 || round === RETRY_DELAYS_MS.length) return { settled, unknown };
+    await sleep(RETRY_DELAYS_MS[round]);
+    pulls = await readByNumber(github, owner, repo, unknown.map((pull) => pull.number));
+  }
+}
+
+function headCheckRun(pull) {
+  const commit = pull.commits.nodes[0]?.commit;
+  if (!commit || commit.oid !== pull.headRefOid) return null;
+  const runs = commit.checkSuites.nodes.flatMap((suite) => suite.checkRuns.nodes);
+  return runs.sort((a, b) => b.databaseId - a.databaseId)[0] ?? null;
+}
+
+// Syncs one settled PR's label and head check; returns whether it wrote anything.
+async function check({ github, core, owner, repo }, pull) {
+  const { number, baseRefName: base } = pull;
+  const conflict = pull.mergeable === "CONFLICTING";
+  let wrote = false;
+
+  const labelled = pull.labels.nodes.some((label) => label.name === LABEL);
+  if (conflict && !labelled) {
+    await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [LABEL] });
+    core.info(`#${number}: added ${LABEL}`);
+    wrote = true;
+  } else if (!conflict && labelled) {
+    await removeLabelIfPresent(github, { owner, repo, issue_number: number, name: LABEL });
+    core.info(`#${number}: removed ${LABEL}`);
+    wrote = true;
+  }
+
+  const conclusion = conflict ? "failure" : "success";
+  const existing = headCheckRun(pull);
+  if (existing?.conclusion === conclusion.toUpperCase()) return wrote;
+  const run = {
+    owner,
+    repo,
+    name: CHECK_NAME,
+    status: "completed",
+    conclusion,
+    output: conflict
+      ? {
+          title: `Conflicts with ${base}`,
+          summary: `Merge ${base} into your branch (or rebase onto it), resolve the conflicts and push.`,
+        }
+      : { title: `No conflicts with ${base}`, summary: `This branch merges cleanly into ${base}.` },
+  };
+  if (existing) {
+    await github.rest.checks.update({ ...run, check_run_id: existing.databaseId });
+  } else {
+    await github.rest.checks.create({ ...run, head_sha: pull.headRefOid });
+  }
+  core.info(`#${number}: ${CHECK_NAME} check set to ${conclusion}`);
+  return true;
 }
 
 module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) => {
   const { owner, repo } = context.repo;
-
-  if (context.eventName === "push") {
-    const pulls = await github.paginate(github.rest.pulls.list, {
-      owner,
-      repo,
-      state: "open",
-      base: context.ref.replace(/^refs\/heads\//, ""),
-      per_page: 100,
-    });
-    for (const pull of pulls) {
-      const { state } = await fetchState(github, owner, repo, pull.number, sleep);
-      if (state === "unknown") {
-        core.warning(`#${pull.number}: mergeability still unknown; label left unchanged`);
-        continue;
-      }
-      await syncLabel(github, core, owner, repo, pull.number, pull.labels, state);
-    }
-    return;
+  const pulls =
+    context.eventName === "push"
+      ? await listOpen(github, owner, repo, context.ref.replace(/^refs\/heads\//, ""))
+      : await readByNumber(github, owner, repo, [context.payload.pull_request.number]);
+  const { settled, unknown } = await settle(github, owner, repo, pulls, sleep);
+  for (const [i, pull] of settled.entries()) {
+    const wrote = await check({ github, core, owner, repo }, pull);
+    if (wrote && i < settled.length - 1) await sleep(WRITE_PACING_MS);
   }
-
-  const number = context.payload.pull_request.number;
-  const { state, pull } = await fetchState(github, owner, repo, number, sleep);
-  if (state === "unknown") {
-    core.warning(`#${number}: mergeability still unknown; label left unchanged`);
-    return;
-  }
-  await syncLabel(github, core, owner, repo, number, pull.labels, state);
-  if (state === "conflict") {
-    core.setFailed(
-      `This pull request has merge conflicts with ${pull.base.ref}. ` +
-        `Merge ${pull.base.ref} into your branch (or rebase onto it), resolve the conflicts and push.`,
-    );
+  for (const pull of unknown) {
+    core.warning(`#${pull.number}: mergeability still unknown; label and check left unchanged`);
   }
 };
 
-module.exports.classify = classify;
 module.exports.LABEL = LABEL;
+module.exports.RETRY_DELAYS_MS = RETRY_DELAYS_MS;
+module.exports.WRITE_PACING_MS = WRITE_PACING_MS;

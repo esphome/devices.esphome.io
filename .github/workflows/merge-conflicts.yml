@@ -1,11 +1,16 @@
 name: Merge conflicts
 
-# Adds the `has-conflicts` label to pull requests that can't be merged into
-# main and removes it once they can. On a pull request event the job also
-# fails while the PR conflicts, so the author gets a red "Merge conflicts"
-# check. A push to main rechecks every open PR's label, since a merge can
-# create a conflict in a PR nobody touched. Logic lives in
-# .github/scripts/merge-conflicts.cjs.
+# Keeps the `has-conflicts` label and a "Merge conflicts" check run on each
+# pull request's head commit in sync with whether it merges cleanly into its
+# base. The check run is published explicitly because a pull_request_target
+# job's own check attaches to the base commit, not the PR head; this job never
+# fails, so the head check carries the signal.
+#
+# - pull_request_target (opened / reopened / synchronize): checks that PR.
+# - push to main: rechecks every open PR against main, since a merge can
+#   create (or clear) a conflict in a PR nobody touched.
+#
+# Logic lives in .github/scripts/merge-conflicts.cjs.
 
 on:
   pull_request_target:
@@ -19,15 +24,17 @@ on:
 
 permissions: {}
 
+# A newer run rereads every state it needs, so the older one can be dropped.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Merge conflicts
+  sync:
+    name: Sync conflict label and check
     runs-on: ubuntu-latest
     permissions:
+      checks: write  # publish the "Merge conflicts" check run on the PR head
       contents: read  # to check out the script below
       issues: write  # labels are an issues-level resource
       pull-requests: write  # read mergeability and add/remove the label
@@ -42,7 +49,7 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Sync has-conflicts label
+      - name: Sync has-conflicts label and check
         uses: actions/github-script@v9.0.0
         with:
           script: |

@@ -1,11 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * Unit tests for the github-script handlers used by the "Merge conflicts" and
- * "Request Copilot review" workflows:
- *   .github/scripts/merge-conflicts.cjs
- *   .github/scripts/request-copilot-review.cjs
- *
- * Exercised with a recording GitHub client mock - no network. Run with
+ * Unit tests for .github/scripts/merge-conflicts.cjs, the "Merge conflicts"
+ * workflow handler, against a recording GitHub client mock. Run with
  * `npm test`.
  */
 import test from "node:test";
@@ -14,190 +10,258 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const conflicts = require("../.github/scripts/merge-conflicts.cjs");
-const copilot = require("../.github/scripts/request-copilot-review.cjs");
-const { classify, LABEL } = conflicts as {
-  classify: (pull: { mergeable: boolean | null; mergeable_state?: string }) => string;
+const { LABEL, RETRY_DELAYS_MS, WRITE_PACING_MS } = conflicts as {
   LABEL: string;
+  RETRY_DELAYS_MS: number[];
+  WRITE_PACING_MS: number;
 };
 
-type Pull = {
-  number: number;
-  mergeable: boolean | null;
-  mergeable_state?: string;
-  labels: { name: string }[];
-  base: { ref: string };
-};
+const REPO = { owner: "esphome", repo: "devices.esphome.io" };
 
-function makeCore() {
-  const out = { info: [] as string[], warning: [] as string[], failed: [] as string[] };
+type Mergeable = "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+type Pr = ReturnType<typeof pr>;
+
+// A GraphQL PullRequest node. `check` is the conclusion of an existing
+// "Merge conflicts" run on `checkOid` (the head by default).
+function pr(
+  number: number,
+  mergeable: Mergeable,
+  opts: { labels?: string[]; check?: "SUCCESS" | "FAILURE"; checkOid?: string; state?: string } = {},
+) {
+  const head = `sha${number}`;
   return {
-    out,
-    core: {
-      info: (m: string) => out.info.push(m),
-      warning: (m: string) => out.warning.push(m),
-      setFailed: (m: string) => out.failed.push(m),
+    number,
+    state: opts.state ?? "OPEN",
+    headRefOid: head,
+    baseRefName: "main",
+    mergeable,
+    labels: { nodes: (opts.labels ?? []).map((name) => ({ name })) },
+    commits: {
+      nodes: [
+        {
+          commit: {
+            oid: opts.checkOid ?? head,
+            checkSuites: {
+              nodes: opts.check
+                ? [{ checkRuns: { nodes: [{ databaseId: 100 + number, conclusion: opts.check }] } }]
+                : [],
+            },
+          },
+        },
+      ],
     },
   };
 }
 
-// `reads` maps a PR number to the successive `pulls.get` results.
-function makeGithub(reads: Record<number, Pull[]>, open: Pull[] = []) {
-  const calls: { method: string; args: Record<string, unknown> }[] = [];
+// `reads` maps a PR number to its successive reads (the last one repeats);
+// `pages` lists the PR numbers on each page of the open-PR listing.
+function makeGithub(reads: Record<number, Pr[]>, pages: number[][] = []) {
+  const queries: { query: string; vars: Record<string, unknown> }[] = [];
+  const writes: unknown[][] = [];
+  const next = (n: number) => (reads[n].length > 1 ? reads[n].shift()! : reads[n][0]);
   const github = {
-    paginate: async (_fn: unknown, args: Record<string, unknown>) => {
-      calls.push({ method: "pulls.list", args });
-      return open;
+    graphql: async (query: string, vars: Record<string, unknown>) => {
+      queries.push({ query, vars });
+      if (query.includes("pullRequests(")) {
+        const index = vars.cursor === null ? 0 : Number(vars.cursor);
+        return {
+          repository: {
+            pullRequests: {
+              nodes: pages[index].map(next),
+              pageInfo: { hasNextPage: index + 1 < pages.length, endCursor: String(index + 1) },
+            },
+          },
+        };
+      }
+      const repository: Record<string, Pr> = {};
+      for (const [, n] of query.matchAll(/pr(\d+): pullRequest/g)) repository[`pr${n}`] = next(Number(n));
+      return { repository };
     },
     rest: {
-      pulls: {
-        list: () => undefined,
-        get: async ({ pull_number }: { pull_number: number }) => {
-          const queue = reads[pull_number];
-          return { data: queue.length > 1 ? queue.shift()! : queue[0] };
-        },
-      },
       issues: {
-        addLabels: async (args: Record<string, unknown>) => {
-          calls.push({ method: "addLabels", args });
-        },
-        removeLabel: async (args: Record<string, unknown>) => {
-          calls.push({ method: "removeLabel", args });
-        },
+        addLabels: async (a: { issue_number: number; labels: string[] }) =>
+          void writes.push(["addLabels", a.issue_number, a.labels]),
+        removeLabel: async (a: { issue_number: number; name: string }) =>
+          void writes.push(["removeLabel", a.issue_number, a.name]),
+      },
+      checks: {
+        create: async (a: { head_sha: string; name: string; conclusion: string }) =>
+          void writes.push(["checks.create", a.head_sha, a.name, a.conclusion]),
+        update: async (a: { check_run_id: number; name: string; conclusion: string }) =>
+          void writes.push(["checks.update", a.check_run_id, a.name, a.conclusion]),
       },
     },
   };
-  return { github, calls };
+  return { github, queries, writes };
 }
 
-const pr = (number: number, over: Partial<Pull> = {}): Pull => ({
-  number,
-  mergeable: true,
-  mergeable_state: "clean",
-  labels: [],
-  base: { ref: "main" },
-  ...over,
-});
+function makeCore() {
+  const warnings: string[] = [];
+  return { warnings, core: { info: () => {}, warning: (m: string) => void warnings.push(m) } };
+}
+
 const prContext = (number: number) => ({
   eventName: "pull_request_target",
-  repo: { owner: "esphome", repo: "devices.esphome.io" },
+  repo: REPO,
   payload: { pull_request: { number } },
 });
-const noSleep = async () => {};
+const pushContext = { eventName: "push", ref: "refs/heads/main", repo: REPO, payload: {} };
 
-test("classify maps mergeability to a state", () => {
-  assert.equal(classify({ mergeable: true, mergeable_state: "clean" }), "clean");
-  assert.equal(classify({ mergeable: true, mergeable_state: "blocked" }), "clean");
-  assert.equal(classify({ mergeable: false, mergeable_state: "dirty" }), "conflict");
-  assert.equal(classify({ mergeable: null }), "unknown");
-  assert.equal(classify({ mergeable: false, mergeable_state: "unknown" }), "unknown");
-});
+function recordSleeps() {
+  const slept: number[] = [];
+  return { slept, sleep: async (ms: number) => void slept.push(ms) };
+}
 
-test("a conflicting PR gets the label and a failed check", async () => {
-  const { github, calls } = makeGithub({ 7: [pr(7, { mergeable: false, mergeable_state: "dirty" })] });
-  const { core, out } = makeCore();
-  await conflicts({ github, context: prContext(7), core, sleep: noSleep });
-  assert.deepEqual(
-    calls.filter((c) => c.method === "addLabels").map((c) => c.args.labels),
-    [[LABEL]],
-  );
-  assert.equal(out.failed.length, 1);
-  assert.match(out.failed[0], /merge conflicts with main/);
-});
+const prEventCases: { name: string; read: Pr; writes: unknown[][] }[] = [
+  {
+    name: "a new conflict gets the label and a failing head check",
+    read: pr(7, "CONFLICTING"),
+    writes: [
+      ["addLabels", 7, [LABEL]],
+      ["checks.create", "sha7", "Merge conflicts", "failure"],
+    ],
+  },
+  {
+    name: "a resolved conflict loses the label and gets a passing head check",
+    read: pr(7, "MERGEABLE", { labels: [LABEL] }),
+    writes: [
+      ["removeLabel", 7, LABEL],
+      ["checks.create", "sha7", "Merge conflicts", "success"],
+    ],
+  },
+  {
+    name: "a conflict already labelled and failed is left alone",
+    read: pr(7, "CONFLICTING", { labels: [LABEL], check: "FAILURE" }),
+    writes: [],
+  },
+  {
+    name: "a clean PR already passing is left alone",
+    read: pr(7, "MERGEABLE", { check: "SUCCESS" }),
+    writes: [],
+  },
+  {
+    name: "a stale failing check is updated in place",
+    read: pr(7, "MERGEABLE", { check: "FAILURE" }),
+    writes: [["checks.update", 107, "Merge conflicts", "success"]],
+  },
+  {
+    name: "a check on an older commit is not reused",
+    read: pr(7, "CONFLICTING", { labels: [LABEL], check: "FAILURE", checkOid: "old" }),
+    writes: [["checks.create", "sha7", "Merge conflicts", "failure"]],
+  },
+];
 
-test("a clean PR loses a stale label and passes", async () => {
-  const { github, calls } = makeGithub({ 7: [pr(7, { labels: [{ name: LABEL }] })] });
-  const { core, out } = makeCore();
-  await conflicts({ github, context: prContext(7), core, sleep: noSleep });
-  assert.deepEqual(calls.map((c) => c.method), ["removeLabel"]);
-  assert.deepEqual(out.failed, []);
-});
-
-test("a pending mergeability is retried until it settles", async () => {
-  const { github, calls } = makeGithub({
-    7: [pr(7, { mergeable: null }), pr(7, { mergeable: false, mergeable_state: "dirty" })],
+for (const { name, read, writes: expected } of prEventCases) {
+  test(`PR event: ${name}`, async () => {
+    const { github, writes } = makeGithub({ 7: [read] });
+    const { core } = makeCore();
+    await conflicts({ github, context: prContext(7), core, sleep: async () => {} });
+    assert.deepEqual(writes, expected);
   });
-  const { core, out } = makeCore();
-  let slept = 0;
-  await conflicts({ github, context: prContext(7), core, sleep: async () => void slept++ });
-  assert.equal(slept, 1);
-  assert.deepEqual(calls.map((c) => c.method), ["addLabels"]);
-  assert.equal(out.failed.length, 1);
+}
+
+test("a pending mergeability is re-read until it settles", async () => {
+  const { github, writes, queries } = makeGithub({ 7: [pr(7, "UNKNOWN"), pr(7, "CONFLICTING")] });
+  const { core } = makeCore();
+  const { slept, sleep } = recordSleeps();
+  await conflicts({ github, context: prContext(7), core, sleep });
+  assert.deepEqual(slept, [RETRY_DELAYS_MS[0]]);
+  assert.equal(queries.length, 2);
+  assert.deepEqual(writes.map((w) => w[0]), ["addLabels", "checks.create"]);
 });
 
 test("a mergeability that never settles changes nothing", async () => {
-  const { github, calls } = makeGithub({ 7: [pr(7, { mergeable: null, labels: [{ name: LABEL }] })] });
-  const { core, out } = makeCore();
-  await conflicts({ github, context: prContext(7), core, sleep: noSleep });
-  assert.deepEqual(calls, []);
-  assert.deepEqual(out.failed, []);
-  assert.equal(out.warning.length, 1);
+  const { github, writes } = makeGithub({ 7: [pr(7, "UNKNOWN", { labels: [LABEL] })] });
+  const { core, warnings } = makeCore();
+  const { slept, sleep } = recordSleeps();
+  await conflicts({ github, context: prContext(7), core, sleep });
+  assert.deepEqual(slept, RETRY_DELAYS_MS);
+  assert.deepEqual(writes, []);
+  assert.match(warnings[0], /#7: mergeability still unknown/);
 });
 
-test("a push to main relabels every open PR without failing", async () => {
-  const open = [pr(1), pr(2, { labels: [{ name: LABEL }] }), pr(3)];
-  const { github, calls } = makeGithub(
-    {
-      1: [pr(1, { mergeable: false, mergeable_state: "dirty" })],
-      2: [pr(2, { labels: [{ name: LABEL }] })],
-      3: [pr(3)],
-    },
-    open,
-  );
-  const { core, out } = makeCore();
-  const context = { eventName: "push", ref: "refs/heads/main", repo: prContext(0).repo, payload: {} };
-  await conflicts({ github, context, core, sleep: noSleep });
-  assert.equal(calls[0].args.base, "main");
-  assert.deepEqual(
-    calls.slice(1).map((c) => [c.method, c.args.issue_number]),
-    [
-      ["addLabels", 1],
-      ["removeLabel", 2],
-    ],
-  );
-  assert.deepEqual(out.failed, []);
-});
-
-function makeReviewGithub(fail = false) {
-  const calls: Record<string, unknown>[] = [];
-  return {
-    calls,
-    github: {
-      rest: {
-        pulls: {
-          requestReviewers: async (args: Record<string, unknown>) => {
-            if (fail) throw new Error("Reviews may only be requested from collaborators");
-            calls.push(args);
-          },
-        },
-      },
-    },
+test("a label already removed elsewhere (404) is not an error", async () => {
+  const { github, writes } = makeGithub({ 7: [pr(7, "MERGEABLE", { labels: [LABEL] })] });
+  github.rest.issues.removeLabel = async () => {
+    throw Object.assign(new Error("Label does not exist"), { status: 404 });
   };
-}
-const readyContext = (type = "User") => ({
-  repo: { owner: "esphome", repo: "devices.esphome.io" },
-  payload: { pull_request: { number: 9, user: { type } } },
+  const { core } = makeCore();
+  await conflicts({ github, context: prContext(7), core, sleep: async () => {} });
+  assert.deepEqual(writes, [["checks.create", "sha7", "Merge conflicts", "success"]]);
 });
 
-test("marking a PR ready requests a Copilot review", async () => {
-  const { github, calls } = makeReviewGithub();
+test("a push sweep writes only the PRs whose state changed, paced", async () => {
+  const { github, writes, queries } = makeGithub(
+    {
+      1: [pr(1, "CONFLICTING")],
+      2: [pr(2, "MERGEABLE", { labels: [LABEL], check: "FAILURE" })],
+      3: [pr(3, "MERGEABLE", { check: "SUCCESS" })],
+    },
+    [[1, 2, 3]],
+  );
   const { core } = makeCore();
-  await copilot({ github, context: readyContext(), core });
-  assert.deepEqual(calls, [
-    { owner: "esphome", repo: "devices.esphome.io", pull_number: 9, reviewers: [copilot.COPILOT_REVIEWER] },
+  const { slept, sleep } = recordSleeps();
+  await conflicts({ github, context: pushContext, core, sleep });
+  assert.equal(queries[0].vars.base, "main");
+  assert.deepEqual(writes, [
+    ["addLabels", 1, [LABEL]],
+    ["checks.create", "sha1", "Merge conflicts", "failure"],
+    ["removeLabel", 2, LABEL],
+    ["checks.update", 102, "Merge conflicts", "success"],
+  ]);
+  assert.deepEqual(slept, [WRITE_PACING_MS, WRITE_PACING_MS]);
+});
+
+test("a push sweep follows every page of open PRs", async () => {
+  const { github, queries } = makeGithub(
+    { 1: [pr(1, "MERGEABLE", { check: "SUCCESS" })], 2: [pr(2, "MERGEABLE", { check: "SUCCESS" })] },
+    [[1], [2]],
+  );
+  const { core } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.deepEqual(queries.map((q) => q.vars.cursor), [null, "1"]);
+});
+
+test("a push sweep re-reads only the unknown PRs", async () => {
+  const { github, queries } = makeGithub(
+    {
+      1: [pr(1, "MERGEABLE", { check: "SUCCESS" })],
+      2: [pr(2, "UNKNOWN"), pr(2, "MERGEABLE", { check: "SUCCESS" })],
+    },
+    [[1, 2]],
+  );
+  const { core } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.equal(queries.length, 2);
+  assert.match(queries[1].query, /pr2: pullRequest\(number: 2\)/);
+  assert.doesNotMatch(queries[1].query, /pr1:/);
+});
+
+test("a push sweep syncs labels from the fresh read, not the listing", async () => {
+  // The listing is stale: another run changed both labels while the sweep waited.
+  const { github, writes } = makeGithub(
+    {
+      4: [pr(4, "UNKNOWN"), pr(4, "MERGEABLE", { labels: [LABEL], check: "SUCCESS" })],
+      5: [pr(5, "UNKNOWN", { labels: [LABEL] }), pr(5, "CONFLICTING", { check: "FAILURE" })],
+    },
+    [[4, 5]],
+  );
+  const { core } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.deepEqual(writes, [
+    ["removeLabel", 4, LABEL],
+    ["addLabels", 5, [LABEL]],
   ]);
 });
 
-test("bot PRs are skipped", async () => {
-  const { github, calls } = makeReviewGithub();
-  const { core } = makeCore();
-  await copilot({ github, context: readyContext("Bot"), core });
-  assert.deepEqual(calls, []);
-});
-
-test("a failed request warns instead of failing", async () => {
-  const { github } = makeReviewGithub(true);
-  const { core, out } = makeCore();
-  await copilot({ github, context: readyContext(), core });
-  assert.equal(out.failed.length, 0);
-  assert.match(out.warning[0], /Could not request a Copilot review on #9/);
+test("a PR closed while the sweep waited is skipped", async () => {
+  const { github, writes, queries } = makeGithub(
+    { 6: [pr(6, "UNKNOWN"), pr(6, "CONFLICTING", { state: "MERGED" })] },
+    [[6]],
+  );
+  const { core, warnings } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.equal(queries.length, 2);
+  assert.deepEqual(writes, []);
+  assert.deepEqual(warnings, []);
 });
