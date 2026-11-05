@@ -31,5 +31,7 @@ Credit and thanks to
 - [https://templates.blakadder.com/shelly_plus_1.html](https://templates.blakadder.com/shelly_plus_1.html)
 
 ## Configuration as relay with overtemperature protection
+
 ```yaml file=config.yaml
 ```
+
