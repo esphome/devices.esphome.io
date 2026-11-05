@@ -88,8 +88,10 @@ Key points:
 - The ESPHome configuration is open source. At least one ` ```yaml url=… ` fence points at a
   `.yaml` file in the manufacturer's GitHub, Codeberg, or GitLab repo so the rendered page shows
   the live upstream config.
-- Wi-Fi devices include `esp32_improv:`, and `improv_serial:` when there is a USB port.
-- The device can be "taken control" of via the ESPHome Builder: `dashboard_import:`, the
+- Wi-Fi devices include `improv_ble:` (`esp32_improv:` is the deprecated spelling), and `improv_serial:`
+  when there is a USB port.
+- The device can be "taken control" of via the ESPHome Builder: `dashboard_import:` (its
+  `package_import_url` must resolve to the config file, case-sensitively), the
   `ota.esphome` component, serial flashing not disabled, and OTA updates via the
   `update.http_request` component.
 - No secrets (not even `!secret wifi_ssid` / `!secret wifi_password`), no passwords, no static
