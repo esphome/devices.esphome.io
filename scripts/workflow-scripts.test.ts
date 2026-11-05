@@ -138,15 +138,17 @@ const context = {
 
 // --- feedback script -------------------------------------------------------
 
-// `status` writes mfe-status.txt (the review verdict); pass `undefined` to omit
-// it entirely (simulating a crashed run).
+// `prNumber` is the triggering run's PR (non-numeric means no matching PR); the
+// artifact itself only gets a decoy number. `status` writes mfe-status.txt (the
+// review verdict); pass `undefined` to omit it entirely (a crashed run).
 function withArtifact(
   prNumber: string,
   report: string | null,
   status?: string
 ): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-art-"));
-  fs.writeFileSync(path.join(dir, "pr-number.txt"), prNumber + "\n");
+  // A decoy: the scripts must take the PR from the run, never this file.
+  fs.writeFileSync(path.join(dir, "pr-number.txt"), "999\n");
   runPrNumber = /^\d+$/.test(prNumber) ? Number(prNumber) : null;
   if (report !== null) fs.writeFileSync(path.join(dir, "mfe-review-report.md"), report);
   if (status !== undefined) fs.writeFileSync(path.join(dir, "mfe-status.txt"), status + "\n");
@@ -1058,7 +1060,7 @@ test("promote: any other removeLabel error propagates", async () => {
 test("promote: falls back to ./artifact when MFE_ARTIFACT_DIR is unset", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-cwd-"));
   fs.mkdirSync(path.join(dir, "artifact"));
-  fs.writeFileSync(path.join(dir, "artifact", "pr-number.txt"), "42\n");
+  fs.writeFileSync(path.join(dir, "artifact", "pr-number.txt"), "999\n");
   runPrNumber = 42;
   delete process.env.MFE_ARTIFACT_DIR;
   const cwd = process.cwd();

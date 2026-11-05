@@ -34,7 +34,7 @@ jobs:
       # Everything this job acts on is re-derived here through the API from
       # the triggering run's head commit: the pull request, a maintainer
       # approval of that exact commit, and the newly added device pages.
-      - name: Read metadata
+      - name: Resolve the pull request, approval and new pages
         id: meta
         uses: actions/github-script@v9.0.0
         with:

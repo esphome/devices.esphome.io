@@ -16,9 +16,7 @@
 //
 // Exported as a function so it can be linted (`node --check`) and unit-tested
 // with a mocked GitHub client.
-const fs = require("fs");
 const { findRunPullRequest } = require("./workflow-run-pr.cjs");
-const path = require("path");
 
 const MFE_LABEL = "made-for-esphome";
 const PENDING_LABEL = "made-for-esphome-pending";
@@ -47,7 +45,6 @@ async function botConvertedToDraft({ github, owner, repo, prNumber }) {
 }
 
 module.exports = async ({ github, context, core }) => {
-  const artifactDir = process.env.MFE_ARTIFACT_DIR || "artifact";
   const runPr = await findRunPullRequest({ github, context });
   if (!runPr) {
     core.info("No open pull request matches this run's head commit; nothing to do.");
