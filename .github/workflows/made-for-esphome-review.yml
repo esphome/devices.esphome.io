@@ -45,7 +45,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -123,7 +123,7 @@ jobs:
         # uploaded, which signals the feedback workflow to dismiss any stale
         # review (on a genuine pass) or leave it (on a crash/inconclusive run).
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: mfe-review-report
           path: |
