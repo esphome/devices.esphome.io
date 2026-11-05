@@ -48,7 +48,15 @@ const cases: { name: string; files: Record<string, string>; reasons: RegExp[] }[
   {
     name: "a url package is refused",
     files: { "config.yaml": `${BASE}packages:\n  remote:\n    url: https://github.com/o/r\n    files: [a.yaml]\n` },
-    reasons: [/not a local `!include`/],
+    reasons: [/not a local `!include`/, /has a remote package/],
+  },
+  {
+    name: "a remote package map behind a local include is refused",
+    files: {
+      "config.yaml": `${BASE}packages: !include pkgs.yaml\n`,
+      "pkgs.yaml": "remote:\n  url: https://github.com/o/r\n  files: [a.yaml]\n",
+    },
+    reasons: [/`pkgs.yaml` has a remote package/],
   },
   {
     name: "an include escaping the folder is refused",

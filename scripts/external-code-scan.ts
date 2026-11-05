@@ -97,6 +97,9 @@ function scanFile(root: string, file: string, reasons: Set<string>, seen: Set<st
     }
   }
   walk(tree, (node) => {
+    if (isMapping(node) && typeof node.url === "string" && ("files" in node || "ref" in node)) {
+      reasons.add(`\`${rel}\` has a remote package (\`url: ${node.url}\`)`);
+    }
     if (typeof node === "string" && GIT_SOURCE_RE.test(node.trim())) {
       reasons.add(`\`${rel}\` references a git source (\`${node.trim()}\`)`);
     }
