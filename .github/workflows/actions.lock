@@ -5,7 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yaml':
         - 'actions/checkout@v7.0.1'
-        - 'actions/setup-node@v7.0.0'
+        - 'actions/setup-node@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'nosborn/github-action-markdown-cli@v3.5.0'
     '.github/workflows/commit-date-published.yml':
@@ -27,7 +27,7 @@ workflows:
     '.github/workflows/made-for-esphome-review.yml':
         - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.0'
-        - 'actions/setup-node@v7.0.0'
+        - 'actions/setup-node@v7.1.0'
         - 'actions/setup-python@v7.0.0'
         - 'actions/upload-artifact@v7.0.2'
     '.github/workflows/pr-validation-feedback.yml':
@@ -42,7 +42,7 @@ workflows:
     '.github/workflows/weekly-link-check.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/github-script@v9.0.0'
-        - 'actions/setup-node@v7.0.0'
+        - 'actions/setup-node@v7.1.0'
 dependencies:
     'actions/cache@v6.1.0':
         ref: 'v6.1.0'
@@ -74,9 +74,9 @@ dependencies:
         commit: 'sha1-3a2844b7e9c422d3c10d287c895573f7108da1b3'
         owner_id: 44036562
         repo_id: 205262760
-    'actions/setup-node@v7.0.0':
-        ref: 'v7.0.0'
-        commit: 'sha1-820762786026740c76f36085b0efc47a31fe5020'
+    'actions/setup-node@v7.1.0':
+        ref: 'v7.1.0'
+        commit: 'sha1-949feb2413d6458794dcd2491c4babbbce0c15c1'
         owner_id: 44036562
         repo_id: 189476904
     'actions/setup-python@v7.0.0':
