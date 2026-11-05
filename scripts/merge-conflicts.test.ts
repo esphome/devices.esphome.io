@@ -326,15 +326,18 @@ test("a PR into another base gets the label but no head check", async () => {
   assert.deepEqual(writes, [["addLabels", 7, [LABEL]]]);
 });
 
-test("a new head leaves the promotion to CI; a base change re-runs it", async () => {
-  const read = () => pr(8, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" });
-  for (const [action, promoted] of [
-    ["synchronize", false],
-    ["edited", true],
+test("a clean new head leaves the promotion to CI; conflicts and base changes re-run it", async () => {
+  for (const [action, mergeable, promoted] of [
+    ["synchronize", "MERGEABLE", false],
+    ["synchronize", "CONFLICTING", true],
+    ["reopened", "CONFLICTING", true],
+    ["edited", "MERGEABLE", true],
   ] as const) {
+    const check = mergeable === "CONFLICTING" ? "SUCCESS" : "FAILURE";
+    const read = () => pr(8, mergeable, { labels: ["made-for-esphome"], check });
     const { github, writes } = makeGithub({ 8: [read()] });
     const { core } = makeCore();
     await conflicts({ github, context: prContext(8, action), core, sleep: async () => {} });
-    assert.equal(writes.some((w) => w[0] === "promote"), promoted, action);
+    assert.equal(writes.some((w) => w[0] === "promote"), promoted, `${action} ${mergeable}`);
   }
 });

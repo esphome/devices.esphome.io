@@ -182,13 +182,16 @@ module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r)
       ? await listOpen(github, owner, repo, context.ref.replace(/^refs\/heads\//, ""))
       : await readByNumber(github, owner, repo, [context.payload.pull_request.number]);
   const { settled, unknown } = await settle(github, owner, repo, pulls, sleep);
-  // A new head re-runs CI and the review, whose completion promotes; only a
-  // sweep or a base change can move the check on a head they already judged.
+  // A clean new head re-runs CI and the review, whose completion promotes. A
+  // sweep or base change moves the check on a head they already judged, and a
+  // conflict blocks those pull_request workflows, so both re-run it here (a
+  // failing check only ever demotes).
   const repromote = context.eventName === "push" || context.payload.action === "edited";
   const pace = makePacer(sleep);
   for (const pull of settled) {
     const changed = await check({ github, core, owner, repo, pace, defaultBranch }, pull);
-    if (changed && repromote && hasLabel(pull, MFE_LABEL)) {
+    const conflict = pull.mergeable === "CONFLICTING";
+    if (changed && (repromote || conflict) && hasLabel(pull, MFE_LABEL)) {
       await pace();
       await promote({ github, core, owner, repo, prNumber: pull.number });
     }
