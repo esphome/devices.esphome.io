@@ -25,7 +25,7 @@ const PR_FRAGMENT = `fragment Pr on PullRequest {
   headRefOid
   baseRefName
   mergeable
-  labels(first: 20) { nodes { name } }
+  labels(first: 100) { nodes { name } }
   commits(last: 1) {
     nodes {
       commit {
