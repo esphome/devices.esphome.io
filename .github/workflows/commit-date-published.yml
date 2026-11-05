@@ -50,13 +50,8 @@ jobs:
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner, repo, pull_number: pr.number, per_page: 100,
             });
-            const approved = reviews.some(
-              (r) =>
-                r.state === 'APPROVED' &&
-                r.commit_id === pr.head.sha &&
-                ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(r.author_association)
-            );
-            if (!approved) {
+            const { maintainerApproves } = require('./.github/scripts/maintainer-approval.cjs');
+            if (!maintainerApproves(reviews, pr.head.sha)) {
               core.info(`PR #${pr.number} has no maintainer approval of ${pr.head.sha}; nothing to do.`);
               return;
             }
