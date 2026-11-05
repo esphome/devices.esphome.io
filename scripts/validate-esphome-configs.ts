@@ -10,10 +10,13 @@
  *   npm run validate-esphome -- --all         # every device folder
  *   --annotations                             # also emit GitHub Actions annotations
  *
- * Environment: ESPHOME_BIN (default "esphome"); DEVICE_BUILDER_DIR and
- * DEVICE_BUILDER_PYTHON for the import check (skipped when unset);
- * VALIDATION_REPORT (markdown report path); CONFIG_TIMEOUT_MS; JOBS;
- * BASE_SHA / HEAD_SHA (CI diff range).
+ * A page whose configs could pull in outside code (see external-code-scan.ts)
+ * gets a notice and is not run through either check.
+ *
+ * Environment: ESPHOME_BIN (default "esphome"); DEVICE_BUILDER_CMD (the
+ * importer command), or DEVICE_BUILDER_DIR and DEVICE_BUILDER_PYTHON, for the
+ * import check (skipped when unset); CONFIG_TIMEOUT_MS; JOBS; BASE_SHA /
+ * HEAD_SHA (CI diff range).
  */
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -23,21 +26,17 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import yaml from "js-yaml";
 import { changedPaths } from "./changed-paths.ts";
+import { scanExternalCode } from "./external-code-scan.ts";
 import { NETWORK_FAILURE_RE, stripAnsi } from "./review-made-for-esphome.ts";
-import {
-  buildReport,
-  ESPHOME_YAML_SCHEMA,
-  findYamlFences,
-  type Issue,
-} from "./validate-yaml-configs.ts";
+import { ESPHOME_YAML_SCHEMA, findYamlFences, type Issue } from "./validate-yaml-configs.ts";
 
 const execFileAsync = promisify(execFile);
 
-export type Check = "esphome" | "import";
+export type Check = "esphome" | "import" | "scan";
 
 export interface Finding extends Issue {
   check: Check;
-  level: "error" | "warning";
+  level: "error" | "warning" | "notice";
 }
 
 export interface Target {
@@ -49,11 +48,15 @@ export interface Target {
 export interface Page {
   dir: string; // absolute device folder
   rel: string; // repo-relative index.md
+  files: string[]; // every file= target, including ones that failed to load
   targets: Target[];
   findings: Finding[];
 }
 
 const NETWORK_COMPONENTS = ["wifi", "ethernet", "openthread"];
+// Download failures: CI runs ESPHome without network access.
+const DOWNLOAD_FAILURE_RE =
+  /Max retries exceeded|NameResolutionError|Failed to resolve|Could not download|Unable to download|ConnectionError/i;
 const SECRETS_FILES = new Set(["secrets.yaml", "secrets.yml"]);
 
 type Mapping = Record<string, unknown>;
@@ -92,7 +95,7 @@ export function loadPage(deviceDir: string, repoRoot: string): Page | null {
   ];
   if (files.length === 0) return null;
   const rel = path.relative(repoRoot, indexPath);
-  const page: Page = { dir: deviceDir, rel, targets: [], findings: [] };
+  const page: Page = { dir: deviceDir, rel, files, targets: [], findings: [] };
   const parsed = new Map<string, unknown>();
   for (const file of files) {
     try {
@@ -248,14 +251,15 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
   }
   const blob = `${result.stderr}\n${result.stdout}`;
   const error = trimEsphomeError(result.stdout, result.stderr, work);
-  const network = NETWORK_FAILURE_RE.test(blob);
+  const network = NETWORK_FAILURE_RE.test(blob) || DOWNLOAD_FAILURE_RE.test(blob);
   page.findings.push({
     check: "esphome",
     level: network ? "warning" : "error",
     file,
     line: sourceLine(error, target.file),
     message: network
-      ? `could not fetch a remote package or component (network or upstream problem); inconclusive:\n${error}`
+      ? `needs to download a remote file (font, image, model, package), and CI runs ESPHome ` +
+        `without network access; not validated:\n${error}`
       : `${how}:\n${error}`,
   });
   return false;
@@ -299,17 +303,24 @@ interface ImportRow {
 }
 
 async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
+  if (pages.length === 0) return false;
   const dbDir = process.env.DEVICE_BUILDER_DIR;
-  if (!dbDir) {
+  const cmd = process.env.DEVICE_BUILDER_CMD;
+  if (!cmd && !dbDir) {
     console.error(
       "Device Builder import check skipped: set DEVICE_BUILDER_DIR to an esphome/device-builder " +
         "checkout and DEVICE_BUILDER_PYTHON to a Python with it installed"
     );
     return false;
   }
-  const python = process.env.DEVICE_BUILDER_PYTHON || "python3";
+  const [bin, ...prefix] = cmd
+    ? [cmd]
+    : [
+        process.env.DEVICE_BUILDER_PYTHON || "python3",
+        path.join(dbDir as string, "script", "sync_esphome_devices.py"),
+      ];
   const args = [
-    path.join(dbDir, "script", "sync_esphome_devices.py"),
+    ...prefix,
     "--repo",
     repoRoot,
     "--check",
@@ -318,7 +329,7 @@ async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
   ];
   let stdout: string;
   try {
-    ({ stdout } = await execFileAsync(python, args, { maxBuffer: 64 * 1024 * 1024 }));
+    ({ stdout } = await execFileAsync(bin, args, { maxBuffer: 64 * 1024 * 1024 }));
   } catch (err) {
     const e = err as { code?: number | string; stdout?: string; stderr?: string };
     if (e.code !== 1 || !e.stdout) {
@@ -384,7 +395,11 @@ function selectDirs(flags: Set<string>, positional: string[], devicesRoot: strin
 const escData = (s: string): string =>
   String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 const escProp = (s: string): string => escData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
-const TITLES: Record<Check, string> = { esphome: "ESPHome config", import: "Device Builder import" };
+const TITLES: Record<Check, string> = {
+  esphome: "ESPHome config",
+  import: "Device Builder import",
+  scan: "Not validated",
+};
 
 async function main(): Promise<number> {
   const argv = process.argv.slice(2);
@@ -406,7 +421,26 @@ async function main(): Promise<number> {
     timeoutMs: Number(process.env.CONFIG_TIMEOUT_MS || 180000),
     limit: limiter(Number(process.env.JOBS || Math.min(8, os.cpus().length))),
   };
-  await Promise.all([checkImport(pages, repoRoot), ...pages.map((p) => checkEsphome(p, runner))]);
+  const runnable: Page[] = [];
+  for (const page of pages) {
+    const reasons = scanExternalCode(page.dir, page.files);
+    if (reasons.length === 0) {
+      runnable.push(page);
+      continue;
+    }
+    page.findings.push({
+      check: "scan",
+      level: "notice",
+      file: page.rel,
+      message:
+        "not validated with ESPHome or the Device Builder: this page's config could pull in code " +
+        `from outside the device folder, which CI does not run (${reasons.join("; ")})`,
+    });
+  }
+  await Promise.all([
+    checkImport(runnable, repoRoot),
+    ...runnable.map((p) => checkEsphome(p, runner)),
+  ]);
 
   const findings = pages.flatMap((p) => p.findings);
   const errors = findings.filter((f) => f.level === "error");
@@ -426,15 +460,6 @@ async function main(): Promise<number> {
         `::${f.level} file=${escProp(f.file)}${line},title=${escProp(TITLES[f.check])}::${escData(f.message)}`
       );
     }
-  }
-  const reportPath = process.env.VALIDATION_REPORT;
-  if (reportPath && errors.length > 0) {
-    const issues = errors.map((f) => {
-      const [head, ...rest] = f.message.split("\n");
-      const detail = rest.length > 0 ? `\n\n  \`\`\`text\n  ${rest.join("\n  ")}\n  \`\`\`` : "";
-      return { ...f, message: `${TITLES[f.check]}: ${head}${detail}` };
-    });
-    fs.writeFileSync(reportPath, buildReport(issues, "ESPHome and Device Builder checks failed"), "utf8");
   }
   const failedPages = pages.filter((p) => p.findings.some((f) => f.level === "error")).length;
   console.log(`\n${pages.length - failedPages}/${pages.length} device page(s) passed`);

@@ -1,0 +1,141 @@
+/**
+ * Static scan for configs that would make `esphome config` run code from
+ * outside the repo or outside the device folder. CI validates a page only
+ * when this finds nothing.
+ */
+import * as fs from "node:fs";
+import * as path from "node:path";
+import yaml from "js-yaml";
+
+class Tagged {
+  constructor(
+    readonly tag: string,
+    readonly value: unknown
+  ) {}
+}
+
+const TAGS = [
+  "!include", "!include_dir_list", "!include_dir_named", "!include_dir_merge_list",
+  "!include_dir_merge_named", "!secret", "!lambda", "!env", "!env_var", "!extend",
+  "!remove", "!force",
+];
+
+const SCAN_SCHEMA = yaml.DEFAULT_SCHEMA.extend(
+  TAGS.flatMap((tag) =>
+    (["scalar", "sequence", "mapping"] as const).map(
+      (kind) =>
+        new yaml.Type(tag, {
+          kind,
+          construct: (data) => new Tagged(tag, data),
+          instanceOf: Tagged,
+        })
+    )
+  )
+);
+
+// Git sources ESPHome fetches packages and components from.
+const GIT_SOURCE_RE = /^(github|gitlab|codeberg|git):\/\/|^git@|^git\+/i;
+// Folder contents ESPHome can import as Python.
+const CODE_DIRS = new Set(["custom_components", "components", "external_components"]);
+const CODE_FILE_RE = /\.(py|pyc|so)$/i;
+
+const isMapping = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Tagged);
+
+function inside(root: string, target: string): boolean {
+  const rel = path.relative(root, target);
+  return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
+}
+
+/** Why validating *files* of *deviceDir* could run outside code, or [] when it cannot. */
+export function scanExternalCode(deviceDir: string, files: string[]): string[] {
+  const reasons = new Set<string>();
+  scanFolder(deviceDir, deviceDir, reasons);
+  const seen = new Set<string>();
+  for (const file of files) scanFile(deviceDir, path.join(deviceDir, file), reasons, seen);
+  return [...reasons].sort();
+}
+
+function scanFolder(root: string, dir: string, reasons: Set<string>): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, entry.name);
+    const rel = path.relative(root, p);
+    if (entry.isDirectory()) {
+      if (CODE_DIRS.has(entry.name)) reasons.add(`the folder has a \`${rel}/\` directory`);
+      else scanFolder(root, p, reasons);
+    } else if (CODE_FILE_RE.test(entry.name)) {
+      reasons.add(`the folder has a Python file (\`${rel}\`)`);
+    }
+  }
+}
+
+function scanFile(root: string, file: string, reasons: Set<string>, seen: Set<string>): void {
+  if (seen.has(file)) return;
+  seen.add(file);
+  const rel = path.relative(root, file);
+  let tree: unknown;
+  try {
+    tree = yaml.load(fs.readFileSync(file, "utf8"), { schema: SCAN_SCHEMA });
+  } catch {
+    reasons.add(`\`${rel}\` could not be read or parsed`);
+    return;
+  }
+  if (isMapping(tree)) {
+    if ("external_components" in tree) reasons.add(`\`${rel}\` uses \`external_components:\``);
+    const packages = tree.packages;
+    if (packages !== undefined) {
+      const entries = Array.isArray(packages)
+        ? packages
+        : isMapping(packages)
+          ? Object.values(packages)
+          : [packages];
+      for (const entry of entries) {
+        if (!(entry instanceof Tagged && entry.tag === "!include")) {
+          reasons.add(`\`${rel}\` has a \`packages:\` entry that is not a local \`!include\``);
+        }
+      }
+    }
+  }
+  walk(tree, (node) => {
+    if (typeof node === "string" && GIT_SOURCE_RE.test(node.trim())) {
+      reasons.add(`\`${rel}\` references a git source (\`${node.trim()}\`)`);
+    }
+    if (!(node instanceof Tagged) || !node.tag.startsWith("!include")) return;
+    const target = includeTarget(node);
+    if (target === null) {
+      reasons.add(`\`${rel}\` has an \`${node.tag}\` whose target cannot be read statically`);
+      return;
+    }
+    const abs = path.resolve(path.dirname(file), target);
+    if (target.includes("://") || !inside(root, abs)) {
+      reasons.add(`\`${rel}\` includes \`${target}\`, outside the device folder`);
+      return;
+    }
+    if (node.tag === "!include") {
+      scanFile(root, abs, reasons, seen);
+    } else if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+      for (const f of yamlFilesUnder(abs)) scanFile(root, f, reasons, seen);
+    }
+  });
+}
+
+function includeTarget(node: Tagged): string | null {
+  if (typeof node.value === "string") return node.value.trim();
+  if (isMapping(node.value) && typeof node.value.file === "string") return node.value.file.trim();
+  return null;
+}
+
+function yamlFilesUnder(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) return yamlFilesUnder(p);
+    return /\.ya?ml$/i.test(e.name) ? [p] : [];
+  });
+}
+
+function walk(node: unknown, visit: (node: unknown) => void): void {
+  visit(node);
+  if (node instanceof Tagged) walk(node.value, visit);
+  else if (Array.isArray(node)) node.forEach((n) => walk(n, visit));
+  else if (isMapping(node)) Object.values(node).forEach((n) => walk(n, visit));
+}
