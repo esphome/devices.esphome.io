@@ -19,9 +19,13 @@
 // with a mocked GitHub client.
 const fs = require("fs");
 const path = require("path");
+const { removeLabelIfPresent } = require("./labels.cjs");
+const { requestCopilotReview } = require("./request-copilot-review.cjs");
 
 const MFE_LABEL = "made-for-esphome";
 const PENDING_LABEL = "made-for-esphome-pending";
+// Published on the PR head by merge-conflicts.cjs.
+const CONFLICT_CHECK = "Merge conflicts";
 
 // Conclusions that don't stand in the way of a human review: `skipped` covers
 // jobs excluded by a path/event filter and `neutral` is an explicit
@@ -58,6 +62,11 @@ module.exports = async ({ github, context, core }) => {
   }
 
   const { owner, repo } = context.repo;
+  await promote({ github, core, owner, repo, prNumber });
+};
+
+// Promotes or demotes one PR from its current head check runs.
+async function promote({ github, core, owner, repo, prNumber }) {
   const { data: pr } = await github.rest.pulls.get({
     owner,
     repo,
@@ -85,14 +94,17 @@ module.exports = async ({ github, context, core }) => {
   // Only GitHub Actions check runs count. Runs from `workflow_run` and
   // `pull_request_target` workflows (including this one) attach their check
   // runs to the default/base branch commit rather than the PR head, so what is
-  // left here is exactly the CI and Made for ESPHome Review jobs.
+  // left here is the CI and Made for ESPHome Review jobs plus the "Merge
+  // conflicts" check run that merge-conflicts.cjs publishes on the head.
   const relevant = checks.filter((check) => check.app && check.app.slug === "github-actions");
   const running = relevant.filter((check) => check.status !== "completed");
   const failed = relevant.filter(
     (check) => check.status === "completed" && !PASSING_CONCLUSIONS.has(check.conclusion)
   );
-  // No checks at all (e.g. the runs have since expired) is not a pass.
-  const green = relevant.length > 0 && running.length === 0 && failed.length === 0;
+  // No checks at all (e.g. the runs have since expired) is not a pass, and
+  // neither is the conflict check alone: CI and the review haven't registered.
+  const validated = relevant.some((check) => check.name !== CONFLICT_CHECK);
+  const green = validated && running.length === 0 && failed.length === 0;
   const hasPending = labels.includes(PENDING_LABEL);
 
   if (!green) {
@@ -101,17 +113,12 @@ module.exports = async ({ github, context, core }) => {
     // state is left as it is so a PR a human is already reviewing doesn't get
     // pulled out from under them.
     if (hasPending) {
-      try {
-        await github.rest.issues.removeLabel({
-          owner,
-          repo,
-          issue_number: prNumber,
-          name: PENDING_LABEL,
-        });
-      } catch (error) {
-        // Someone removed the label between the read and the write, not an error.
-        if (error.status !== 404) throw error;
-      }
+      await removeLabelIfPresent(github, {
+        owner,
+        repo,
+        issue_number: prNumber,
+        name: PENDING_LABEL,
+      });
       core.info(
         `${running.length} check(s) running, ${failed.length} failing, removed ` +
           `\`${PENDING_LABEL}\` from PR #${prNumber}.`
@@ -135,6 +142,9 @@ module.exports = async ({ github, context, core }) => {
           { id: pr.node_id }
         );
         core.info(`All ${relevant.length} check(s) pass, marked PR #${prNumber} ready for review.`);
+        // GITHUB_TOKEN's ready_for_review event starts no workflow, so
+        // request-copilot-review.yml never sees this one.
+        await requestCopilotReview({ github, core, owner, repo, pull: pr });
       } catch (error) {
         // Both promotion jobs can reach this within seconds of each other when
         // CI and the review finish together, and the loser's mutation fails
@@ -157,4 +167,6 @@ module.exports = async ({ github, context, core }) => {
     return;
   }
   core.info(`\`${PENDING_LABEL}\` already set on PR #${prNumber}.`);
-};
+}
+
+module.exports.promote = promote;

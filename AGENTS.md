@@ -37,10 +37,19 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
 
 - **One new device per PR.** An update PR touches one device, unless it is a related cleanup across several
   devices.
-- Title: `Add <Device Name>` for a new device, `Update <Device Name> - <what changed>` for an update. No generic
-  titles such as "Update device" or "Fix docs".
+- Title says what the PR does, using the page's frontmatter `title` as the device name: `Add <Device Name>` for a
+  new device, `Update <Device Name> - <what changed>` for an update, `Remove <Device Name>` for a removal. A
+  cross-device cleanup gets an imperative summary naming the change (`Fix broken datasheet links on Tuya pages`).
+- Never use a file name (`index.md`, `config.yaml`), a branch name, "new device", or a title that doesn't name the
+  device. When you review or open a PR whose title breaks these rules, suggest (or, as a maintainer, set) a
+  conforming title from the PR's device folder and frontmatter `title`. A bad title alone doesn't block a merge.
 - Keep `.github/PULL_REQUEST_TEMPLATE.md` intact (it says "DO NOT DELETE ANYTHING"). Tick the one matching
   "Type of changes" box and the checklist items that apply; a bot labels the PR from those boxes.
+- A PR that can't merge into `main` gets the `has-conflicts` label and a failing "Merge conflicts" check run on its
+  head commit until main is merged or rebased in; a clean PR gets a passing one. Every merge to `main` rechecks
+  all open PRs and updates both.
+- Copilot reviews a PR when it opens, and again when a draft is marked ready for review, either by the author or by
+  the Made for ESPHome promotion (the review drafter often drafts a PR before that first review starts).
 - Only review and change what the diff touches; don't flag pre-existing problems on untouched pages. Validation
   scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
   and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole

@@ -35,7 +35,7 @@ jobs:
       # Check out the base repo (default branch, trusted) only to load the
       # command handler — no PR code is fetched or executed here.
       - name: Checkout scripts
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts
