@@ -862,7 +862,7 @@ const draftedBy = (type: string) => [
   { event: "convert_to_draft", actor: { type } },
 ];
 
-// The promote script only needs pr-number.txt out of the review artifact.
+// Sets the mocked run's PR; promote reads nothing from the artifact.
 const withPrNumber = (prNumber: string) => withArtifact(prNumber, null, "pass");
 
 test("promote: all checks green -> adds the pending label", async () => {
@@ -1088,26 +1088,6 @@ test("promote: any other removeLabel error propagates", async () => {
   );
 });
 
-test("promote: falls back to ./artifact when MFE_ARTIFACT_DIR is unset", async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-cwd-"));
-  fs.mkdirSync(path.join(dir, "artifact"));
-  fs.writeFileSync(path.join(dir, "artifact", "pr-number.txt"), "999\n");
-  runPrNumber = 42;
-  delete process.env.MFE_ARTIFACT_DIR;
-  const cwd = process.cwd();
-  process.chdir(dir);
-  try {
-    const { github, calls } = makePromoteGithub({
-      pr: makePr([MFE]),
-      checks: [ga("completed", "success")],
-    });
-    await promoteScript({ github, context, core: freshCore() });
-    assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
-  } finally {
-    process.chdir(cwd);
-  }
-});
-
 test("promote: a failed ready-for-review mutation warns instead of throwing", async () => {
   withPrNumber("42");
   const { github, calls } = makePromoteGithub({
@@ -1124,7 +1104,6 @@ test("promote: a failed ready-for-review mutation warns instead of throwing", as
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
   assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
 });
-
 
 test("promote: a PR that moved past the run's commit is left alone", async () => {
   withPrNumber("42");

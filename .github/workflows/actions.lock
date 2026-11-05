@@ -44,7 +44,6 @@ workflows:
         - 'actions/github-script@v9.0.0'
     '.github/workflows/update-date-published.yml':
         - 'actions/github-script@v9.0.0'
-        - 'actions/upload-artifact@v7.0.2'
     '.github/workflows/verify-lockfile.yml':
         - 'actions/checkout@v7.0.1'
     '.github/workflows/weekly-link-check.yml':
