@@ -35,7 +35,7 @@ jobs:
         # so a missing artifact is expected — don't fail the workflow over it,
         # the outcome check below skips the remaining steps instead.
         continue-on-error: true
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: validation-report
           run-id: ${{ github.event.workflow_run.id }}
