@@ -7,7 +7,7 @@ board: esp32
 project-url: https://shop.iotix.ro/product/adam/
 ---
 
-![IoTiX Adam](adam.png "IoTiX Adam")
+![IoTiX Adam](adam.webp "IoTiX Adam")
 
 The IoTiX Adam is a DIN-rail ESP32 controller with 16 digital inputs and 16 digital outputs, provided by two onboard
 PCF8575 I/O expanders on a shared I2C bus. An expansion slot accepts RS485, Ethernet or KNX daughterboards.
