@@ -12,9 +12,9 @@ one or more example `.yaml` config files pulled into the page with fenced code b
 
 Review PRs against the rules below. They mirror what CI enforces (`npm run validate-devices`,
 `npm run validate-yaml`, `npm run validate-esphome`, `npm run lint-frontmatter`, markdownlint,
-yamllint, and the external link check) plus the pull request template checklist and the Made for ESPHome standard, so a
-clean review here should mean a green CI run. Prefer citing the specific rule and file:line
-when requesting a change.
+yamllint, and the external link check) plus the pull request template checklist and the Made
+for ESPHome standard, so a clean review here should mean a green CI run. Prefer citing the
+specific rule and file:line when requesting a change.
 
 ## What to look at first
 
@@ -52,15 +52,9 @@ Richer examples (automations, Home Assistant integration, extra components) belo
 
 ## ESPHome validity and Device Builder import
 
-`npm run validate-esphome` runs on every device folder the PR touches (it needs ESPHome installed):
-
-- Every `file=` yaml passes `esphome config`. `config.yaml`, and any file with its own `esphome: name:`,
-  is validated on its own; an add-on file without one is validated merged onto `config.yaml` plus the
-  `api:`, `ota:` and Wi-Fi a user's config adds.
-- The page is importable by the ESPHome Device Builder: the first yaml fence that parses as a mapping is
-  the `config.yaml` one, at least one local image sits next to `index.md` (not in a subfolder), and
-  `config.yaml` has a SoC block with a concrete `board:` (on esp32 a `variant:` is enough) and at least one
-  hardware platform entry (not `template`, no `lambda:`) or an `ethernet:` block.
+`npm run validate-esphome`: each `file=` yaml passes `esphome config` (an add-on file without
+`esphome: name:` is checked merged onto `config.yaml`), and the page must import into the ESPHome
+Device Builder; the check prints why not.
 
 ## Secrets, passwords, and network config (all example YAML)
 
