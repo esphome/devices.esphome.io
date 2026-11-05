@@ -143,12 +143,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     timeout-minutes: 30
-    # SECURITY: `esphome config` and the Device Builder importer run the PR's
-    # yaml, and `external_components` / `packages` are fetched and imported
-    # while it validates. This job only runs in the secret-free `pull_request`
-    # context with `contents: read`, never runs `compile` / `run`, has no
-    # secrets file, and stays separate from yaml_validate so it cannot touch
-    # that job's artifact.
+    permissions:
+      contents: read
+    # SECURITY: no code a PR's yaml pulls in runs here. Pages that use
+    # external_components, remote packages or out-of-folder includes get a
+    # notice instead, and ESPHome and the importer run in a container with no
+    # network and no token (see AGENTS.md).
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -191,15 +191,6 @@ jobs:
           git sparse-checkout add $(printf 'src/docs/devices/%s ' $dirs)
           echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
           echo "run=true" >> "$GITHUB_OUTPUT"
-      - name: Setup Node.js
-        if: steps.scope.outputs.run == 'true'
-        uses: actions/setup-node@v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - name: Install dependencies
-        if: steps.scope.outputs.run == 'true'
-        run: npm ci
       - name: Checkout Device Builder
         if: steps.scope.outputs.run == 'true'
         uses: actions/checkout@v7.0.1
@@ -208,42 +199,35 @@ jobs:
           ref: ${{ env.DEVICE_BUILDER_REF }}
           path: _device-builder
           persist-credentials: false
-      - name: Setup uv
+      - name: Build the ESPHome and Device Builder image
         if: steps.scope.outputs.run == 'true'
-        uses: astral-sh/setup-uv@v10.3.2
-        with:
-          version: "0.13.7"
-          enable-cache: true
-          cache-dependency-glob: _device-builder/pyproject.toml
-      - name: Install Device Builder and ESPHome
-        if: steps.scope.outputs.run == 'true'
+        # The build context is the Device Builder checkout only, so this
+        # networked step never sees the PR's files.
         run: |
-          uv venv "$RUNNER_TEMP/venv" --python 3.12
-          # Stable releases only: uv otherwise takes an ESPHome beta that
-          # satisfies the floor.
-          uv pip install --python "$RUNNER_TEMP/venv/bin/python" --prerelease disallow \
-            "./_device-builder[esphome]"
-          "$RUNNER_TEMP/venv/bin/esphome" version
+          docker build -t esphome-validate -f - _device-builder <<'EOF'
+          FROM python:3.12-slim
+          COPY . /opt/device-builder
+          RUN pip install --no-cache-dir "/opt/device-builder[esphome]" && esphome version
+          EOF
+      - name: Setup Node.js
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+      - name: Install dependencies
+        if: steps.scope.outputs.run == 'true'
+        run: npm ci
       - name: Validate with ESPHome and the Device Builder importer
         if: steps.scope.outputs.run == 'true'
         env:
           DIRS: ${{ steps.scope.outputs.dirs }}
-          DEVICE_BUILDER_DIR: ${{ github.workspace }}/_device-builder
-          DEVICE_BUILDER_PYTHON: ${{ runner.temp }}/venv/bin/python
-          ESPHOME_BIN: ${{ runner.temp }}/venv/bin/esphome
-          # On failure the validator writes a markdown report here; the
-          # pr-validation-feedback workflow adds it to its review.
-          VALIDATION_REPORT: ${{ github.workspace }}/esphome-validation-report.md
+          # Each call runs in a fresh container: no network, no token, capped
+          # CPU, memory, processes and time.
+          ESPHOME_BIN: ${{ github.workspace }}/scripts/sandbox/esphome
+          DEVICE_BUILDER_CMD: ${{ github.workspace }}/scripts/sandbox/device-builder
+          JOBS: "3"
         # shellcheck disable=SC2086
         run: npm run --silent validate-esphome -- --annotations $DIRS
-      - name: Upload validation feedback
-        if: always() && steps.scope.outputs.run == 'true'
-        uses: actions/upload-artifact@v7.0.2
-        with:
-          name: esphome-validation-report
-          path: esphome-validation-report.md
-          if-no-files-found: ignore
-          retention-days: 1
   link_check:
     name: External Link Check
     runs-on: ubuntu-latest

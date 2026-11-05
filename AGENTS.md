@@ -135,6 +135,11 @@ Device Builder; the check prints why not. Locally it needs `esphome` on PATH, an
 that has it installed (`pip install "<checkout>[esphome]"`); without them that check is skipped. Pass device folder
 names to check specific pages.
 
+CI never runs code a page's yaml pulls in. A page whose configs use `external_components:`, a `packages:` entry
+that is not a local `!include`, a git source, an `!include` outside the device folder, or Python files in the
+folder gets a "Not validated" notice instead of either check; this does not fail the PR. Everything else runs in
+a container with no network and no token, so configs that download fonts, images or models get a warning.
+
 ## Markdown style
 
 - Lines wrap at 120 columns (markdownlint MD013; code blocks, tables and headings are exempt). yamllint uses the

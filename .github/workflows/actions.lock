@@ -7,7 +7,6 @@ workflows:
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
-        - 'astral-sh/setup-uv@v10.3.2'
         - 'nosborn/github-action-markdown-cli@v3.5.0'
     '.github/workflows/commit-date-published.yml':
         - 'actions/checkout@v7.0.1'
@@ -90,11 +89,6 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'astral-sh/setup-uv@v10.3.2':
-        ref: 'v10.3.2'
-        commit: 'sha1-07a047e608db84b3d8c06cd9a7c7dcc9c355c18e'
-        owner_id: 115962839
-        repo_id: 846733598
     'nosborn/github-action-markdown-cli@v3.5.0':
         ref: 'v3.5.0'
         commit: 'sha1-508d6cefd8f0cc99eab5d2d4685b1d5f470042c1'
