@@ -41,8 +41,11 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
   titles such as "Update device" or "Fix docs".
 - Keep `.github/PULL_REQUEST_TEMPLATE.md` intact (it says "DO NOT DELETE ANYTHING"). Tick the one matching
   "Type of changes" box and the checklist items that apply; a bot labels the PR from those boxes.
-- Only review and change what the diff touches. Validators and link checks are scoped to changed files, so
-  pre-existing problems on untouched pages are out of scope.
+- Only review and change what the diff touches; don't flag pre-existing problems on untouched pages. Validation
+  scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
+  and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole
+  catalog, so a broken untouched page can still fail CI. Only the no-inline-yaml rule, the Made for ESPHome
+  `url=` requirement, `lint-frontmatter` and `check-links` are limited to pages the PR changes.
 
 ## Device folder and page
 
@@ -83,8 +86,9 @@ standard: uk, us
 
 ## Example configuration YAML
 
-Every example config lives in its own `.yaml` file next to `index.md` and is pulled into the page with an empty
-fence:
+Every example config in the repo lives in its own `.yaml` file next to `index.md` and is pulled into the page with
+an empty fence. A page may instead (or also) show a config straight from an upstream repo with a `url=` fence,
+which needs no local copy:
 
 ````md
 ```yaml file=config.yaml
@@ -94,7 +98,8 @@ fence:
 - No inline yaml in fenced blocks on added or modified pages. The only exception is a fence marked `inline` for a
   two- or three-line snippet that is not a runnable config. `inline` is not a way around the rules below.
 - The **first `file=` fence on a page must reference `config.yaml`**. `url=` fences may appear anywhere and do not
-  count towards that ordering.
+  count towards that ordering. A page with only `url=` fences and no `file=` fence is valid; `file=config.yaml` is
+  still the standard form outside Made for ESPHome.
 - Every `file=` must point at a file that exists. A `url=` must use an allowlisted host and shape (see Made for
   ESPHome below); anything else is dropped from the build with a warning.
 - Every yaml file must parse.

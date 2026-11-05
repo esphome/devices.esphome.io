@@ -43,8 +43,9 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 
 5. **Configuration Structure**
 
-   - ✅ Each example config lives in its own `.yaml` file next to `index.md`, pulled in with `` ```yaml file=<name>.yaml ``; no inline yaml on added or modified pages (a fence marked `inline` may hold a short non-runnable snippet)
-   - ✅ **CRITICAL: the first `file=` fence references `config.yaml`, and `config.yaml` is hardware-only** - This is non-negotiable and enforced by `npm run validate-yaml`
+   - ✅ Each example config in the repo lives in its own `.yaml` file next to `index.md`, pulled in with `` ```yaml file=<name>.yaml ``; no inline yaml on added or modified pages (a fence marked `inline` may hold a short non-runnable snippet)
+   - ✅ A page may instead show an upstream config with a `` ```yaml url=… `` fence, which needs no local copy; a page with only `url=` fences is valid
+   - ✅ **CRITICAL: when a page has `file=` fences, the first one references `config.yaml`, and `config.yaml` is hardware-only** - This is non-negotiable and enforced by `npm run validate-yaml`
    - ❌ No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `web_server_idf:`, `improv_serial:`, `captive_portal:`, `bluetooth_proxy:` or `dashboard_import:` in `config.yaml`
    - ❌ No `platform: homeassistant`, `platform: mqtt` or `platform: template` anywhere in `config.yaml`
    - ✅ `wifi:` in `config.yaml` may hold only radio tunables (`country`, `power_save_mode`, `output_power`, ...) and an empty `ap:`; no `ssid`, `password`, `networks`, `manual_ip`, `eap` or `use_address`
