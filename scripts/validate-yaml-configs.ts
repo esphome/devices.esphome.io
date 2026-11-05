@@ -419,7 +419,7 @@ const ADDING_DEVICES_HELP_URL =
 // derive from fork-controlled input (device slugs, file paths). Insert a
 // zero-width space after any `@` that precedes a word character so those
 // values can't turn into `@mention` notifications to third parties.
-export function neutralizeMentions(text: string): string {
+function neutralizeMentions(text: string): string {
   return text.replace(/@(?=[A-Za-z0-9_-])/g, "@" + String.fromCharCode(0x200b));
 }
 
@@ -427,10 +427,7 @@ export function neutralizeMentions(text: string): string {
 // body. Grouped by file so a contributor sees, per page, exactly what to fix.
 // Written to the path in VALIDATION_REPORT (set in CI) so a follow-up
 // workflow can surface it as a `REQUEST_CHANGES` review.
-export function buildReport(
-  issues: Issue[],
-  heading = "Device configuration checks failed"
-): string {
+function buildReport(issues: Issue[]): string {
   const byFile = new Map<string, Issue[]>();
   for (const issue of issues) {
     const list = byFile.get(issue.file) ?? [];
@@ -439,7 +436,7 @@ export function buildReport(
   }
 
   const lines: string[] = [];
-  lines.push(`## ❌ ${heading}`);
+  lines.push("## ❌ Device configuration checks failed");
   lines.push("");
   lines.push(
     `The automated checks for the device pages in this pull request found ` +

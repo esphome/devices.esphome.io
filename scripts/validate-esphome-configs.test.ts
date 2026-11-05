@@ -10,6 +10,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import {
+  checkEsphome,
   deviceDirsOf,
   isStandalone,
   loadPage,
@@ -151,4 +152,51 @@ test("esphome output is trimmed to the Failed config block with temp paths remov
   assert.equal(trimEsphomeError("", "INFO x\nERROR boom\n", work), "ERROR boom");
   assert.equal(sourceLine(trimmed, "config.yaml"), 3);
   assert.equal(sourceLine(trimmed, "other.yaml"), undefined);
+});
+
+// A stand-in `esphome` that exits with *status* for every call.
+function fakeEsphome(status: number): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-esphome-"));
+  const bin = path.join(dir, "esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\necho "Failed config"\nexit ${status}\n`, { mode: 0o755 });
+  return bin;
+}
+
+async function esphomeFindings(files: Record<string, string>, status: number) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "validate-esphome-test-"));
+  const dir = path.join(root, "Plug");
+  fs.mkdirSync(dir);
+  for (const [name, content] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), content);
+  try {
+    const page = loadPage(dir, root);
+    assert.ok(page);
+    await checkEsphome(page, { bin: fakeEsphome(status), timeoutMs: 10_000, limit: (fn) => fn() });
+    return page.findings.map((f) => ({ level: f.level, file: path.basename(f.file), message: f.message }));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test("the sandbox's timeout exit (124) is an inconclusive warning, not a config error", async () => {
+  const findings = await esphomeFindings(
+    { "index.md": fence("file=config.yaml"), "config.yaml": CONFIG },
+    124
+  );
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].level, "warning");
+  assert.match(findings[0].message, /time limit; inconclusive/);
+});
+
+test("an add-on skipped because its base failed gets a notice", async () => {
+  const findings = await esphomeFindings(
+    {
+      "index.md": fence("file=config.yaml") + fence("file=extra.yaml"),
+      "config.yaml": CONFIG,
+      "extra.yaml": "sensor: []\n",
+    },
+    1
+  );
+  const extra = findings.find((f) => f.file === "extra.yaml");
+  assert.equal(extra?.level, "notice");
+  assert.match(extra?.message ?? "", /not validated: `config.yaml` did not validate/);
 });

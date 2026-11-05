@@ -188,7 +188,7 @@ function limiter(jobs: number): <T>(fn: () => Promise<T>) => Promise<T> {
   };
 }
 
-interface Runner {
+export interface Runner {
   bin: string;
   timeoutMs: number;
   limit: <T>(fn: () => Promise<T>) => Promise<T>;
@@ -210,11 +210,14 @@ async function esphomeConfig(
     );
     return { ok: true };
   } catch (err) {
-    const e = err as NodeJS.ErrnoException & { stdout?: string; stderr?: string; killed?: boolean };
+    // `code` is the errno string for a spawn failure, else the exit status.
+    const e = err as { code?: string | number; stdout?: string; stderr?: string; killed?: boolean };
     if (e.code === "ENOENT") {
       throw new FatalError(`esphome not found (${runner.bin}); install it with \`pip install esphome\``);
     }
-    return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut: !!e.killed };
+    // The sandbox's own `timeout` exits 124 before Node's limit kills the process.
+    const timedOut = !!e.killed || e.code === 124;
+    return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut };
   }
 }
 
@@ -245,7 +248,7 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
       check: "esphome",
       level: "warning",
       file,
-      message: `\`esphome config\` did not finish within ${runner.timeoutMs} ms; inconclusive`,
+      message: "`esphome config` hit the CI time limit; inconclusive",
     });
     return false;
   }
@@ -266,7 +269,7 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
 }
 
 /** Validate every target of *page* in one work copy: standalone files first, then fragments. */
-async function checkEsphome(page: Page, runner: Runner): Promise<void> {
+export async function checkEsphome(page: Page, runner: Runner): Promise<void> {
   if (page.targets.length === 0) return;
   const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "esphome-config-")));
   const work = path.join(tmp, path.basename(page.dir));
@@ -285,8 +288,17 @@ async function checkEsphome(page: Page, runner: Runner): Promise<void> {
     standalone.forEach((t, i) => {
       if (!results[i]) failedBases.add(t.file);
     });
-    const fragments = rest.filter((t) => t.mergeOnto !== null && !failedBases.has(t.mergeOnto));
-    await Promise.all(fragments.map((t) => checkTarget(page, work, t, runner)));
+    const fragments = rest.filter((t) => t.mergeOnto !== null);
+    for (const t of fragments.filter((f) => failedBases.has(f.mergeOnto as string))) {
+      page.findings.push({
+        check: "esphome",
+        level: "notice",
+        file: path.join(path.dirname(page.rel), t.file),
+        message: `not validated: \`${t.mergeOnto}\` did not validate, so this file wasn't merged onto it`,
+      });
+    }
+    const runnable = fragments.filter((t) => !failedBases.has(t.mergeOnto as string));
+    await Promise.all(runnable.map((t) => checkTarget(page, work, t, runner)));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
