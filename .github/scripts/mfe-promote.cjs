@@ -24,6 +24,8 @@ const { requestCopilotReview } = require("./request-copilot-review.cjs");
 
 const MFE_LABEL = "made-for-esphome";
 const PENDING_LABEL = "made-for-esphome-pending";
+// Published on the PR head by merge-conflicts.cjs.
+const CONFLICT_CHECK = "Merge conflicts";
 
 // Conclusions that don't stand in the way of a human review: `skipped` covers
 // jobs excluded by a path/event filter and `neutral` is an explicit
@@ -97,8 +99,10 @@ async function promote({ github, core, owner, repo, prNumber }) {
   const failed = relevant.filter(
     (check) => check.status === "completed" && !PASSING_CONCLUSIONS.has(check.conclusion)
   );
-  // No checks at all (e.g. the runs have since expired) is not a pass.
-  const green = relevant.length > 0 && running.length === 0 && failed.length === 0;
+  // No checks at all (e.g. the runs have since expired) is not a pass, and
+  // neither is the conflict check alone: CI and the review haven't registered.
+  const validated = relevant.some((check) => check.name !== CONFLICT_CHECK);
+  const green = validated && running.length === 0 && failed.length === 0;
   const hasPending = labels.includes(PENDING_LABEL);
 
   if (!green) {

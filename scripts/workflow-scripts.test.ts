@@ -726,6 +726,7 @@ test("intake: a non-404 error from the contents API propagates", async () => {
 // --- promote script --------------------------------------------------------
 
 type CheckRun = {
+  name?: string;
   status: string;
   conclusion?: string | null;
   app?: { slug: string };
@@ -958,6 +959,18 @@ test("promote: no check runs at all is not a pass", async () => {
   });
   await promoteScript({ github, context, core: freshCore() });
   assert.equal(calls.filter((c) => c.method === "removeLabel").length, 1);
+});
+
+test("promote: a passing conflict check alone is not a pass", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [{ ...ga("completed", "success"), name: "Merge conflicts" }],
+    events: draftedBy("Bot"),
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
 });
 
 test("promote: non-Actions check runs are ignored", async () => {

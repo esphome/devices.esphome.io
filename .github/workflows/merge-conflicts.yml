@@ -29,17 +29,17 @@ on:
 
 permissions: {}
 
-# A newer run rereads every state it needs, so the older one can be dropped.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   sync:
     name: Sync conflict label and check
     runs-on: ubuntu-latest
     # `edited` also fires for title and body edits; only a base change matters.
     if: github.event.action != 'edited' || github.event.changes.base
+    # A newer run rereads every state it needs, so the older one can be
+    # dropped. Job-level, so a skipped title or body edit cancels nothing.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     permissions:
       checks: write  # publish the "Merge conflicts" check run on the PR head
       contents: read  # to check out the script below
