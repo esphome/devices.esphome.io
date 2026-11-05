@@ -462,14 +462,16 @@ export function configTargets(page: Page): { targets: ConfigTarget[]; findings: 
       files.push(f.file);
     }
   }
-  const hasConfig = files.includes("config.yaml");
+  const parsedFiles = new Map<string, unknown>();
   for (const file of files) {
-    let parsed: unknown;
     try {
-      parsed = loadYaml(fs.readFileSync(path.join(page.dir, file), "utf8"));
+      parsedFiles.set(file, loadYaml(fs.readFileSync(path.join(page.dir, file), "utf8")));
     } catch {
-      continue; // a missing file is validate-yaml's finding
+      // a missing file is validate-yaml's finding
     }
+  }
+  const hasConfig = parsedFiles.has("config.yaml");
+  for (const [file, parsed] of parsedFiles) {
     if (file === "config.yaml") {
       targets.unshift({ file, mergeOnto: null });
     } else if (isStandalone(parsed)) {
@@ -656,6 +658,21 @@ async function main(): Promise<number> {
 
   let dirs: string[];
   const namedDirs = positional.filter((p) => fs.existsSync(path.join(devicesRoot, p, "index.md")));
+  if (!flags.has("--all") && namedDirs.length < positional.length) {
+    const unknown = positional.filter((p) => {
+      if (namedDirs.includes(p)) return false;
+      try {
+        git("rev-parse", "--verify", "--quiet", `${p}^{commit}`);
+        return namedDirs.length > 0;
+      } catch {
+        return true;
+      }
+    });
+    if (unknown.length > 0) {
+      console.error(`unknown device folder or git ref: ${unknown.join(", ")}`);
+      return 2;
+    }
+  }
   if (flags.has("--all")) {
     dirs = fs
       .readdirSync(devicesRoot, { withFileTypes: true })
@@ -733,5 +750,11 @@ async function main(): Promise<number> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().then((code) => process.exit(code));
+  main().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err);
+      process.exit(2);
+    }
+  );
 }

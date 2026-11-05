@@ -230,3 +230,17 @@ test("the annotation line comes from the file's own source marker", () => {
   assert.equal(sourceLine(out, "config.yaml"), 14);
   assert.equal(sourceLine(out, "other.yaml"), undefined);
 });
+
+test("fragments of a page whose config.yaml is missing get a finding, not a merge target", () => {
+  const md = `${PAGE}\n\`\`\`yaml file=extra.yaml\n\`\`\`\n`;
+  const { root, dir } = makeDevice({ "index.md": md, "extra.yaml": "sensor: []\n" });
+  try {
+    const page = loadPage(dir, root);
+    assert.ok(page);
+    const { targets, findings } = configTargets(page);
+    assert.deepEqual(targets, []);
+    assert.match(findings[0].message, /no `config.yaml` to merge it onto/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
