@@ -143,54 +143,102 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     timeout-minutes: 30
-    # SECURITY: `esphome config` runs the PR's yaml, and `external_components`
-    # / `packages` are fetched and imported while it validates. This job only
-    # runs in the secret-free `pull_request` context with `contents: read`,
-    # never runs `compile` / `run`, and has no secrets file.
+    # SECURITY: `esphome config` and the Device Builder importer run the PR's
+    # yaml, and `external_components` / `packages` are fetched and imported
+    # while it validates. This job only runs in the secret-free `pull_request`
+    # context with `contents: read`, never runs `compile` / `run`, has no
+    # secrets file, and stays separate from yaml_validate so it cannot touch
+    # that job's artifact.
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # esphome/device-builder commit whose importer
+      # (script/sync_esphome_devices.py --check) decides whether a page
+      # imports. Bump it to a newer device-builder main commit to pick up
+      # importer changes; ESPHome is the latest stable release that commit's
+      # `esphome` extra accepts, shared by both checks.
+      DEVICE_BUILDER_REF: 302899f8f81cd86a7ec11c2115c5122c8eba6ffb
     steps:
-      - name: Checkout code
+      - name: Checkout scripts
         uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # Commits and trees only: the diff needs no file contents, and only
+          # the changed device folders are added to the sparse checkout below.
           fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            src/lib
           persist-credentials: false
+      - name: Find changed device pages with file= configs
+        id: scope
+        run: |
+          dirs=""
+          for d in $(git diff --name-only --diff-filter=ACMRTD "$BASE_SHA...$HEAD_SHA" -- src/docs/devices \
+              | sed -n 's|^src/docs/devices/\([^/]*\)/.*|\1|p' | sort -u); do
+            if git show "HEAD:src/docs/devices/$d/index.md" 2>/dev/null | grep -q 'file='; then
+              dirs="$dirs $d"
+            fi
+          done
+          if [ -z "$dirs" ]; then
+            echo "No changed device pages with file= configs."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Checking:$dirs"
+          # shellcheck disable=SC2086
+          git sparse-checkout add $(printf 'src/docs/devices/%s ' $dirs)
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+          echo "run=true" >> "$GITHUB_OUTPUT"
       - name: Setup Node.js
+        if: steps.scope.outputs.run == 'true'
         uses: actions/setup-node@v7.1.0
         with:
           node-version: 24
           cache: npm
       - name: Install dependencies
+        if: steps.scope.outputs.run == 'true'
         run: npm ci
-      - name: Detect changed device pages
-        id: detect
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: npm run --silent validate-esphome -- --detect
-      - name: Setup Python
-        if: steps.detect.outputs.run == 'true'
-        uses: actions/setup-python@v7.0.0
+      - name: Checkout Device Builder
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/checkout@v7.0.1
         with:
-          python-version: "3.12"
-      - name: Cache pip
-        if: steps.detect.outputs.run == 'true'
-        uses: actions/cache@v6.1.0
+          repository: esphome/device-builder
+          ref: ${{ env.DEVICE_BUILDER_REF }}
+          path: _device-builder
+          persist-credentials: false
+      - name: Setup uv
+        if: steps.scope.outputs.run == 'true'
+        uses: astral-sh/setup-uv@v10.3.2
         with:
-          path: ~/.cache/pip
-          key: esphome-config-${{ runner.os }}-pip-v1
-          restore-keys: |
-            esphome-config-${{ runner.os }}-pip-
-      - name: Install ESPHome
-        if: steps.detect.outputs.run == 'true'
-        # Latest stable, like the Made for ESPHome review and the Device
-        # Builder importer, so pages are checked against the ESPHome users get.
-        run: pip install esphome
-      - name: Validate example configs with ESPHome and the Device Builder import rules
-        if: steps.detect.outputs.run == 'true'
+          enable-cache: true
+          cache-dependency-glob: _device-builder/pyproject.toml
+      - name: Install Device Builder and ESPHome
+        if: steps.scope.outputs.run == 'true'
+        run: |
+          uv venv "$RUNNER_TEMP/venv" --python 3.12
+          uv pip install --python "$RUNNER_TEMP/venv/bin/python" "./_device-builder[esphome]"
+      - name: Validate with ESPHome and the Device Builder importer
+        if: steps.scope.outputs.run == 'true'
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: npm run --silent validate-esphome -- --annotations
+          DIRS: ${{ steps.scope.outputs.dirs }}
+          DEVICE_BUILDER_DIR: ${{ github.workspace }}/_device-builder
+          DEVICE_BUILDER_PYTHON: ${{ runner.temp }}/venv/bin/python
+          ESPHOME_BIN: ${{ runner.temp }}/venv/bin/esphome
+          # On failure the validator writes a markdown report here; the
+          # pr-validation-feedback workflow adds it to its review.
+          VALIDATION_REPORT: ${{ github.workspace }}/esphome-validation-report.md
+        # shellcheck disable=SC2086
+        run: npm run --silent validate-esphome -- --annotations $DIRS
+      - name: Upload validation feedback
+        if: always() && steps.scope.outputs.run == 'true'
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: esphome-validation-report
+          path: esphome-validation-report.md
+          if-no-files-found: ignore
+          retention-days: 1
   link_check:
     name: External Link Check
     runs-on: ubuntu-latest
