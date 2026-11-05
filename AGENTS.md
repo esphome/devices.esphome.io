@@ -41,6 +41,10 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
   titles such as "Update device" or "Fix docs".
 - Keep `.github/PULL_REQUEST_TEMPLATE.md` intact (it says "DO NOT DELETE ANYTHING"). Tick the one matching
   "Type of changes" box and the checklist items that apply; a bot labels the PR from those boxes.
+- A PR that can't merge into `main` gets the `has-conflicts` label and a failing "Merge conflicts" check until
+  main is merged or rebased in. A merge to `main` rechecks every open PR's label.
+- Copilot reviews a PR when it opens, and again when a draft is marked ready for review (the review drafter often
+  drafts a PR right after opening, before that first review starts).
 - Only review and change what the diff touches; don't flag pre-existing problems on untouched pages. Validation
   scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
   and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole

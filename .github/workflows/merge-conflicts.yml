@@ -1,0 +1,50 @@
+name: Merge conflicts
+
+# Adds the `has-conflicts` label to pull requests that can't be merged into
+# main and removes it once they can. On a pull request event the job also
+# fails while the PR conflicts, so the author gets a red "Merge conflicts"
+# check. A push to main rechecks every open PR's label, since a merge can
+# create a conflict in a PR nobody touched. Logic lives in
+# .github/scripts/merge-conflicts.cjs.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Merge conflicts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # to check out the script below
+      issues: write  # labels are an issues-level resource
+      pull-requests: write  # read mergeability and add/remove the label
+    steps:
+      # Checks out the base repo (trusted) only to load the script below,
+      # never the PR's code - this job runs with a writable token.
+      - name: Checkout scripts
+        uses: actions/checkout@v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Sync has-conflicts label
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/merge-conflicts.cjs');
+            await script({ github, context, core });
