@@ -57,6 +57,7 @@ import matter from "gray-matter";
 // js-yaml is a transitive dep of gray-matter; import directly to parse.
 import yaml from "js-yaml";
 import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
+import { changedPaths, type ChangedPath } from "./changed-paths.ts";
 
 // Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
 // the JS boolean `true`) and the rare string form. Anything else — missing,
@@ -159,14 +160,14 @@ function checkSensitiveInTree(
   }
 }
 
-interface YamlFence {
+export interface YamlFence {
   fileAttr: string | null; // null when the fence has no `file=` attr
   urlAttr: string | null; // null when the fence has no `url=` attr
   inline: boolean; // true when the fence carries the bare `inline` marker
   lineNumber: number; // 1-indexed source line of the fence opener
 }
 
-function findYamlFences(md: string): YamlFence[] {
+export function findYamlFences(md: string): YamlFence[] {
   const lines = md.split(/\r?\n/);
   const fences: YamlFence[] = [];
   let inFence: { char: string; len: number } | null = null;
@@ -201,11 +202,26 @@ function findYamlFences(md: string): YamlFence[] {
   return fences;
 }
 
-interface Issue {
+export interface Issue {
   file: string;
   line?: number;
   message: string;
 }
+
+// ESPHome custom tags parse to their argument with the tag re-stamped, so
+// `password: !secret foo` parses to `"!secret foo"`, which the password check
+// recognises as non-literal.
+export const ESPHOME_YAML_SCHEMA = yaml.DEFAULT_SCHEMA.extend(
+  ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
+    (tag) =>
+      new yaml.Type(tag, {
+        kind: "scalar",
+        construct: (data) =>
+          data === null || data === undefined ? tag : `${tag} ${data}`,
+        represent: (data) => data as string,
+      })
+  )
+);
 
 function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
   const issues: Issue[] = [];
@@ -218,23 +234,10 @@ function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
     return issues;
   }
 
-  // Parse — tolerate ESPHome custom tags. Re-stamp the tag onto the
-  // resulting string so `password: !secret foo` parses to `"!secret foo"`,
-  // which the password check correctly recognises as non-literal.
-  const schema = yaml.DEFAULT_SCHEMA.extend(
-    ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
-      (tag) =>
-        new yaml.Type(tag, {
-          kind: "scalar",
-          construct: (data) =>
-            data === null || data === undefined ? tag : `${tag} ${data}`,
-          represent: (data) => data as string,
-        })
-    )
-  );
+  // Parse with the ESPHome tags tolerated (see ESPHOME_YAML_SCHEMA).
   let parsed: unknown = undefined;
   try {
-    parsed = yaml.load(raw, { schema });
+    parsed = yaml.load(raw, { schema: ESPHOME_YAML_SCHEMA });
   } catch (err) {
     const e = err as yaml.YAMLException;
     issues.push({
@@ -355,58 +358,35 @@ function walkMarkdown(dir: string, out: string[], depth = 0): void {
 // requirement applies. Only `D` (deletion) and `U` (unmerged, shouldn't
 // appear in CI) are ignored.
 function findChangedMarkdown(devicesRoot: string): Set<string> | null {
-  const base = process.env.BASE_SHA;
-  const head = process.env.HEAD_SHA;
-  if (!base || !head) return null;
-  let out: string;
-  try {
-    out = execFileSync(
-      "git",
-      [
-        "diff",
-        "--name-status",
-        "-z",
-        `${base}..${head}`,
-        "--",
-        "src/docs/devices",
-      ],
-      { encoding: "utf8" }
-    );
-  } catch (err) {
-    console.error(`git diff failed: ${(err as Error).message}`);
-    process.exit(1);
-  }
+  const changes = prChanges();
+  if (changes === null) return null;
   const changed = new Set<string>();
-  const tokens = out.split("\0");
-  let i = 0;
-  while (i < tokens.length) {
-    const status = tokens[i];
-    if (!status) { i++; continue; }
-    const code = status[0];
-    let candidatePath: string | null = null;
-    if (code === "R" || code === "C") {
-      // Format: <Rxx|Cxx>\0<old>\0<new> — take the new path, similarity
-      // index ignored: any rename/copy onto a device markdown must follow
-      // the rules.
-      candidatePath = tokens[i + 2];
-      i += 3;
-    } else {
-      // Format: <code>\0<path>
-      const p = tokens[i + 1];
-      i += 2;
-      // A = added, M = modified, T = type change. D (deleted) and U
-      // (unmerged — shouldn't appear in CI) are ignored.
-      if (code === "A" || code === "M" || code === "T") candidatePath = p;
-    }
-    if (!candidatePath) continue;
-    if (!/\.(md|mdx)$/i.test(candidatePath)) continue;
-    const abs = path.resolve(process.cwd(), candidatePath);
+  for (const c of changes) {
+    // A = added, M = modified, T = type change, R/C = the new path of a
+    // rename/copy. D (deleted) and U (unmerged) are ignored.
+    if (!["A", "M", "T", "R", "C"].includes(c.status)) continue;
+    if (!/\.(md|mdx)$/i.test(c.path)) continue;
+    const abs = path.resolve(process.cwd(), c.path);
     // Restrict to the devices tree (the path-spec already does, but be
     // defensive against future trigger changes).
     if (!abs.startsWith(devicesRoot + path.sep) && abs !== devicesRoot) continue;
     changed.add(abs);
   }
   return changed;
+}
+
+// The PR's changes under src/docs/devices between BASE_SHA and HEAD_SHA, or
+// null when the env vars are absent (local runs and push builds).
+function prChanges(): ChangedPath[] | null {
+  const base = process.env.BASE_SHA;
+  const head = process.env.HEAD_SHA;
+  if (!base || !head) return null;
+  try {
+    return changedPaths(base, head, "src/docs/devices");
+  } catch (err) {
+    console.error(`git diff failed: ${(err as Error).message}`);
+    process.exit(1);
+  }
 }
 
 // Identify the device directories this PR newly adds — i.e. each
@@ -419,43 +399,14 @@ function findChangedMarkdown(devicesRoot: string): Set<string> | null {
 // and `push` builds have no meaningful diff base), so the one-device rule
 // is enforced on pull_request events only.
 function findAddedDevices(): string[] | null {
-  const base = process.env.BASE_SHA;
-  const head = process.env.HEAD_SHA;
-  if (!base || !head) return null;
-  let out: string;
-  try {
-    out = execFileSync(
-      "git",
-      ["diff", "--name-status", "-z", `${base}..${head}`, "--", "src/docs/devices"],
-      { encoding: "utf8" }
-    );
-  } catch (err) {
-    console.error(`git diff failed: ${(err as Error).message}`);
-    process.exit(1);
-  }
+  const changes = prChanges();
+  if (changes === null) return null;
   const devices = new Set<string>();
-  const tokens = out.split("\0");
-  let i = 0;
-  while (i < tokens.length) {
-    const status = tokens[i];
-    if (!status) { i++; continue; }
-    const code = status[0];
-    let candidatePath: string | null = null;
-    if (code === "R" || code === "C") {
-      // <Rxx|Cxx>\0<old>\0<new>. A rename relocates an existing device, so
-      // it isn't a new one; a copy spawns a new device dir, so take the new
-      // path.
-      if (code === "C") candidatePath = tokens[i + 2];
-      i += 3;
-    } else {
-      const p = tokens[i + 1];
-      i += 2;
-      if (code === "A") candidatePath = p;
-    }
-    if (!candidatePath) continue;
-    const m = candidatePath.match(
-      /^src\/docs\/devices\/([^/]+)\/index\.(?:md|mdx)$/i
-    );
+  for (const c of changes) {
+    // A rename relocates an existing device, so it isn't a new one; a copy
+    // spawns a new device dir.
+    if (c.status !== "A" && c.status !== "C") continue;
+    const m = c.path.match(/^src\/docs\/devices\/([^/]+)\/index\.(?:md|mdx)$/i);
     if (m) devices.add(m[1]);
   }
   return [...devices].sort();
@@ -468,7 +419,7 @@ const ADDING_DEVICES_HELP_URL =
 // derive from fork-controlled input (device slugs, file paths). Insert a
 // zero-width space after any `@` that precedes a word character so those
 // values can't turn into `@mention` notifications to third parties.
-function neutralizeMentions(text: string): string {
+export function neutralizeMentions(text: string): string {
   return text.replace(/@(?=[A-Za-z0-9_-])/g, "@" + String.fromCharCode(0x200b));
 }
 
@@ -476,7 +427,10 @@ function neutralizeMentions(text: string): string {
 // body. Grouped by file so a contributor sees, per page, exactly what to fix.
 // Written to the path in VALIDATION_REPORT (set in CI) so a follow-up
 // workflow can surface it as a `REQUEST_CHANGES` review.
-function buildReport(issues: Issue[]): string {
+export function buildReport(
+  issues: Issue[],
+  heading = "Device configuration checks failed"
+): string {
   const byFile = new Map<string, Issue[]>();
   for (const issue of issues) {
     const list = byFile.get(issue.file) ?? [];
@@ -485,7 +439,7 @@ function buildReport(issues: Issue[]): string {
   }
 
   const lines: string[] = [];
-  lines.push("## ❌ Device configuration checks failed");
+  lines.push(`## ❌ ${heading}`);
   lines.push("");
   lines.push(
     `The automated checks for the device pages in this pull request found ` +

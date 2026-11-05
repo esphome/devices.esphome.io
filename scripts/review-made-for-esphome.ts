@@ -513,6 +513,11 @@ function tail(text: string, lines: number): string {
   return all.slice(all.length - lines).join("\n");
 }
 
+// `esphome config` output that points at a network or upstream-repo problem
+// rather than at the config itself.
+const NETWORK_FAILURE_RE =
+  /Failed to clone|Could not clone|unable to access|Connection (timed out|refused)|Temporary failure in name resolution|Network is unreachable|Could not resolve host/i;
+
 // Classify a failed `esphome config`. Returns a human-readable finding string
 // and whether it looks like a network/toolchain problem (inconclusive) rather
 // than a genuine config error.
@@ -537,11 +542,7 @@ function classifyConfigError(r: ExecResult): {
     // Should not happen — we always write secrets.yaml. Treat as network/env.
     return { message: "internal: secrets.yaml was not found", network: true };
   }
-  if (
-    /Failed to clone|Could not clone|unable to access|Connection (timed out|refused)|Temporary failure in name resolution|Network is unreachable|Could not resolve host/i.test(
-      blob
-    )
-  ) {
+  if (NETWORK_FAILURE_RE.test(blob)) {
     return {
       message:
         "could not fetch a remote package/component while expanding the config " +
@@ -1930,6 +1931,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
+  NETWORK_FAILURE_RE,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
