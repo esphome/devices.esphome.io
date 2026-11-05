@@ -4,7 +4,9 @@
 // resolves to null so the caller does nothing.
 //
 // `workflow_run.pull_requests` is empty for fork PRs, so the PR is looked up
-// by `owner:branch` and then pinned to the exact head SHA and repository.
+// by `owner:branch` and then pinned to the exact head SHA and repository. When
+// one head is open against several bases, the default branch's PR wins, and
+// anything still ambiguous resolves to null.
 
 async function findRunPullRequest({ github, context }) {
   const run = context.payload.workflow_run;
@@ -17,14 +19,18 @@ async function findRunPullRequest({ github, context }) {
     head: `${headRepo.owner.login}:${run.head_branch}`,
     per_page: 100,
   });
-  return (
-    pulls.find(
-      (pr) =>
-        pr.head.sha === run.head_sha &&
-        pr.head.repo &&
-        pr.head.repo.full_name === headRepo.full_name
-    ) || null
+  const matches = pulls.filter(
+    (pr) =>
+      pr.head.sha === run.head_sha &&
+      pr.head.repo &&
+      pr.head.repo.full_name === headRepo.full_name
   );
+  if (matches.length > 1) {
+    const defaultBranch = context.payload.repository && context.payload.repository.default_branch;
+    const onDefault = matches.filter((pr) => pr.base && pr.base.ref === defaultBranch);
+    return onDefault.length === 1 ? onDefault[0] : null;
+  }
+  return matches[0] || null;
 }
 
 module.exports = { findRunPullRequest };

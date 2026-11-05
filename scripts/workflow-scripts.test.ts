@@ -122,7 +122,7 @@ function freshCore() {
 // context.payload.workflow_run (never from the artifact). null = no open PR.
 let runPrNumber: number | null = 42;
 const RUN = {
-  head_sha: "runsha",
+  head_sha: "sha1", // the PR head the mocks return
   head_branch: "add-device",
   head_repository: { full_name: "fork/esphome-devices", owner: { login: "fork" } },
 };
@@ -1091,4 +1091,16 @@ test("promote: a failed ready-for-review mutation warns instead of throwing", as
   assert.ok(core._warned[0].includes("not a draft"));
   // The label still goes on.
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+});
+
+
+test("promote: a PR that moved past the run's commit is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: { ...makePr([MFE]), head: { sha: "newer" } },
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  assert.equal(calls.filter((c) => c.method.startsWith("paginate:")).length, 0);
 });

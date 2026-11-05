@@ -15,9 +15,10 @@ const RUN = {
   head_branch: "add-device",
   head_repository: { full_name: "fork/devices", owner: { login: "fork" } },
 };
-const pr = (number: number, sha: string, repo: string) => ({
+const pr = (number: number, sha: string, repo: string, base = "main") => ({
   number,
   head: { sha, repo: { full_name: repo } },
+  base: { ref: base },
 });
 
 function call(pulls: unknown[], run: unknown = RUN) {
@@ -29,7 +30,10 @@ function call(pulls: unknown[], run: unknown = RUN) {
     },
     rest: { pulls: { list: () => undefined } },
   };
-  const context = { repo: { owner: "esphome", repo: "devices" }, payload: { workflow_run: run } };
+  const context = {
+    repo: { owner: "esphome", repo: "devices" },
+    payload: { workflow_run: run, repository: { default_branch: "main" } },
+  };
   return findRunPullRequest({ github, context }).then((r: unknown) => ({ r, seen }));
 }
 
@@ -52,4 +56,14 @@ for (const [name, pulls] of [
 
 test("resolves to null when the run carries no head repository", async () => {
   assert.equal((await call([pr(5, "abc", "fork/devices")], { ...RUN, head_repository: null })).r, null);
+});
+
+test("prefers the default-branch PR when one head is open against several bases", async () => {
+  const { r } = await call([pr(5, "abc", "fork/devices", "next"), pr(6, "abc", "fork/devices")]);
+  assert.equal((r as { number: number }).number, 6);
+});
+
+test("resolves to null when several PRs match and none targets the default branch", async () => {
+  const { r } = await call([pr(5, "abc", "fork/devices", "a"), pr(6, "abc", "fork/devices", "b")]);
+  assert.equal(r, null);
 });

@@ -58,6 +58,11 @@ module.exports = async ({ github, context, core }) => {
     repo,
     pull_number: prNumber,
   });
+  // The run vouches for one commit; a newer push gets its own run.
+  if (pr.head.sha !== runPr.head.sha) {
+    core.info(`PR #${prNumber} moved past the run's commit; nothing to do.`);
+    return;
+  }
   if (pr.state !== "open") {
     core.info(`PR #${prNumber} is ${pr.state}; nothing to do.`);
     return;
