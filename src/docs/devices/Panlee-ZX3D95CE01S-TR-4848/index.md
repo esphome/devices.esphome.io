@@ -52,7 +52,7 @@ More background on this family of devices, including the other variants, is coll
 
 The device has an onboard 2mm pitch programming connector, and unpopulated flash header pins.
 Connect 5V, GND, TX0 to the adapter's RX and RX0 to the adapter's TX, and tie `IO0` to GND while powering up to
-  enter download mode.
+enter download mode.
 
 ## Basic Config
 
