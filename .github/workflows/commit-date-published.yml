@@ -2,8 +2,9 @@ name: Commit date-published update
 
 # Runs in the trusted base-repo context after the fork-PR workflow finishes,
 # so it has access to the GitHub App credentials that update-date-published.yml
-# cannot see. It consumes the metadata artifact produced there, rewrites the
-# date-published frontmatter, and commits back to the PR branch.
+# cannot see. It re-derives the pull request, the approval and the new pages
+# from the triggering run, rewrites the date-published frontmatter, and
+# commits back to the PR branch.
 on:
   workflow_run:
     workflows: ["Update date-published on approval"]
@@ -17,36 +18,64 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
-      actions: read  # download the metadata artifact from the triggering run
+      contents: read  # to check out the script below
+      pull-requests: read  # to find the run's pull request, its reviews and files
     steps:
-      - name: Download metadata
-        continue-on-error: true
-        uses: actions/download-artifact@v8.0.2
+      # Checks out the base repo (trusted) only to load the helper below,
+      # never the PR's code.
+      - name: Checkout scripts
+        uses: actions/checkout@v7.0.1
         with:
-          name: date-published-metadata
-          path: metadata
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
 
-      # The triggering workflow only uploads an artifact when it found newly
-      # added device pages, so its absence means there is nothing to do.
+      # Everything this job acts on is re-derived here through the API from
+      # the triggering run's head commit: the pull request, a maintainer
+      # approval of that exact commit, and the newly added device pages.
       - name: Read metadata
         id: meta
         uses: actions/github-script@v9.0.0
         with:
           script: |
-            const fs = require('fs');
-            if (!fs.existsSync('metadata/info.json')) {
-              core.info('No metadata artifact — nothing to do.');
-              core.setOutput('proceed', 'false');
+            const { findRunPullRequest } = require('./.github/scripts/workflow-run-pr.cjs');
+            core.setOutput('proceed', 'false');
+            const pr = await findRunPullRequest({ github, context });
+            if (!pr) {
+              core.info("No open pull request matches this run's head commit; nothing to do.");
               return;
             }
-            const m = JSON.parse(fs.readFileSync('metadata/info.json', 'utf8'));
+            const { owner, repo } = context.repo;
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner, repo, pull_number: pr.number, per_page: 100,
+            });
+            const approved = reviews.some(
+              (r) =>
+                r.state === 'APPROVED' &&
+                r.commit_id === pr.head.sha &&
+                ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(r.author_association)
+            );
+            if (!approved) {
+              core.info(`PR #${pr.number} has no maintainer approval of ${pr.head.sha}; nothing to do.`);
+              return;
+            }
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner, repo, pull_number: pr.number, per_page: 100,
+            });
+            const pattern = /^src\/docs\/devices\/[^/]+\/index\.md$/;
+            const pages = files
+              .filter((f) => f.status === 'added' && pattern.test(f.filename))
+              .map((f) => f.filename);
+            if (pages.length === 0) {
+              core.info(`PR #${pr.number} adds no device pages; nothing to do.`);
+              return;
+            }
             core.setOutput('proceed', 'true');
-            core.setOutput('head_repo', m.headRepo);
-            core.setOutput('head_ref', m.headRef);
-            core.setOutput('head_sha', m.headSha);
-            core.setOutput('pages', m.pages.join('\n'));
+            core.setOutput('head_repo', pr.head.repo.full_name);
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('pages', pages.join('\n'));
 
       - name: Generate a token
         if: steps.meta.outputs.proceed == 'true'
