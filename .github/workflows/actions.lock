@@ -14,7 +14,6 @@ workflows:
         - 'actions/download-artifact@v8.0.2'
         - 'actions/github-script@v9.0.0'
     '.github/workflows/dependabot-auto-merge.yml':
-        - 'actions/create-github-app-token@v3.3.0'
         - 'dependabot/fetch-metadata@v3.1.0'
     '.github/workflows/label-pr-type.yml':
         - 'actions/checkout@v7.0.1'
