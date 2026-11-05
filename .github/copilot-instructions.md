@@ -36,16 +36,21 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 
 4. **Security & Privacy**
 
-   - ❌ No passwords or secrets in configuration examples (except `!secret wifi_ssid` and `!secret wifi_password`)
+   - ❌ No `!secret` references anywhere in any example yaml, including `!secret wifi_ssid` / `!secret wifi_password`
+   - ❌ No passwords on `password:`, `*_password:` or `psk:` keys, neither literal nor `!secret`
    - ❌ No static/manual IP addresses in wifi or ethernet blocks
    - ❌ No hardcoded credentials or sensitive information
 
 5. **Configuration Structure**
 
-   - ✅ **CRITICAL: First configuration should be hardware definitions only** - This is non-negotiable
-   - ✅ Core ESPHome components are allowed in first configuration: `api:`, `ota:`, `wifi:`, `logger:`, `captive_portal:`
+   - ✅ Each example config in the repo lives in its own `.yaml` file next to `index.md`, pulled in with `` ```yaml file=<name>.yaml ``; no inline yaml on added or modified pages (a fence marked `inline` may hold a short non-runnable snippet)
+   - ✅ A page may instead show an upstream config with a `` ```yaml url=… `` fence, which needs no local copy; a page with only `url=` fences is valid
+   - ✅ **CRITICAL: when a page has `file=` fences, the first one references `config.yaml`, and `config.yaml` is hardware-only** - This is non-negotiable and enforced by `npm run validate-yaml`
+   - ❌ No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `web_server_idf:`, `improv_serial:`, `captive_portal:`, `bluetooth_proxy:` or `dashboard_import:` in `config.yaml`
+   - ❌ No `platform: homeassistant`, `platform: mqtt` or `platform: template` anywhere in `config.yaml`
+   - ✅ `wifi:` in `config.yaml` may hold only radio tunables (`country`, `power_save_mode`, `output_power`, ...) and an empty `ap:`; no `ssid`, `password`, `networks`, `manual_ip`, `eap` or `use_address`
    - ❌ `web_server:` component should NOT be included in any configurations on device pages
-   - ✅ More complex examples can be provided in separate configuration blocks
+   - ✅ More complex examples go in separate yaml files referenced by later `file=` fences
    - ✅ Proper YAML formatting and indentation
 
 6. **Documentation Quality**
@@ -60,6 +65,7 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 
 8. **Markdown frontmatter**
    - ✅ The `title`, `date-published`, `type`, and `standard` data are required to be specified in the frontmatter
+   - ✅ `type`, `standard` and `board` values must come from `src/utils/validFrontmatter.ts`, and `date-published` must not be in the future
    - ✅ Check the `date-published` markdown frontmatter and make sure it's in the format of `YYYY-MM-DD`.  If the month or day values are 1-9, it should be prefixed with a 0, for example: `2025-07-04`
 
 ### Made for ESPHome Devices (made-for-esphome: true)
@@ -75,18 +81,18 @@ When a device has `made-for-esphome: true` in its frontmatter, it must meet ALL 
 #### Open Source Requirements
 
 - ✅ **ESPHome configuration is open source** and available for users to modify/update
-- ✅ **Project URL** should link to public repository with configuration files
+- ✅ **At least one `` ```yaml url=… `` fence** points at a `.yaml` file in the manufacturer's GitHub, Codeberg or GitLab repo, so the page shows the upstream config live
 
 #### Wi-Fi Device Requirements (if applicable)
 
-- ✅ **`improv_ble:` component** must be included in configuration
+- ✅ **`improv_ble:` component** must be included in configuration (`esp32_improv:` is the deprecated spelling)
 - ✅ **`improv_serial:` component** must be included if device has USB port
 
 #### User Control & Updates
 
 The device must allow users to "take control" via ESPHome Builder:
 
-- ✅ **`dashboard_import:` component** included to facilitate adoption
+- ✅ **`dashboard_import:` component** included to facilitate adoption, with a `package_import_url` that resolves to the config file (paths are case-sensitive)
 - ✅ **`ota.esphome` component** included for OTA updates
   - Example:
     ```yaml
@@ -94,11 +100,11 @@ The device must allow users to "take control" via ESPHome Builder:
       - platform: esphome
     ```
 - ✅ **Serial flashing NOT disabled**
-- ✅ **No secrets references** in the configuration
-- ✅ **No passwords** in the configuration
+- ✅ **No secrets references** in the configuration, not even `!secret wifi_ssid` / `!secret wifi_password`
+- ✅ **No passwords** in the configuration, neither literal nor `!secret` (an empty `password: ""` is fine)
 - ✅ **No static IP addresses** in the configuration
 - ✅ **Configuration must compile and run successfully** without any user changes after taking control
-- ✅ **Every entity/component** (sensor, switch, etc.) must have an `id` defined
+- ✅ **Every entity/component** (sensor, switch, etc.) must have an `id` defined (`ota:`, `interval:` and `external_components:` entries are exempt)
 - ✅ **`update.http_request` component** included for OTA updates
   - Example:
     ```yaml
@@ -158,11 +164,12 @@ This device appears to be based on ESP8266, but Made for ESPHome devices must us
 ### For Configuration Structure Issues
 
 ```
-The configuration contains components that should not be included on device pages:
+The configuration contains components that should not be in `config.yaml`:
 - Line 25: `web_server:` component should be removed - not allowed on device pages
-- Line 30: `time:` component should be in a separate configuration block
+- Line 28: `api:` and `ota:` belong in a separate yaml file, not `config.yaml`
+- Line 30: `platform: template` sensor should move to a separate yaml file
 
-**The first configuration should contain hardware definitions and core ESPHome components only** (esphome:, esp32:, sensor:, switch:, api:, ota:, wifi:, logger:, captive_portal:). Please remove web_server entirely and move other advanced components to a second configuration block.
+**`config.yaml` must be hardware-only** (for example `esphome:`, `esp32:`, `logger:`, hardware `sensor:` / `switch:` / `output:` entries, and a `wifi:` block with only radio tunables and an empty `ap:`). Please remove web_server entirely and move the other components to a second yaml file referenced by a later `file=` fence.
 ```
 
 ## Workflow Integration
