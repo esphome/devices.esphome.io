@@ -4,8 +4,10 @@
 version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yaml':
+        - 'actions/cache@v6.1.0'
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
+        - 'actions/setup-python@v7.0.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'nosborn/github-action-markdown-cli@v3.5.0'
     '.github/workflows/commit-date-published.yml':

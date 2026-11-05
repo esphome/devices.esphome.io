@@ -6,7 +6,8 @@ device is one folder under `src/docs/devices/<DeviceName>/` holding an `index.md
 configs the page pulls in.
 
 The rules below are what CI enforces (`npm run validate-devices`, `npm run validate-yaml`,
-`npm run lint-frontmatter`, markdownlint, yamllint, the CRLF check and the external link check), plus the pull
+`npm run validate-esphome`, `npm run lint-frontmatter`, markdownlint, yamllint, the CRLF check and the external link
+check), plus the pull
 request template and the Made for ESPHome standard. If a document ever disagrees with CI, the validator scripts
 in `scripts/` win; fix the document. The same rules are repeated for other tools in
 `.github/copilot-instructions.md` and `.github/skills/code-review/SKILL.md`, so keep those in step when a rule
@@ -23,6 +24,7 @@ Node 22.12 or newer.
 npm install
 npm run validate-devices    # folder names, frontmatter, aliases, then validate-yaml
 npm run validate-yaml       # the example-config rules below
+npm run validate-esphome    # esphome config + Device Builder import rules on changed pages (needs esphome on PATH)
 npm run lint-frontmatter    # yamllint on the frontmatter of changed .md/.mdx (needs yamllint on PATH)
 npm run check-links         # external links in changed markdown
 npm test                    # script unit tests and workflow-script syntax checks
@@ -31,7 +33,9 @@ npm run extract-yaml -- <path>   # move inline yaml fences into .yaml files
 npm run wrap-markdown -- <file>  # wrap prose to the 120-column limit
 ```
 
-Run `validate-devices` and `lint-frontmatter` before pushing any change under `src/docs/devices/`.
+Run `validate-devices`, `validate-esphome` and `lint-frontmatter` before pushing any change under
+`src/docs/devices/`. `validate-esphome` needs ESPHome installed (`pip install esphome`); pass device folder names
+(`npm run validate-esphome -- Sonoff-S20`) to check specific pages, or `--all` for the whole catalog.
 
 ## Pull requests
 
@@ -45,7 +49,8 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
   scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
   and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole
   catalog, so a broken untouched page can still fail CI. Only the no-inline-yaml rule, the Made for ESPHome
-  `url=` requirement, `lint-frontmatter` and `check-links` are limited to pages the PR changes.
+  `url=` requirement, `validate-esphome`, `lint-frontmatter` and `check-links` are limited to pages the PR changes
+  (`validate-esphome` checks every device folder the PR touches).
 
 ## Device folder and page
 
@@ -125,6 +130,27 @@ Automations, Home Assistant integration and extra components go in separate, des
 - No static IP addresses (`manual_ip`) in `wifi:` or `ethernet:` blocks.
 - Do not include `web_server:` in any config on a device page.
 
+### ESPHome and Device Builder checks (`npm run validate-esphome`)
+
+Every device folder a PR touches must also pass these. The ESPHome Device Builder imports device pages into its
+board catalog from `config.yaml`, so they mirror its importer (`script/sync_esphome_devices.py` in
+esphome/device-builder).
+
+- Every `file=` yaml passes `esphome config` with the latest ESPHome release and no `secrets.yaml`. `config.yaml`,
+  and any other file with its own `esphome: name:`, is validated on its own, so `config.yaml` must be a complete,
+  valid hardware config (for example, `logger.log` actions need `logger:`, a `status` sensor needs a network). A
+  file without `esphome: name:` is an add-on and is validated merged onto `config.yaml`, together with the `api:`,
+  `ota:` and Wi-Fi a user's own config adds.
+- The first yaml fence that parses as a mapping must be the `config.yaml` one; an `inline` snippet above it would
+  be imported instead.
+- The page embeds at least one local image next to `index.md` (not in a subfolder).
+- `config.yaml` has the SoC block (`esp32:`, `esp8266:`, `bk72xx:`, `rp2040:` or `rtl87xx:`) with a concrete
+  `board:` (on esp32 a `variant:` is enough). Hardware pulled in through remote `packages:` cannot be imported.
+- `config.yaml` has at least one hardware component: a sensor, switch, light, output or other platform entry with
+  its pins, that is not `platform: template` and has no `lambda:`, or an `ethernet:` block.
+
+`ln882x` pages are reported as a notice, since the importer does not handle them yet.
+
 ## Markdown style
 
 - Lines wrap at 120 columns (markdownlint MD013; code blocks, tables and headings are exempt). yamllint uses the
@@ -135,7 +161,8 @@ Automations, Home Assistant integration and extra components go in separate, des
 
 ## Images
 
-- Store images in the device folder, not hotlinked from external sites, and embed them with a title:
+- Store images directly in the device folder (not a subfolder), not hotlinked from external sites, and embed them
+  with a title:
   `![IoTiX Adam](adam.webp "IoTiX Adam")`.
 - Keep files small; there is no hard limit, but the catalog's median image is about 120 KB. Use JPG for photos,
   WebP when the image needs transparency, and PNG only for screenshots or diagrams that compress well. Resize

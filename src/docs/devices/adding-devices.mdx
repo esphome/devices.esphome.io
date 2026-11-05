@@ -278,6 +278,21 @@ Additional yaml files (e.g. `voice-assistant.yaml`, `battery-percentage.yaml`) c
 automations, or anything else specific to one feature — they just have to be valid YAML and follow the
 no-passwords / no-`!secret` rules.
 
+### ESPHome and Device Builder checks
+
+`npm run validate-esphome` runs on every device folder a pull request touches. It needs ESPHome installed
+(`pip install esphome`); `npm run validate-esphome -- <Device-Folder>` checks one page.
+
+- Every yaml file referenced with `file=` must pass `esphome config` with the latest ESPHome release.
+  `config.yaml` is validated on its own, so it must be a complete, valid hardware config. A file without its own
+  `esphome: name:` is treated as an add-on and validated merged onto `config.yaml`, together with the `api:`,
+  `ota:` and Wi-Fi a user's own config adds. A file with `esphome: name:` is validated on its own.
+- The [ESPHome Device Builder](https://github.com/esphome/device-builder) imports device pages into its board
+  catalog, so the page must be importable: the first yaml fence that parses must be the `config.yaml` one, the page
+  must show at least one image stored next to `index.md`, and `config.yaml` must have its SoC block (`esp32:`,
+  `esp8266:`, `bk72xx:`, `rp2040:` or `rtl87xx:`) with a concrete `board:` (on esp32 a `variant:` is enough) plus at
+  least one hardware component, such as a sensor, switch, light or output with its pins.
+
 If you have inline yaml in an existing markdown page, extract it to files with `npm run extract-yaml -- <path>`.
 The script is idempotent — it leaves already-migrated fences alone and writes the first fence on each page as
 `config.yaml`. Quotes around the file attribute are optional (`file=config.yaml` and `file="config.yaml"` both
@@ -361,7 +376,8 @@ a made-for-esphome page.
 
 To add images to your files do the following:
 
-1. Add the images to your newly created device folder in `/src/docs/devices`
+1. Add the images to your newly created device folder in `/src/docs/devices`, next to `index.md` (not in a
+   subfolder)
 2. Add the images to your folder using the appropriate markdown syntax:
 
 ```md

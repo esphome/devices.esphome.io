@@ -138,6 +138,59 @@ jobs:
             validation-report.md
           if-no-files-found: ignore
           retention-days: 1
+  esphome_validate:
+    name: ESPHome Config Validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 30
+    # SECURITY: `esphome config` runs the PR's yaml, and `external_components`
+    # / `packages` are fetched and imported while it validates. This job only
+    # runs in the secret-free `pull_request` context with `contents: read`,
+    # never runs `compile` / `run`, and has no secrets file.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Detect changed device pages
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run --silent validate-esphome -- --detect
+      - name: Setup Python
+        if: steps.detect.outputs.run == 'true'
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Cache pip
+        if: steps.detect.outputs.run == 'true'
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: esphome-config-${{ runner.os }}-pip-v1
+          restore-keys: |
+            esphome-config-${{ runner.os }}-pip-
+      - name: Install ESPHome
+        if: steps.detect.outputs.run == 'true'
+        # Latest stable, like the Made for ESPHome review and the Device
+        # Builder importer, so pages are checked against the ESPHome users get.
+        run: pip install esphome
+      - name: Validate example configs with ESPHome and the Device Builder import rules
+        if: steps.detect.outputs.run == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run --silent validate-esphome -- --annotations
   link_check:
     name: External Link Check
     runs-on: ubuntu-latest
