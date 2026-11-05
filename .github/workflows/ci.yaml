@@ -212,13 +212,18 @@ jobs:
         if: steps.scope.outputs.run == 'true'
         uses: astral-sh/setup-uv@v10.3.2
         with:
+          version: "0.13.7"
           enable-cache: true
           cache-dependency-glob: _device-builder/pyproject.toml
       - name: Install Device Builder and ESPHome
         if: steps.scope.outputs.run == 'true'
         run: |
           uv venv "$RUNNER_TEMP/venv" --python 3.12
-          uv pip install --python "$RUNNER_TEMP/venv/bin/python" "./_device-builder[esphome]"
+          # Stable releases only: uv otherwise takes an ESPHome beta that
+          # satisfies the floor.
+          uv pip install --python "$RUNNER_TEMP/venv/bin/python" --prerelease disallow \
+            "./_device-builder[esphome]"
+          "$RUNNER_TEMP/venv/bin/esphome" version
       - name: Validate with ESPHome and the Device Builder importer
         if: steps.scope.outputs.run == 'true'
         env:
