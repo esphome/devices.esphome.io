@@ -26,14 +26,21 @@ type Pr = ReturnType<typeof pr>;
 function pr(
   number: number,
   mergeable: Mergeable,
-  opts: { labels?: string[]; check?: "SUCCESS" | "FAILURE"; checkOid?: string; state?: string } = {},
+  opts: {
+    labels?: string[];
+    check?: "SUCCESS" | "FAILURE";
+    checkOid?: string;
+    state?: string;
+    base?: string;
+    head?: string;
+  } = {},
 ) {
-  const head = `sha${number}`;
+  const head = opts.head ?? `sha${number}`;
   return {
     number,
     state: opts.state ?? "OPEN",
     headRefOid: head,
-    baseRefName: "main",
+    baseRefName: opts.base ?? "main",
     mergeable,
     labels: { nodes: (opts.labels ?? []).map((name) => ({ name })) },
     commits: {
@@ -106,12 +113,13 @@ function makeCore() {
   return { warnings, core: { info: () => {}, warning: (m: string) => void warnings.push(m) } };
 }
 
-const prContext = (number: number) => ({
+const repository = { default_branch: "main" };
+const prContext = (number: number, action = "synchronize") => ({
   eventName: "pull_request_target",
   repo: REPO,
-  payload: { pull_request: { number } },
+  payload: { action, pull_request: { number }, repository },
 });
-const pushContext = { eventName: "push", ref: "refs/heads/main", repo: REPO, payload: {} };
+const pushContext = { eventName: "push", ref: "refs/heads/main", repo: REPO, payload: { repository } };
 
 function recordSleeps() {
   const slept: number[] = [];
@@ -172,7 +180,8 @@ test("a pending mergeability is re-read until it settles", async () => {
   const { slept, sleep } = recordSleeps();
   await conflicts({ github, context: prContext(7), core, sleep });
   assert.deepEqual(slept, [RETRY_DELAYS_MS[0], WRITE_PACING_MS]);
-  assert.equal(queries.length, 2);
+  // The initial read, the retry, and the re-read just before writing.
+  assert.equal(queries.length, 3);
   assert.deepEqual(writes.map((w) => w[0]), ["addLabels", "checks.create"]);
 });
 
@@ -289,4 +298,43 @@ test("a changed check re-runs the promotion on made-for-esphome PRs only", async
     ["promote", 8],
     ["checks.update", 109, "Merge conflicts", "failure"],
   ]);
+});
+
+test("a write is decided on a re-read, so another run's sync isn't undone", async () => {
+  // Between the read and the write another run labelled and failed the PR.
+  const { github, writes } = makeGithub({
+    7: [pr(7, "CONFLICTING"), pr(7, "CONFLICTING", { labels: [LABEL], check: "FAILURE" })],
+  });
+  const { core } = makeCore();
+  await conflicts({ github, context: prContext(7), core, sleep: async () => {} });
+  assert.deepEqual(writes, []);
+});
+
+test("a PR whose head moved during the sync is left to the next run", async () => {
+  const { github, writes } = makeGithub({
+    7: [pr(7, "CONFLICTING"), pr(7, "CONFLICTING", { head: "newsha" })],
+  });
+  const { core } = makeCore();
+  await conflicts({ github, context: prContext(7), core, sleep: async () => {} });
+  assert.deepEqual(writes, []);
+});
+
+test("a PR into another base gets the label but no head check", async () => {
+  const { github, writes } = makeGithub({ 7: [pr(7, "CONFLICTING", { base: "dev" })] });
+  const { core } = makeCore();
+  await conflicts({ github, context: prContext(7), core, sleep: async () => {} });
+  assert.deepEqual(writes, [["addLabels", 7, [LABEL]]]);
+});
+
+test("a new head leaves the promotion to CI; a base change re-runs it", async () => {
+  const read = () => pr(8, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" });
+  for (const [action, promoted] of [
+    ["synchronize", false],
+    ["edited", true],
+  ] as const) {
+    const { github, writes } = makeGithub({ 8: [read()] });
+    const { core } = makeCore();
+    await conflicts({ github, context: prContext(8, action), core, sleep: async () => {} });
+    assert.equal(writes.some((w) => w[0] === "promote"), promoted, action);
+  }
 });

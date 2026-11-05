@@ -60,7 +60,9 @@ module.exports = async ({ github, context, core }) => {
     core.setFailed("Could not read a PR number from the artifact.");
     return;
   }
-  await promote({ github, core, ...context.repo, prNumber });
+
+  const { owner, repo } = context.repo;
+  await promote({ github, core, owner, repo, prNumber });
 };
 
 // Promotes or demotes one PR from its current head check runs.

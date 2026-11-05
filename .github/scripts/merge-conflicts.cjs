@@ -112,12 +112,31 @@ function makePacer(sleep) {
   };
 }
 
+const hasLabel = (pull, name) => pull.labels.nodes.some((label) => label.name === name);
+const conclusionOf = (pull) => (pull.mergeable === "CONFLICTING" ? "failure" : "success");
+
+// The check run is keyed by head SHA alone, so it is only published for PRs on
+// the default branch: a PR into another base sharing that SHA can't clobber it.
+function wantsWrite(pull, defaultBranch) {
+  const conflict = pull.mergeable === "CONFLICTING";
+  if (conflict !== hasLabel(pull, LABEL)) return true;
+  if (pull.baseRefName !== defaultBranch) return false;
+  return headCheckRun(pull)?.conclusion !== conclusionOf(pull).toUpperCase();
+}
+
 // Syncs one settled PR's label and head check; returns whether the check changed.
-async function check({ github, core, owner, repo, pace }, pull) {
+async function check({ github, core, owner, repo, pace, defaultBranch }, listed) {
+  if (!wantsWrite(listed, defaultBranch)) return false;
+  // Another run may have written since the read; decide on one taken just before writing.
+  const [pull] = await readByNumber(github, owner, repo, [listed.number]);
+  if (!pull || pull.state !== "OPEN" || pull.mergeable === "UNKNOWN" || pull.headRefOid !== listed.headRefOid) {
+    core.info(`#${listed.number}: changed while syncing; left to the next run`);
+    return false;
+  }
   const { number, baseRefName: base } = pull;
   const conflict = pull.mergeable === "CONFLICTING";
 
-  const labelled = pull.labels.nodes.some((label) => label.name === LABEL);
+  const labelled = hasLabel(pull, LABEL);
   if (conflict && !labelled) {
     await pace();
     await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [LABEL] });
@@ -128,7 +147,8 @@ async function check({ github, core, owner, repo, pace }, pull) {
     core.info(`#${number}: removed ${LABEL}`);
   }
 
-  const conclusion = conflict ? "failure" : "success";
+  if (base !== defaultBranch) return false;
+  const conclusion = conclusionOf(pull);
   const existing = headCheckRun(pull);
   if (existing?.conclusion === conclusion.toUpperCase()) return false;
   const run = {
@@ -156,17 +176,19 @@ async function check({ github, core, owner, repo, pace }, pull) {
 
 module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) => {
   const { owner, repo } = context.repo;
+  const defaultBranch = context.payload.repository.default_branch;
   const pulls =
     context.eventName === "push"
       ? await listOpen(github, owner, repo, context.ref.replace(/^refs\/heads\//, ""))
       : await readByNumber(github, owner, repo, [context.payload.pull_request.number]);
   const { settled, unknown } = await settle(github, owner, repo, pulls, sleep);
+  // A new head re-runs CI and the review, whose completion promotes; only a
+  // sweep or a base change can move the check on a head they already judged.
+  const repromote = context.eventName === "push" || context.payload.action === "edited";
   const pace = makePacer(sleep);
   for (const pull of settled) {
-    const changed = await check({ github, core, owner, repo, pace }, pull);
-    // The promotion only re-runs when CI or the review finishes, so a changed
-    // head check re-evaluates it here.
-    if (changed && pull.labels.nodes.some((label) => label.name === MFE_LABEL)) {
+    const changed = await check({ github, core, owner, repo, pace, defaultBranch }, pull);
+    if (changed && repromote && hasLabel(pull, MFE_LABEL)) {
       await pace();
       await promote({ github, core, owner, repo, prNumber: pull.number });
     }
