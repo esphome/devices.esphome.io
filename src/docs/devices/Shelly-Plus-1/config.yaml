@@ -3,17 +3,16 @@ substitutions:
 
 esphome:
   name: shelly-plus-1
-  platformio_options:
-    board_build.f_cpu: 160000000L
 
 esp32:
   variant: esp32
+  toolchain: esp-idf
   framework:
     type: esp-idf
-    sdkconfig_options:
-      CONFIG_FREERTOS_UNICORE: y
-      CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
-      CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
+    advanced:
+      flash_chip: generic
+      minimum_chip_revision: '3.0'
+      sram1_as_iram: true
 
 logger:
 
