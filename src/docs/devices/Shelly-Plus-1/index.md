@@ -35,10 +35,6 @@ Credit and thanks to
 ```yaml
 substitutions:
   device_name: "Shelly Plus 1"
-  # Higher value gives lower watt readout
-  current_res: "0.001"
-  # Lower value gives lower voltage readout
-  voltage_div: "1925"
 
 esphome:
   name: shelly-plus-1
