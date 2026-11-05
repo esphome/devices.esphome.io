@@ -34,4 +34,3 @@ Credit and thanks to
 
 ```yaml file=config.yaml
 ```
-
