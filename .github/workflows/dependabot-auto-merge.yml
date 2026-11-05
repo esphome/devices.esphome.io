@@ -22,9 +22,21 @@ jobs:
         uses: dependabot/fetch-metadata@v3.1.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
+      # Merging with the app token lets the merge trigger `push` workflows,
+      # which a GITHUB_TOKEN merge does not. Dependabot-triggered runs only see
+      # Dependabot secrets, so the app key must be stored there too; without
+      # it this falls back to GITHUB_TOKEN.
+      - name: Generate a token
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
       - name: Enable auto-merge for Dependabot PRs
         if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
