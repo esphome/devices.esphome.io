@@ -760,12 +760,14 @@ test("intake: a non-404 error from the contents API propagates", async () => {
 // --- promote script --------------------------------------------------------
 
 type CheckRun = {
+  name?: string;
   status: string;
   conclusion?: string | null;
   app?: { slug: string };
 };
 
 type PullRequest = {
+  number?: number;
   state?: string;
   draft?: boolean;
   node_id?: string;
@@ -808,6 +810,10 @@ function makePromoteGithub(
           calls.push({ method: "pulls.get", args });
           return { data: opts.pr ?? makePr([]) };
         },
+        requestReviewers: async (args: unknown) => {
+          calls.push({ method: "requestReviewers", args });
+          return { data: {} };
+        },
       },
       issues: {
         listEvents,
@@ -835,6 +841,7 @@ function makePr(
   extra: { state?: string; draft?: boolean } = {}
 ): PullRequest {
   return {
+    number: 42,
     state: extra.state ?? "open",
     draft: extra.draft ?? false,
     node_id: "PR_node",
@@ -891,6 +898,18 @@ test("promote: a green draft the bot created is marked ready for review", async 
   assert.ok(gql.query.includes("markPullRequestReadyForReview"));
   assert.equal(gql.vars.id, "PR_node");
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+  // Its ready_for_review event triggers no workflow, so promote asks Copilot.
+  assert.deepEqual(
+    calls.filter((c) => c.method === "requestReviewers").map((c) => c.args),
+    [
+      {
+        owner: "esphome",
+        repo: "esphome-devices",
+        pull_number: 42,
+        reviewers: ["copilot-pull-request-reviewer[bot]"],
+      },
+    ]
+  );
 });
 
 test("promote: a draft a human created stays a draft", async () => {
@@ -977,6 +996,18 @@ test("promote: no check runs at all is not a pass", async () => {
   });
   await promoteScript({ github, context, core: freshCore() });
   assert.equal(calls.filter((c) => c.method === "removeLabel").length, 1);
+});
+
+test("promote: a passing conflict check alone is not a pass", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [{ ...ga("completed", "success"), name: "Merge conflicts" }],
+    events: draftedBy("Bot"),
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 0);
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
 });
 
 test("promote: non-Actions check runs are ignored", async () => {
@@ -1089,8 +1120,9 @@ test("promote: a failed ready-for-review mutation warns instead of throwing", as
   await promoteScript({ github, context, core });
   assert.equal(core._warned.length, 1);
   assert.ok(core._warned[0].includes("not a draft"));
-  // The label still goes on.
+  // The label still goes on; the job that won the race requested the review.
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
+  assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
 });
 
 
