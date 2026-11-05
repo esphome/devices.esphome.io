@@ -58,8 +58,11 @@ module.exports = async ({ github, context, core }) => {
     core.setFailed("Could not read a PR number from the artifact.");
     return;
   }
+  await promote({ github, core, ...context.repo, prNumber });
+};
 
-  const { owner, repo } = context.repo;
+// Promotes or demotes one PR from its current head check runs.
+async function promote({ github, core, owner, repo, prNumber }) {
   const { data: pr } = await github.rest.pulls.get({
     owner,
     repo,
@@ -158,4 +161,6 @@ module.exports = async ({ github, context, core }) => {
     return;
   }
   core.info(`\`${PENDING_LABEL}\` already set on PR #${prNumber}.`);
-};
+}
+
+module.exports.promote = promote;

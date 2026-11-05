@@ -7,15 +7,17 @@
 // Labels and check runs are only written when they disagree with the state.
 
 const { removeLabelIfPresent } = require("./labels.cjs");
+const { promote } = require("./mfe-promote.cjs");
 
 const LABEL = "has-conflicts";
 const CHECK_NAME = "Merge conflicts";
 const GITHUB_ACTIONS_APP_ID = 15368;
 const PAGE_SIZE = 50;
 const RETRY_DELAYS_MS = [3_000, 5_000, 10_000, 20_000];
-// Spaces out a sweep's writes to stay under GitHub's secondary rate limit
-// (about 80 content-creating requests a minute).
+// Spaces out every write after the first to stay under GitHub's secondary
+// rate limit (about 80 content-creating requests a minute).
 const WRITE_PACING_MS = 1_000;
+const MFE_LABEL = "made-for-esphome";
 
 const PR_FRAGMENT = `fragment Pr on PullRequest {
   number
@@ -101,26 +103,34 @@ function headCheckRun(pull) {
   return runs.sort((a, b) => b.databaseId - a.databaseId)[0] ?? null;
 }
 
-// Syncs one settled PR's label and head check; returns whether it wrote anything.
-async function check({ github, core, owner, repo }, pull) {
+// Resolves immediately the first time, then after WRITE_PACING_MS.
+function makePacer(sleep) {
+  let first = true;
+  return async () => {
+    if (!first) await sleep(WRITE_PACING_MS);
+    first = false;
+  };
+}
+
+// Syncs one settled PR's label and head check; returns whether the check changed.
+async function check({ github, core, owner, repo, pace }, pull) {
   const { number, baseRefName: base } = pull;
   const conflict = pull.mergeable === "CONFLICTING";
-  let wrote = false;
 
   const labelled = pull.labels.nodes.some((label) => label.name === LABEL);
   if (conflict && !labelled) {
+    await pace();
     await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [LABEL] });
     core.info(`#${number}: added ${LABEL}`);
-    wrote = true;
   } else if (!conflict && labelled) {
+    await pace();
     await removeLabelIfPresent(github, { owner, repo, issue_number: number, name: LABEL });
     core.info(`#${number}: removed ${LABEL}`);
-    wrote = true;
   }
 
   const conclusion = conflict ? "failure" : "success";
   const existing = headCheckRun(pull);
-  if (existing?.conclusion === conclusion.toUpperCase()) return wrote;
+  if (existing?.conclusion === conclusion.toUpperCase()) return false;
   const run = {
     owner,
     repo,
@@ -134,6 +144,7 @@ async function check({ github, core, owner, repo }, pull) {
         }
       : { title: `No conflicts with ${base}`, summary: `This branch merges cleanly into ${base}.` },
   };
+  await pace();
   if (existing) {
     await github.rest.checks.update({ ...run, check_run_id: existing.databaseId });
   } else {
@@ -150,9 +161,15 @@ module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r)
       ? await listOpen(github, owner, repo, context.ref.replace(/^refs\/heads\//, ""))
       : await readByNumber(github, owner, repo, [context.payload.pull_request.number]);
   const { settled, unknown } = await settle(github, owner, repo, pulls, sleep);
-  for (const [i, pull] of settled.entries()) {
-    const wrote = await check({ github, core, owner, repo }, pull);
-    if (wrote && i < settled.length - 1) await sleep(WRITE_PACING_MS);
+  const pace = makePacer(sleep);
+  for (const pull of settled) {
+    const changed = await check({ github, core, owner, repo, pace }, pull);
+    // The promotion only re-runs when CI or the review finishes, so a changed
+    // head check re-evaluates it here.
+    if (changed && pull.labels.nodes.some((label) => label.name === MFE_LABEL)) {
+      await pace();
+      await promote({ github, core, owner, repo, prNumber: pull.number });
+    }
   }
   for (const pull of unknown) {
     core.warning(`#${pull.number}: mergeability still unknown; label and check left unchanged`);

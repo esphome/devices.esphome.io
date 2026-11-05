@@ -6,9 +6,13 @@ name: Merge conflicts
 # job's own check attaches to the base commit, not the PR head; this job never
 # fails, so the head check carries the signal.
 #
-# - pull_request_target (opened / reopened / synchronize): checks that PR.
+# - pull_request_target (opened / reopened / synchronize, or edited to a new
+#   base): checks that PR.
 # - push to main: rechecks every open PR against main, since a merge can
 #   create (or clear) a conflict in a PR nobody touched.
+#
+# When the head check changes on a made-for-esphome PR, the job re-runs its
+# promotion (mfe-promote.cjs), which otherwise only runs after CI or the review.
 #
 # Logic lives in .github/scripts/merge-conflicts.cjs.
 
@@ -18,6 +22,7 @@ on:
       - opened
       - reopened
       - synchronize
+      - edited
   push:
     branches:
       - main
@@ -33,11 +38,13 @@ jobs:
   sync:
     name: Sync conflict label and check
     runs-on: ubuntu-latest
+    # `edited` also fires for title and body edits; only a base change matters.
+    if: github.event.action != 'edited' || github.event.changes.base
     permissions:
       checks: write  # publish the "Merge conflicts" check run on the PR head
       contents: read  # to check out the script below
       issues: write  # labels are an issues-level resource
-      pull-requests: write  # read mergeability and add/remove the label
+      pull-requests: write  # read mergeability, set labels, re-run the Made for ESPHome promotion
     steps:
       # Checks out the base repo (trusted) only to load the script below,
       # never the PR's code - this job runs with a writable token.

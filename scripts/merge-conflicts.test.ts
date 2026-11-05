@@ -78,6 +78,12 @@ function makeGithub(reads: Record<number, Pr[]>, pages: number[][] = []) {
       return { repository };
     },
     rest: {
+      pulls: {
+        get: async (a: { pull_number: number }) => {
+          writes.push(["promote", a.pull_number]);
+          return { data: { state: "closed" } };
+        },
+      },
       issues: {
         addLabels: async (a: { issue_number: number; labels: string[] }) =>
           void writes.push(["addLabels", a.issue_number, a.labels]),
@@ -165,7 +171,7 @@ test("a pending mergeability is re-read until it settles", async () => {
   const { core } = makeCore();
   const { slept, sleep } = recordSleeps();
   await conflicts({ github, context: prContext(7), core, sleep });
-  assert.deepEqual(slept, [RETRY_DELAYS_MS[0]]);
+  assert.deepEqual(slept, [RETRY_DELAYS_MS[0], WRITE_PACING_MS]);
   assert.equal(queries.length, 2);
   assert.deepEqual(writes.map((w) => w[0]), ["addLabels", "checks.create"]);
 });
@@ -190,7 +196,7 @@ test("a label already removed elsewhere (404) is not an error", async () => {
   assert.deepEqual(writes, [["checks.create", "sha7", "Merge conflicts", "success"]]);
 });
 
-test("a push sweep writes only the PRs whose state changed, paced", async () => {
+test("a push sweep writes only what changed, pacing each write", async () => {
   const { github, writes, queries } = makeGithub(
     {
       1: [pr(1, "CONFLICTING")],
@@ -209,7 +215,8 @@ test("a push sweep writes only the PRs whose state changed, paced", async () => 
     ["removeLabel", 2, LABEL],
     ["checks.update", 102, "Merge conflicts", "success"],
   ]);
-  assert.deepEqual(slept, [WRITE_PACING_MS, WRITE_PACING_MS]);
+  // Every write after the first is paced.
+  assert.deepEqual(slept, [WRITE_PACING_MS, WRITE_PACING_MS, WRITE_PACING_MS]);
 });
 
 test("a push sweep follows every page of open PRs", async () => {
@@ -264,4 +271,22 @@ test("a PR closed while the sweep waited is skipped", async () => {
   assert.equal(queries.length, 2);
   assert.deepEqual(writes, []);
   assert.deepEqual(warnings, []);
+});
+
+test("a changed check re-runs the promotion on made-for-esphome PRs only", async () => {
+  const { github, writes } = makeGithub(
+    {
+      8: [pr(8, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" })],
+      9: [pr(9, "CONFLICTING", { labels: [LABEL], check: "SUCCESS" })],
+      10: [pr(10, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "FAILURE" })],
+    },
+    [[8, 9, 10]],
+  );
+  const { core } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.deepEqual(writes, [
+    ["checks.update", 108, "Merge conflicts", "failure"],
+    ["promote", 8],
+    ["checks.update", 109, "Merge conflicts", "failure"],
+  ]);
 });
