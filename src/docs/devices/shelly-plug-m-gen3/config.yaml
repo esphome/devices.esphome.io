@@ -37,12 +37,6 @@ sensor:
       - above: ${max_temp}
         then:
           - switch.turn_off: switch_relay
-          - homeassistant.service:
-              service: persistent_notification.create
-              data:
-                title: Message from ${devicename}
-              data_template:
-                message: Switch turned off because temperature exceeded ${max_temp}°C
   - platform: resistance
     id: temp_resistance_reading
     sensor: temp_analog_reading
