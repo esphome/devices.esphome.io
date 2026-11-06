@@ -1,0 +1,46 @@
+esphome:
+  name: brilliant-smart-wifi-plug
+  friendly_name: Brilliant Smart Wifi Plug
+
+bk72xx:
+  board: cb2s
+
+logger:
+
+wifi:
+  ap:
+
+text_sensor:
+  - platform: libretiny
+    version:
+      name: LibreTiny Version
+
+sensor:
+  - platform: internal_temperature
+    name: "BK7231N Internal Temperature"
+    update_interval: 3s
+  - platform: wifi_signal
+    name: WiFi Signal
+    id: sensor_wifi_signal_1
+
+binary_sensor:
+  - platform: gpio
+    id: binary_switch_1
+    pin:
+      number: P26
+      inverted: true
+      mode:
+        input: true
+    on_press:
+      - switch.toggle: switch_1
+
+switch:
+  - platform: gpio
+    id: switch_1
+    name: Relay 1
+    pin: P6
+
+status_led:
+  pin:
+    number: P24
+    inverted: true
