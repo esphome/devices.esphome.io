@@ -38,7 +38,7 @@ The cable coming out through the bottom of the unit has the folling pinout:
 ### ModBUS Parameters
 
 Wire up a an RS485 transceiver to an ESP32 to interface with the device using ESPHome's
-[Modbus Component](https://esphome.io/components/modbus.html).
+[Modbus Component](https://esphome.io/components/modbus/).
 
 Connection parameters:
 

@@ -28,10 +28,10 @@ work with ESPHome and is compatible with the ESP32. This board supports the 4 bu
 | GPIO9     | Button Toggle | D9       |
 | GPIO10    | Button Menu   | D10      |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is
-[available on GitHub](https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-2/esphome-4btn-rev1.yaml).
+```yaml url=https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-2/esphome-4btn-rev1.yaml
+```
 
 ## Pictures
 

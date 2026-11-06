@@ -12,12 +12,12 @@ difficulty: 4
 
 ![EKF Сonnect PRO Wi-Fi (RCS-2-WF)](0.jpg)
 
-Equipped with [cb2s](https://developer.tuya.com/en/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq) Tuya module which is
+Equipped with [cb2s](https://developer.tuya.com/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq) Tuya module which is
 well known and is actualy
 based on Beken BK7231N.
 
 The power monitoring chip is
-[BL0937](https://developer.tuya.com/en/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc) which is known from
+[BL0937](https://developer.tuya.com/docs/iot-device-dev/Electricity-statistics?id=Kaunfo4am6icc) which is known from
 other
 Tuya designs and does not require further introduction.
 

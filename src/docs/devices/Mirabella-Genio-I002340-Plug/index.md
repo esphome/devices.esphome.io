@@ -1,5 +1,5 @@
 ---
-title: Mirrabella Genio I002340 Power Board with USB
+title: Mirabella Genio I002340 Power Board with USB
 date-published: 2020-01-19
 type: plug
 standard: au

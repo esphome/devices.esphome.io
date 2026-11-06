@@ -13,7 +13,7 @@ Available at:
 
 -
   [Walmart](https://www.walmart.com/ip/Smartpoint-Wifi-Smart-Remote-Controller-Compatible-with-Alexa-and-Google-Assistant-Hands-Free-Voice-Control/824016383)
-- [Amazon](https://amzn.to/3n1c2LD)
+- [Amazon](https://www.amazon.com/dp/B08NFBJCSQ)
 
 ## GPIO Pinout
 

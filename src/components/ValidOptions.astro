@@ -1,0 +1,26 @@
+---
+import {
+  VALID_TYPES,
+  VALID_BOARDS,
+  VALID_STANDARDS,
+} from "../utils/validFrontmatter";
+
+interface Props {
+  set: "type" | "board" | "standard";
+}
+
+const sets: Record<Props["set"], ReadonlySet<string>> = {
+  type: VALID_TYPES,
+  board: VALID_BOARDS,
+  standard: VALID_STANDARDS,
+};
+
+const values = Array.from(sets[Astro.props.set]).sort();
+---
+
+{values.map((value, index) => (
+  <span>
+    <code>{value}</code>
+    {index < values.length - 1 && ", "}
+  </span>
+))}

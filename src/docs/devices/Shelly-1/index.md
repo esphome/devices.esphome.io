@@ -8,7 +8,7 @@ board: esp8266
 
 ![Shelly 1](./shelly1.png "Shelly 1")
 
-[Amazon Link](https://amzn.to/2OAz8de)
+[Amazon Link](https://www.amazon.com/dp/B07G33LNDY)
 
 ## GPIO Pinout
 

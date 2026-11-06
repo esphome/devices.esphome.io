@@ -1,0 +1,26 @@
+name: Update date-published on approval
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+# This workflow runs in the (untrusted) fork-PR context and therefore has no
+# access to secrets or variables. It only marks the approval:
+# commit-date-published.yml runs after it, in the trusted workflow_run context,
+# and re-derives the pull request, the approval and the new pages itself.
+jobs:
+  approve:
+    name: Mark maintainer approval
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.review.state == 'approved' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association)
+    permissions: {}
+    steps:
+      - name: Mark the approval
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Maintainer approved PR #$PR_NUMBER"

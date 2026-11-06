@@ -70,7 +70,7 @@ wifi:
 
 captive_portal:
 
-# see: https://esphome.io/components/time.html, required for total_daily_energy
+# see: https://esphome.io/components/time/, required for total_daily_energy
 time:
   - platform: homeassistant
     id: homeassistant_time

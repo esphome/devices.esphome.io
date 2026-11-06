@@ -43,7 +43,5 @@ rtl87xx:
   board: t103-v1.0
 ```
 
-[1]: /Mirabella-Genio-Wi-Fi-1.4m-Pixel-LED-Corner-Light-Packaging.png "Mirabella Genio Wi-Fi 1.4m Pixel LED Corner
-Light"
-[2]: /Mirabella-Genio-Wi-Fi-1.4m-Pixel-LED-Corner-Light-Teardown.jpg "Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light
-Teardown"
+[1]: ./Mirabella-Genio-Wi-Fi-1.4m-Pixel-LED-Corner-Light-Packaging.png "Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light"
+[2]: ./Mirabella-Genio-Wi-Fi-1.4m-Pixel-LED-Corner-Light-Teardown.jpg "Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light Teardown"

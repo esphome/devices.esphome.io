@@ -1,5 +1,4 @@
 ---
-slug: tuya-convert
 title: Prepare a device with tuya-convert
 ---
 
@@ -22,7 +21,7 @@ This page is not a guide to installing and using tuya-convert in general; if you
 the following helpful:
 
 - The [tuya-convert documentation](https://github.com/ct-Open-Source/tuya-convert#requirements); or
-- A [video guide to using tuya-convert on a Raspberry Pi](https://www.digiblur.com/2019/11/tuya-convert-2-flash-tuya-smartlife.html)
+- A [video guide to using tuya-convert on a Raspberry Pi](https://web.archive.org/web/20220523141738/https://www.digiblur.com/2019/11/tuya-convert-2-flash-tuya-smartlife.html)
 
 During the process, don't get nervous - keep calm and be patient.
 
