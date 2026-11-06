@@ -89,22 +89,31 @@ bk72xx:
 Add your own Wi-Fi credentials, `api:`, and `ota:` before flashing. The empty `ap:`
 block lets a freshly flashed device bring up a fallback hotspot.
 
-ESPHome caches each GitHub component for a day. Set `refresh: 0s` on an
-`external_components` entry to pick up a new push immediately.
+The example pins [`hlw8112_spi`](https://github.com/eyal0/hlw8112_spi) and
+[`bk72xx_spi`](https://github.com/eyal0/bk72xx_spi) to tag `1.0`. Bump those refs when
+you want a newer release.
 
 The current ratios are the component defaults and match the clamp-meter ratios used by
 the OpenBeken driver. If a current channel reads high, raise that channel's ratio by
 the same factor. `voltage_ratio` is the divider ratio relative to 1 kΩ / 1 MΩ.
-`meter_channel` selects which current channel feeds the single apparent-power and
-power-factor measurement. The chip has one apparent-power register.
+`meter_channel` with a `name` is a Home Assistant select for which current channel
+feeds the single apparent-power, power-factor, and phase-angle measurement. `A` or `B`
+instead of a named block would fix the channel. The chip has one apparent-power
+register.
 
 ```yaml file=config.yaml
 ```
 
-`phase_angle` reports degrees, on a 50 Hz or 60 Hz scale chosen from the measured
-frequency. `energy_export_a` and `energy_export_b` are exported kWh. The energy
-registers clear when they are read, so the component adds each reading into import or
-export totals and stores them in flash about every 30 updates, and again on shutdown.
+The energy registers clear when they are read, so the component adds each reading into
+import or export totals and stores them in flash about every 30 updates, and again on
+shutdown.
+
+These optional sensors are supported by the component but are not enabled in
+`config.yaml`:
+
+- `phase_angle` — degrees, on a 50 Hz or 60 Hz scale chosen from the measured
+  frequency
+- `energy_export_a`, `energy_export_b` — exported kWh
 
 These template buttons clear the stored totals. They use `id(meter)` from the
 configuration above.

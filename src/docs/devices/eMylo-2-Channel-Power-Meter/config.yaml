@@ -10,9 +10,9 @@ bk72xx:
   board: t1-u
 
 external_components:
-  - source: github://eyal0/bk72xx_spi@main
+  - source: github://eyal0/bk72xx_spi@1.0
     components: [bk72xx_spi]
-  - source: github://eyal0/hlw8112_spi@main
+  - source: github://eyal0/hlw8112_spi@1.0
     components: [hlw8112_spi]
 
 logger:
@@ -29,12 +29,15 @@ sensor:
     spi_id: spi_bus
     cs_pin: P21
     update_interval: 2s
-    # Clamp-meter defaults. If a current reads high, raise that channel's
-    # ratio by the same factor.
+    # K1 / K2 from the HLW8112 calibration-free formulas. These match the
+    # clamp-meter ratios used by the OpenBeken driver. Raise a current ratio
+    # if that channel reads high. These are the defaults and can be omitted.
     current_ratio_a: 0.2
     current_ratio_b: 0.2
     voltage_ratio: 1.0
-    meter_channel: A
+    # A or B fixes the shared channel. A name makes it a Home Assistant control.
+    meter_channel:
+      name: Meter Channel
     voltage:
       name: Voltage
     frequency:
