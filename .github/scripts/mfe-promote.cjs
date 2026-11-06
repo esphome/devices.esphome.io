@@ -18,7 +18,6 @@
 // with a mocked GitHub client.
 const { findRunPullRequest } = require("./workflow-run-pr.cjs");
 const { removeLabelIfPresent } = require("./labels.cjs");
-const { requestCopilotReview } = require("./request-copilot-review.cjs");
 
 const MFE_LABEL = "made-for-esphome";
 const PENDING_LABEL = "made-for-esphome-pending";
@@ -143,9 +142,9 @@ async function promote({ github, core, owner, repo, prNumber, headSha }) {
           { id: pr.node_id }
         );
         core.info(`All ${relevant.length} check(s) pass, marked PR #${prNumber} ready for review.`);
-        // GITHUB_TOKEN's ready_for_review event starts no workflow, so
-        // request-copilot-review.yml never sees this one.
-        await requestCopilotReview({ github, core, owner, repo, pull: pr });
+        // GITHUB_TOKEN's ready_for_review event starts no workflow, so the
+        // calling job requests the Copilot review with the app token.
+        core.setOutput("marked-ready", String(prNumber));
       } catch (error) {
         // Both promotion jobs can reach this within seconds of each other when
         // CI and the review finish together, and the loser's mutation fails

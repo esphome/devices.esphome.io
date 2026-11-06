@@ -135,12 +135,31 @@ jobs:
       # GITHUB_TOKEN rather than the app token: it needs `checks: read`, and
       # workflow_run already runs in the base-repo context.
       - name: Promote the pull request when checks pass
+        id: promote
         if: steps.download.outcome == 'success'
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
             await script({ github, context, core });
+
+      # The promotion's ready_for_review event starts no workflow, so ask
+      # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      - name: Request Copilot review
+        if: steps.promote.outputs.marked-ready
+        uses: actions/github-script@v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.promote.outputs.marked-ready }}
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const { requestCopilotReview } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReview({
+              github,
+              core,
+              ...context.repo,
+              prNumber: Number(process.env.PR_NUMBER),
+            });
 
   promote:
     name: Promote when CI settles last
@@ -181,9 +200,36 @@ jobs:
           path: artifact
 
       - name: Promote the pull request when checks pass
+        id: promote
         if: steps.download.outcome == 'success'
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
             await script({ github, context, core });
+
+      - name: Generate a token
+        if: steps.promote.outputs.marked-ready
+        id: generate-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
+      # The promotion's ready_for_review event starts no workflow, so ask
+      # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      - name: Request Copilot review
+        if: steps.promote.outputs.marked-ready
+        uses: actions/github-script@v9.0.0
+        env:
+          PR_NUMBER: ${{ steps.promote.outputs.marked-ready }}
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const { requestCopilotReview } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReview({
+              github,
+              core,
+              ...context.repo,
+              prNumber: Number(process.env.PR_NUMBER),
+            });

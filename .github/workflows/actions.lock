@@ -41,6 +41,7 @@ workflows:
         - 'actions/github-script@v9.0.0'
     '.github/workflows/request-copilot-review.yml':
         - 'actions/checkout@v7.0.1'
+        - 'actions/create-github-app-token@v3.3.0'
         - 'actions/github-script@v9.0.0'
     '.github/workflows/update-date-published.yml': []
     '.github/workflows/verify-lockfile.yml':
