@@ -26,15 +26,21 @@ after flashing ESPHome (its signal is not readable by the module anyway).
 The CB2S module is flashed via UART with [ltchiptool](https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/).
 Things to keep in mind with Beken chips:
 
-1. Bridge the CEN pin to GND before powering the chip, and remove the bridge before the writing starts.
-2. The 3.3 V rail of most USB-UART adapters cannot power the module reliably during flashing
-   (brownouts on flash erase). The most reliable method is mounting the CB2S back on the LoraTap
-   board powered from mains and connecting only GND, RX and TX to the adapter.
-   **If you power the board from mains, do NOT connect the 3.3 V line of the USB-UART adapter.**
-3. An order that works: power up the board, plug in the USB adapter, launch the flash command,
+1. Work with the board **fully disconnected from mains** and power the module from an isolated
+   3.3 V supply rated for at least 500 mA. The 3.3 V rail of most USB-UART adapters cannot power
+   the module reliably during flashing (brownouts on flash erase), so use a dedicated supply, or
+   desolder the CB2S module and flash it on its own.
+2. If the module only powers up reliably on the board, the board must still be fed from a supply
+   that is galvanically isolated from mains (for example an isolated bench supply). A mains-referenced
+   supply puts hazardous voltage on GND, RX and TX, and therefore on the USB adapter and the computer.
+   If you have no isolated supply, put a USB isolator between the adapter and the computer and treat
+   every pin as live. **Never connect the 3.3 V line of the USB-UART adapter while the board is powered.**
+3. Bridge the CEN pin to GND before powering the chip, and remove the bridge before the writing starts.
+4. An order that works: power up the module, plug in the USB adapter, launch the flash command,
    wait a few seconds, then remove the CEN-to-GND bridge.
 
-**Warning: this device works with mains voltage. Take all necessary precautions.**
+**Warning: this device works with mains voltage. Take all necessary precautions and never work on it
+while it is connected to mains.**
 **Never short P26 (or any relay pin) to GND: it destroys the module.**
 
 ## GPIO Pinout

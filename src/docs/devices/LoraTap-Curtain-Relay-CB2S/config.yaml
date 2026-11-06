@@ -66,6 +66,7 @@ script:
   - id: open_script
     mode: restart
     then:
+      - script.stop: close_script
       - switch.turn_off: relay_down
       - delay: 500ms
       - switch.turn_on: relay_up
@@ -73,12 +74,15 @@ script:
   - id: close_script
     mode: restart
     then:
+      - script.stop: open_script
       - switch.turn_off: relay_up
       - delay: 500ms
       - switch.turn_on: relay_down
 
   - id: stop_script
     then:
+      - script.stop: open_script
+      - script.stop: close_script
       - switch.turn_off: relay_up
       - switch.turn_off: relay_down
 
