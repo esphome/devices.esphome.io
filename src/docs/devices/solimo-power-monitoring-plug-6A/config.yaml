@@ -1,9 +1,8 @@
+esphome:
+  name: solimo-power-monitoring-plug
 
-## Basic Config
-
-```yaml
-web_server:
-  port: 80
+rtl87xx:
+  board: generic-rtl8710bn-2mb-788k
 
 substitutions:
   voltage_divider: "1584.943820224719"
@@ -35,7 +34,7 @@ sensor:
 switch:
   - platform: gpio
     pin: PA00
-    name: "relay"
+    name: "Relay"
     id: relay
     on_turn_on:
       - switch.turn_on: blue_led
@@ -55,7 +54,6 @@ binary_sensor:
       - invert:
       - delayed_on: 100ms
       - delayed_off: 100ms
-      - delayed_on_off: 100ms
     name: "Button"
     on_press:
       - switch.toggle: relay
