@@ -5,4 +5,3 @@ sensor:
     humidity:
       name: Humidity
     update_interval: 60s
-
