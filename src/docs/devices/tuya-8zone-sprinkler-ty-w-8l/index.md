@@ -74,9 +74,13 @@ In Option B, **DO NOT connect the 3.3V cable from the USB adapter**. Only GND,
 TX and RX. The board generates its own 3.3V internally from the 24VAC.
 
 The transformer must be an isolating type whose secondary is not referenced to
-earth. A mains-referenced 24 VAC supply puts hazardous voltage on GND, TX and RX,
-and therefore on the USB adapter and the computer. If you cannot confirm that the
-transformer is isolating, put a USB isolator between the adapter and the computer.
+earth, and you must be able to confirm that. A mains-referenced 24 VAC supply puts
+hazardous voltage on GND, TX and RX, and therefore on the USB adapter and the
+computer. A USB isolator between the adapter and the computer protects the
+computer only: the adapter leads and the pads on the board stay live. If you
+cannot verify that the transformer is isolating, do not flash the board while it
+is powered. Desolder the module, or power it from an isolated bench supply with
+the 24 VAC input disconnected.
 
 ### 1. Back up the original firmware first
 
@@ -104,15 +108,17 @@ On the ESPHome Dashboard use Install, Manual download, UF2 package instead.
 
 ### 3. Write the firmware
 
-Enter download mode (bridge CEN/RST to GND while powering the board, then release
-the bridge when the tool starts writing) and flash the compiled image:
+Run the command first, it waits for the chip. Then briefly bridge CEN to GND to
+reset the chip and release it, and the tool links and writes:
 
 ```bash
-ltchiptool flash write bk7231n firmware.uf2
+ltchiptool flash write firmware.uf2
 ```
 
-ltchiptool only writes a compiled image, it does not compile ESPHome YAML, so pass
-the UF2 file and not `config.yaml`.
+CEN is the reset pin, so holding it to GND keeps the chip in reset and the tool
+never connects. `flash write` takes the image alone, the UF2 header tells
+ltchiptool which chip family it is. ltchiptool only writes a compiled image, it
+does not compile ESPHome YAML, so pass the UF2 file and not `config.yaml`.
 
 ## Button usage
 
