@@ -8,11 +8,7 @@ substitutions:
 esphome:
   name: ${devicename}
   friendly_name: ${friendlyName}
-  on_boot:
-    - priority: 250
-      then:
-        - switch.turn_on: switch_relay
-
+  
 esp32:
   variant: esp32c3
   flash_size: 8MB
