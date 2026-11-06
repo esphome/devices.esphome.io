@@ -77,17 +77,18 @@ roughly 91-95 % of that in my builds, so it is worth keeping the number and size
 
 ### The PCA9557 Is Not Needed for Touch
 
-The CrowPanel V3.0 has a PCA9557 I/O expander (I2C 0x18) that is connected to the GT911 reset and interrupt lines.
+The CrowPanel V3.0 has a PCA9557 I/O expander (I2C 0x18). Its IO0 drives the GT911 reset line and IO1 the interrupt
+line.
 Touch works without any PCA9557 configuration, because the GT911 comes out of reset on its own at power-on. In my
 earlier testing, resetting the GT911 through the PCA9557 broke touch. On ESPHome 2026.10.2, a `reset_pin` on PCA9557
-pin 0 worked, but it is not required.
+IO0 worked, but it is not required.
 
 ### GT911 I2C Address
 
-The GT911 I2C address is set by the state of GPIO38 during power-on:
+The GT911 I2C address is set by the level of its interrupt line (PCA9557 IO1) when it comes out of reset:
 
-- **GPIO38 LOW** -> address **0x5D** (most common)
-- **GPIO38 HIGH** -> address **0x14**
+- **INT LOW** -> address **0x5D** (all of my units)
+- **INT HIGH** -> address **0x14**
 
 ESPHome tries 0x5D first and falls back to 0x14 on its own, so the address does not need to be changed.
 
@@ -101,7 +102,8 @@ configuration could fix. Reseating the touch ribbon cable is a good first check.
 |----------|--------|
 | I2C SDA (Touch) | GPIO 19 |
 | I2C SCL (Touch) | GPIO 20 |
-| Touch INT | GPIO 38 |
+| Touch reset | PCA9557 IO0 |
+| Touch INT | PCA9557 IO1 |
 | Backlight PWM | GPIO 2 |
 | Display DE | GPIO 41 |
 | Display HSYNC | GPIO 39 |
@@ -118,7 +120,7 @@ configuration could fix. Reseating the touch ribbon cable is a good first check.
 | `flash_size: 16MB` | Boot loop, no logging | Change to `4MB` |
 | Missing `invert_colors: true` | Wrong colors | Add it |
 | Missing `pclk_inverted: true` | Garbled display | Add it |
-| Adding `interrupt_pin: 38` | Touch stops responding | Remove it, use polling |
+| Adding `interrupt_pin: 38` | Touch stops responding | Remove it and use polling (GPIO38 is not the touch INT line) |
 | Missing `usb_disable.h` | `I2C software timeout` | Add the header file (see notes above) |
 | Logger not on UART0 | No logs over the USB-C port | Add `logger: hardware_uart: UART0` |
 
