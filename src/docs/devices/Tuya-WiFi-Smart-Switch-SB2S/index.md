@@ -6,24 +6,24 @@ standard: global
 board: bk72xx
 pcb: CB2S
 ---
-![Product Image](./tuya-wifi-smart-switch-sb2s-front.jpg "Device front")
-![Product Image](./tuya-wifi-smart-switch-sb2s-pcb-front.jpg "PCB front")
-![Product Image](./tuya-wifi-smart-switch-sb2s-pcb-back.jpg "PCB back")
-![Product Image](./tuya-wifi-smart-switch-sb2s-submodule-front.jpg "SB2S front")
-![Product Image](./tuya-wifi-smart-switch-sb2s-submodule-back.jpg "SB2S back")
+
+![Product Image](./Tuya-WiFi-Smart-Switch-SB2S-front.jpg "Device front")
+![Product Image](./Tuya-WiFi-Smart-Switch-SB2S-pcb-front.jpg "PCB front")
+![Product Image](./Tuya-WiFi-Smart-Switch-SB2S-pcb-back.jpg "PCB back")
+![Product Image](./Tuya-WiFi-Smart-Switch-SB2S-submodule-front.jpg "SB2S front")
+![Product Image](./Tuya-WiFi-Smart-Switch-SB2S-submodule-back.jpg "SB2S back")
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| P8     | Button              |
-| P7     | Status Led          |
-| p24    | Relay               |
+| Pin | Function   |
+| --- | ---------- |
+| P8  | Button     |
+| P7  | Status Led |
+| p24 | Relay      |
 
 ## Basic Configuration
 
 ```yaml
-
 esphome:
   name: relayname
   friendly_name: relayname
@@ -53,7 +53,7 @@ substitutions:
 
 ## ---------------- ##
 ##    Status LED    ##
-## Если есть ошибка в ESPhome, то диод мигает. Eсли все хорошо, то индикатором можно управлять из HA
+## Если есть ошибка в ESPHome, то диод мигает. Eсли все хорошо, то индикатором можно управлять из HA
 ## ---------------- ##
 
 light:
@@ -67,7 +67,7 @@ light:
 ##  Binary Sensors  ##
 ## ---------------- ##
 binary_sensor:
-# Button 1
+  # Button 1
   - platform: gpio
     id: button
     pin:
@@ -83,7 +83,7 @@ binary_sensor:
 ##      Switch      ##
 ## ---------------- ##
 switch:
-#Relay
+  #Relay
   - platform: output
     name: "${device_friendly_name} Relay"
     icon: ${device_icon}

@@ -9,7 +9,9 @@ difficulty: 3
 
 ## Bootloop Workaround
 
-Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only (not on AC). Here's a workaround: https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868
+Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only
+(not on AC). Here's a workaround:
+[https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868](https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868)
 
 ## GPIO Pinout
 
@@ -38,7 +40,9 @@ esphome:
   name: $device_name
 
 esp32:
-  board: nodemcu-32s
+  variant: esp32
+  framework:
+    type: esp-idf
 
 wifi:
   ssid: !secret wifi_ssid
@@ -56,7 +60,7 @@ logger:
 api:
 
 ota:
-  password: !secret ota_pwd
+  - platform: esphome
 
 #optional
 web_server:
@@ -135,22 +139,15 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
     id: esp32_temp
-    lambda: return temperatureRead();
 
   - platform: template
     name: $friendly_name Power Factor
     device_class: power_factor
     id: power_factor
     lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
-
-  - platform: esp32_hall
-    name: $friendly_name ESP32 Hall Sensor
-    update_interval: 60s
 
 binary_sensor:
   - platform: gpio
@@ -273,5 +270,4 @@ interval:
           - light.turn_on: wifi_status_led
         else:
           - light.turn_off: wifi_status_led
-
 ```

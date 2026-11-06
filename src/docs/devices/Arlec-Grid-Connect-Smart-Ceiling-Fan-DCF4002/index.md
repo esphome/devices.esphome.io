@@ -1,24 +1,29 @@
 ---
 title: Arlec DCF4002WHA/DCF4002BHA Ceiling Fan+Light
 date-published: 2023-12-17
-type: fan
+type: light
 standard: au
 board: rtl87xx
 ---
 
 ![DCF4002WHA](DCF4002WHA.jpeg)
 
-The Arlec DCF4002 ceiling Fan+Light combo, marketed as the "Smart Madrid" model by Arlec is part of the [Grid Connect ecosystem](https://grid-connect.com.au/) and is sold at Bunnings in Australia and New Zealand.
+The Arlec DCF4002 ceiling Fan+Light combo, marketed as the "Smart Madrid" model by Arlec is part of the
+[Grid Connect ecosystem](https://grid-connect.com.au/) and is sold at Bunnings in Australia and New Zealand.
 
 The device comes with a Tuya WR4 module which uses the Realtek RTL8710BN, and uses a Tuya MCU for device control.  
 ![DCF4002_controller](DCF4002_controller.jpg)
 
-The RTL8710BN is mounted on a daughterboard on pin headers, which allows for easy removal and reflashing without needing a soldering iron.
+The RTL8710BN is mounted on a daughterboard on pin headers, which allows for easy removal and reflashing without needing
+a soldering iron.
 ![The RTL8710BN is mounted on a daughterboard on pin headers](DCF4002_daughterboard.jpg)
 
-Alternatively, you can replace the WR4 with an ESP8266 module, soldered to the appropriate Power, GND, and UART pins of the daughterboard.
+Alternatively, you can replace the WR4 with an ESP8266 module, soldered to the appropriate Power, GND, and UART pins of
+the daughterboard.
 
-For reflashing the RTL8710, the LibreTiny Chip Tool [ltchiptool](https://github.com/libretiny-eu/ltchiptool) can be used to reflash the board via its UART pins which are exposed via the pin header. Details on the reflashing procedure are available here: https://docs.libretiny.eu/docs/platform/realtek-ambz/#flashing
+For reflashing the RTL8710, the LibreTiny Chip Tool [ltchiptool](https://github.com/libretiny-eu/ltchiptool) can be used
+to reflash the board via its UART pins which are exposed via the pin header. Details on the reflashing procedure are
+available here: [https://docs.libretiny.eu/docs/platform/realtek-ambz/#flashing](https://docs.libretiny.eu/docs/platform/realtek-ambz/#flashing)
 
 We recommend peforming the following steps for reflashing:
 
@@ -102,7 +107,8 @@ light:
 
 ### If WR4 is replaced with ESP8266
 
-It is critical that you disable serial logging as per the YAML provided here.  If you do not do this, the Tuya MCU spits out gibberish and is not recognised by ESPHome.
+It is critical that you disable serial logging as per the YAML provided here.  If you do not do this, the Tuya MCU spits
+out gibberish and is not recognised by ESPHome.
 
 ```yaml
 esphome:

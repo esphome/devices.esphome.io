@@ -31,7 +31,7 @@ esphome:
   friendly_name: "Shelly Plus 1PM Mini"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: esp-idf
     version: recommended
@@ -109,11 +109,11 @@ sensor:
   - platform: bl0942
     uart_id: uart_bus
     voltage:
-      name: 'Voltage'
+      name: "Voltage"
     current:
-      name: 'Current'
+      name: "Current"
     power:
-      name: 'Power'
+      name: "Power"
     frequency:
       name: "Frequency"
       accuracy_decimals: 2
@@ -125,5 +125,4 @@ uart:
   rx_pin: GPIO7
   baud_rate: 9600
   stop_bits: 1
-
 ```

@@ -7,19 +7,18 @@ board: bk72xx
 difficulty: 4
 ---
 
-
 ## GPIO Pinout
 
-| Pin    | Function                            |
-| ------ | ----------------------------------- |
-| P6     | Green LED all buttons (inverted)    |
-| P24    | Yellow Led top button (inverted)    |
-| P8     | Yellow Led middle button (inverted) |
-| P14    | Open Relay L2                       |
-| P26    | Close Relay L1                      |
-| P23    | Open button                         |
-| P7     | Stop button                         |
-| P9     | Close button                        |
+| Pin | Function                            |
+| --- | ----------------------------------- |
+| P6  | Green LED all buttons (inverted)    |
+| P24 | Yellow Led top button (inverted)    |
+| P8  | Yellow Led middle button (inverted) |
+| P14 | Open Relay L2                       |
+| P26 | Close Relay L1                      |
+| P23 | Open button                         |
+| P7  | Stop button                         |
+| P9  | Close button                        |
 
 ## Basic Config
 

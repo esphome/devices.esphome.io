@@ -1,0 +1,8 @@
+esphome:
+  platformio_options:
+    custom_versions.beken-bdk: 3.0.78
+
+bk72xx:
+  framework:
+    version: 0.0.0
+    source: https://github.com/libretiny-eu/libretiny#feature/bk7238

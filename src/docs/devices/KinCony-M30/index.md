@@ -57,7 +57,7 @@ esphome:
   friendly_name: m30
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
