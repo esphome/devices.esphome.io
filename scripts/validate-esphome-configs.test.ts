@@ -13,6 +13,7 @@ import {
   checkEsphome,
   checkImport,
   deviceDirsOf,
+  isDownloadOnlyFailure,
   isStandalone,
   loadPage,
   sourceLine,
@@ -78,6 +79,13 @@ const targetCases: {
     files: { "extra.yaml": "sensor: []\n" },
     targets: [],
     finding: /no `config.yaml` to merge it onto/,
+  },
+  {
+    name: "a file= target outside the page folder is a notice, not dropped",
+    md: fence("file=configs/plug.yaml"),
+    files: {},
+    targets: [],
+    finding: /`configs\/plug.yaml` is not beside index.md/,
   },
   {
     name: "a page with only url= and inline fences is out of scope",
@@ -155,6 +163,22 @@ test("esphome output is trimmed to the Failed config block with temp paths remov
   assert.equal(sourceLine(trimmed, "other.yaml"), undefined);
 });
 
+const FONT_FAILURE = ["font: [source config.yaml:3]", "  Could not download font"];
+const downloadCases: [string, string[], boolean][] = [
+  ["a download error in the only failing component", ["Failed config", ...FONT_FAILURE], true],
+  [
+    "a download error next to a schema error in another component",
+    ["Failed config", ...FONT_FAILURE, "sensor: [source config.yaml:9]", "  Invalid key"],
+    false,
+  ],
+  ["a logged fetch line beside a real error", ["WARNING ConnectionError fetching", "ERROR Traceback"], false],
+  ["an error line that is a download failure", ["ERROR Failed to resolve fonts.gstatic.com"], true],
+];
+
+for (const [name, lines, expected] of downloadCases) {
+  test(`download-only: ${name}`, () => assert.equal(isDownloadOnlyFailure(lines), expected));
+}
+
 // A stand-in executable that prints *output* and exits with *status*.
 function fakeBin(status: number, output = "Failed config"): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-bin-"));
@@ -202,6 +226,21 @@ test("an add-on skipped because its base failed gets a notice", async () => {
   assert.match(extra?.message ?? "", /not validated: `config.yaml` did not validate/);
 });
 
+test("an add-on skipped because its base was inconclusive gets a warning", async () => {
+  const findings = await esphomeFindings(
+    {
+      "index.md": fence("file=config.yaml") + fence("file=extra.yaml"),
+      "config.yaml": CONFIG,
+      "extra.yaml": "sensor: []\n",
+    },
+    1,
+    ["Failed config", "", ...FONT_FAILURE].join("\n")
+  );
+  const extra = findings.find((f) => f.file === "extra.yaml");
+  assert.equal(extra?.level, "warning");
+  assert.match(extra?.message ?? "", /`config.yaml` could not be validated/);
+});
+
 test("a logged fetch failure doesn't downgrade a real Failed config error", async () => {
   const output = "WARNING ConnectionError fetching a font\nFailed config\n\nsensor: [unknown]: Invalid key";
   const findings = await esphomeFindings(
@@ -234,4 +273,23 @@ test("a page the importer returns no row for is an import error", async () => {
   }
   assert.deepEqual(pages[0].findings, []);
   assert.match(pages[1].findings[0]?.message ?? "", /returned no result for this page/);
+});
+
+test("a malformed importer row is fatal, not read as a successful import", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "validate-esphome-test-"));
+  const dir = path.join(root, "Plug-A");
+  fs.mkdirSync(dir);
+  fs.writeFileSync(path.join(dir, "index.md"), fence("file=config.yaml"));
+  fs.writeFileSync(path.join(dir, "config.yaml"), CONFIG);
+  const page = loadPage(dir, root);
+  assert.ok(page);
+  const prev = process.env.DEVICE_BUILDER_CMD;
+  process.env.DEVICE_BUILDER_CMD = fakeBin(0, '[{"device": "Plug-A", "imported": "false", "reason": null}]');
+  try {
+    await assert.rejects(checkImport([page], root), /unexpected row/);
+  } finally {
+    if (prev === undefined) delete process.env.DEVICE_BUILDER_CMD;
+    else process.env.DEVICE_BUILDER_CMD = prev;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

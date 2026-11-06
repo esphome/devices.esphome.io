@@ -94,6 +94,12 @@ const cases: {
     broken: [/`missing.yaml` is missing or isn't valid YAML/],
   },
   {
+    name: "a missing include_dir target is broken",
+    files: { "config.yaml": `${BASE}sensor: !include_dir_list sensors\n` },
+    reasons: [],
+    broken: [/`!include_dir_list` whose folder `sensors` does not exist/],
+  },
+  {
     name: "an unparsable include is broken",
     files: { "config.yaml": `${BASE}sensor: !include bad.yaml\n`, "bad.yaml": "a: [\n" },
     reasons: [],

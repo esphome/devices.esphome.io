@@ -180,7 +180,9 @@ jobs:
           dirs=""
           for d in $(printf '%s\n' "$changed" | sed -n 's|^src/docs/devices/\([^/]*\)/.*|\1|p' | sort -u); do
             page="HEAD:src/docs/devices/$d/index.md"
-            git cat-file -e "$page" 2>/dev/null || continue  # page removed
+            # The tree is local in a blobless clone, so this only says whether the
+            # page exists; a failed blob fetch in git show then fails the step.
+            [ -n "$(git ls-tree HEAD -- "src/docs/devices/$d/index.md")" ] || continue  # page removed
             content=$(git show "$page")
             if printf '%s' "$content" | grep -q 'file='; then
               dirs="$dirs $d"

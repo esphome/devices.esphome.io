@@ -132,6 +132,8 @@ function scanFile(root: string, file: string, reasons: Reasons, seen: Set<string
       scanFile(root, abs, reasons, seen);
     } else if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
       for (const f of yamlFilesUnder(abs)) scanFile(root, f, reasons, seen);
+    } else {
+      reasons.broken.add(`\`${rel}\` has an \`${node.tag}\` whose folder \`${target}\` does not exist`);
     }
   });
 }
@@ -145,6 +147,7 @@ function includeTarget(node: Tagged): string | null {
 function yamlFilesUnder(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const p = path.join(dir, e.name);
+    if (e.isSymbolicLink()) return []; // scanFolder reports it
     if (e.isDirectory()) return yamlFilesUnder(p);
     return /\.ya?ml$/i.test(e.name) ? [p] : [];
   });

@@ -86,22 +86,31 @@ export function loadPage(deviceDir: string, repoRoot: string): Page | null {
   } catch {
     return null;
   }
-  const files = [
+  const refs = [
     ...new Set(
       findYamlFences(md)
         .map((f) => f.fileAttr?.replace(/^\.\//, ""))
-        .filter((f): f is string => !!f && !/[/\\]|\.\./.test(f))
+        .filter((f): f is string => !!f)
     ),
   ];
-  if (files.length === 0) return null;
+  if (refs.length === 0) return null;
   const rel = path.relative(repoRoot, indexPath);
+  const files = refs.filter((f) => !/[/\\]|\.\./.test(f));
   const page: Page = { dir: deviceDir, rel, files, targets: [], findings: [] };
+  for (const ref of refs.filter((f) => !files.includes(f))) {
+    page.findings.push({
+      check: "esphome",
+      level: "notice",
+      file: rel,
+      message: `not validated: \`${ref}\` is not beside index.md, and only files there are checked`,
+    });
+  }
   const parsed = new Map<string, unknown>();
   for (const file of files) {
     try {
       parsed.set(file, parseYaml(fs.readFileSync(path.join(deviceDir, file), "utf8")));
     } catch {
-      // a missing file is validate-yaml's finding
+      // The external-code scan reports any unreadable file= target as an error.
     }
   }
   for (const [file, tree] of parsed) {
@@ -132,8 +141,8 @@ export function userScaffold(base: unknown, fragment: unknown): string {
   return lines.join("\n") + "\n";
 }
 
-/** The `Failed config` block of `esphome config` output, else its error lines. */
-export function trimEsphomeError(stdout: string, stderr: string, workDir: string): string {
+/** The `Failed config` block of `esphome config` output, else its error lines, uncapped. */
+export function esphomeErrorLines(stdout: string, stderr: string, workDir: string): string[] {
   const clean = (s: string): string[] =>
     stripAnsi(s).split(workDir + path.sep).join("").split("\n");
   const out = clean(stdout);
@@ -143,10 +152,30 @@ export function trimEsphomeError(stdout: string, stderr: string, workDir: string
       ? out.slice(failed)
       : [...out, ...clean(stderr)].filter((l) => /\b(ERROR|Error)\b/.test(l));
   if (picked.length === 0) picked = clean(stderr).slice(-10);
-  picked = picked.filter((l) => l.trim() !== "");
+  return picked.filter((l) => l.trim() !== "");
+}
+
+/** The error lines of `esphome config` output, capped for display. */
+export function trimEsphomeError(stdout: string, stderr: string, workDir: string): string {
+  const picked = esphomeErrorLines(stdout, stderr, workDir);
   const capped = picked.slice(0, 30);
   if (picked.length > capped.length) capped.push("...");
   return capped.join("\n");
+}
+
+/** True when every failing component, or every error line without a `Failed config` block, is a download. */
+export function isDownloadOnlyFailure(lines: string[]): boolean {
+  const isDownload = (text: string): boolean =>
+    NETWORK_FAILURE_RE.test(text) || DOWNLOAD_FAILURE_RE.test(text);
+  const errors = lines.filter((l) => !/\b(INFO|WARNING|DEBUG|VERBOSE)\b/.test(l));
+  if (errors.length === 0) return false;
+  if (!/^Failed config/.test(errors[0])) return isDownload(errors.join("\n"));
+  const sections: string[][] = [];
+  for (const line of errors.slice(1)) {
+    if (!/^\s/.test(line) || sections.length === 0) sections.push([]);
+    sections[sections.length - 1].push(line);
+  }
+  return sections.length > 0 && sections.every((sec) => isDownload(sec.join("\n")));
 }
 
 /** Line of the first `[source <file>:<line>]` marker for *file* in ESPHome's output. */
@@ -227,7 +256,9 @@ async function esphomeConfig(
   }
 }
 
-async function checkTarget(page: Page, work: string, target: Target, runner: Runner): Promise<boolean> {
+type TargetResult = "ok" | "error" | "inconclusive";
+
+async function checkTarget(page: Page, work: string, target: Target, runner: Runner): Promise<TargetResult> {
   let entry = target.file;
   if (target.mergeOnto !== null) {
     const base = page.targets.find((t) => t.file === target.mergeOnto)?.parsed;
@@ -242,7 +273,7 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
     );
   }
   const result = await esphomeConfig(runner, work, entry);
-  if (result.ok) return true;
+  if (result.ok) return "ok";
   const file = path.join(path.dirname(page.rel), target.file);
   const how =
     target.mergeOnto === null
@@ -256,14 +287,11 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
       file,
       message: "`esphome config` hit the CI time limit; inconclusive",
     });
-    return false;
+    return "inconclusive";
   }
-  const blob = `${result.stderr}\n${result.stdout}`;
   const error = trimEsphomeError(result.stdout, result.stderr, work);
-  // A "Failed config" block is ESPHome's verdict; only it decides whether this
-  // was a download failure, so a logged fetch attempt can't hide a schema error.
-  const evidence = /Failed config/.test(blob) ? error : blob;
-  const network = NETWORK_FAILURE_RE.test(evidence) || DOWNLOAD_FAILURE_RE.test(evidence);
+  // A download failure next to a real error in another component stays an error.
+  const network = isDownloadOnlyFailure(esphomeErrorLines(result.stdout, result.stderr, work));
   page.findings.push({
     check: "esphome",
     level: network ? "warning" : "error",
@@ -274,7 +302,7 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
         `without network access; not validated:\n${error}`
       : `${how}:\n${error}`,
   });
-  return false;
+  return network ? "inconclusive" : "error";
 }
 
 /** Validate every target of *page* in one work copy: standalone files first, then fragments. */
@@ -290,23 +318,28 @@ export async function checkEsphome(page: Page, runner: Runner): Promise<void> {
     const [first, ...rest] = page.targets;
     // The first target fetches the page's packages and components once; the
     // rest reuse them from the shared work copy.
-    const firstOk = await checkTarget(page, work, first, runner);
-    const failedBases = new Set(firstOk ? [] : [first.file]);
+    const bases = new Map([[first.file, await checkTarget(page, work, first, runner)]]);
     const standalone = rest.filter((t) => t.mergeOnto === null);
     const results = await Promise.all(standalone.map((t) => checkTarget(page, work, t, runner)));
-    standalone.forEach((t, i) => {
-      if (!results[i]) failedBases.add(t.file);
-    });
-    const fragments = rest.filter((t) => t.mergeOnto !== null);
-    for (const t of fragments.filter((f) => failedBases.has(f.mergeOnto as string))) {
+    standalone.forEach((t, i) => bases.set(t.file, results[i]));
+    const runnable: Target[] = [];
+    for (const t of rest.filter((f) => f.mergeOnto !== null)) {
+      const base = bases.get(t.mergeOnto as string);
+      if (base === "ok") {
+        runnable.push(t);
+        continue;
+      }
+      // An inconclusive base leaves the page unchecked; a base error already fails it.
+      const inconclusive = base === "inconclusive";
       page.findings.push({
         check: "esphome",
-        level: "notice",
+        level: inconclusive ? "warning" : "notice",
         file: path.join(path.dirname(page.rel), t.file),
-        message: `not validated: \`${t.mergeOnto}\` did not validate, so this file wasn't merged onto it`,
+        message:
+          `not validated: \`${t.mergeOnto}\` ${inconclusive ? "could not be validated" : "did not validate"}, ` +
+          "so this file wasn't merged onto it",
       });
     }
-    const runnable = fragments.filter((t) => !failedBases.has(t.mergeOnto as string));
     await Promise.all(runnable.map((t) => checkTarget(page, work, t, runner)));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -322,6 +355,12 @@ interface ImportRow {
   imported: boolean;
   reason: string | null;
 }
+
+const isImportRow = (r: unknown): r is ImportRow =>
+  isMapping(r) &&
+  typeof r.device === "string" &&
+  typeof r.imported === "boolean" &&
+  (r.reason === null || typeof r.reason === "string");
 
 export async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
   if (pages.length === 0) return false;
@@ -364,10 +403,13 @@ export async function checkImport(pages: Page[], repoRoot: string): Promise<bool
   }
   const byDevice = new Map(pages.map((p) => [path.basename(p.dir), p]));
   const answered = new Set<string>();
-  for (const row of rows as ImportRow[]) {
+  for (const row of rows) {
+    if (!isImportRow(row) || !byDevice.has(row.device)) {
+      throw new FatalError(`Device Builder importer returned an unexpected row: ${JSON.stringify(row)}`);
+    }
     answered.add(row.device);
-    const page = byDevice.get(row.device);
-    if (!page || row.imported) continue;
+    const page = byDevice.get(row.device) as Page;
+    if (row.imported) continue;
     page.findings.push({
       check: "import",
       level: "error",
