@@ -32,6 +32,11 @@ The Apollo Automation MSR-2 is a mmWave CO2 multisensor. We improved on the MSR-
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/MSR-2/blob/main/Integrations/ESPHome/MSR-2.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/msr-2)

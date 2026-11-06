@@ -19,6 +19,9 @@ Features:
 - Servo position adjustable through `number` entity
 - Powered by USB-C port
 
-The YAML configuration file can be found at [glowswitch-esphome](https://github.com/glowswitch/glowswitch-esphome).
-
 ![image](https://github.com/user-attachments/assets/333948db-ffb1-4703-b86c-60c6d182976b)
+
+## Configuration
+
+```yaml url=https://github.com/glowswitch/glowswitch-esphome/blob/main/firmware.yaml
+```

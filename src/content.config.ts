@@ -6,6 +6,7 @@ import {
   VALID_BOARDS,
   VALID_STANDARDS,
 } from "./utils/validFrontmatter";
+import { parseAliases } from "./utils/deviceAliases";
 
 const stringOrList = z
   .union([z.string(), z.array(z.string())])
@@ -45,6 +46,15 @@ const deviceSchemaExtension = z.object({
   model: z.coerce.string().optional(),
   Model: z.coerce.string().optional(),
   description: z.coerce.string().optional(),
+  // Alternate names/URLs for this device. Shape checking lives in
+  // parseAliases() so the schema, `npm run validate-devices` and the
+  // redirect generator all agree on what a valid alias looks like.
+  alias: z.unknown().optional().superRefine((value, ctx) => {
+    if (value === undefined) return;
+    for (const message of parseAliases(value).errors) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    }
+  }),
 });
 
 // Devices live at src/docs/devices/ (preserved from the legacy structure)

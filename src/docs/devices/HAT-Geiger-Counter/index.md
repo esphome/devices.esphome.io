@@ -50,3 +50,8 @@ ESPHome dashboard or provisioned via BLE (ESPHome app) or USB-C (improv_serial).
 2. Provision Wi-Fi using the ESPHome app (BLE) or a USB-C cable (improv_serial)
 3. Adopt the device in Home Assistant via the ESPHome integration
 4. Optionally configure your radmon.org username and password from Home Assistant
+
+## Configuration
+
+```yaml url=https://github.com/homeautomationthings/HAT-Geiger/blob/main/hat-geiger.yaml
+```
