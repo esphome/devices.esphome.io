@@ -4,7 +4,7 @@ date-published: 2026-10-12
 type: light
 standard: eu
 board: esp32
-difficulty: 4
+difficulty: 2
 ---
 
 The Shelly Duo Bulb E27 Gen3 (`S3BL-D010009AEU`) is a Wi-Fi LED bulb with an E27 socket and tunable white (one warm
