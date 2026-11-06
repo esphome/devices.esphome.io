@@ -40,55 +40,124 @@ uart:
 tuya:
   id: tuya_component
 
+  # Workaround for a Tuya MCU bug: once the display has dimmed, the first OFF
+  # command is ignored and the MCU reports DP1=ON again. While an OFF request
+  # from HA/ESPHome is pending, such a report is answered with another OFF,
+  # up to max_off_retries times.
   on_datapoint_update:
     - sensor_datapoint: 1
       datapoint_type: bool
       then:
         - lambda: |-
-            if (id(waiting_for_off_response)) {
-              if (x) {
-                ESP_LOGD(
-                  "smart_fan",
-                  "Tuya MCU reported DP1=ON after OFF command; forcing OFF"
-                );
+            if (!id(waiting_for_off_response)) {
+              return;
+            }
 
-                id(waiting_for_off_response) = false;
-                id(tuya_component).force_set_boolean_datapoint_value(1, false);
-              } else {
-                ESP_LOGD(
-                  "smart_fan",
-                  "Tuya MCU confirmed DP1=OFF"
-                );
+            if (!x) {
+              ESP_LOGD("smart_fan", "Tuya MCU confirmed DP1=OFF");
+              id(waiting_for_off_response) = false;
+              id(off_retries) = 0;
+              id(off_watchdog).stop();
+              return;
+            }
 
-                id(waiting_for_off_response) = false;
-              }
+            if (id(off_retries) < id(max_off_retries)) {
+              id(off_retries) += 1;
+              ESP_LOGD(
+                "smart_fan",
+                "Tuya MCU reported DP1=ON after OFF command; retrying OFF (%d/%d)",
+                id(off_retries), id(max_off_retries)
+              );
+              id(tuya_component).force_set_boolean_datapoint_value(1, false);
+            } else {
+              ESP_LOGW(
+                "smart_fan",
+                "Tuya MCU still reports DP1=ON after %d OFF retries; giving up",
+                id(max_off_retries)
+              );
+              id(waiting_for_off_response) = false;
+              id(off_retries) = 0;
+              id(off_watchdog).stop();
+              id(sync_ha_fan).execute();
             }
 
 globals:
-  # True only while we are waiting for the response to an OFF command
-  # issued through the ESPHome/HA fan entity. Reset automatically by
-  # off_response_timeout if the MCU does not answer.
+  # True only while an OFF request from the ESPHome/HA fan entity is pending.
   - id: waiting_for_off_response
     type: bool
     restore_value: false
     initial_value: "false"
 
+  # Number of OFF retries already sent for the pending OFF request.
+  - id: off_retries
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+  # Upper bound for OFF retries per OFF request.
+  - id: max_off_retries
+    type: int
+    restore_value: false
+    initial_value: "2"
+
+  # True while the public fan is being updated from the state reported by
+  # the Tuya MCU. The public fan's on_turn_on / on_turn_off triggers also
+  # fire on these updates, so they must not treat them as user requests.
+  - id: syncing_from_mcu
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
 script:
-  # Clears waiting_for_off_response if the Tuya MCU does not report DP1
-  # within 3 seconds after an OFF command. Without this, a later ON from
-  # the device itself would be wrongly forced OFF.
-  - id: off_response_timeout
+  # Copies the last state reported by the Tuya MCU to the public fan.
+  - id: sync_ha_fan
+    mode: queued
+    then:
+      - lambda: |-
+          id(syncing_from_mcu) = true;
+          id(ha_fan).state = id(duux_fan).state;
+          id(ha_fan).speed = id(duux_fan).speed;
+          id(ha_fan).oscillating = id(duux_fan).oscillating;
+          id(ha_fan).publish_state();
+          id(syncing_from_mcu) = false;
+
+  # Runs while an OFF request is pending. If the Tuya MCU does not answer
+  # within 3 seconds, OFF is sent again (bounded by max_off_retries). If it
+  # still does not answer, the request is dropped and the public fan is set
+  # back to the last state reported by the MCU, so HA does not show OFF
+  # while the fan is still running.
+  - id: off_watchdog
     mode: restart
     then:
-      - delay: 3s
-      - lambda: |-
-          if (id(waiting_for_off_response)) {
-            ESP_LOGD(
-              "smart_fan",
-              "No DP1 response from Tuya MCU after OFF command; clearing flag"
-            );
-            id(waiting_for_off_response) = false;
-          }
+      - while:
+          condition:
+            lambda: |-
+              return id(waiting_for_off_response);
+          then:
+            - delay: 3s
+            - lambda: |-
+                if (!id(waiting_for_off_response)) {
+                  return;
+                }
+
+                if (id(off_retries) < id(max_off_retries)) {
+                  id(off_retries) += 1;
+                  ESP_LOGD(
+                    "smart_fan",
+                    "No DP1 response from Tuya MCU after OFF command; retrying OFF (%d/%d)",
+                    id(off_retries), id(max_off_retries)
+                  );
+                  id(tuya_component).force_set_boolean_datapoint_value(1, false);
+                } else {
+                  ESP_LOGW(
+                    "smart_fan",
+                    "No DP1 response from Tuya MCU after %d OFF retries; giving up",
+                    id(max_off_retries)
+                  );
+                  id(waiting_for_off_response) = false;
+                  id(off_retries) = 0;
+                  id(sync_ha_fan).execute();
+                }
 
 fan:
   # ---------------------------------------------------------------------------
@@ -109,14 +178,10 @@ fan:
     speed_count: 26
     oscillation_datapoint: 4
 
+    # Keep the public template fan synchronized with the actual state
+    # reported by the Tuya MCU.
     on_state:
-      - lambda: |-
-          // Keep the public template fan synchronized with the actual
-          // state reported by the Tuya MCU.
-          id(ha_fan).state = id(duux_fan).state;
-          id(ha_fan).speed = id(duux_fan).speed;
-          id(ha_fan).oscillating = id(duux_fan).oscillating;
-          id(ha_fan).publish_state();
+      - script.execute: sync_ha_fan
 
   # ---------------------------------------------------------------------------
   # Public fan entity
@@ -131,29 +196,48 @@ fan:
     speed_count: 26
 
     # Turning the fan ON from HA/ESPHome.
+    #
+    # A newer ON request cancels a pending OFF request, so a late DP1=ON
+    # from the MCU is no longer answered with a forced OFF.
     on_turn_on:
-      - fan.turn_on:
-          id: duux_fan
+      - if:
+          condition:
+            lambda: |-
+              return !id(syncing_from_mcu);
+          then:
+            - lambda: |-
+                if (id(waiting_for_off_response)) {
+                  ESP_LOGD(
+                    "smart_fan",
+                    "HA/ESPHome requested ON; cancelling pending OFF request"
+                  );
+                }
+                id(waiting_for_off_response) = false;
+                id(off_retries) = 0;
+            - script.stop: off_watchdog
+            - fan.turn_on:
+                id: duux_fan
 
     # Turning the fan OFF from HA/ESPHome.
     #
     # Set the flag BEFORE sending the command to the Tuya fan. The response
-    # from the Tuya MCU is then examined by tuya.on_datapoint_update.
-    # The timeout script clears the flag if no response arrives.
+    # from the Tuya MCU is then examined by tuya.on_datapoint_update, and
+    # off_watchdog retries the OFF if no response arrives.
     on_turn_off:
       - if:
           condition:
             lambda: |-
-              return id(duux_fan).state;
+              return !id(syncing_from_mcu) && id(duux_fan).state;
           then:
             - lambda: |-
                 id(waiting_for_off_response) = true;
+                id(off_retries) = 0;
                 ESP_LOGD(
                   "smart_fan",
                   "HA/ESPHome requested OFF; waiting for Tuya MCU response"
                 );
 
-            - script.execute: off_response_timeout
+            - script.execute: off_watchdog
 
             - fan.turn_off:
                 id: duux_fan
