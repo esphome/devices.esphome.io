@@ -9,16 +9,14 @@
 // Runs from two jobs in made-for-esphome-pr.yml: after the Made for ESPHome
 // review (the slowest check by a wide margin, it compiles the linked config,
 // so the rest have settled by then), and again after CI, which covers CI
-// finishing later or a failed CI job being re-run. Either way all it needs
-// from the run is the PR number, read from `pr-number.txt` in whichever
-// artifact that job downloaded (`mfe-review-report` or `validation-report`).
-// Everything else is re-derived from the check runs, so the review verdict
-// needs no plumbing: a failed review is simply a failed check.
+// finishing later or a failed CI job being re-run. The PR comes from the
+// triggering run's head commit (workflow-run-pr.cjs), and everything else is
+// re-derived from the check runs, so the review verdict needs no plumbing: a
+// failed review is simply a failed check.
 //
 // Exported as a function so it can be linted (`node --check`) and unit-tested
 // with a mocked GitHub client.
-const fs = require("fs");
-const path = require("path");
+const { findRunPullRequest } = require("./workflow-run-pr.cjs");
 const { removeLabelIfPresent } = require("./labels.cjs");
 const { requestCopilotReview } = require("./request-copilot-review.cjs");
 
@@ -51,27 +49,30 @@ async function botConvertedToDraft({ github, owner, repo, prNumber }) {
 }
 
 module.exports = async ({ github, context, core }) => {
-  const artifactDir = process.env.MFE_ARTIFACT_DIR || "artifact";
-  const prNumber = parseInt(
-    fs.readFileSync(path.join(artifactDir, "pr-number.txt"), "utf8").trim(),
-    10
-  );
-  if (!Number.isInteger(prNumber)) {
-    core.setFailed("Could not read a PR number from the artifact.");
+  const runPr = await findRunPullRequest({ github, context });
+  if (!runPr) {
+    core.info("No open pull request matches this run's head commit; nothing to do.");
     return;
   }
+  const prNumber = runPr.number;
 
   const { owner, repo } = context.repo;
-  await promote({ github, core, owner, repo, prNumber });
+  await promote({ github, core, owner, repo, prNumber, headSha: runPr.head.sha });
 };
 
-// Promotes or demotes one PR from its current head check runs.
-async function promote({ github, core, owner, repo, prNumber }) {
+// Promotes or demotes one PR from its current head check runs. With `headSha`,
+// a PR whose head has moved past that commit is left alone.
+async function promote({ github, core, owner, repo, prNumber, headSha }) {
   const { data: pr } = await github.rest.pulls.get({
     owner,
     repo,
     pull_number: prNumber,
   });
+  // The run vouches for one commit; a newer push gets its own run.
+  if (headSha && pr.head.sha !== headSha) {
+    core.info(`PR #${prNumber} moved past the run's commit; nothing to do.`);
+    return;
+  }
   if (pr.state !== "open") {
     core.info(`PR #${prNumber} is ${pr.state}; nothing to do.`);
     return;

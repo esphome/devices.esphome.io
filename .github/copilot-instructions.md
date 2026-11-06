@@ -56,6 +56,7 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
    - ✅ `wifi:` in `config.yaml` may hold only radio tunables (`country`, `power_save_mode`, `output_power`, ...) and an empty `ap:`; no `ssid`, `password`, `networks`, `manual_ip`, `eap` or `use_address`
    - ❌ `web_server:` component should NOT be included in any configurations on device pages
    - ✅ More complex examples go in separate yaml files referenced by later `file=` fences
+   - ✅ Each `file=` yaml passes `esphome config` (an add-on file without `esphome: name:` is checked merged onto `config.yaml`), and the page must import into the ESPHome Device Builder; the check prints why not. (`npm run validate-esphome`)
    - ✅ Proper YAML formatting and indentation
 
 6. **Documentation Quality**

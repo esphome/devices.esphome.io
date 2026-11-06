@@ -22,9 +22,10 @@ name: Made for ESPHome PR
 #
 # SECURITY: every job here runs in the base-repo context with a writable
 # token, so none of them ever checks out or executes the PR's code. Intake
-# reads the diff through the API, and the workflow_run jobs read only the
-# artifact and the GitHub API. The one checkout is of the trusted base repo,
-# to load the handler scripts.
+# reads the diff through the API, and the workflow_run jobs take the pull
+# request from the triggering run and read artifacts only for report text and
+# verdicts. The one checkout is of the trusted base repo, to load the handler
+# scripts.
 
 on:
   pull_request_target:
@@ -166,8 +167,9 @@ jobs:
             .github/scripts
           sparse-checkout-cone-mode: false
 
-      # Only for the PR number it carries; the validation report itself is
-      # handled by the pr-validation-feedback workflow.
+      # Only a gate: a cancelled CI run uploads nothing, so promotion is
+      # skipped. The PR comes from the triggering run, and the validation
+      # report itself is handled by the pr-validation-feedback workflow.
       - name: Download validation artifact
         id: download
         continue-on-error: true
