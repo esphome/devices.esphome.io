@@ -18,6 +18,14 @@ export default defineConfig({
         "@components": path.resolve(__dirname, "./src/components"),
       },
     },
+    // Starlight's bundled source imports js-yaml 4. Left external, the
+    // prerender chunks resolve it from the project root, which holds the
+    // js-yaml 5 our scripts use. Bundling it resolves Starlight's own copy.
+    environments: {
+      prerender: {
+        resolve: { noExternal: ["js-yaml"] },
+      },
+    },
   },
   image: {
     responsiveStyles: true,

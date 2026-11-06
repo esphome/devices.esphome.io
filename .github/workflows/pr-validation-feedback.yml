@@ -1,8 +1,8 @@
 name: PR Validation Feedback
 
 # Runs after the CI workflow finishes. When the device-config validator fails
-# it leaves a markdown report (and the PR number) as the `validation-report`
-# artifact; this workflow turns that into a REQUEST_CHANGES review on the PR as
+# it leaves a markdown report as the `validation-report` artifact; this
+# workflow turns that into a REQUEST_CHANGES review on the PR as
 # esphome[bot], updating the existing review while issues remain and dismissing
 # it once they are gone.
 #
@@ -28,14 +28,26 @@ jobs:
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     permissions:
       actions: read  # to list/download the triggering run's artifacts
+      contents: read  # to check out the script below
+      pull-requests: read  # to find the run's pull request
     steps:
+      # Checks out the base repo (trusted) only to load the helper below,
+      # never the PR's code.
+      - name: Checkout scripts
+        uses: actions/checkout@v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Download validation artifact
         id: download
         # A cancelled CI run (concurrency cancel-in-progress) uploads nothing,
         # so a missing artifact is expected — don't fail the workflow over it,
         # the outcome check below skips the remaining steps instead.
         continue-on-error: true
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: validation-report
           run-id: ${{ github.event.workflow_run.id }}
@@ -45,7 +57,7 @@ jobs:
       - name: Generate a token
         if: steps.download.outcome == 'success'
         id: generate-token
-        uses: actions/create-github-app-token@v3.2.0
+        uses: actions/create-github-app-token@v3.3.0
         with:
           client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
@@ -61,17 +73,16 @@ jobs:
             // the made-for-esphome review (also a bot REQUEST_CHANGES).
             const MARKER = '<!-- device-config-validation -->';
 
-            const prNumber = parseInt(
-              fs.readFileSync('artifact/pr-number.txt', 'utf8').trim(),
-              10
-            );
-            if (!Number.isInteger(prNumber)) {
-              core.setFailed('Could not read a PR number from the artifact.');
+            const { findRunPullRequest } = require('./.github/scripts/workflow-run-pr.cjs');
+            const runPr = await findRunPullRequest({ github, context });
+            if (!runPr) {
+              core.info("No open pull request matches this run's head commit; nothing to do.");
               return;
             }
+            const prNumber = runPr.number;
 
             // A report file means the validator failed; its absence means it
-            // passed (only pr-number.txt was uploaded).
+            // passed.
             const reportPath = 'artifact/validation-report.md';
             const hasReport = fs.existsSync(reportPath);
 
