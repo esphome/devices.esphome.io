@@ -1,4 +1,5 @@
-# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server): https://github.com/makethingshappy/MTH-for-ESPHome/blob/a38f23c006aa3ed14a521c8e01b3ec0af9aadacd/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml
+# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a38f23c006aa3ed14a521c8e01b3ec0af9aadacd/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml
 # IoTextra Octal 3.04 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
 # Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/Octal/v.3.04/host-map.yaml
 # All channels active-low on the HOST line: input active = 0, output on = 0
@@ -37,7 +38,9 @@ binary_sensor:
   - {platform: gpio, id: in4, name: "IN4", pin: {number: GPIO11, inverted: true}}   # AP3
 
 switch:
-  - {platform: gpio, id: rl1, name: "RL1", pin: {number: GPIO4, inverted: true}, restore_mode: ALWAYS_OFF}   # AP4 via SB2, relay K1
-  - {platform: gpio, id: rl2, name: "RL2", pin: {number: GPIO5, inverted: true}, restore_mode: ALWAYS_OFF}   # AP5, relay K2
+  # AP4 via SB2, relay K1
+  - {platform: gpio, id: rl1, name: "RL1", pin: {number: GPIO4, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP5, relay K2
+  - {platform: gpio, id: rl2, name: "RL2", pin: {number: GPIO5, inverted: true}, restore_mode: ALWAYS_OFF}
   - {platform: gpio, id: do1, name: "DO1", pin: {number: GPIO6, inverted: true}, restore_mode: ALWAYS_OFF}   # AP6
   - {platform: gpio, id: do2, name: "DO2", pin: {number: GPIO7, inverted: true}, restore_mode: ALWAYS_OFF}   # AP7
