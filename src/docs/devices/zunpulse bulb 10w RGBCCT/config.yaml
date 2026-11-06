@@ -1,0 +1,35 @@
+esphome:
+  name: zunpulse-light
+  friendly_name: zunpulse light
+
+bk72xx:
+  board: cb2l
+
+output:
+  - platform: libretiny_pwm
+    id: output_red
+    pin: P26
+  - platform: libretiny_pwm
+    id: output_green
+    pin: P6
+  - platform: libretiny_pwm
+    id: output_blue
+    pin: P24
+  - platform: libretiny_pwm
+    id: output_cold
+    pin: P8
+  - platform: libretiny_pwm
+    id: output_warm
+    pin: P7
+
+light:
+  - platform: rgbww
+    name: "Light"
+    red: output_red
+    green: output_green
+    blue: output_blue
+    cold_white: output_cold
+    warm_white: output_warm
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    color_interlock: true
