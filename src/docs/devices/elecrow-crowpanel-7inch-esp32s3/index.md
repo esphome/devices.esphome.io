@@ -96,9 +96,10 @@ The GT911 I2C address is set by the state of GPIO38 during power-on:
 This varies between individual units due to internal pull-up/pull-down differences. If touch doesn't work, try the other
 address.
 
-On at least one reported unit, the GT911 came up at 0x14 and still failed with `Calibration error`. Because the address
-is latched at power-on, no configuration change can override it. A hardware pull-down on GPIO38 may be needed, but this
-has not been confirmed.
+If the log shows `Address: 0x14` together with `Calibration error`, the GT911 did not respond at either address.
+ESPHome tries 0x5D first and then 0x14, so this points to a hardware problem rather than the address. On one of my
+units this turned out to be a touch fault that no configuration could fix. Reseating the touch ribbon cable is a good
+first check.
 
 ### I2C Scan Breaks GT911
 
