@@ -113,16 +113,23 @@ include SPI/QSPI displays (1.47" to 3.5"), a DVP camera module, and an SD card.
 
 ## Basic ESPHome Configuration
 
-This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the LED ring, buttons, and a
-voice assistant with on-device wake word detection. Note that `use_wake_word` is set to `false` because
-`micro_wake_word` handles wake word detection directly. Wake word restart happens in `on_tts_stream_end` (after the
-speaker finishes playing TTS audio) rather than `on_end`, which avoids an I2S bus conflict where restarting the
-microphone in `on_end` would preempt the speaker. `api:`, `ota:`, and Wi-Fi credentials are omitted below since
-they're boilerplate rather than hardware-specific; add them as usual for your own network. For a full-featured
+This minimal configuration sets up the audio hardware (microphone, speaker, DAC/ADC), the RTC, the LED ring and the
+buttons. `api:`, `ota:`, and Wi-Fi credentials are omitted below since they're boilerplate rather than
+hardware-specific; add them as usual for your own network.
+
+```yaml file=config.yaml
+```
+
+## Voice Assistant
+
+Add this to the configuration above for a voice assistant with on-device wake word detection. Note that
+`use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Wake word restart
+happens in `on_tts_stream_end` (after the speaker finishes playing TTS audio) rather than `on_end`, which avoids an
+I2S bus conflict where restarting the microphone in `on_end` would preempt the speaker. For a full-featured
 configuration with LED animations for each voice assistant state, see the
 [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
-```yaml file=config.yaml
+```yaml file=voice-assistant.yaml
 ```
 
 ## Links
