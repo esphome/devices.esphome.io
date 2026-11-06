@@ -1,0 +1,121 @@
+esphome:
+  name: ct-power-monitor
+  friendly_name: "CT Power Monitor"
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: esp-idf
+
+wifi:
+  power_save_mode: none
+  ap:
+
+logger:
+
+sensor:
+  # Raw ADC inputs (internal) -- attenuation 12dB for 0-3.3V range
+  # MLP201193: CH1=D34, CH2=D35, CH3=D36, CH4=D39
+  - platform: adc
+    pin: GPIO34
+    id: adc_ch1
+    attenuation: 12db
+    internal: true
+
+  - platform: adc
+    pin: GPIO35
+    id: adc_ch2
+    attenuation: 12db
+    internal: true
+
+  - platform: adc
+    pin: GPIO36
+    id: adc_ch3
+    attenuation: 12db
+    internal: true
+
+  - platform: adc
+    pin: GPIO39
+    id: adc_ch4
+    attenuation: 12db
+    internal: true
+
+  # CT Clamp sensors -- calibrate after install
+  - platform: ct_clamp
+    sensor: adc_ch1
+    name: "CT1 Current"
+    id: ct1Amps
+    update_interval: never
+    sample_duration: 200ms
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 2
+    filters:
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0 -> 0
+            - 0.01 -> 1     # Adjust after calibration
+      - lambda: "return max(x, 0.0f);"
+
+  - platform: ct_clamp
+    sensor: adc_ch2
+    name: "CT2 Current"
+    id: ct2Amps
+    update_interval: never
+    sample_duration: 200ms
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 2
+    filters:
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0 -> 0
+            - 0.01 -> 1
+      - lambda: "return max(x, 0.0f);"
+
+  - platform: ct_clamp
+    sensor: adc_ch3
+    name: "CT3 Current"
+    id: ct3Amps
+    update_interval: never
+    sample_duration: 200ms
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 2
+    filters:
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0 -> 0
+            - 0.01 -> 1
+      - lambda: "return max(x, 0.0f);"
+
+  - platform: ct_clamp
+    sensor: adc_ch4
+    name: "CT4 Current"
+    id: ct4Amps
+    update_interval: never
+    sample_duration: 200ms
+    unit_of_measurement: A
+    device_class: current
+    accuracy_decimals: 2
+    filters:
+      - calibrate_linear:
+          method: exact
+          datapoints:
+            - 0 -> 0
+            - 0.01 -> 1
+      - lambda: "return max(x, 0.0f);"
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "Uptime"
+
+switch:
+  - platform: restart
+    name: "Restart"
