@@ -54,8 +54,8 @@ import * as path from "path";
 import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
-// js-yaml is a transitive dep of gray-matter; import directly to parse.
-import yaml from "js-yaml";
+// js-yaml (v5) parses the example configs; gray-matter bundles its own copy.
+import * as yaml from "js-yaml";
 import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
 
 // Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
@@ -221,15 +221,19 @@ function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
   // Parse — tolerate ESPHome custom tags. Re-stamp the tag onto the
   // resulting string so `password: !secret foo` parses to `"!secret foo"`,
   // which the password check correctly recognises as non-literal.
-  const schema = yaml.DEFAULT_SCHEMA.extend(
-    ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
-      (tag) =>
-        new yaml.Type(tag, {
-          kind: "scalar",
-          construct: (data) =>
-            data === null || data === undefined ? tag : `${tag} ${data}`,
-          represent: (data) => data as string,
-        })
+  const schema = yaml.CORE_SCHEMA.withTags(
+    // v4's DEFAULT_SCHEMA extras, so parsing matches the old behaviour.
+    yaml.mergeTag,
+    yaml.timestampTag,
+    yaml.binaryTag,
+    yaml.omapTag,
+    yaml.pairsTag,
+    yaml.setTag,
+    ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map((tag) =>
+      yaml.defineScalarTag(tag, {
+        resolve: (source) => (source === "" ? tag : `${tag} ${source}`),
+        identify: () => false,
+      })
     )
   );
   let parsed: unknown = undefined;

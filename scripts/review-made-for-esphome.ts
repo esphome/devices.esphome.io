@@ -68,7 +68,7 @@ import { execFileSync } from "child_process";
 import { createHash } from "crypto";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import {
   parseUpstreamUrl,
   type UpstreamHost,
@@ -216,15 +216,19 @@ function findYamlFences(md: string): YamlFence[] {
 // and the password check can recognise it as a non-literal reference).
 // ---------------------------------------------------------------------------
 
-const ESPHOME_SCHEMA = yaml.DEFAULT_SCHEMA.extend(
-  ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
-    (tag) =>
-      new yaml.Type(tag, {
-        kind: "scalar",
-        construct: (data) =>
-          data === null || data === undefined ? tag : `${tag} ${data}`,
-        represent: (data) => data as string,
-      })
+const ESPHOME_SCHEMA = yaml.CORE_SCHEMA.withTags(
+  // v4's DEFAULT_SCHEMA extras, so parsing matches the old behaviour.
+  yaml.mergeTag,
+  yaml.timestampTag,
+  yaml.binaryTag,
+  yaml.omapTag,
+  yaml.pairsTag,
+  yaml.setTag,
+  ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map((tag) =>
+    yaml.defineScalarTag(tag, {
+      resolve: (source) => (source === "" ? tag : `${tag} ${source}`),
+      identify: () => false,
+    })
   )
 );
 
