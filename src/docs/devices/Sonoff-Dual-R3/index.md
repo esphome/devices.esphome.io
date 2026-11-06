@@ -40,169 +40,17 @@ For power measuring see CSE7761 Power Sensor (v1.x) or BL0939 Power Sensor (v2.x
 
 ## Basic Configuration
 
-```yaml
-esphome:
-  name: sonoff-dual-r3
-
-esp32:
-  variant: esp32
-
-logger:
-  level: INFO
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-api:
-  encryption:
-    key: !secret esp_api_key
-
-ota:
-  password: !secret ota_secret
-
-sensor:
-  - platform: wifi_signal
-    name: "RSSI"
-    id: sensor_rssi
-    update_interval: 90s
-    entity_category: "diagnostic"
-
-  - platform: uptime
-    name: "Uptime"
-    id: sensor_uptime
-    update_interval: 300s
-    entity_category: "diagnostic"
-
-button:
-  - platform: restart
-    name: "Restart"
-    id: button_restart
-
-light:
-  - platform: status_led
-    name: "LED"
-    id: led_status
-    pin:
-      number: GPIO13
-      inverted: True
-    internal: True
-
-switch:
-  - platform: gpio
-    name: "1"
-    pin: GPIO27
-    id: relay_1
-
-  - platform: gpio
-    name: "2"
-    pin: GPIO14
-    id: relay_2
-
-binary_sensor:
-  - platform: gpio
-    name: "Button"
-    id: sensor_button
-    pin:
-      number: GPIO00
-      mode:
-        input: True
-        pullup: True
-      inverted: True
-    disabled_by_default: True
-    icon: "mdi:radiobox-blank"
-    filters:
-      - delayed_on: 50ms
-    on_press:
-      - switch.toggle: relay_1
-
-  - platform: gpio
-    name: "1"
-    pin:
-      number: GPIO32
-      mode:
-        input: True
-        pullup: True
-      inverted: True
-    filters:
-      - delayed_on_off: 50ms
-    on_press:
-      - switch.turn_on: relay_1
-    on_release:
-      - switch.turn_off: relay_1
-
-  - platform: gpio
-    name: "2"
-    pin:
-      number: GPIO33
-      mode:
-        input: True
-        pullup: True
-      inverted: True
-    filters:
-      - delayed_on_off: 50ms
-    on_press:
-      - switch.turn_on: relay_2
-    on_release:
-      - switch.turn_off: relay_2
+```yaml file=config.yaml
 ```
 
-Dual R3 v1.x power meter configuration
+Dual R3 v1.x power meter configuration. Since ESPHome 2026.5.0 the CSE7761 reports signed power, and on this board
+normal loads read negative without the `multiply: -1` filters
+([details](https://esphome.io/components/sensor/cse7761/#power-direction)).
 
-```yaml
-uart:
-  tx_pin: GPIO25
-  rx_pin: GPIO26
-  baud_rate: 38400
-  parity: EVEN
-  stop_bits: 1
-
-sensor:
-  - platform: cse7761
-    update_interval: 21s
-    voltage:
-      name: "Voltage"
-    current_1:
-      name: "Current 1"
-      disabled_by_default: True
-    current_2:
-      name: "Current 2"
-      disabled_by_default: True
-    active_power_1:
-      name: "Power 1"
-    active_power_2:
-      name: "Power 2"
+```yaml file=power-meter-cse7761.yaml
 ```
 
 Dual R3 v2.x power meter configuration
 
-```yaml
-uart:
-  tx_pin: GPIO25
-  rx_pin: GPIO26
-  baud_rate: 4800
-  parity: NONE
-  stop_bits: 2
-
-sensor:
-  - platform: bl0939
-    update_interval: 21s
-    voltage:
-      name: "Voltage"
-    current_1:
-      name: "Current 1"
-      disabled_by_default: True
-    current_2:
-      name: "Current 2"
-      disabled_by_default: True
-    active_power_1:
-      name: "Power 1"
-    active_power_2:
-      name: "Power 2"
-    energy_1:
-      name: "Energy 1"
-    energy_2:
-      name: "Energy 2"
-    energy_total:
-      name: "Energy Total"
+```yaml file=power-meter-bl0939.yaml
 ```

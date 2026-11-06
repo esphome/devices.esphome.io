@@ -1,0 +1,96 @@
+esphome:
+  name: sonoff-dual-r3
+
+esp32:
+  variant: esp32
+
+logger:
+  level: INFO
+
+wifi:
+  ap: {}
+
+sensor:
+  - platform: wifi_signal
+    name: "RSSI"
+    id: sensor_rssi
+    update_interval: 90s
+    entity_category: "diagnostic"
+
+  - platform: uptime
+    name: "Uptime"
+    id: sensor_uptime
+    update_interval: 300s
+    entity_category: "diagnostic"
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: button_restart
+
+light:
+  - platform: status_led
+    name: "LED"
+    id: led_status
+    pin:
+      number: GPIO13
+      inverted: True
+    internal: True
+
+switch:
+  - platform: gpio
+    name: "1"
+    pin: GPIO27
+    id: relay_1
+
+  - platform: gpio
+    name: "2"
+    pin: GPIO14
+    id: relay_2
+
+binary_sensor:
+  - platform: gpio
+    name: "Button"
+    id: sensor_button
+    pin:
+      number: GPIO00
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    disabled_by_default: True
+    icon: "mdi:radiobox-blank"
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - switch.toggle: relay_1
+
+  - platform: gpio
+    name: "1"
+    pin:
+      number: GPIO32
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
+      - switch.turn_on: relay_1
+    on_release:
+      - switch.turn_off: relay_1
+
+  - platform: gpio
+    name: "2"
+    pin:
+      number: GPIO33
+      mode:
+        input: True
+        pullup: True
+      inverted: True
+    filters:
+      - delayed_on_off: 50ms
+    on_press:
+      - switch.turn_on: relay_2
+    on_release:
+      - switch.turn_off: relay_2
