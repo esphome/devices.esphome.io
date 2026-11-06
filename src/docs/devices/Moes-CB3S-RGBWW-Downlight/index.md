@@ -33,15 +33,22 @@ flashed via UART with [ltchiptool](https://docs.libretiny.eu/docs/flashing/tools
 
 Things to keep in mind with Beken chips:
 
-1. Bridge the CEN pin to GND before powering the chip, and remove the bridge before the writing starts.
-2. The chip needs a stable 3.3 V supply. If your USB-UART adapter cannot provide it, flashing will fail.
-   You can power it from an external 3.3 V supply or power the downlight itself from mains.
-   **If you power it from mains, do NOT connect the 3.3 V line of the USB-UART adapter.**
-   Only GND, RX and TX go to the adapter.
-3. An order that works: power up the board, plug in the USB adapter, launch the flash command,
+1. Work with the downlight **fully disconnected from mains** and power the CB3S from an isolated
+   3.3 V supply rated for at least 500 mA. Most USB-UART adapters cannot deliver that current
+   reliably, and a brownout during flash erase aborts the write.
+2. If the module only powers up reliably on its own board, the board must be fed from a supply that
+   is galvanically isolated from mains (isolated bench supply, or a mains isolation transformer for
+   the whole board). A mains-referenced supply puts hazardous voltage on GND, RX, TX and therefore on
+   the USB adapter and the computer. If you have no isolated supply, put a USB isolator between the
+   adapter and the computer and treat every pin as live.
+   **Never connect the 3.3 V line of the USB-UART adapter while the board is powered.** Only GND, RX
+   and TX go to the adapter.
+3. Bridge the CEN pin to GND before powering the chip, and remove the bridge before the writing starts.
+4. An order that works: power up the module, plug in the USB adapter, launch the flash command,
    wait a few seconds, then remove the CEN-to-GND bridge.
 
-**Warning: this device works with mains voltage. Take all necessary precautions.**
+**Warning: this device works with mains voltage. Take all necessary precautions and never work on it
+while it is connected to mains.**
 
 ## GPIO Pinout
 
