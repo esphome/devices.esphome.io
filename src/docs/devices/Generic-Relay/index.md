@@ -5,7 +5,7 @@ type: relay
 standard: global
 ---
 
-![full](/relay-full.jpg)
+![full](./relay-full.jpg)
 
 Relays are simple electronics components that allow you to switch a high
 load using only a single pin on your board.

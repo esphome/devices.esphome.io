@@ -10,7 +10,7 @@ board: esp8266
 
 This is for [Mirabella Genio Wi-Fi SES LED Candle](https://mirabellagenio.net.au/ses-led-candle).
 
-![Genio Wi-Fi SES LED Candle](/mirabella-genio-wi-fi-ses-led-candle.jpg "Genio Wi-Fi SES LED Candle")
+![Genio Wi-Fi SES LED Candle](./mirabella-genio-wi-fi-ses-led-candle.jpg "Genio Wi-Fi SES LED Candle")
 
 ## GPIO Pinout
 

@@ -17,9 +17,9 @@ Each relay has COM+NO+NC exposed. Each relay supports 10Amp max load (Songle SRD
 Many vendors advertise that this board can be powered with 5-12VDC.
 The manufacturer LCTech literature lists it as a 5V product.
 
-I bought it from: https://www.aliexpress.us/item/3256808359095569.html
+I bought it from: [https://www.aliexpress.us/item/3256808359095569.html](https://www.aliexpress.us/item/3256808359095569.html)
 
-LCTech Wiki page: http://www.chinalctech.com/cpzx/Programmer/Relay_Module/735.html
+LCTech Wiki page: [http://www.chinalctech.com/cpzx/Programmer/Relay_Module/735.html](http://www.chinalctech.com/cpzx/Programmer/Relay_Module/735.html)
 
 ## Input voltage considerations
 
@@ -27,11 +27,11 @@ The XL1509-3.3 Converter supports up to 40V, but the 470uF input capacitor
 (C3) is rated at 25V max on at least some variations of these boards.
 
 The `Vin` supply is fed directly to the relay coils without any regulation or
-conversion.  Voltages higher than 5V may lead to unacceptable power dissipation
+conversion. Voltages higher than 5V may lead to unacceptable power dissipation
 or shortened relay life.
 
 There does not appear to be any simple solution for reducing the voltage across
-the relay coils.  A naive swap of the 1N4148 snubber diode for a 5V Zener will
+the relay coils. A naive swap of the 1N4148 snubber diode for a 5V Zener will
 lead to high power dissipation across the BJT.
 ![Snubber Diode](diode.jpg "Snubber Diode")
 
@@ -49,7 +49,7 @@ The silkscreen labeling of this header was clear on my board.
 Does expose `GPIO0`, but does not route `EN` for automated flash support.
 
 | Pin | Comment                                                            |
-| --- | -------------------------------------------------------------------|
+| --- | ------------------------------------------------------------------ |
 | 3V3 | Use 3.3V only                                                      |
 | TX  | TTL / 3.3V Serial TX pin                                           |
 | RX  | TTL / 3.3V Serial RX pin                                           |
@@ -70,54 +70,54 @@ schematic or manual continuity tracing.
 
 Header P3 is located closest to the board edge with odd numbered pins closest to the edge
 
-| Pin | Comment                                                  |
-| --- | -------------------------------------------------------- |
-|  1  | GND                                                      |
-|  2  | 3V3                                                      |
-|  3  | SVP                                                      |
-|  4  | EN Tied to button labeled EN                             |
-|  5  | GPIO34                                                   |
-|  6  | SVN                                                      |
-|  7  | GPIO32                                                   |
-|  8  | GPIO35                                                   |
-|  9  | GPIO25                                                   |
-| 10  | GPIO33                                                   |
-| 11  | GPIO27                                                   |
-| 12  | GPIO26                                                   |
-| 13  | GPIO12 / RCK / 74HC595 RCLK                              |
-| 14  | GPIO14 / SI / 74HC595 SER                                |
-| 15  | SD2                                                      |
-| 16  | GPIO13 / SCK / 74HC595 SRCLK                             |
-| 17  | CMD                                                      |
-| 18  | SD3                                                      |
-| 19  | GND                                                      |
-| 20  | 3V3                                                      |
+| Pin | Comment                      |
+| --- | ---------------------------- |
+| 1   | GND                          |
+| 2   | 3V3                          |
+| 3   | SVP                          |
+| 4   | EN Tied to button labeled EN |
+| 5   | GPIO34                       |
+| 6   | SVN                          |
+| 7   | GPIO32                       |
+| 8   | GPIO35                       |
+| 9   | GPIO25                       |
+| 10  | GPIO33                       |
+| 11  | GPIO27                       |
+| 12  | GPIO26                       |
+| 13  | GPIO12 / RCK / 74HC595 RCLK  |
+| 14  | GPIO14 / SI / 74HC595 SER    |
+| 15  | SD2                          |
+| 16  | GPIO13 / SCK / 74HC595 SRCLK |
+| 17  | CMD                          |
+| 18  | SD3                          |
+| 19  | GND                          |
+| 20  | 3V3                          |
 
 Header P2 is located closest to the relay modules with odd numbered pins
 closest to the board edge
 
-| Pin | Comment                                                  |
-| --- | -------------------------------------------------------- |
-|  1  | GND                                                      |
-|  2  | GPIO23                                                   |
-|  3  | GPIO22                                                   |
-|  4  | TX                                                       |
-|  5  | RX                                                       |
-|  6  | GPIO 21                                                  |
-|  7  | GND                                                      |
-|  8  | GPIO19                                                   |
-|  9  | GPIO18                                                   |
-| 10  | GPIO5 / G / 74HC595 OE                                   |
-| 11  | GPIO17                                                   |
-| 12  | GPIO16                                                   |
-| 13  | GPIO4 / SCLR / 74HC595 SRCLR                             |
-| 14  | GPIO0 Tied to button labeled IO0                         |
-| 15  | GPIO2                                                    |
-| 16  | GPIO15                                                   |
-| 17  | SD1                                                      |
-| 18  | SD0                                                      |
-| 19  | CLK                                                      |
-| 20  | 3V3                                                      |
+| Pin | Comment                          |
+| --- | -------------------------------- |
+| 1   | GND                              |
+| 2   | GPIO23                           |
+| 3   | GPIO22                           |
+| 4   | TX                               |
+| 5   | RX                               |
+| 6   | GPIO 21                          |
+| 7   | GND                              |
+| 8   | GPIO19                           |
+| 9   | GPIO18                           |
+| 10  | GPIO5 / G / 74HC595 OE           |
+| 11  | GPIO17                           |
+| 12  | GPIO16                           |
+| 13  | GPIO4 / SCLR / 74HC595 SRCLR     |
+| 14  | GPIO0 Tied to button labeled IO0 |
+| 15  | GPIO2                            |
+| 16  | GPIO15                           |
+| 17  | SD1                              |
+| 18  | SD0                              |
+| 19  | CLK                              |
+| 20  | 3V3                              |
 
 ## Basic Config
 
@@ -126,7 +126,7 @@ esphome:
   name: ESP32 relayboard
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # IO0 button can be configured as a binary_sensor
 binary_sensor:

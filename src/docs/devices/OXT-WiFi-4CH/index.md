@@ -14,29 +14,31 @@ Other device could be found as WSM16-4-WIFI
 
 ## Product Images
 
-![main view](/device_main.jpg "FRONT")
-![pcb](/pcb_front.jpg "PCB")
+![main view](./device_main.jpg "FRONT")
+![pcb](./pcb_front.jpg "PCB")
 
 ## Programming
 
 Solder USB TTL wires like below
 
-![soldering](/soldering.jpg "soldering")
+![soldering](./soldering.jpg "soldering")
 
-To enter bootloader mode, ground CEN pin and power device. I used https://github.com/libretiny-eu/ltchiptool to program it
+To enter bootloader mode, ground CEN pin and power device. I used
+[https://github.com/libretiny-eu/ltchiptool](https://github.com/libretiny-eu/ltchiptool) to
+program it
 
 ## GPIO Pinout
 
 ### OXT Wi-Fi 4CH - PCB ZH-Z10 REV 03
 
-| Pin    | Function        |
-|--------|-----------------|
-| GPIO24 | Push Button     |
-| GPIO20 | Relay #1        |
-| GPIO28 | Relay #2        |
-| GPIO17 | Relay #3        |
-| GPIO16 | Relay #4        |
-| GPIO9  | Status LED |
+| Pin    | Function    |
+| ------ | ----------- |
+| GPIO24 | Push Button |
+| GPIO20 | Relay #1    |
+| GPIO28 | Relay #2    |
+| GPIO17 | Relay #3    |
+| GPIO16 | Relay #4    |
+| GPIO9  | Status LED  |
 
 ## Basic Configuration
 
@@ -139,5 +141,4 @@ binary_sensor:
       - light.toggle: sw4
     on_release:
       - light.toggle: sw4
-
 ```

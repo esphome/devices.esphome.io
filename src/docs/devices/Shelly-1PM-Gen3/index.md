@@ -62,7 +62,6 @@ esphome:
 
 esp32:
   variant: esp32c3
-  board: esp32-c3-devkitm-1
 
 api:
 
@@ -73,7 +72,11 @@ wifi:
 uart:
   id: bl0942_uart
   tx_pin: GPIO6
-  rx_pin: GPIO7
+  rx_pin:
+    number: GPIO7
+    mode:
+      pullup: true
+      input: true
   baud_rate: 9600
   stop_bits: 1
 
@@ -146,7 +149,7 @@ component has default calibration values but they may not be accurate for
 every device. Add in new calibration values based on measurements with a
 quality digital multimeter and a simple resistive load.
 
-_See [ESPHome Documentation](https://esphome.io/components/sensor/bl0942.html) for more details._
+_See [ESPHome Documentation](https://esphome.io/components/sensor/bl0942/) for more details._
 
 ### Safety Shutdown Option
 
@@ -320,7 +323,6 @@ esphome:
 
 esp32:
   variant: esp32c3
-  board: esp32-c3-devkitm-1
 
 api:
 
@@ -350,7 +352,11 @@ logger:
 uart:
   id: bl0942_uart
   tx_pin: GPIO6
-  rx_pin: GPIO7
+  rx_pin: 
+    number: GPIO7
+    mode:
+      pullup: true
+      input: true
   baud_rate: 9600
   stop_bits: 1
 

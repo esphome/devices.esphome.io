@@ -21,10 +21,10 @@ The latest LSC Light White Ambiance 3000272 devices use the Tuya BK7231T module,
 
 ## GPIO Pinout
 
-| Pin    | Function                            |
-| ------ | ----------------------------------- |
-| P24    | Cold White (PWM)                    |
-| P26    | Warm White (PWM)                    |
+| Pin | Function         |
+| --- | ---------------- |
+| P24 | Cold White (PWM) |
+| P26 | Warm White (PWM) |
 
 ## Basic configuration
 
@@ -102,7 +102,6 @@ text_sensor:
       name: IP Address
       entity_category: diagnostic
 
-
 binary_sensor:
   - platform: status
     name: Status
@@ -121,7 +120,6 @@ output:
   - platform: ledc
     id: output_warm_white
     pin: P26
-
 
 # Example configuration entry
 light:

@@ -10,18 +10,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO34 | ANALOG_A1           |
-| GPIO35 | ANALOG_A2           |
-| GPIO39 | ANALOG_A3           |
-| GPIO36 | ANALOG_A4           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO14 | 433MHz Receiver     |
-| GPIO16 | IR Receiver         |
-| GPIO33 | RS485_RXD           |
-| GPIO32 | RS485_TXD           |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO34 | ANALOG_A1       |
+| GPIO35 | ANALOG_A2       |
+| GPIO39 | ANALOG_A3       |
+| GPIO36 | ANALOG_A4       |
+| GPIO4  | IIC_SDA         |
+| GPIO5  | IIC_SCL         |
+| GPIO14 | 433MHz Receiver |
+| GPIO16 | IR Receiver     |
+| GPIO33 | RS485_RXD       |
+| GPIO32 | RS485_TXD       |
 
 [Additional pinout/design details](https://www.kincony.com/32-channel-esp32-mosfet-board.html)
 
@@ -33,7 +33,7 @@ esphome:
   name: KC868-A32M
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Enable logging
 logger:
@@ -43,10 +43,10 @@ api:
 
 # Example configuration entry
 i2c:
-   - id: bus_a
-     sda: 4
-     scl: 5
-     scan: true
+  - id: bus_a
+    sda: 4
+    scl: 5
+    scan: true
 
 # Example configuration entry
 ethernet:
@@ -58,19 +58,19 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     i2c_id: bus_a
     address: 0x23
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 9-16
+  - id: "pcf8574_hub_out_2" # for output channel 9-16
     i2c_id: bus_a
     address: 0x24
 
-  - id: 'pcf8574_hub_out_3'  # for output channel 17-24
+  - id: "pcf8574_hub_out_3" # for output channel 17-24
     i2c_id: bus_a
     address: 0x25
 
-  - id: 'pcf8574_hub_out_4'  # for output channel 25-32
+  - id: "pcf8574_hub_out_4" # for output channel 25-32
     i2c_id: bus_a
     address: 0x26
 

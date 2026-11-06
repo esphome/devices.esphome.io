@@ -11,7 +11,12 @@ difficulty: 4
 
 ## Description
 
-The AQiA Smart WiFi Power Strip is a three outlet smart power strip, [sold by Micro Center](https://www.microcenter.com/product/665655/aqia-smart-wi-fi-power-strip) and manufactured by IPOTEK (manufacturer part number SK569-WU-AC). The three outlets are independently switchable via software, while the two USB ports are permanently on. Each outlet has an indicator light that is lit when the relay is closed, and cannot be controlled in software. The only physical control on the device is a single power button that has a propensity to get stuck.
+The AQiA Smart WiFi Power Strip is a three outlet smart power strip,
+[sold by Micro Center](https://www.microcenter.com/product/665655/aqia-smart-wi-fi-power-strip) and manufactured by
+IPOTEK (manufacturer part number SK569-WU-AC). The three outlets are independently switchable via software, while the
+two USB ports are permanently on. Each outlet has an indicator light that is lit when the relay is closed, and cannot be
+controlled in software. The only physical control on the device is a single power button that has a propensity to get
+stuck.
 
 Internally the strip is powered by a CB2S module, which uses the BK7231N controller.
 
@@ -27,13 +32,20 @@ Internally the strip is powered by a CB2S module, which uses the BK7231N control
 
 ## Flashing
 
-This device is not vulnerable to `tuya-cloudcutter` or `tuya-convert`, so the only method of flashing it is by soldering wires to the chip and using `ltchiptool` to overwrite its firmware. I could not find any easily accessible UART pads on the board, and had to solder to the chip itself. [A pinout for this module is available on the LibreTiny site](https://docs.libretiny.eu/boards/cb2s/#pinout). Since the chip is mechanically mounted upside down on the control board, it's worth rotating the image upside down as well so you can be sure you're soldering wires to the correct pads. The chip operates at 3.3v.
+This device is not vulnerable to `tuya-cloudcutter` or `tuya-convert`, so the only method of flashing it is by soldering
+wires to the chip and using `ltchiptool` to overwrite its firmware. I could not find any easily accessible UART pads on
+the board, and had to solder to the chip itself.
+[A pinout for this module is available on the LibreTiny site](https://docs.libretiny.eu/boards/cb2s/#pinout). Since the
+chip is mechanically mounted upside down on the control board, it's worth rotating the image upside down as well so you
+can be sure you're soldering wires to the correct pads. The chip operates at 3.3v.
 
-During the flashing process in `ltchiptool`, you'll also have to bridge `CEN` to ground briefly. I was able to do so with a regular jumper wire, no soldering required.
+During the flashing process in `ltchiptool`, you'll also have to bridge `CEN` to ground briefly. I was able to do so
+with a regular jumper wire, no soldering required.
 
 ## Configuration
 
-Some sections containing required or default ESPHome configuration have been removed. Make sure they're filled out in your config.
+Some sections containing required or default ESPHome configuration have been removed. Make sure they're filled out in
+your config.
 
 ```yaml
 esphome:

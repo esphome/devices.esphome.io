@@ -3,30 +3,37 @@ title: GHome SW5
 date-published: 2024-09-02
 type: switch
 standard: US
-board: BK7231N
+board: bk72xx
 ---
 
 ![Product Image](ghome-sw5.jpg "Product Image")
 
 ## Flashing
 
-As of November 2024, there are two methods of flashing this device, using a serial adapter and ltchiptool, or OTA using tuya-cloudcutterflash
+As of November 2024, there are two methods of flashing this device, using a serial adapter and ltchiptool, or OTA using
+tuya-cloudcutterflash
 
-Attention: Recently purchased units (Decemeber, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.  These units cannot be flashed with ESPHome.  The newly purchased units also have screw terminals on the switch body for the wiring.  The older units had four wires coming off of the back of the switch body.
+Attention: Recently purchased units (Decemeber, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.
+These units cannot be flashed with ESPHome.  The newly purchased units also have screw terminals on the switch body for
+the wiring.  The older units had four wires coming off of the back of the switch body.
 
 ### OTA
 
-CAUTION: either install the device properly in the wall before attempting, or have another way of safely powering the device. OTA flashing when the device is powered with mains current can be dangerous
+CAUTION: either install the device properly in the wall before attempting, or have another way of safely powering the
+device. OTA flashing when the device is powered with mains current can be dangerous
 
-Newer versions of this switch use the BK7231N chip, running 1.0.1 firmware. These devices are able to be flashed using tuya-cloudcutter.
+Newer versions of this switch use the BK7231N chip, running 1.0.1 firmware. These devices are able to be flashed using
+tuya-cloudcutter.
 
-Install Tuya-cloudcutter, following instructions [here](https://github.com/tuya-cloudcutter/tuya-cloudcutter/tree/main/custom-firmware)
+Install Tuya-cloudcutter, following instructions
+[in the tuya-cloudcutter repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter/tree/main/custom-firmware)
 
 Once the tool is installed, run it with this command:
 
 ```sudo ./tuya-cloudcutter.sh -p gosund-sw5-a-v2.1-smart-switch-bk7231n-v1.0.1 -f ESPHome-Kickstart-v23.08.29_bk7231n_app.ota.ug.bin```
 
-Follow the onscreen instructions to put the device into "slow blink" mode, and then power off/back on when prompted. This will install the ESPHome Kickstart firmware. From there is is possible to OTA install full ESPHome.
+Follow the onscreen instructions to put the device into "slow blink" mode, and then power off/back on when prompted.
+This will install the ESPHome Kickstart firmware. From there is is possible to OTA install full ESPHome.
 
 ### Serial
 
@@ -40,7 +47,7 @@ build the firmware in esphome and flash it using the itchiptool
 
 download the firmware in the uf2 format
 
-Install itchiptool from [here](https://github.com/libretiny-eu/ltchiptool)
+Install ltchiptool from [the ltchiptool repository](https://github.com/libretiny-eu/ltchiptool)
 
 figure out the serial port the device is connected to and run the following command
 (in my case it was /dev/ttyUSB0 in linux, but in windows it will be a com port)
@@ -189,7 +196,7 @@ confirmed the chip on my board
 - This is an exact teardown of the device (with the other
   controller) [Teardown](https://www.elektroda.com/rtvforum/topic3892160.html)
 - I designed and 3d printed a pogo based clip to flash the device here is
-  the [Onshape Link](https://cad.onshape.com/documents/bd911beb7a4a52211fd6ff0a/w/639be8dce01942437b84688a/e/92c75704a7d638fc027182f4?renderMode=0&uiState=66d5ece2b7272918ae9b9502)
+  the [Onshape Link][1]
 - Amazon link for the pogo pins [Amazon Link](https://www.amazon.com/gp/product/B00TX43QEQ)
   - Labeled on amazon `uxcell 100 Pcs PL75-B1 0.7mm Tip 16mm Spring Test Probes Pin for PCB Board`
 
@@ -203,3 +210,5 @@ A Closeup of fully assembled clip
 
 Janky flashing setup with a dedicated 3.3v power supply
 ![Flashing Setup](janky.png "Flashing Setup")
+
+[1]: https://cad.onshape.com/documents/bd911beb7a4a52211fd6ff0a/w/639be8dce01942437b84688a/e/92c75704a7d638fc027182f4?renderMode=0&uiState=66d5ece2b7272918ae9b9502

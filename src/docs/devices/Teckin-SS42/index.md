@@ -3,7 +3,7 @@ title: Teckin SS42
 date-published: 2023-11-08
 type: plug
 standard: eu
-board: esp8286
+board: esp8266
 ---
 
 ![image](teckin-ss42.webp)

@@ -13,25 +13,32 @@ difficulty: 1
 
 Nerdiy's **SelfIY Ring** is a selfie ring that can be manufactured using a 3D printer.
 
-In addition to the 3D-printed components, it is based on a **WS2812** (or similar) LED strip and a **[Seeed Studio XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html)**. The SelfIY Ring is powered via a **USB-C connection** and can be integrated and controlled through HomeAssistant thanks to the ESPHome-based firmware. The color and brightness of the LEDs can be adjusted either through HomeAssistant or via the integrated web server. Additionally, the brightness can be controlled using the two built-in sensor buttons.
+In addition to the 3D-printed components, it is based on a **WS2812** (or similar) LED strip and a
+**[Seeed Studio XIAO ESP32-S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html)**. The SelfIY Ring is powered via a
+**USB-C connection** and can be integrated and controlled through HomeAssistant thanks to the ESPHome-based firmware.
+The color and brightness of the LEDs can be adjusted either through HomeAssistant or via the integrated web server.
+Additionally, the brightness can be controlled using the two built-in sensor buttons.
 
-The SelfIY Ring can be mounted on a **standard tripod thread (1/4″)**. Furthermore, cameras can also be attached to the ring using a tripod thread (1/4″).
+The SelfIY Ring can be mounted on a **standard tripod thread (1/4″)**. Furthermore, cameras can also be attached to the
+ring using a tripod thread (1/4″).
 
 ## Files for 3D print
 
-More info and the housing STLs are available here: [Nerdiy.de](https://nerdiy.de/produkt/selfiy-ring-bauteile-3d-druckbarer-selfie-ring-stl-dateien/)
+More info and the housing STLs are available here:
+[Nerdiy.de](https://nerdiy.de/produkt/selfiy-ring-bauteile-3d-druckbarer-selfie-ring-stl-dateien/)
 
 ## GPIO Pinout
 
-| Pin    | Function          |
-| ------ | ----------------- |
-| GPIO07  | Touch Button "Plus" |
-| GPIO08 | Touch Button "Minus"             |
-| GPIO05 | LED-Strip               |
+| Pin    | Function             |
+| ------ | -------------------- |
+| GPIO07 | Touch Button "Plus"  |
+| GPIO08 | Touch Button "Minus" |
+| GPIO05 | LED-Strip            |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is available [here](https://github.com/Nerdiyde/ESPHomeSnippets/blob/main/Snippets/selfIY_ring/nerdiys-selfiy-ring.yaml).
+```yaml url=https://github.com/Nerdiyde/ESPHomeSnippets/blob/main/Snippets/selfIY_ring/nerdiys-selfiy-ring.yaml
+```
 
 ## Dimensions
 

@@ -28,7 +28,7 @@ esphome:
 
 # ESP32 Board
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 

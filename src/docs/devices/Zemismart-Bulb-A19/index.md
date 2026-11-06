@@ -6,7 +6,8 @@ standard: eu
 board: esp8266
 ---
 
-RGBW smart light bulb, A19 shape, E27 base, RGB colors + cold white, 100-240V AC 50/60Hz, natively Tuya/Smart Life, works with Tuya-convert to flash to ESPHome.
+RGBW smart light bulb, A19 shape, E27 base, RGB colors + cold white, 100-240V AC 50/60Hz, natively Tuya/Smart Life,
+works with Tuya-convert to flash to ESPHome.
 
 ## GPIO Pinout
 

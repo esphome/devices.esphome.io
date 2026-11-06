@@ -1,11 +1,11 @@
 ---
 title: M5Stack M5Core2
-date-published: 2025-05-29
+date-published: 2025-12-05
 type: misc
 standard: global
 board: esp32
 project-url: https://docs.m5stack.com/en/core/core2
-made-for-esphome: False
+made-for-esphome: false
 difficulty: 2
 ---
 
@@ -47,7 +47,10 @@ esphome:
     upload_speed: 460800
 
 esp32:
-  board: m5stack-core2
+  variant: esp32
+  # Arduino framework is required for the axp192 component
+  framework:
+    type: arduino
 
 psram:
   mode: quad
@@ -119,17 +122,9 @@ i2c:
     scan: true
 
 display:
-  - platform: ili9xxx
-    model: ili9342
-    cs_pin: GPIO5
-    dc_pin: GPIO15
-    invert_colors: true
+  - platform: mipi_spi
+    model: M5CORE2
     show_test_card: true
-    dimensions:
-      width: 320
-      height: 240
-    transform:
-      mirror_x: false # must be explicitly included, otherwise it defaults to true with the ili9342
 
 touchscreen:
   - platform: ft63x6
@@ -164,7 +159,6 @@ binary_sensor:
     y_min: 240
     y_max: 280
     use_raw: true
-
 # doesn't work:
 # i2s_audio:
 #   id: bus_i2s
@@ -187,11 +181,43 @@ binary_sensor:
 #         data: !lambda return startup_raw;
 ```
 
+## RTC
+
+[BM8563 Time Source](https://esphome.io/components/time/bm8563/)
+
+```yaml
+# First block - hardware definition only
+esphome:
+  min_version: 2025.12.0
+
+time:
+  - platform: bm8563
+    # repeated synchronization is not necessary unless the external RTC
+    # is much more accurate than the internal clock
+    update_interval: never
+```
+
+```yaml
+# Second block - more complex example with integration
+time:
+  - platform: bm8563
+    update_interval: never
+  - platform: homeassistant
+    on_time_sync:
+      then:
+        bm8563.write_time:
+
+esphome:
+  on_boot:
+    then:
+      bm8563.read_time:
+```
+
 ## Notes
 
-- **Display**: works reliably with `ili9342`
+- **Display**: works reliably with `mipi_spi` (M5CORE2)
 - **Touchscreen**: works well with `ft63x6`, including virtual button regions (A/B/C)
 - **MPU6886 IMU**: provides data for accelerometer, gyroscope, and temperature. Temperature readings are erratic and inaccurate
 - **Speaker**: didn't work, but some config is provided
 - **Microphone**: untested
-- **BM8563 RTC**: not configured, no ESPHome component exists for it
+- **BM8563 RTC**: ESPHome component exists for version >=2025.12.0.

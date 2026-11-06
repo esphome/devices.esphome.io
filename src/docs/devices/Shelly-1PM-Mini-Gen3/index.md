@@ -22,6 +22,8 @@ Generation 3 of Shelly Mini. With Powermeter, and Relay
 
 The UART Pinout is the same as other Shelly Plus Mini.
 
+![Shelly 1 Mini Gen3](../Shelly-1-Mini-Gen3/shelly_1_mini_gen3_pcb_a.png "Shelly 1 Mini Gen3")
+
 ## GPIO Pinout
 
 | Pin    | Function  |
@@ -42,7 +44,7 @@ esphome:
   friendly_name: "Shelly 1PM Mini Gen3"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   flash_size: 8MB
   framework:
     type: esp-idf
@@ -118,7 +120,11 @@ sensor:
 uart:
   id: uart_0
   tx_pin: GPIO6
-  rx_pin: GPIO7
+  rx_pin: 
+    number: GPIO7
+    mode:
+      pullup: true
+      input: true
   baud_rate: 9600
   stop_bits: 1
 

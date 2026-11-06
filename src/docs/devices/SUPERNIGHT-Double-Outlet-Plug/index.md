@@ -10,26 +10,37 @@ board: esp8266
 
 ## Flashing
 
-As of 2022-04-12, this device can be flashed with Tuya Convert OTA (over-the-air) out of the box with no adjustments needed.  Put the device in flash mode by long-holding either button until it starts fast-flashing.  This device likely cannot be opened without destruction.
+As of 2022-04-12, this device can be flashed with Tuya Convert OTA (over-the-air) out of the box with no adjustments
+needed. Put the device in flash mode by long-holding either button until it starts fast-flashing. This device likely
+cannot be opened without destruction.
 
 ## GPIO Pinout
 
-| Pin    | Function                               |
-| ------ | -------------------------------------- |
-| GPIO1  | Left Outlet Button (Inverted: true)    |
-| GPIO3  | Left Outlet Relay                      |
-| GPIO4  | HLW8012 CF1 pin                        |
-| GPIO5  | HLW8012 CF pin                         |
-| GPIO12  | Right Outlet Relay                    |
-| GPIO13 | HLW8012 SEL pin (Inverted: true)       |
-| GPIO14 | Dual red status LED (Inverted: true    |
-| A0 | Right Button (ADC Analog)                  |
+| Pin    | Function                            |
+| ------ | ----------------------------------- |
+| GPIO1  | Left Outlet Button (Inverted: true) |
+| GPIO3  | Left Outlet Relay                   |
+| GPIO4  | HLW8012 CF1 pin                     |
+| GPIO5  | HLW8012 CF pin                      |
+| GPIO12 | Right Outlet Relay                  |
+| GPIO13 | HLW8012 SEL pin (Inverted: true)    |
+| GPIO14 | Dual red status LED (Inverted: true |
+| A0     | Right Button (ADC Analog)           |
 
 ## General Notes
 
-These devices appear to be individually calibrated for voltage, current, and power.  As a result, you will need to measure with a multimeter and adjust the voltage divider, current resistor, and power draw accordingly.  The observed range so far for voltage divider is 747-865, so the base configuration has been adjusted to be the average of range at 806 for likely best default settings.  The observed range so far for the current resistor is 0.00113-0.0013, so the base configuration is set to 0.001215.  You can adjust the voltage divider, current resistor and power line curve in the substitutions section if needed.  You need to adjust the voltage divider and current resistor before making power adjustments.
+These devices appear to be individually calibrated for voltage, current, and power. As a result, you will need to
+measure with a multimeter and adjust the voltage divider, current resistor, and power draw accordingly. The observed
+range so far for voltage divider is 747-865, so the base configuration has been adjusted to be the average of range at
+806 for likely best default settings. The observed range so far for the current resistor is 0.00113-0.0013, so the base
+configuration is set to 0.001215. You can adjust the voltage divider, current resistor and power line curve in the
+substitutions section if needed. You need to adjust the voltage divider and current resistor before making power
+adjustments.
 
-There is an oddity with restoring the value of the right relay because of the analog switch and its values during boot up.  Because of this, the default configuration won't allow the right button to be pressed until the device is fully booted up, otherwise it will randomly change the state of the right outlet at startup.  The measured time of unavailablity of the right button is about 8 seconds as a result.
+There is an oddity with restoring the value of the right relay because of the analog switch and its values during boot
+up. Because of this, the default configuration won't allow the right button to be pressed until the device is fully
+booted up, otherwise it will randomly change the state of the right outlet at startup. The measured time of
+unavailablity of the right button is about 8 seconds as a result.
 
 The nightlight feature cannot be controlled by the ESP IO, and cannot be disabled without physical changes.
 
@@ -52,7 +63,7 @@ esphome:
     then:
       globals.set:
         id: allow_analog_button_input
-        value: 'true'
+        value: "true"
 
 esp8266:
   board: esp8285
@@ -63,13 +74,13 @@ esp8266:
 substitutions:
   # You must get current and voltage correct before calibrating power.
   # Observered current resistor values from 2 units: 0.00113-0.0013
-  current_resistor: '0.001215'
+  current_resistor: "0.001215"
   # Observed voltage divider values from 2 units: 747-865
-  voltage_divider: '806'
+  voltage_divider: "806"
   # The value 'Power' shows by default is incorrect, to add a linear correction
   # place a known entity and set the calibration data here.
-  calibration_pre_cal_power_value: '129.1'
-  calibration_expected_correct_value: '60.0'
+  calibration_pre_cal_power_value: "129.1"
+  calibration_expected_correct_value: "60.0"
 
 logger:
 api:
@@ -88,10 +99,10 @@ captive_portal:
 
 # We don't want to allow analog input until bootup is complete.
 globals:
-   - id: allow_analog_button_input
-     type: bool
-     restore_value: no
-     initial_value: 'false'
+  - id: allow_analog_button_input
+    type: bool
+    restore_value: no
+    initial_value: "false"
 
 # GPIO14 is the red LED for both the left and right buttons together.
 # They cannot be controlled individually.

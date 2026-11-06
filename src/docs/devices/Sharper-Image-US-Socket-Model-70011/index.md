@@ -12,17 +12,19 @@ difficulty: 3
 | ------------------------------------------ | ---------------------------------------- |
 | ![Plug front](plug-front.jpg "Plug front") | ![Plug front](plug-back.jpg "Plug back") |
 
-The Sharper Image 70011 Smart Wall Plug was sold at various retailers such as Target and Amazon. It is a rebranded KMC 70011 smart plug without the HLW8012 energy monitoring chip.
+The Sharper Image 70011 Smart Wall Plug was sold at various retailers such as Target and Amazon. It is a rebranded KMC
+70011 smart plug without the HLW8012 energy monitoring chip.
 
-They can be flashed with soldering or without soldering by using jumpers. The board is a standard ESP-12f variant of the ESP8266.
+They can be flashed with soldering or without soldering by using jumpers. The board is a standard ESP-12f variant of the
+ESP8266.
 
 ## GPIO Pinout
 
-| Pin    | Function                  |
-| ------ | ------------------------- |
-| GPIO14 | Relay                     |
-| GPIO13 | Green LED (Inverted: true)|
-| GPIO0  | Button                    |
+| Pin    | Function                   |
+| ------ | -------------------------- |
+| GPIO14 | Relay                      |
+| GPIO13 | Green LED (Inverted: true) |
+| GPIO0  | Button                     |
 
 ## Getting it up and running
 
@@ -30,7 +32,8 @@ They can be flashed with soldering or without soldering by using jumpers. The bo
 
 ![Photo of the Smart Plug connected to a serial flasher](plug-flashing.jpg "Photo of the Smart Plug connected to a serial flasher")
 
-In order to program the Smart Plug, it's necessary to solder leads or place jumpers onto the esp8266 carrierboard as shown below. ESP devices should always be flashed in 3.3V mode.
+In order to program the Smart Plug, it's necessary to solder leads or place jumpers onto the esp8266 carrierboard as
+shown below. ESP devices should always be flashed in 3.3V mode.
 
 If unclear from the picture, use the following pinouts:
 
@@ -39,7 +42,8 @@ RXD0 (directly above TXD0, yellow)
 GND (left, top-most pin, brown)
 Vcc (right, top-most pin, red)
 
-It is required to hold the device's button down to boot into flashing mode until the device starts to erase the stock firmware.
+It is required to hold the device's button down to boot into flashing mode until the device starts to erase the stock
+firmware.
 
 ## Basic Configuration
 
@@ -48,7 +52,6 @@ It is required to hold the device's button down to boot into flashing mode until
 substitutions:
   name: si-smartplug-model-70011
   friendly_name: si-smartplug-model-70011
-
 ```
 
 ```yaml
@@ -59,7 +62,7 @@ esphome:
 
 esp8266:
   board: d1_mini
-  early_pin_init: false  # Prevent the physical relay flipping on reboot.
+  early_pin_init: false # Prevent the physical relay flipping on reboot.
 
 api:
 ota:
@@ -70,7 +73,7 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-#  domain: !secret wifi_mydomain
+  #  domain: !secret wifi_mydomain
   ap:
     password: !secret ap_password
 

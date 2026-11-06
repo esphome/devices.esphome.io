@@ -6,7 +6,7 @@ standard: eu
 board: esp8266
 ---
 
-![Nous A1T](neo_render4_tasmota.jpg  "Tasmota Version Plug")
+![Nous A1T](neo_render4_tasmota.jpg "Tasmota Version Plug")
 
 ## GPIO Pinout
 
@@ -27,19 +27,17 @@ board: esp8266
 | GPIO14 | Relay1     |
 | GPIO15 | None       |
 | GPIO16 | None       |
-|  FLAG  | None       |
+| FLAG   | None       |
 
 ## Basic Configuration
 
 ```yaml
-
 substitutions:
   devicename: "smartplug"
   # Higher value gives lower watt readout
   current_res: "0.00280"
   # Lower value gives lower voltage readout
   voltage_div: "775"
-
 
 esphome:
   name: $devicename
@@ -74,7 +72,7 @@ wifi:
 
 captive_portal:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -193,5 +191,4 @@ text_sensor:
   - platform: version
     name: "${devicename} - ESPHome Version"
     hide_timestamp: true
-
 ```
