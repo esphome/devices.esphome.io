@@ -8,7 +8,8 @@ board: esp8266
 
 ![Product Image](Shelly-Bulb-Duo-RGBW.png "Shelly RGBW")
 
-This template was made using the Tasmota template found [here](https://github.com/arendst/mgos-to-tasmota) with the [GPIO conversion in the Tasmota docs](https://tasmota.github.io/docs/GPIO-Conversion/#gpio-conversion).
+This template was made using [the Tasmota template](https://github.com/arendst/mgos-to-tasmota) with the
+[GPIO conversion in the Tasmota docs](https://tasmota.github.io/docs/GPIO-Conversion/#gpio-conversion).
 
 ## GPIO Pinout
 

@@ -10,22 +10,22 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO39 | ANALOG_A2           |
-| GPIO34 | ANALOG_A3           |
-| GPIO35 | ANALOG_A4           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO16 | 433MHz Receiver     |
-| GPIO32 | RS485_RXD           |
-| GPIO33 | RS485_TXD           |
-| GPIO13 | GSM_RXD             |
-| GPIO15 | GSM_TXD             |
-| GPIO2  | Buzzer              |
-| GPIO12 | WS2812B LED         |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO36 | ANALOG_A1       |
+| GPIO39 | ANALOG_A2       |
+| GPIO34 | ANALOG_A3       |
+| GPIO35 | ANALOG_A4       |
+| GPIO4  | IIC_SDA         |
+| GPIO5  | IIC_SCL         |
+| GPIO14 | 1-Wire GPIO     |
+| GPIO16 | 433MHz Receiver |
+| GPIO32 | RS485_RXD       |
+| GPIO33 | RS485_TXD       |
+| GPIO13 | GSM_RXD         |
+| GPIO15 | GSM_TXD         |
+| GPIO2  | Buzzer          |
+| GPIO12 | WS2812B LED     |
 
 [Additional pinout/design details](https://www.kincony.com/gsm-relay-esp32-board.html)
 
@@ -37,7 +37,7 @@ esphome:
   name: KC868-A8S
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 remote_receiver:
   pin: 16
@@ -65,10 +65,10 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
 # Individual outputs
@@ -241,7 +241,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter1"
     rc_switch_raw:
-      code: '001111010111001010111000'
+      code: "001111010111001010111000"
       protocol: 1
     on_press:
       then:
@@ -252,7 +252,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter2"
     rc_switch_raw:
-      code: '001111010111001010111100'
+      code: "001111010111001010111100"
       protocol: 1
     on_press:
       then:
@@ -263,7 +263,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter3"
     rc_switch_raw:
-      code: '001111010111001010110100'
+      code: "001111010111001010110100"
       protocol: 1
     on_press:
       then:
@@ -274,18 +274,18 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter4"
     rc_switch_raw:
-      code: '001111010111001010111001'
+      code: "001111010111001010111001"
       protocol: 1
     on_press:
       then:
         - switch.toggle: light4
     filters:
-      - delayed_off: 200ms  
+      - delayed_off: 200ms
 
   - platform: remote_receiver
     name: "remoter5"
     rc_switch_raw:
-      code: '001111010111001010110010'
+      code: "001111010111001010110010"
       protocol: 1
     on_press:
       then:
@@ -296,7 +296,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter6"
     rc_switch_raw:
-      code: '001111010111001010110101'
+      code: "001111010111001010110101"
       protocol: 1
     on_press:
       then:
@@ -307,7 +307,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter7"
     rc_switch_raw:
-      code: '001111010111001010110001'
+      code: "001111010111001010110001"
       protocol: 1
     on_press:
       then:
@@ -318,7 +318,7 @@ binary_sensor:
   - platform: remote_receiver
     name: "remoter8"
     rc_switch_raw:
-      code: '001111010111001010110011'
+      code: "001111010111001010110011"
       protocol: 1
     on_press:
       then:
@@ -331,7 +331,7 @@ binary_sensor:
     pin: 14
     device_class: motion
     on_release:
-       - script.execute: motion_timer
+      - script.execute: motion_timer
 
 script:
   - id: motion_timer

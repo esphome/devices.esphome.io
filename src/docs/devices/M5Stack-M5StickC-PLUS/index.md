@@ -32,9 +32,10 @@ project-url: https://docs.m5stack.com/en/core/m5stickc_plus
 
 ## External Component
 
-[ESPHome AXP192 Component by martydingo]("https://github.com/martydingo/esphome-axp192")
+[ESPHome AXP192 Component by martydingo](https://github.com/martydingo/esphome-axp192)
 
-This custom component it to implement support for the AXP192 for both the M5Stick-C. It is required to turn on the backlight.
+This custom component it to implement support for the AXP192 for both the M5Stick-C. It is required to turn on the
+backlight.
 
 ## Example Configuration
 
@@ -49,7 +50,10 @@ esphome:
     upload_speed: 115200
 
 esp32:
-  board: m5stick-c
+  variant: esp32
+  # Arduino framework is required for the axp192 component
+  framework:
+    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
@@ -152,8 +156,8 @@ display:
 
 i2s_audio:
   id: bus_i2s
-  i2s_lrclk_pin: G26
-  i2s_bclk_pin: G0
+  i2s_lrclk_pin: GPIO26
+  i2s_bclk_pin: GPIO0
 
 microphone:
   - platform: i2s_audio
@@ -166,7 +170,8 @@ microphone:
 
 ## Workaround for using devices powered with 5V on the HY2.0-4P port
 
-The 5V power on the HY2.0-4P is fed by the axp192. Therefore these devices must be initialized some time after the axp192 has started.
+The 5V power on the HY2.0-4P is fed by the axp192. Therefore these devices must be initialized some time after the
+axp192 has started.
 
 ```yml
 i2c:
@@ -193,3 +198,33 @@ sensor:
     humidity:
       name: "Humidity"
 ```
+
+## RTC
+
+[BM8563 Time Source](https://next.esphome.io/components/time/bm8563/)
+
+```yaml
+esphome:
+  on_boot:
+    then:
+      # read the RTC time once when the system boots
+      bm8563.read_time:
+
+time:
+  - platform: bm8563
+    # repeated synchronization is not necessary unless the external RTC
+    # is much more accurate than the internal clock
+    update_interval: never
+  - platform: homeassistant
+    # instead try to synchronize via network repeatedly ...
+    on_time_sync:
+      then:
+        # ... and update the RTC when the synchronization was successful
+        bm8563.write_time:
+```
+
+## Notes
+
+- **Display**: works reliably with `st7789v`
+- **Microphone**: untested
+- **BM8563 RTC**: ESPHome component exists for version >=2025.12.0.

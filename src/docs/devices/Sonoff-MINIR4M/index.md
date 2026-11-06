@@ -10,9 +10,11 @@ difficulty: 5
 
 ![Sonoff MiniR4M](sonoff-mini-r4m.jpg "Product Image")
 
-SONOFF'S First Matter Device, with one (detachable) relay, one external input, one button. Switch is really small, approx 40x33mm, easily fits behind wall switch.
+SONOFF'S First Matter Device, with one (detachable) relay, one external input, one button. Switch is really small,
+approx 40x33mm, easily fits behind wall switch.
 
-Product page: [https://sonoff.tech/product/diy-smart-switches/minir4m/](https://sonoff.tech/product/diy-smart-switches/minir4m/)
+Product page:
+[https://sonoff.tech/product/diy-smart-switches/minir4m/](https://sonoff.tech/product/diy-smart-switches/minir4m/)
 
 ## Features
 
@@ -26,7 +28,8 @@ Flash locked
 
 ## Programming
 
-Rx, Tx, Gnd and 3V3 pads are available, but due to Matter certification - ESP32-C3 flash is locked and no reflash is possible.
+Rx, Tx, Gnd and 3V3 pads are available, but due to Matter certification - ESP32-C3 flash is locked and no reflash is
+possible.
 
 A new ESP32-C3 IC is required to programm the unit with ESPHome flash.
 
@@ -62,7 +65,7 @@ esphome:
   comment: "Sonoff MiniR4M"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: arduino
 

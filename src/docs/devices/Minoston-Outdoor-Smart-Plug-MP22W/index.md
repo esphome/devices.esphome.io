@@ -10,7 +10,9 @@ board: bk72xx
 
 ## Notes
 
-This device has at least three different versions, one with ESP8266, one with WB2s, and one with CB2S. This is specific to the CB2s version. If you have the WB2S chip (Version 2.0) pinout information can be found [here.](https://www.elektroda.com/rtvforum/topic3973047.html)
+This device has at least three different versions, one with ESP8266, one with WB2s, and one with CB2S. This is specific
+to the CB2s version. If you have the WB2S chip (Version 2.0) pinout information can be found
+[on the Elektroda forum](https://www.elektroda.com/rtvforum/topic3973047.html).
 
 ## Basic Configuration
 

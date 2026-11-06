@@ -10,13 +10,17 @@ board: esp8266
 
 ## Product description
 
-This is an 8-relay board with an [ESP-12F](https://docs.ai-thinker.com/_media/esp8266/docs/esp-12f_product_specification_en.pdf).
+This is an 8-relay board with an
+[ESP-12F](https://docs.ai-thinker.com/_media/esp8266/docs/esp-12f_product_specification_en.pdf).
 
 Each relay has COM+NO+NC exposed. Product descriptions don't seem to specify maximum load.
 
-The board can be powered either via 7-30VDC or via 5VDC via the screw terminals. Power the board with the screw terminals for flashing.
+The board can be powered either via 7-30VDC or via 5VDC via the screw terminals. Power the board with the screw
+terminals for flashing.
 
-I bought it from: https://s.click.aliexpress.com/e/_DnEOi2r (affiliation link so i can make others like this, no guarantee it will continue to exist).
+I bought it from: [https://s.click.aliexpress.com/e/_DnEOi2r](https://s.click.aliexpress.com/e/_DnEOi2r) (affiliation
+link so i can make others like this, no
+guarantee it will continue to exist).
 
 ## GPIO Header
 
@@ -37,17 +41,17 @@ This board has headers for a few GPIO pins on its ESP-12F.
 
 Be aware that relay 1 and 6 will be momentarily toggled on during boot.
 
-| Pin    | Comment                                       |
-| ------ | --------------------------------------------- |
-| GPIO0  | Relay 6 (high on boot)                        |
-| GPIO2  | Exposed on board | (blue) LED on the ESP-12F  |
-| GPIO4  | Relay 7                                       |
-| GPIO5  | Relay 8                                       |
-| GPIO12 | Relay 3                                       |
-| GPIO13 | Relay 4                                       |
-| GPIO14 | Relay 2                                       |
-| GPIO15 | Relay 5                                       |
-| GPIO16 | Relay 1 (high on boot)                        |
+| Pin    | Comment                                     |
+| ------ | ------------------------------------------- |
+| GPIO0  | Relay 6 (high on boot)                      |
+| GPIO2  | Exposed on board, (blue) LED on the ESP-12F |
+| GPIO4  | Relay 7                                     |
+| GPIO5  | Relay 8                                     |
+| GPIO12 | Relay 3                                     |
+| GPIO13 | Relay 4                                     |
+| GPIO14 | Relay 2                                     |
+| GPIO15 | Relay 5                                     |
+| GPIO16 | Relay 1 (high on boot)                      |
 
 ## Basic Config
 

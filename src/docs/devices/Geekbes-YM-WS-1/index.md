@@ -8,15 +8,16 @@ board: esp8266
 
 ![alt text](geekbes_YM-WS-1.png "Geekbes YM-WS-1 Plug")
 
-The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/geekbes_YM-WS-1.html) documentation and adapted through trial and error.
+The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/geekbes_YM-WS-1.html) documentation
+and adapted through trial and error.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO12 | LedLink             |
-| GPIO13 | Button              |
-| GPIO15 | Relay               |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO12 | LedLink  |
+| GPIO13 | Button   |
+| GPIO15 | Relay    |
 
 ## Basic Configuration
 
@@ -39,7 +40,7 @@ logger:
 api:
 
 ota:
-- platform: esphome
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid

@@ -7,16 +7,17 @@ board: bk72xx
 pcb: CB3S
 difficulty: 2
 ---
+
 ![Device Front](./ultrapro-wfd1001-wall-outlet-v1.0.4.jpg "Device Front")
 ![Device Label](./ultrapro-wfd1001-label-sticker.png "Device Label")
 
 ## GPIO Pinout
 
-| Pin | Alternate Pin Name | Function     | Active |
-| --- | ------------------ | ------------ | ------ |
-| P23 | ADC3               | Button       | Low    |
-| P24 | PWM4               | Status Led   | High   |
-| P26 | PWM5               | Relay        | High   |
+| Pin | Alternate Pin Name | Function   | Active |
+| --- | ------------------ | ---------- | ------ |
+| P23 | ADC3               | Button     | Low    |
+| P24 | PWM4               | Status Led | High   |
+| P26 | PWM5               | Relay      | High   |
 
 ## Tuya Cloudcutter
 
@@ -25,7 +26,7 @@ The board is easily flashed without disassembly using
 
 ## Basic Configuration
 
-The button will toggle the relay and LED.  Holding the button for more
+The button will toggle the relay and LED. Holding the button for more
 than 5 seconds will reset the wifi password and revert the device to
 the captive portal.
 

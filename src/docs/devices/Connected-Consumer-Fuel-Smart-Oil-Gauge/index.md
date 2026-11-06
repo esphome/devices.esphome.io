@@ -9,7 +9,7 @@ difficulty: 3
 
 ![alt text](Product-Image.jpg "Smart Oil Gauge")
 
-Product Page: https://www.smartoilgauge.com/shop/product/ccf901i/
+Product Page: [https://www.smartoilgauge.com/shop/product/ccf901i/](https://www.smartoilgauge.com/shop/product/ccf901i/)
 
 SKU: CCF-901
 
@@ -33,28 +33,36 @@ SKU: CCF-901
 
 ## Flashing
 
-1) REMOVE THE BATTERIES!!
-2) Remove the control board
-3) Locate the contact points required for Physically Connecting to your Device: \
-   ![alt text](Connections-Front.jpg "Front Flashing Contact Points") \
-   ![alt text](Connections-Back.jpg "Back Flashing Contact Points") \
-4) Solderless connections to the contact point can be made using IC Hook Test Leads such as these: \
-   https://www.sparkfun.com/ic-hook-test-leads.html \
-   ![alt text](Flashing-Front.jpg "Front Flashing Connection") \
-   ![alt text](Flashing-Edge.jpg "Edge Flashing Connection") \
-5) Follow the directions as outlined by Esphome for Physically Connecting to your Device: \
-   https://esphome.io/guides/physical_device_connection#physically-connecting-to-your-device \
+1. REMOVE THE BATTERIES!!
+2. Remove the control board
+3. Locate the contact points required for physically connecting to your device. Use the following photos for reference:
+   ![alt text](Connections-Front.jpg "Front Flashing Contact Points")
+   ![alt text](Connections-Back.jpg "Back Flashing Contact Points")
+4. Solderless connections to the contact point can be made using IC hook test leads such as these:
+   [https://www.sparkfun.com/ic-hook-test-leads.html](https://www.sparkfun.com/ic-hook-test-leads.html)
+   ![alt text](Flashing-Front.jpg "Front Flashing Connection")
+   ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
+5. Follow the directions as outlined by ESPHome for physically connecting to your device:
+  
+[https://esphome.io/guides/physical_device_connection#physically-connecting-to-your-device](https://esphome.io/guides/physical_device_connection/)
 
 ## Operation
 
 Note: Be sure to modify the substitution section of the code for your tank_size and tank_orientation. \
-It is highly recommended to use an external 6.5 to 7.4 VDC power supply. Running this code will likely deplete the batteries faster than the stock firmware.
+It is highly recommended to use an external 6.5 to 7.4 VDC power supply. Running this code will likely deplete the
+batteries faster than the stock firmware.
 
-The controller wakes every hour, sends three level readings to Home Assistant, and then powers down for another hour waiting for the TPL5111 to power it back up.
+The controller wakes every hour, sends three level readings to Home Assistant, and then powers down for another hour
+waiting for the TPL5111 to power it back up.
 
 Pressing the control button once will either wake up the controller, or power it back down.
 
-Double pressing the control button while powered on will toggle between allowing and not allowing the automatic power down. When the controller is on, and the automatic power down is allowed, the LED on the control board will be OFF and briefly blink ON every second. When the controller is on, and the automatic power down is not allowed, the LED on the control board will be ON and briefly blink OFF every second. Wait about 15 to 20 seconds after waking the controller before attempting to disable the automatic power down. Disabling the Automatic power down gives time to flash Esphome code updates.
+Double pressing the control button while powered on will toggle between allowing and not allowing the automatic power
+down. When the controller is on, and the automatic power down is allowed, the LED on the control board will be OFF and
+briefly blink ON every second. When the controller is on, and the automatic power down is not allowed, the LED on the
+control board will be ON and briefly blink OFF every second. Wait about 15 to 20 seconds after waking the controller
+before attempting to disable the automatic power down. Disabling the Automatic power down gives time to flash Esphome
+code updates.
 
 | LED Behavior                 | Controller State (Double Press Control Button to switch states)                                           |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -63,9 +71,13 @@ Double pressing the control button while powered on will toggle between allowing
 
 ## Ultrasonic JSN-SR04T
 
-Datasheet: https://components101.com/sites/default/files/component_datasheet/JSN-SR04-Datasheet.pdf \
-![alt text](Ultrasonic.jpg "JSN-SR04T Waterproof Ultrasonic Range Finder") \
-The Ultrasonic JSN-SR04T is configured with R27 open. This causes the JSN-SR04T to operate using Trigger and Echo Pulses like an HC-SR04 Ultrasonic Distance Sensor.
+Datasheet:
+[https://components101.com/sites/default/files/component_datasheet/JSN-SR04-Datasheet.pdf](https://components101.com/sites/default/files/component_datasheet/JSN-SR04-Datasheet.pdf)
+
+![alt text](Ultrasonic.jpg "JSN-SR04T Waterproof Ultrasonic Range Finder")
+
+The Ultrasonic JSN-SR04T is configured with R27 open. This causes the JSN-SR04T to operate using trigger and echo pulses
+like an HC-SR04 ultrasonic distance sensor.
 
 ## IC References
 
@@ -74,7 +86,7 @@ The Ultrasonic JSN-SR04T is configured with R27 open. This causes the JSN-SR04T 
 ### TPL5111 - Nano-Power System Timer for Power Gating
 
 SMD Marking: ZFVX \
-https://www.ti.com/lit/ds/symlink/tpl5111.pdf?ts=1739630376626&ref_url=https%253A%252F%252Fwww.google.com%252F
+[https://www.ti.com/lit/ds/symlink/tpl5111.pdf?ts=1739630376626&ref_url=https%253A%252F%252Fwww.google.com%252F](https://www.ti.com/lit/ds/symlink/tpl5111.pdf)
 
 Power Gating of 3.3VDC to the ESP8266.\
 Hardwired to restart the controller every hour.\
@@ -83,20 +95,23 @@ Timer will cut 3.3V when DONE pin goes HIGH, will wake after 1hr.
 ### SN74LVC1G3157 - Single-Pole Double-Throw Analog Switch
 
 SMD Marking: C5F \
-Datasheet: https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf?ts=1740393486499
+Datasheet:
+[https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf?ts=1740393486499](https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf)
 
 Switches the connection to A0 (GPIO17)
+
 | SELECT (GPIO15) | A0 (GPIO17)                  |
 | --------------- | ---------------------------- |
-| LOW             | Battery Voltage*             |
+| LOW             | Battery Voltage\*            |
 | HIGH            | Temperature (MCP9700AT-E/TT) |
 
-*Battery Voltage is measured with a voltage divider circuit using R1= 10MOhm, R2= 1MOhm.
+\*Battery Voltage is measured with a voltage divider circuit using R1= 10MOhm, R2= 1MOhm.
 
 ### MCP9700AT-E/TT - Low-Power Linear Active Thermistor IC
 
 SMD Marking: AFT3 \
-Datasheet: https://ww1.microchip.com/downloads/aemDocuments/documents/MSLD/ProductDocuments/DataSheets/MCP970X-Family-Data-Sheet-DS20001942.pdf
+Datasheet:
+[https://ww1.microchip.com/downloads/aemDocuments/documents/MSLD/ProductDocuments/DataSheets/MCP970X-Family-Data-Sheet-DS20001942.pdf](https://ww1.microchip.com/downloads/aemDocuments/documents/MSLD/ProductDocuments/DataSheets/MCP970X-Family-Data-Sheet-DS20001942.pdf)
 
 ## Basic Configuration
 
@@ -104,12 +119,12 @@ Datasheet: https://ww1.microchip.com/downloads/aemDocuments/documents/MSLD/Produ
 substitutions:
   device_name: "smart-oil-gauge"
   friendly_name: "Smart Oil Gauge"
-  Samples_Before_Sleep: '3'
-  Auto_Sleep_On_dc: '2.5%'
-  Auto_Sleep_Off_dc: '87%'
-  ultrasonic_interval: '250ms'
+  Samples_Before_Sleep: "3"
+  Auto_Sleep_On_dc: "2.5%"
+  Auto_Sleep_Off_dc: "87%"
+  ultrasonic_interval: "250ms"
   tank_size: "330" # 275, 330, 500, 550, or 1000
-  tank_orientation: '1'  # 1 = Vertical,  2 = Horizontal
+  tank_orientation: "1" # 1 = Vertical,  2 = Horizontal
 
 esphome:
   name: ${device_name}
@@ -132,14 +147,16 @@ esphome:
         - switch.turn_on: TempSens_EN
 
   on_shutdown:
-    then:
-      - switch.turn_off: ultrasonic_en
-      - output.turn_off: LED_pwm
-      - if:
-          condition:
-            - switch.is_on: deep_sleep_trig
-          then:
-            - switch.turn_on: sleep_1hr
+    - priority: 800
+      then:
+        - if:
+            condition:
+              - switch.is_on: deep_sleep_trig
+            then:
+              - lambda: 'delay(50);'
+              - switch.turn_on: Done
+
+
 
 esp8266:
   board: esp_wroom_02
@@ -174,51 +191,51 @@ deep_sleep:
 globals:
   - id: Tank_Width
     type: float
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Tank_Radius
     type: float
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Tank_Height
     type: float
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Tank_Length
     type: float
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Oil_Height
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Rectangle_Height
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Arc_Height
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Rectangle_Area
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Arc_Area
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Total_Area
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Oil_In_Tank
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Max_Fill
     type: double
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Tank_Orientation
     type: float
@@ -230,7 +247,7 @@ globals:
 
   - id: Measure_Count
     type: int
-    initial_value: '0'
+    initial_value: "0"
 
   - id: Samples_Before_Sleep
     type: int
@@ -276,6 +293,13 @@ switch:
       - output.set_level:
           id: LED_pwm
           level: ${Auto_Sleep_On_dc}
+
+  - platform: gpio
+    pin: GPIO13 # Done Signal to TPL5111
+    id: Done # Use Deep_Sleep_EN
+    entity_category: "config"
+    disabled_by_default: true
+    name: "Done"
 
   - platform: template
     name: "Variable Check"
@@ -338,19 +362,19 @@ binary_sensor:
 
 sensor:
   - platform: template
-    name: 'Oil In Tank'
+    name: "Oil In Tank"
     id: Oil_In_Tank_sens
     device_class: volume_storage
     state_class: measurement
-    unit_of_measurement: 'gal'
+    unit_of_measurement: "gal"
     accuracy_decimals: 4
 
   - platform: template
-    name: 'Max Fill'
+    name: "Max Fill"
     id: Max_Fill_sens
     device_class: volume
     state_class: total
-    unit_of_measurement: 'gal'
+    unit_of_measurement: "gal"
     accuracy_decimals: 4
 
   - platform: adc
@@ -383,7 +407,7 @@ sensor:
             then:
               - sensor.template.publish:
                   id: TempC
-                  state: !lambda 'return id(ADC_Input).state;'
+                  state: !lambda "return id(ADC_Input).state;"
               - component.update: VP_Oil
               - switch.turn_off: TempSens_EN
               - delay: 1s
@@ -391,26 +415,26 @@ sensor:
             else:
               - sensor.template.publish:
                   id: Batt_V
-                  state: !lambda 'return id(ADC_Input).state;'
+                  state: !lambda "return id(ADC_Input).state;"
 
   - platform: template
-    name: 'Temperature'
+    name: "Temperature"
     id: TempC
     device_class: temperature
     state_class: measurement
     accuracy_decimals: 3
-    unit_of_measurement: '°C'
+    unit_of_measurement: "°C"
 
   - platform: template
-    name: 'Battery Voltage'
+    name: "Battery Voltage"
     id: Batt_V
     device_class: voltage
     state_class: measurement
     accuracy_decimals: 4
-    unit_of_measurement: 'V'
+    unit_of_measurement: "V"
 
   - platform: template
-    name: 'Vapor Pressure Oil'
+    name: "Vapor Pressure Oil"
     id: VP_Oil
     update_interval: never
     device_class: pressure
@@ -436,8 +460,8 @@ sensor:
 
   - platform: ultrasonic
     trigger_pin:
-        number: GPIO4
-        inverted: true
+      number: GPIO4
+      inverted: true
 
     echo_pin: GPIO5
     name: "Distance to Oil"
@@ -445,7 +469,6 @@ sensor:
     accuracy_decimals: 25
     update_interval: never # 4s
     filters:
-
       - median:
           window_size: 5
           send_every: 5
@@ -499,7 +522,6 @@ sensor:
         - script.execute: Calc_Oil_Height
 
 script:
-
   - id: Calc_Oil_Height
     then:
       - if:
@@ -557,10 +579,10 @@ script:
               - lambda: |-
                   return id(Oil_Height) < (id(Tank_Radius));
           then:
-             - lambda: |-
+            - lambda: |-
                 id(Rectangle_Height) = 0;
                 id(Arc_Height) = id(Oil_Height);
-             - script.execute: Calc_Area
+            - script.execute: Calc_Area
 
   - id: Calc_Area
     then:
@@ -592,24 +614,24 @@ script:
             return id(Total_Area) * id(Tank_Length) / 231;
       - sensor.template.publish:
           id: Oil_In_Tank_sens
-          state: !lambda 'return id(Oil_In_Tank);'
+          state: !lambda "return id(Oil_In_Tank);"
       - sensor.template.publish:
           id: Max_Fill_sens
-          state: !lambda 'return id(Max_Fill) - id(Oil_In_Tank);'
+          state: !lambda "return id(Max_Fill) - id(Oil_In_Tank);"
       - if:
           condition:
             - switch.is_on: Auto_Sleep_Disable
           then:
             - globals.set:
                 id: Measure_Count
-                value: '0'
+                value: "0"
           else:
             - globals.set:
                 id: Measure_Count
-                value: !lambda 'return id(Measure_Count) += 1;'
+                value: !lambda "return id(Measure_Count) += 1;"
             - if:
                 condition:
-                  - lambda: 'return id(Measure_Count) >= id(Samples_Before_Sleep);'
+                  - lambda: "return id(Measure_Count) >= id(Samples_Before_Sleep);"
                 then:
                   - switch.turn_on: deep_sleep_trig
       - lambda: 'ESP_LOGD("MeasureCount", "%i", id(Measure_Count));'
@@ -650,8 +672,8 @@ script:
             - component.update: Oil_Distance
             - delay: ${ultrasonic_interval}
 
- # Tank Dimensions:
- # https://www.fuelsnap.com/heating_oil_tank_charts.php
+  # Tank Dimensions:
+  # https://www.fuelsnap.com/heating_oil_tank_charts.php
 
   - id: set_tank_dimensions
     then:
@@ -688,5 +710,4 @@ script:
           }
 
           id(Tank_Radius) = id(Tank_Width)/2;
-
 ```

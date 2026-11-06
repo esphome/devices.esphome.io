@@ -9,7 +9,8 @@ difficulty: 3
 
 ## Notes
 
-- the Matter compatible version of this switch (part numbers ending in W, e.g. M5-2C-86W) is locked and cannot be flashed
+- the Matter compatible version of this switch (part numbers ending in W, e.g. M5-2C-86W) is locked and cannot be
+  flashed
 - status LED (blue) in left-most button
 - channel LEDs (red) are dimmable (PWM)
   while relays OFF; 100% bright when ON
@@ -18,44 +19,50 @@ difficulty: 3
 - in 2-gang version LED 2 to/can be
   activated separately from Relay
 
-![header](/Sonoff_M5_2gang_MB.jpg "Pin header for flashing incl. GPIO00")
+## Troubleshooting
+
+- FTDI adapters typically provide enough power to flash ESPHome onto these devices, but due to the PCB design, they do
+  not provide sufficient power to boot. This will typically present as esphome rst:0x1 (POWERON_RESET), boot:0x13
+  (SPI_FAST_FLASH_BOOT). When connected to and powered by its wall plate, it will boot normally.
+
+![header](./Sonoff_M5_2gang_MB.jpg "Pin header for flashing incl. GPIO00")
 
 ## GPIO Pinout
 
 ### 1-Gang Version
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO00 | Button 1            |
-| GPIO23 | Relay  1            |
-| GPIO19 | LED    1            |
-| GPIO05 | Status LED          |
-| GPIO18 | PWM for LED 1       |
+| Pin    | Function      |
+| ------ | ------------- |
+| GPIO00 | Button 1      |
+| GPIO23 | Relay 1       |
+| GPIO19 | LED 1         |
+| GPIO05 | Status LED    |
+| GPIO18 | PWM for LED 1 |
 
 ### 2-Gang Version
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO04 | Button 1            |
-| GPIO15 | Button 2            |
-| GPIO23 | Relay  1 / LED 1    |
-| GPIO19 | Relay  2            |
-| GPIO22 | LED    2            |
-| GPIO05 | Status LED          |
-| GPIO18 | PWM for LED 1/2     |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO04 | Button 1        |
+| GPIO15 | Button 2        |
+| GPIO23 | Relay 1 / LED 1 |
+| GPIO19 | Relay 2         |
+| GPIO22 | LED 2           |
+| GPIO05 | Status LED      |
+| GPIO18 | PWM for LED 1/2 |
 
 ### 3-Gang Version
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO04 | Button 1            |
-| GPIO00 | Button 2            |
-| GPIO15 | Button 3            |
-| GPIO23 | Relay  1 / LED 1    |
-| GPIO19 | Relay  2 / LED 2    |
-| GPIO22 | Relay  3 / LED 3    |
-| GPIO05 | Status LED          |
-| GPIO18 | PWM for LED 1/2/3   |
+| Pin    | Function          |
+| ------ | ----------------- |
+| GPIO04 | Button 1          |
+| GPIO00 | Button 2          |
+| GPIO15 | Button 3          |
+| GPIO23 | Relay 1 / LED 1   |
+| GPIO19 | Relay 2 / LED 2   |
+| GPIO22 | Relay 3 / LED 3   |
+| GPIO05 | Status LED        |
+| GPIO18 | PWM for LED 1/2/3 |
 
 ## Basic Configuration (2-Gang)
 
@@ -64,7 +71,7 @@ esphome:
   name: Sonoff M5 2gang
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -83,7 +90,7 @@ ota:
   - platform: esphome
     password: !secret ota_secret
 
-sensor:  
+sensor:
   - platform: wifi_signal
     name: "RSSI"
     id: sensor_rssi
@@ -137,8 +144,8 @@ binary_sensor:
     name: "API connected"
     id: sensor_api_connected
     internal: True
-    entity_category: 'diagnostic'
-    device_class: 'connectivity'
+    entity_category: "diagnostic"
+    device_class: "connectivity"
     lambda: return global_api_server->is_connected();
     on_press:
       - light.turn_on: led_status
@@ -177,8 +184,8 @@ light:
     output: pwm_output
     name: "LEDs"
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: 'mdi:led-outline'
-    entity_category: 'config'
+    icon: "mdi:led-outline"
+    entity_category: "config"
 ```
 
 ## Advanced Configuration (3-Gang, US Version)
@@ -237,7 +244,7 @@ substitutions:
 
 # Define the board for the compiler
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -263,14 +270,12 @@ logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: "${apikey}"
 
 # Enable OTA
 ota:
   - platform: esphome
-    safe_mode: true
-    password: !secret ota_password
+
+safe_mode:
 
 # Enable WiFi and AP for captive portal
 wifi:
@@ -329,7 +334,6 @@ button:
     name: "Restart"
     id: button_restart
 
-
 switch:
   # Physical GPIO Relay
   - platform: gpio
@@ -355,8 +359,8 @@ switch:
     id: relay_a_decoupled
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: 'mdi:link-box-outline'
-    entity_category: 'config'
+    icon: "mdi:link-box-outline"
+    entity_category: "config"
 
   # Config-only switch to decouple relay from button
   - platform: template
@@ -364,8 +368,8 @@ switch:
     id: relay_b_decoupled
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: 'mdi:link-box-outline'
-    entity_category: 'config'
+    icon: "mdi:link-box-outline"
+    entity_category: "config"
 
   # Config-only switch to decouple relay from button
   - platform: template
@@ -373,8 +377,8 @@ switch:
     id: relay_c_decoupled
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: 'mdi:link-box-outline'
-    entity_category: 'config'
+    icon: "mdi:link-box-outline"
+    entity_category: "config"
 
 output:
   # Physical GPIO PWM for off-state background brightness
@@ -396,8 +400,8 @@ binary_sensor:
     name: "API connected"
     id: sensor_api_connected
     internal: true
-    entity_category: 'diagnostic'
-    device_class: 'connectivity'
+    entity_category: "diagnostic"
+    device_class: "connectivity"
     lambda: return global_api_server->is_connected();
     on_press:
       - light.turn_off: led_status
@@ -426,8 +430,8 @@ binary_sensor:
     on_multi_click:
       # single click detection
       - timing:
-        - ON for at most 900ms
-        - OFF for at least 600ms
+          - ON for at most 900ms
+          - OFF for at least 600ms
         then:
           - homeassistant.event:
               event: esphome.on_gesture
@@ -486,8 +490,8 @@ binary_sensor:
     on_multi_click:
       # single click detection
       - timing:
-        - ON for at most 900ms
-        - OFF for at least 600ms
+          - ON for at most 900ms
+          - OFF for at least 600ms
         then:
           - homeassistant.event:
               event: esphome.on_gesture
@@ -546,8 +550,8 @@ binary_sensor:
     on_multi_click:
       # single click detection
       - timing:
-        - ON for at most 900ms
-        - OFF for at least 600ms
+          - ON for at most 900ms
+          - OFF for at least 600ms
         then:
           - homeassistant.event:
               event: esphome.on_gesture
@@ -602,6 +606,6 @@ light:
     output: pwm_output
     name: "Background Brightness"
     restore_mode: RESTORE_DEFAULT_OFF
-    icon: 'mdi:led-outline'
-    entity_category: 'config'
+    icon: "mdi:led-outline"
+    entity_category: "config"
 ```

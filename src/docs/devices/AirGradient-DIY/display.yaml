@@ -1,0 +1,19 @@
+font:
+  - file: "gfonts://Roboto"
+    id: roboto
+    size: 12
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyzµ³/
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 64x48"
+    address: 0x3C
+    lambda: |-
+      // For Celsius, uncomment the below line
+      // it.printf(0, 0, id(roboto), "%.1f°C", id(temp).state);
+      // For Fahrenheit, uncomment the below line
+      // it.printf(0, 0, id(roboto), "%.1f°F", (id(temp).state * 1.8) + 32);
+      it.printf(0, 12, id(roboto), "%.1f%% RH", id(humidity).state);
+      it.printf(0, 24, id(roboto), "%.0fppm", id(co2).state);
+      it.printf(0, 36, id(roboto), "%.0f µg/m³", id(pm25).state);

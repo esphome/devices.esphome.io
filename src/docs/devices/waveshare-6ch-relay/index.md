@@ -3,7 +3,7 @@ title: WAVESHARE-6CH-RELAY
 date-published: 2024-12-21
 type: relay
 standard: global
-board: esp32-s3
+board: esp32
 ---
 
 ![Product](./image1.jpg "Product Image")
@@ -20,7 +20,7 @@ Rail-mounted ABS case, easy to install, safe to use
 
 Each relay has COM+NO+NC exposed. Rating ≤10A 250VAC/30VDC.
 The board can be powered either via 7-36DC or via 5VDC (USB-C).
-It can bought from: https://www.waveshare.com/esp32-s3-relay-6ch.htm
+It can bought from: [https://www.waveshare.com/esp32-s3-relay-6ch.htm](https://www.waveshare.com/esp32-s3-relay-6ch.htm)
 
 ## GPIO Pinout
 
@@ -29,13 +29,17 @@ It can bought from: https://www.waveshare.com/esp32-s3-relay-6ch.htm
 ## Basic Config
 
 ```yaml
-# based on https://github.com/ryansch/esphome-config/blob/main/waveshare-esp32-s3-relay-6ch.yaml
+# Home Assistant ESPHome yaml config file for Waveshare ESP32 S3 6ch relay box
+# 04/29/2026
+# Your secrets file needs to have these entries:
+# wifi_ssid: "SSID"
+# wifi_password: "PASS"
 
 esphome:
   name: waveshare-6ch-relay
 
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   flash_size: 8MB
   framework:
     type: arduino
@@ -43,13 +47,17 @@ esp32:
 # Enable logging
 logger:
   level: DEBUG
-# Enable Home Assistant API
 api:
-    password: !secret api_password
+  actions:
+  - action: rtttl_play
+    variables:
+      song_str: string
+    then:
+      - rtttl.play:
+          rtttl: !lambda 'return song_str;'
 
 ota:
   - platform: esphome
-    password: !secret ota_password
     id: zone_controller_ota
 
 wifi:
@@ -60,6 +68,9 @@ captive_portal:
 
 web_server:
   port: 80
+
+bluetooth_proxy:
+  active: true
 
 time:
   - platform: homeassistant
@@ -81,6 +92,25 @@ binary_sensor:
     on_press:
       then:
         - button.press: restart_button
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    update_interval: 60s
+    
+text_sensor:
+  - platform: version
+    name: "Firmware Version"
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      entity_category: diagnostic
+    mac_address:
+      name: "Mac Address"
+      entity_category: diagnostic        
 
 
 switch:
@@ -112,6 +142,16 @@ switch:
       ignore_strapping_warning: true
     id: relay6
     name: Relay 6
+  - platform: template
+    name: Buzzer
+    icon: mdi:volume-high
+    turn_on_action:
+      - rtttl.play:
+          id: rtttl_buzzer
+          rtttl: 'beep:d=4,o=5,b=100:16e6'
+    turn_off_action:
+      - rtttl.stop:
+          id: rtttl_buzzer
 
 uart:
   tx_pin: GPIO17
@@ -119,16 +159,15 @@ uart:
   baud_rate: 9600
   id: modbus_uart
 
-# buzzer
 output:
   - platform: ledc
     pin: GPIO21
-    id: buzzer
+    id: buzzer_output
 
 rtttl:
-  output: buzzer
+  output: buzzer_output
   id: rtttl_buzzer
-  gain: 30%
+  gain: 40%
 
 light:
   - platform: esp32_rmt_led_strip
