@@ -1,0 +1,122 @@
+esphome:
+  name: philips-series-900
+  friendly_name: Philips Series 900
+  name_add_mac_suffix: true
+  min_version: 2026.5.3
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: 1.4.3
+    components: [philips]
+
+logger:
+  # UART0 on the ESP32-C3 is GPIO20/21 — GPIO20 is the MCU link's RX.
+  # Log over the native USB so that pin stays free.
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+uart:
+  - id: uart_mcu
+    rx_pin: GPIO20
+    tx_pin: GPIO10
+    baud_rate: 115200
+
+philips:
+  id: purifier
+  # AC0951 is the verified model. The AC0950 is the same protocol without the
+  # particulate sensor: use model: AC0950 and drop the pm2_5 and allergen_index
+  # sensors plus the standby_sensor switch, which are AC0951-only. Untested.
+  model: AC0951
+
+fan:
+  - platform: philips
+    philips: purifier
+    id: philips_fan
+    name: "Fan"
+
+sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_prefilter
+    name: "Pre-filter"
+    type: filter_clean
+  - platform: philips
+    philips: purifier
+    id: philips_hepa
+    name: "HEPA Filter"
+    type: filter_lifetime
+  - platform: philips
+    philips: purifier
+    id: philips_timer_remaining
+    name: "Timer Remaining"
+    type: timer_remaining
+  - platform: philips
+    philips: purifier
+    id: philips_pm25
+    name: "PM2.5"
+    type: pm2_5
+  - platform: philips
+    philips: purifier
+    id: philips_allergen_index
+    name: "Allergen Index"
+    type: allergen_index
+
+switch:
+  - platform: philips
+    philips: purifier
+    id: philips_child_lock
+    name: "Child Lock"
+    type: child_lock
+  - platform: philips
+    philips: purifier
+    id: philips_beep
+    name: "Beep"
+    type: beep
+  - platform: philips
+    philips: purifier
+    id: philips_standby_sensor
+    name: "Standby Sensor Monitoring"
+    type: standby_sensor
+
+select:
+  - platform: philips
+    philips: purifier
+    id: philips_display_brightness
+    name: "Display Brightness"
+    type: display_brightness
+
+number:
+  - platform: philips
+    philips: purifier
+    id: philips_sleep_timer
+    name: "Sleep Timer"
+    type: timer
+
+button:
+  - platform: philips
+    philips: purifier
+    id: philips_reset_prefilter
+    name: "Reset Pre-filter"
+    type: reset_prefilter
+  - platform: philips
+    philips: purifier
+    id: philips_reset_hepa
+    name: "Reset HEPA Filter"
+    type: reset_hepa
+
+text_sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_mcu_version
+    name: "MCU Version"
+    type: mcu_version
