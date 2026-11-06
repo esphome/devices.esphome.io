@@ -1,0 +1,27 @@
+servo:
+  - id: my_servo_v11
+    output: servo_pwm_v11
+    min_level: 3%
+    idle_level: 7.5%
+    max_level: 12%
+
+output:
+  - platform: ledc
+    id: servo_pwm_v11
+    pin: GPIO25
+    frequency: 50Hz
+
+interval:
+  - interval: 3s
+    then:
+      - servo.write:
+          id: my_servo_v11
+          level: -100%  # Approximately 0°
+      - delay: 3s
+      - servo.write:
+          id: my_servo_v11
+          level: 0%     # Approximately 90°
+      - delay: 3s
+      - servo.write:
+          id: my_servo_v11
+          level: 100%   # Approximately 180°

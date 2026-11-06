@@ -1,0 +1,38 @@
+# Touch Controller GT911
+# Configuration verified from official Elecrow code
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+  frequency: 400kHz
+
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    address: 0x5D  # GT911 backup address (IDF driver tries this first)
+    reset_pin: GPIO40
+    interrupt_pin:
+      number: GPIO41
+      mode: INPUT  # SPI ESP-Hosted Wi-Fi may conflict with this interrupt.
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    calibration:
+      x_min: 0
+      x_max: 1024
+      y_min: 0
+      y_max: 600
+    update_interval: 50ms  # Required when SPI ESP-Hosted Wi-Fi is enabled.
+    on_touch:
+      - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+    # Note: GT911 has two possible I2C addresses:
+    # Primary: 0x5D (ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS_BACKUP)
+    # Secondary: 0x14 (ESP_LCD_TOUCH_IO_I2C_GT911_ADDRESS)
+    # The driver tries backup address first, then falls back to primary
+    # I2C clock: 400 kHz (Fast Mode)

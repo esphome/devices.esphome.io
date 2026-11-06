@@ -1,0 +1,6 @@
+i2c:
+  - id: bus_a
+    sda: GPIO18
+    scl: GPIO19
+    scan: true
+    frequency: 400kHz

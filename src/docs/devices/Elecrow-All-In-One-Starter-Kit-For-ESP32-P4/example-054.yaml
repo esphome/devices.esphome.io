@@ -1,0 +1,2961 @@
+substitutions:
+  device_name: esp32-p4-elecrow-aio
+  friendly_name: "ESP32-P4 Elecrow All-In-One"
+  light_recessed: "\U000F179B"
+  wall_sconce_round: "\U000F0748"
+  gas_burner: "\U000F1A1B"
+  home_icon: "\U000F02DC"
+  menu_left: "\U000F0A02"
+  menu_right: "\U000F035F"
+  close: "\U000F0156"
+  delete: "\U000F01B4"
+  backspace: "\U000F006E"
+  check: "\U000F012C"
+  arrow_down: "\U000F004B"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  includes:
+    - custom.h
+    - lvgl_detect_image_format.h
+  platformio_options:
+    build_flags:
+      - -DLIBSSH2_MBEDTLS
+      - -DHAVE_CONFIG_H
+      - -DESPHOME_STB_IMAGE_IMPL
+  includes_c:
+    - stb_image_impl.h
+
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          auto files = id(sd_card).list_directory("/", 0);
+          ESP_LOGI("sdcard", "SD boot: %d files", files.size());
+      - lambda: |-
+          lvgl_keyboard_init(
+            id(onscreen_kb)->obj,
+            id(terminal_input),
+            []() { id(osk_enter_pressed) = true; },
+            []() { id(ssh_client)->handle_key(0x03); }
+          );
+          id(ssh_client)->set_lvgl_callback([](const std::string &text) {
+            lvgl_textarea_set_text(id(terminal_output), text.c_str());
+            lvgl_scroll_to_bottom(id(terminal_output));
+          });
+      - lvgl.label.update:
+          id: sd_label
+          text: !lambda |-
+            auto files = id(sd_card).list_directory("/", 0);
+            return str_sprintf("SD: %d files", (int)files.size());
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    #log_level: VERBOSE
+    #version: 6.13.0
+    #platform_version: 55.3.37
+    advanced:
+      enable_idf_experimental_features: true
+      disable_vfs_support_dir: false
+      include_builtin_idf_components:
+        - fatfs
+        - wear_levelling
+    sdkconfig_options:
+      #CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+      CONFIG_ESP_H264_DUAL_TASK: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_ESP32_SPIRAM_SUPPORT: "y"
+      CONFIG_SPIRAM_USE_MALLOC: "y"
+      CONFIG_FATFS_LFN_STACK: "y"
+
+      CONFIG_VFS_SUPPORT_IO: "y"
+      CONFIG_VFS_MAX_COUNT: "16"
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"
+      #CONFIG_ESP_MAIN_TASK_STACK_SIZE: "65536"
+      CONFIG_ESP_TIMER_TASK_STACK_SIZE: "4096"
+      #CONFIG_ESP_TIMER_TASK_STACK_SIZE: "8192"
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+      CONFIG_ESP_TASK_LOOP_STACK_SIZE: "16384"
+      CONFIG_FATFS_LFN_HEAP: "y"
+      DCONFIG_USE_AUDIO_AAC_SUPPORT: "y"
+      #DCONFIG_ESP_JPG_DECODE_ENABLE: "y"
+      #DCONFIG_ESPHOME_ENABLE_PNGLE: "1"
+      CONFIG_SPIRAM_SPEED_200M: "y"  # ← NOUVEAU: 200 MHz au lieu de défaut
+      CONFIG_SPIRAM_SPEED: "200"
+      CONFIG_LWIP_SOCKET: "y"
+      #CONFIG_LWIP_SO_RCVBUF: "y"
+      CONFIG_LWIP_MAX_SOCKETS: "16"
+      #CONFIG_HTTPD_MAX_REQ_HDR_LEN: "800"
+      #CONFIG_HTTPD_WS_SUPPORT: "y"
+  engineering_sample: true
+
+safe_mode:
+  disabled: true
+
+external_components:
+
+#### uncomment to use old external component to use ***
+  - source:
+      # https://github.com/esphome/esphome/pull/14933
+      type: git
+      url: https://github.com/kahrendt/esphome
+      ref: 89dd9fb3173a6ae7d5c730fa671f6089d7c9a2b8
+    components: [sendspin, generic_image]
+
+#### leave alone ***
+  - source:
+      type: git
+      url: https://github.com/esphome/esphome
+      ref: 57397a318a2e08ea4c44bb7836358a7da20985f2
+    components: [audio, audio_http] #, audio_file
+    refresh: 0s
+
+  - source:
+      type: git
+      url: https://github.com/NonaSuomy/esphome
+      ref: lsm6ds_test_001
+    components: [lsm6ds]
+    refresh: always
+
+  - source: github://pr#15517
+    components: [i2s_audio]
+
+  - source: github://swoboda1337/esphome@esp32-hosted-spi
+    components: [esp32_hosted]
+
+  - source:
+      type: local
+      path: components
+    components: [lvgl, image, font, esp32_rmt_led_strip, usb_hidx, sd_mmc_card, microssh]
+
+  - source:
+      type: git
+      url: https://github.com/youkorr/test2_esp_video_esphome
+      ref: main
+    components:
+      - esp_video
+      - esp_cam_sensor
+      - webdavbox3
+      - storage
+      - lvgl_camera_display
+      - simple_video_player
+      - network_camera
+      - face_detection
+    refresh: always
+
+#  - source: github://guillempages/esphome@tm1637-brightness
+#    components: [online_image]
+
+sd_mmc_card:
+  id: sd_card
+  clk_pin: GPIO43
+  cmd_pin: GPIO44
+  data0_pin: GPIO39
+  #data1_pin: GPIO40
+  #data2_pin: GPIO41
+  #data3_pin: GPIO42
+  mode_1bit: true
+  slot: 1
+
+storage:
+  platform: sd_direct
+  id: my_storage
+  sd_component: sd_card
+  root_path: "/sdcard"
+
+#frigate: "http://home-assistant.local:8123/api/frigate/frigate/notifications/1775568754.477969-9focpa/snapshot.jpg"
+
+http_request:
+  verify_ssl: false
+
+
+online_image:
+  - url: "http://home-assistant.local:8123/api/frigate/frigate/notifications/1775568754.477969-9focpa/snapshot.jpg"
+    format: JPG
+    id: cctv_img
+    byte_order: little_endian
+    type: RGB565
+    resize: 1000x600
+    #on_download_finished:
+      #- lvgl.image.update:
+          #id: cctv_img_lvgl
+          #src: cctv_img
+  # - url: "http://home-assistant.local:8123/local/placeholder.png"
+  #   format: PNG
+  #   id: album_art_img
+  #   byte_order: little_endian
+  #   type: RGB565
+  #   resize: 80x80
+  #   on_download_finished:
+  #     then:
+  #       - lvgl.image.update:
+  #           id: album_art
+  #           src: album_art_img
+  #   on_error:
+  #     then:
+  #       - lvgl.image.update:
+  #           id: album_art
+  #           src: cat_img
+  - url: "http://home-assistant.local:8123/local/placeholder.png"
+    format: JPG  # Changed to JPG as it is more common for album art
+    id: album_art_img
+    byte_order: little_endian
+    type: RGB565
+    resize: 80x80
+    on_download_finished:
+      then:
+        - lvgl.image.update:
+            id: album_art
+            src: album_art_img
+    on_error:
+      then:
+        # Fallback to a local image if download fails
+        - lvgl.image.update:
+            id: album_art
+            src: cat_img
+
+
+# PSRAM
+psram:
+  mode: hex
+  speed: 200MHz
+
+microssh:
+  id: ssh_client
+  hostname: "REPLACE_ME"
+  port: "REPLACE_ME"
+  username: "REPLACE_ME"
+  private_key: "REPLACE_ME"
+  passphrase: "REPLACE_ME"
+  default_command: "REPLACE_ME"
+  speaker_id: speaker_output
+
+usb_host:
+  enable_hubs: true
+
+usb_hidx:
+  hub: true
+  keyboard:
+    layout: us
+  gamepad:
+    device_id: gamepad_main
+    type: xbox360 #xbox360 #generic
+
+# Logger
+logger:
+  level: info
+  hardware_uart: UART0
+
+# Home Assistant API
+api:
+  encryption:
+    key: "REPLACE_ME"
+
+# OTA Updates
+ota:
+  - platform: esphome
+
+# Ethernet Configuration (RMII definition)
+ethernet:
+  type: IP101
+  mdc_pin: GPIO31
+  mdio_pin: GPIO52
+  power_pin: GPIO51
+  clk:
+    mode: CLK_EXT_IN
+    pin: GPIO50
+  phy_addr: 1
+  use_address: "REPLACE_ME"
+  on_connect:
+    then:
+      - lvgl.label.update:
+          id: eth_status_icon
+          text: "\U000F0200"
+          text_color: 0x00FF00
+  on_disconnect:
+    then:
+      - lvgl.label.update:
+          id: eth_status_icon
+          text: "\U000F1CD1"
+          text_color: 0xFF0000
+
+# WiFi via Wireless Module (SPI interface)
+# IMPORTANT: This kit uses SPI wireless modules (nRF24L01+, SX1262, ESP32-C6/H2 via SPI)
+# NOT SDIO like the CrowPanel Advance
+# See wireless module documentation for specific configuration
+
+# Example for ESP32-C6 module (if using SPI-based wireless)
+
+# esp32_hosted:
+#   variant: ESP32C6
+#   active_high: true
+
+#   # SPI Full Duplex (Don't use half-duplex)
+#   type: spi
+#   reset_pin: GPIO2 # EN Wireless Module Reset
+#   cs_pin: GPIO14 #19 Wireless Module CS
+#   clk_pin: GPIO15 #18 Wireless Module CLK
+#   mosi_pin: GPIO7 # 20 Wireless Module MOSI
+#   miso_pin: GPIO9 # 21 Wireless Module MISO
+#   data_ready_pin: GPIO10 # 22 Wireless Module Ready
+#   handshake_pin: GPIO11 # 23 Wireless Module Handshake
+
+  # SDIO
+#  sdio_frequency: 10MHz
+#  reset_pin: GPIO2
+#  cmd_pin: GPIO15
+#  clk_pin: GPIO14
+#  d0_pin: GPIO7
+#  d1_pin: GPIO9
+#  d2_pin: GPIO10
+#  d3_pin: GPIO11
+
+# wifi:
+#   ssid: "REPLACE_ME"
+#   password: "REPLACE_ME"
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "${device_name} Fallback"
+#     password: "REPLACE_ME"
+#   on_connect:
+#     then:
+#       - lvgl.label.update:
+#           id: wifi_status_icon
+#           text: "\U000F0928"
+#           text_color: 0x00FF00
+#   on_disconnect:
+#     then:
+#       - lvgl.label.update:
+#           id: wifi_status_icon
+#           text: "\U000F0929"
+#           text_color: 0xFF0000
+#   on_sta_connected:
+#     then:
+#       - lambda: |-
+#           int rssi = WiFi.RSSI();
+#           const char* icon;
+#           if (rssi >= -55)      icon = "\U000F0928"; // full
+#           else if (rssi >= -67) icon = "\U000F0925"; // medium-high
+#           else if (rssi >= -78) icon = "\U000F0922"; // medium-low
+#           else                  icon = "\U000F091F"; // low
+#           lv_label_set_text(id(wifi_status_icon)->obj, icon);
+#           lv_obj_set_style_text_color(id(wifi_status_icon)->obj, lv_color_hex(0x00FF00), LV_PART_MAIN);
+
+# captive_portal:
+
+# update:
+#   - platform: esp32_hosted
+#     path: network_adapter.bin
+#     sha256: 622980747c593d340e29fc08221da6bc6dd64b8ee7d7773b75796b17de7ecb3f
+#     id: esp32update
+#     on_update_available:
+#       - lvgl.label.update:
+#           id: version_label
+#           text: "Update Available!"
+#           text_color: 0xFFFF00
+
+# button:
+#   - platform: template
+#     name: "Update ESP32-C6 Firmware"
+#     on_press:
+#       - lambda: |-
+#           printf("Pressed!");
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "America/Toronto" # Adjusted for your likely location
+    on_time:
+      - seconds: 0
+        then:
+          - lvgl.label.update:
+              id: clock_label
+              text: !lambda 'return id(sntp_time).now().strftime("%H:%M");'
+          - lvgl.label.update:
+              id: date_label
+              text: !lambda 'return id(sntp_time).now().strftime("%Y-%m-%d");'
+
+# LDO Regulators - both required (LDO3 for DSI PHY, LDO4 for 3.3V peripherals)
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+  - channel: 4
+    voltage: 2.5V
+
+lsm6ds:
+  id: imu
+  i2c_id: bsp2_bus
+  address: 0x6B
+  accel_range: 2G
+  gyro_range: 250DPS
+  accel_odr: 26HZ
+  gyro_odr: 26HZ
+  update_interval: 100ms
+
+i2c:
+  # Camera
+  - id: bsp_bus
+    sda: GPIO45
+    scl: GPIO46
+    frequency: 400kHz
+  # Light Sensor, Humidity/Temperature Sensor, Touch Screen
+  - id: bsp2_bus
+    sda: GPIO18
+    scl: GPIO19
+    frequency: 400kHz
+
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    i2c_id: bsp2_bus
+    address: 0x5D  # GT911 backup address (IDF driver tries this first)
+    reset_pin: GPIO40
+    interrupt_pin:
+      number: GPIO41
+      # SPI ESP32_Hosted WiFi may conflict with this interrupt.
+      mode: INPUT
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
+    calibration:
+      x_min: 0
+      x_max: 1024
+      y_min: 0
+      y_max: 600
+    update_interval: 50ms # If you use #mode: INPUT for SPI ESP32_Hosted WiFi you need to set this.
+    on_touch:
+      - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+display:
+  - platform: mipi_dsi
+    id: main_display
+    model: CUSTOM
+    reset_pin:
+      number: GPIO05
+      inverted: false
+    rotation: 0
+    #show_test_card: true
+    auto_clear_enabled: false
+    lanes: 2
+    lane_bit_rate: 1000Mbps
+    color_order: rgb
+    #invert_colors: true
+
+    pclk_frequency: 51MHz
+    dimensions:
+      width: 1024
+      height: 600
+    hsync_back_porch: 160
+    hsync_pulse_width: 70
+    hsync_front_porch: 160
+    vsync_back_porch: 23
+    vsync_pulse_width: 10
+    vsync_front_porch: 12
+    init_sequence:
+      - [0xB2, 0x10] # PAD_CONTROL register: configures the DSI pad for 2-lane operation (0x10 = 2 lanes)
+      - [0x80, 0x8B] # DSI timing/PLL register, sets lane speed or clock divider parameter
+      - [0x81, 0x78] # DSI timing register, typically horizontal timing or PLL multiplier
+      - [0x82, 0x84] # DSI timing register, typically vertical timing or PLL divider
+      - [0x83, 0x88] # DSI timing register, front/back porch or sync width parameter
+      - [0x84, 0xA8] # DSI timing register, another porch/sync parameter
+      - [0x85, 0xE3] # DSI timing register, likely horizontal active or blanking period
+      - [0x86, 0x88] # DSI timing register, last of the timing chain parameters
+      # MIPI DCS Sleep Out command; wakes the panel for normal operation.
+      - [0x11]
+
+esp_video:
+  i2c_id: bsp_bus
+  xclk_pin: GPIO30
+  xclk_freq: 24000000
+  enable_jpeg: true
+  enable_isp: true
+  use_heap_allocator: false
+
+esp_cam_sensor:
+  id: sc2336_cam
+  i2c_id: bsp_bus
+  sensor_type: SC2336         #"sensor_type" au lieu de "sensor"
+  resolution: "1280x720"          # , 1024x600 ,vga
+  pixel_format: "RGB565"      # Zero-copy
+  framerate: 30
+  jpeg_quality: 15
+  mirror_x: false    # Flip horizontal (hardware)
+  mirror_y: false      # Flip vertical
+  rotation: 0          # 0/90/180/270°
+  crop_offset_x: 0     # Crop pixels from left
+
+lvgl_camera_display:
+  id: camera_display
+  camera_id: sc2336_cam
+  canvas_id: camera_canvas
+  update_interval: 33ms
+  #face_detection_id: face_detect
+  #yolo11_detection_id: yolo_detect
+
+output:
+  - platform: ledc
+    pin: GPIO20
+    id: backlight_pwm
+    frequency: 30000Hz  # IDF default is 30kHz (CONFIG_BLIGHT_PWM_Hz)
+  - platform: gpio
+    pin: GPIO06
+    id: led_06_output
+  - platform: gpio
+    pin: GPIO27
+    id: led_27_output
+  - platform: ledc
+    id: servo_pwm
+    pin: GPIO25
+    frequency: 50Hz
+
+servo:
+  - id: servo_id
+    output: servo_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+
+  # Lesson 4 WS2814A LED
+  - platform: esp32_rmt_led_strip
+    id: rgb_leds
+    name: "RGB LEDs"
+    chipset: WS2814
+    pin:
+      number: GPIO8
+    num_leds: 1
+    rgb_order: WRGB
+    is_wrgb: true
+    color_interlock: true
+    # bit0_high: 400ns
+    # bit0_low: 900ns
+    # bit1_high: 600ns
+    # bit1_low: 700ns
+    # reset_low: 300us
+    rmt_symbols: 192
+    default_transition_length: 0s
+
+# UPDN=0 (normal vertical), SHLR=1 (mirrored horizontal) per IDF gpio_set_level calls
+switch:
+  - platform: gpio
+    pin: GPIO42
+    name: "Relay"
+    id: relay_switch_hw
+  - platform: gpio
+    pin: GPIO32
+    name: "Display UPDN"
+    id: display_updn
+    internal: true
+    restore_mode: RESTORE_DEFAULT_OFF   # UPDN = 0
+
+  - platform: gpio
+    pin: GPIO33
+    name: "Display SHLR"
+    id: display_shlr
+    internal: true
+    restore_mode: RESTORE_DEFAULT_ON    # SHLR = 1
+  - platform: template
+    name: "LVGL Camera Display"
+    id: lvgl_display_enable_switch
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    turn_on_action:
+      - esp_cam_sensor.start_streaming:
+          id: sc2336_cam
+      - lambda: |-
+          id(camera_display).set_enabled(true);
+    turn_off_action:
+      - lambda: |-
+          id(camera_display).set_enabled(false);
+      - esp_cam_sensor.stop_streaming:
+          id: sc2336_cam
+
+lvgl:
+  id: lvgl_component
+  use_ppa: true
+  buffer_size: 0.25
+  color_depth: 16
+  byte_order: little_endian
+  default_font: roboto20
+  log_level: WARN
+
+  msgboxes:
+    - id: simple_box
+      title: Simple
+      body: ""
+      close_button: true
+    - id: message_box
+      close_button: true
+      title: Messagebox
+      bg_color: 0xffff
+      body:
+        text: This is a sample messagebox
+        bg_color: 0x808080
+      #button_style:
+      #  bg_color: 0x00FF00
+      buttons:
+        - id: msgbox_button
+          text: Button
+          on_click:
+            lvgl.widget.show: simple_box
+        - id: msgbox_apply
+          text: "Close"
+          on_click:
+            then:
+              - lvgl.widget.hide: message_box
+  on_idle:
+    - timeout: 10s
+      then:
+        - logger.log: idle timeout
+        - if:
+            condition:
+              lvgl.is_idle:
+                timeout: !lambda return 5000;
+            then:
+              - logger.log: LVGL is idle
+    - timeout: 15s
+      then:
+        - logger.log: idle 15s timeout
+
+      #- lvgl.pause:
+      #- light.turn_off:
+      #    id: display_backlight
+      #    transition_length: 5s
+  bottom_layer:
+    bg_image_src: background_main
+    bg_color: color_back
+  #bg_opa: TRANSP
+
+  gradients:
+    - id: color_bar
+      direction: hor
+      #dither: none
+      stops:
+        -
+          color: 0xFF0000
+          position: 0
+        -
+          color: 0xFFFF00
+          position: 42
+        -
+          color: 0x00FF00
+          position: 84
+        -
+          color: 0x00FFFF
+          position: 127
+        -
+          color: 0x0000FF
+          position: 169
+        -
+          color: 0xFF00FF
+          position: 212
+        -
+          color: 0xFF0000
+          position: 255
+
+# --- GLOBAL STYLES ---
+  style_definitions:
+    - id: main_bg_style
+      bg_opa: 0%
+      pad_all: 0
+      border_width: 0
+
+    - id: hud_text
+      text_color: 0x00D4FF  # Neon Cyan
+      text_font: roboto20
+
+    - id: label_title
+      text_font: roboto20
+      text_color: 0x00D4FF
+
+    - id: transparent_card
+      bg_opa: 0%
+      border_width: 0
+      pad_all: 10
+
+    - id: sensor_label
+      text_color: 0x00D4FF
+      text_font: roboto20
+      align: LV_ALIGN_BOTTOM_RIGHT
+
+    - id: transparent_matrix
+      bg_opa: 0%
+      border_width: 0
+      pad_all: 0
+      text_color: 0x00D4FF
+      text_font: roboto20
+
+    - id: matrix_btn_style
+      bg_opa: 0%
+      border_width: 1
+      border_color: 0x00D4FF
+      text_color: 0x00D4FF
+      radius: 4
+
+    - id: card_style # Used for nested boxes like Voice Assistant
+      bg_color: 0x222222
+      bg_opa: 30%
+      radius: 10
+      border_width: 1
+      border_color: 0x444444
+
+    - id: mag_style_off
+      bg_color: 0x444444
+      border_color: 0x444444
+      border_width: 2
+      radius: 20
+
+    - id: header_footer
+      bg_opa: 0%            # Transparent background
+      border_width: 0
+      text_color: 0x00D4FF  # Neon Cyan
+      text_font: helv20
+  theme:
+    arc:
+      scroll_on_focus: true
+    slider:
+      scroll_on_focus: true
+    button:
+      text_font: roboto10
+      scroll_on_focus: true
+      border_width: 2
+      border_side: [left, top]
+      outline_pad: 6
+      text_color: 0x00D4FF
+      checked:
+        text_color: 0x00D4FF
+      pressed:
+        border_color: 0xFF0000
+        text_color: 0x00D4FF
+      focused:
+        border_color: 0x00FF00
+    checkbox:
+      border_color: 0xC0C0C0
+      indicator:
+        text_font: montserrat_14
+      checked:
+        bg_color: 0xC0C0C0
+
+
+  top_layer:
+    text_font: helv20
+    widgets:
+      - buttonmatrix:
+        width: 100%
+        height: 10%
+        y: 17
+        align: bottom_mid
+        id: top_layer
+        styles: header_footer
+        items:
+          styles: header_footer
+        rows:
+          - buttons:
+              - id: top_prev
+                text: "${menu_left}"
+                width: 1
+                on_click:
+                  lvgl.page.previous:
+              - id: top_home
+                text: "${home_icon}"
+                width: 1
+                on_click:
+                  then:
+                    lvgl.page.show: main_page
+              - id: top_next
+                text: "${menu_right}"
+                width: 1
+                on_click:
+                  lvgl.page.next:
+
+# --- PAGE CONFIGURATION ---
+  pages:
+    - id: main_page
+      styles: main_bg_style
+      width: 1024
+      height: 600
+      pad_all: 0
+      text_color: 0x00D4FF
+      widgets:
+        # --- LAYER 0: BACKGROUND ---
+        - image:
+            id: bg_canvas
+            src: background_main
+            width: 1024
+            height: 600
+
+        # --- HEADER ---
+        - obj:
+            height: 60
+            width: 100%
+            bg_opa: 0%
+            widgets:
+              # MAGNETIC SENSOR ICON
+              - label:
+                  id: mag_icon
+                  x: 32
+                  y: 0
+                  align: TOP_LEFT
+                  text_font: roboto20
+                  text: "\U000F0347"
+                  text_color: 0x444444
+              # MOTION SENSOR ICON
+              - label:
+                  id: motion_icon
+                  x: 56
+                  y: 0
+                  align: TOP_LEFT
+                  text_font: roboto20
+                  text: "\U000F0583"
+                  text_color: 0x444444
+              - label: {id: clock_label, text: "21:22", align: RIGHT_MID, x: -125, styles: hud_text}
+              - label: {text: "CONTROL CENTER", align: CENTER, styles: hud_text}
+              - label: {id: date_label, text: "2026-04-03", align: RIGHT_MID, x: -8, styles: hud_text}
+              - label:
+                  id: nrf_status_icon
+                  x: -350
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F1119"
+                  text_color: 0x666666
+              - label:
+                  id: bluetooth_status_icon
+                  x: -325
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F00AF"
+                  text_color: 0x666666
+              - label:
+                  id: meshtastic_status_icon
+                  x: -300
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F043A"
+                  text_color: 0x666666
+              - label:
+                  id: matter_status_icon
+                  x: -275
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F0AE5"
+                  text_color: 0x666666
+              - label:
+                  id: zigbee_status_icon
+                  x: -250
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F0D41"
+                  text_color: 0x666666
+              - label:
+                  id: wifi_status_icon
+                  x: -225
+                  y: 0
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F0929"
+                  text_color: 0x666666
+              - label:
+                  id: eth_status_icon
+                  x: -200
+                  y: 0
+                  styles: hud_text
+                  align: RIGHT_MID
+                  text_font: roboto20
+                  text: "\U000F1CD1"
+                  text_color: 0xFF0000
+
+        # --- LEFT COLUMN ---
+        - obj:
+            x: 25
+            y: 77
+            width: 265
+            height: 498
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - label: {text: "VOICE ASSISTANT", x: -15, y: -5, styles: label_title, align: TOP_MID}
+              - obj:
+                  y: 35
+                  width: 100%
+                  height: 80
+                  styles: card_style
+                  widgets:
+                    - label:
+                        id: voice_text
+                        text: "Listening..."
+                        align: CENTER
+                        styles: hud_text
+                        long_mode: WRAP
+                        width: 100%
+              # --- POWER / RELAY CONTROL ---
+              - obj:
+                  x: -8
+                  y: 115
+                  width: 265
+                  height: 100
+                  styles: transparent_card
+                  widgets:
+                    - label: {text: "RELAY CONTROL", x: -10, y: 0, align: TOP_MID, styles: hud_text}
+                    - switch:
+                        id: relay_switch
+                        x: -10
+                        y: 10
+                        align: CENTER
+                        width: 60
+                        height: 30
+                        bg_color: 0x333333
+                        on_value:
+                          then:
+                            - lambda: |-
+                                if (x) {
+                                  id(relay_switch_hw).turn_on();
+                                } else {
+                                  id(relay_switch_hw).turn_off();
+                                }
+              - label: {text: "SERVO CONTROL", x: 0, y: 210, styles: label_title, align: TOP_MID}
+              - arc:
+                  id: servo_control
+                  x: 45
+                  y: 240
+                  width: 150
+                  height: 150
+                  min_value: -100
+                  max_value: 100
+                  value: 0
+                  start_angle: 120
+                  end_angle: 60
+                  bg_color: 1973790
+                  arc_color: 255
+                  adjustable: true
+                  on_value:
+                    then:
+                      - lambda: |-
+                          float level = (float)x / 100.0f;
+                          id(servo_id).write(level);
+                      - lvgl.label.update:
+                          id: servo_angle_label
+                          text: !lambda 'return str_sprintf("%d°", x);'
+                  widgets:
+                    - label:
+                      id: servo_angle_label
+                      text: "0°"
+                      text_font: roboto20
+                      align: CENTER
+                      text_color: 0x00D4FF
+              - label: {text: "SYSTEM STATUS", y: 390, align: TOP_MID, styles: hud_text}
+              - label: {id: wifi_sig, text: "WiFi: -65dBm", x: 0, y: 420, styles: hud_text}
+              - label: {id: eth_status, text: "ETH: OK", x: 0, y: 445, styles: hud_text}
+
+        # --- CENTER COLUMN ---
+        - obj:
+            x: 300
+            y: 77
+            width: 455
+            height: 235
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - label: {text: "LIVE FEED", x: -125, y: -5, styles: label_title, align: TOP_MID}
+              - canvas:
+                  id: camera_canvas
+                  width: 320
+                  height: 180
+                  x: 5
+                  y: 35
+                  bg_color: 0x4682B4
+                  border_width: 0
+                  pad_all: 0
+              - button:
+                  id: start_streaming
+                  width: 70
+                  height: 45
+                  x: 345
+                  y: 55
+                  bg_color: 0x00CC44
+                  bg_opa: COVER
+                  radius: 8
+                  scroll_on_focus: false
+                  on_click:
+                    then:
+                      - lambda: |-
+                          if (id(sc2336_cam).start_streaming()) {
+                            lvgl_set_bg_color(id(camera_canvas), 0x000000, 0);
+                            id(camera_display).configure_canvas(id(camera_canvas));
+                          }
+                  widgets:
+                    - label: {text: "START", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+              - button:
+                  id: stop_streaming
+                  width: 70
+                  height: 45
+                  x: 345
+                  y: 110
+                  bg_color: 0xFF4444
+                  bg_opa: COVER
+                  radius: 8
+                  scroll_on_focus: false
+                  on_click:
+                    then:
+                      - lambda: |-
+                          id(sc2336_cam).stop_streaming();
+                          lvgl_set_bg_color(id(camera_canvas), 0x4682B4, 0);
+                  widgets:
+                    - label: {text: "STOP", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+              - button:
+                  width: 70
+                  height: 30
+                  x: 345
+                  y: 165
+                  bg_color: 0x224488
+                  bg_opa: COVER
+                  radius: 8
+                  on_click:
+                    then:
+                      - lvgl.page.show: camera_page
+                  widgets:
+                    - label: {text: "FULL\nSCREEN", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+
+        - obj:
+            x: 300
+            y: 323
+            width: 455
+            height: 155
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - label: {text: "MEDIA & STORAGE", x: -125, y: -5, styles: label_title, align: TOP_MID}
+              - image:
+                  id: album_art
+                  src: album_art_img
+                  x: 15
+                  y: 35
+                  width: 80
+                  height: 80
+                  radius: 5
+              - label: {id: track_name, text: "Idle", x: 110, y: 25, styles: hud_text}
+              - label: {id: artist_name, text: "NonaSuomy", x: 110, y: 48, text_font: roboto10, styles: hud_text}
+              - buttonmatrix:
+                  id: media_controls
+                  x: 110
+                  y: 68
+                  width: 180
+                  height: 38
+                  styles: transparent_matrix
+                  text_color: 0x00D4FF
+                  items:
+                    styles: matrix_btn_style
+                  rows:
+                    - buttons: [{text: "\U000F04AE"}, {text: "\U000F040A"}, {text: "\U000F04AD"}]
+                  on_click:
+                    then:
+                      - lambda: |-
+                          if (x == 1) {
+                            ESP_LOGI("MEDIA", "Play/Pause Toggled");
+                          }
+              - bar: {id: music_progress, width: 85%, height: 6, align: BOTTOM_MID, y: -8, value: 45}
+              - slider:
+                  id: volume_slider
+                  x: -10
+                  y: 35
+                  width: 12
+                  height: 90
+                  align: TOP_RIGHT
+                  min_value: 0
+                  max_value: 100
+                  value: 60
+                  on_value:
+                    then:
+                      - media_player.volume_set:
+                          id: speaker_player
+                          volume: !lambda return x / 100.0;
+
+        - obj:
+            x: 300
+            y: 488
+            width: 455
+            height: 87
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - label:
+                  id: sd_status_icon
+                  text: "\U000F07DC"
+                  x: 8
+                  y: 5
+                  text_font: roboto20
+                  text_color: 0x00FF00
+              - label: {id: sd_label, text: "SD: Checking...", x: 35, y: 8, styles: hud_text}
+              - bar: {id: sd_usage_bar, width: 200, height: 8, x: 35, y: 30, value: 0}
+              - label: {text: "WEBDAV:", x: 250, y: -10, styles: hud_text}
+              - label: {id: webdav_status, text: "--", x: 320, y: -10, text_color: 0x888888, styles: hud_text}
+              - label: {text: "HTTP-FS:", x: 250, y: 10, styles: hud_text}
+              - label: {id: http_status, text: "--", x: 330, y: 10, text_color: 0x888888, styles: hud_text}
+              - button:
+                  width: 80
+                  height: 25
+                  align: BOTTOM_RIGHT
+                  x: -5
+                  y: 0
+                  widgets:
+                    - label: {text: "REMOUNT", align: CENTER, text_font: roboto10}
+                  on_click:
+                    then:
+                      - lambda: |-
+                          auto files = id(sd_card).list_directory("/", 0);
+                          ESP_LOGI("STORAGE", "SD remount: %d files", files.size());
+                      - lvgl.label.update:
+                          id: sd_label
+                          text: !lambda |-
+                            auto files = id(sd_card).list_directory("/", 0);
+                            return str_sprintf("SD: %d files", (int)files.size());
+              - button:
+                  width: 80
+                  height: 25
+                  align: BOTTOM_RIGHT
+                  x: -90
+                  y: 0
+                  widgets:
+                    - label: {text: "EJECT", align: CENTER, text_font: roboto10}
+                  on_click:
+                    then:
+                      - lambda: |-
+                          id(sd_card).unmount();
+                      - lvgl.label.update:
+                          id: sd_label
+                          text: "SD: Ejected"
+
+        # --- RIGHT COLUMN ---
+        - obj:
+            x: 770
+            y: 77
+            width: 230
+            height: 305
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - label: {text: "ENVIRONMENT", y: -5, align: TOP_MID, styles: hud_text}
+              - label:
+                  id: temperature_label
+                  text: "--.-°C"
+                  y: 40
+                  align: TOP_MID
+                  text_font: space40
+                  styles: hud_text
+              - label: {id: humidity_label, text: "--.-%", y: 90, align: TOP_MID, styles: hud_text}
+              - label: {id: light_label, text: "LIGHT: -- lx", y: 120, align: TOP_MID, styles: hud_text}
+              - label: {id: distance_label, text: "DIST: --- cm", y: 145, align: TOP_MID, styles: hud_text}
+              - label: {id: gas_status_label, text: "Air Quality: Clean", y: 170, align: TOP_MID, styles: hud_text}
+              - bar:
+                  id: gas_bar
+                  width: 90%
+                  height: 15
+                  align: TOP_MID
+                  y: 195
+                  value: 0
+              - label:
+                  id: accel_data
+                  text: "X:0.0 Y:0.1 Z:9.8"
+                  align: TOP_LEFT
+                  x: 0
+                  y: 220
+                  text_font: space16
+                  styles: hud_text
+              - label:
+                  id: gyro_data
+                  text: "P:0.0 R:0.0 Y:0.0"
+                  align: TOP_LEFT
+                  x: 0
+                  y: 240
+                  text_font: space16
+                  styles: hud_text
+              - label:
+                  id: imu_temp_label
+                  text: "IMU Temp: --.-°C"
+                  align: TOP_LEFT
+                  x: 0
+                  y: 260
+                  text_font: space16
+                  styles: hud_text
+
+        - obj:
+            x: 770
+            y: 394
+            width: 230
+            height: 180
+            border_width: 2
+            styles: transparent_card
+            widgets:
+              - obj: {id: led_red, width: 15, height: 15, radius: 10, bg_color: 0x440000, x: 0, y: 0}
+              - obj: {id: led_yellow, width: 15, height: 15, radius: 10, bg_color: 0x444400, x: 20, y: 0}
+              - label:
+                  text: INPUT MATRIX
+                  y: -5
+                  align: TOP_MID
+                  styles: hud_text
+              - obj: {id: led_green, width: 15, height: 15, radius: 10, bg_color: 0x004400, x: 170, y: 0}
+              - obj: {id: led_blue, width: 15, height: 15, radius: 10, bg_color: 0x000044, x: 190, y: 0}
+              - buttonmatrix:
+                  id: adc_btns_view
+                  width: 210
+                  height: 130
+                  align: BOTTOM_MID
+                  y: 0
+                  styles: transparent_matrix
+                  text_color: 0x00D4FF
+                  items:
+                    styles: matrix_btn_style
+                  rows:
+                    - buttons:
+                        - text: "\U000F005B"
+                        - text: "\U000F005D"
+                        - text: "\U000F005C"
+                    - buttons:
+                        - text: "\U000F004D"
+                        - text: "\U000F0741"
+                        - text: "\U000F0054"
+                    - buttons:
+                        - text: "\U000F0042"
+                        - text: "\U000F0045"
+                        - text: "\U000F0043"
+
+    - id: camera_page
+      bg_color: 0x000000
+      widgets:
+        - canvas:
+            id: camera_canvas_fs
+            width: 1024
+            height: 600
+            x: 0
+            y: 0
+            bg_color: 0x000000
+            border_width: 0
+            pad_all: 0
+        - button:
+            id: fs_start_streaming
+            width: 90
+            height: 50
+            align: BOTTOM_LEFT
+            x: 10
+            y: -10
+            bg_color: 0x00CC44
+            bg_opa: COVER
+            radius: 8
+            on_click:
+              then:
+                - lambda: |-
+                    if (id(sc2336_cam).start_streaming()) {
+                      lvgl_set_bg_color(id(camera_canvas_fs), 0x000000, 0);
+                      id(camera_display).configure_canvas(id(camera_canvas_fs));
+                    }
+            widgets:
+              - label: {text: "START", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+        - button:
+            id: fs_stop_streaming
+            width: 90
+            height: 50
+            align: BOTTOM_LEFT
+            x: 110
+            y: -10
+            bg_color: 0xFF4444
+            bg_opa: COVER
+            radius: 8
+            on_click:
+              then:
+                - lambda: |-
+                    id(sc2336_cam).stop_streaming();
+                    lvgl_set_bg_color(id(camera_canvas_fs), 0x000000, 0);
+            widgets:
+              - label: {text: "STOP", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+        - button:
+            width: 90
+            height: 50
+            align: BOTTOM_RIGHT
+            x: -10
+            y: -10
+            bg_color: 0x224488
+            bg_opa: COVER
+            radius: 8
+            on_click:
+              then:
+                - lambda: |-
+                    id(sc2336_cam).stop_streaming();
+                - lvgl.page.show: main_page
+            widgets:
+              - label: {text: "BACK", text_color: 0xFFFFFF, text_font: roboto10, align: CENTER}
+
+    - id: terminal_page
+      bg_color: 0x000000
+      layout:
+        type: FLEX
+        flex_flow: COLUMN
+      pad_all: 0
+      widgets:
+        - obj:
+            width: 100%
+            height: 40
+            bg_color: 0x1E1E1E
+            bg_opa: COVER
+            border_width: 0
+            scrollbar_mode: "OFF"
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: SPACE_BETWEEN
+              flex_align_cross: CENTER
+            pad_left: 10
+            pad_right: 10
+            widgets:
+              - label:
+                  text: "MICRO SSH TERMINAL"
+                  text_color: 0x00FF00
+                  text_font: title_font
+              - button:
+                  id: quick_ssh_button
+                  width: 70
+                  height: 30
+                  bg_color: 0x00FF00
+                  on_click:
+                    - lambda: |-
+                        lvgl_textarea_set_text(id(terminal_input), "ssh nonasuomy@example.local");
+                  widgets:
+                    - label:
+                        text: "Quick"
+                        align: CENTER
+                        text_color: 0x000000
+                        text_font: mono_font_16
+              - button:
+                  id: rotate_button
+                  width: 60
+                  height: 30
+                  bg_color: 0x00FF00
+                  on_click:
+                    - lambda: |-
+                        id(display_rotation) = (id(display_rotation) + 90) % 360;
+                        auto rot = static_cast<esphome::display::DisplayRotation>(id(display_rotation));
+                        id(lvgl_component).set_rotation(rot);
+                  widgets:
+                    - label:
+                        text: "ROT"
+                        align: CENTER
+                        text_color: 0x000000
+                        text_font: mono_font_16
+              - button:
+                  id: lock_rotation_button
+                  width: 60
+                  height: 30
+                  bg_color: 0xFF6600
+                  on_click:
+                    - lambda: |-
+                        id(rotation_locked) = !id(rotation_locked);
+                    - lvgl.label.update:
+                        id: lock_rotation_label
+                        text: !lambda 'return std::string(id(rotation_locked) ? "UNLK" : "LOCK");'
+                  widgets:
+                    - label:
+                        id: lock_rotation_label
+                        text: "LOCK"
+                        align: CENTER
+                        text_color: 0x000000
+                        text_font: mono_font_16
+              - button:
+                  id: kbd_toggle_button
+                  width: 60
+                  height: 30
+                  bg_color: 0x00FF00
+                  on_click:
+                    - lambda: |-
+                        lvgl_toggle_hidden(id(onscreen_kb)->obj);
+                  widgets:
+                    - label:
+                        text: "KBD"
+                        align: CENTER
+                        text_color: 0x000000
+                        text_font: mono_font_16
+              - label:
+                  id: connection_status
+                  text: "Disconnected"
+                  text_color: 0xFF0000
+                  text_font: mono_font_16
+        - textarea:
+            id: terminal_output
+            width: 100%
+            flex_grow: 1
+            text_color: 0x00FF00
+            bg_color: 0x000000
+            bg_opa: COVER
+            border_color: 0x00FF00
+            border_width: 2
+            text_font: mono_font_16
+            one_line: false
+            text: "$ Waiting for connection...\n"
+            scrollbar_mode: "AUTO"
+        - keyboard:
+            id: onscreen_kb
+            width: 100%
+            height: 250
+            hidden: true
+            bg_color: 0x000000
+            bg_opa: COVER
+            border_color: 0x00FF00
+            border_width: 1
+            text_font: mono_font_16
+            items:
+              text_color: 0x00FF00
+              bg_color: 0x1E1E1E
+              bg_opa: COVER
+              border_color: 0x00FF00
+              border_width: 1
+              radius: 4
+        - obj:
+            width: 100%
+            height: 60
+            bg_color: 0x1E1E1E
+            bg_opa: COVER
+            border_width: 0
+            layout:
+              type: FLEX
+              flex_flow: ROW
+              flex_align_cross: CENTER
+            pad_left: 10
+            pad_right: 10
+            pad_top: 0
+            pad_bottom: 0
+            widgets:
+              - label:
+                  text: "$"
+                  text_color: 0x00FF00
+                  text_font: mono_font_16
+              - textarea:
+                  id: terminal_input
+                  flex_grow: 1
+                  height: 40
+                  text_color: 0x00FF00
+                  bg_color: 0x000000
+                  bg_opa: COVER
+                  border_color: 0x00FF00
+                  border_width: 1
+                  text_font: mono_font_16
+                  one_line: true
+                  placeholder_text: "Enter command..."
+              - button:
+                  id: send_button
+                  width: 80
+                  height: 40
+                  bg_color: 0x00FF00
+                  scrollbar_mode: "OFF"
+                  on_click:
+                    - lambda: |-
+                        auto textarea = id(terminal_input);
+                        const char* text = lvgl_textarea_get_text(textarea);
+                        if (text && strlen(text) > 0) {
+                          std::string cmd = text;
+                          std::string output = "$ " + cmd + "\n";
+                          if (id(ssh_client)->get_state() == esphome::microssh::SSH_CONNECTED) {
+                            id(ssh_client)->send_command(cmd);
+                            output += "[Command sent to SSH server]\n";
+                          } else if (cmd.find("ssh") == 0) {
+                            output += "Connecting to SSH...\n";
+                            id(ssh_client)->connect_ssh();
+                          } else {
+                            output += "Not connected. Type 'ssh' to connect.\n";
+                          }
+                          lvgl_textarea_add_text(id(terminal_output), output.c_str());
+                          lvgl_textarea_set_text(textarea, "");
+                        }
+                  widgets:
+                    - label:
+                        text: "SEND"
+                        align: CENTER
+                        text_color: 0x000000
+                        text_font: mono_font_16
+
+    - id: page_1
+      styles: main_bg_style
+      pad_all: 0
+      widgets:
+        - button:
+            x: 162
+            y: 300
+            width: 100
+            height: 100
+            bg_color: 0xFF0000
+            on_press:
+              then:
+                - output.turn_on: led_06_output
+                - logger.log: "Red Button Pressed"
+            on_release:
+              then:
+                - output.turn_off: led_06_output
+        - button:
+            x: 272
+            y: 300
+            width: 100
+            height: 100
+            bg_color: 0x00FF00
+            on_press:
+              then:
+                - logger.log: "Green Button Pressed"
+            on_release:
+              then:
+                - logger.log: "Green Button Released"
+        - button:
+            x: 382
+            y: 300
+            width: 100
+            height: 100
+            bg_color: 0x0000FF
+            on_press:
+              then:
+                - logger.log: "Blue Button Pressed"
+            on_release:
+              then:
+                - logger.log: "Blue Button Released"
+        - button:
+            x: 492
+            y: 300
+            width: 100
+            height: 100
+            bg_color: 0xFFFFFF
+            on_press:
+              then:
+                - logger.log: "White Button Pressed"
+            on_release:
+              then:
+                - logger.log: "White Button Released"
+
+    - id: gamepad_page
+      bg_color: 0x111111
+      pad_all: 0
+      widgets:
+        - label:
+            text: "GAMEPAD"
+            align: TOP_MID
+            y: 8
+            styles: hud_text
+        # D-PAD
+        - obj:
+            x: 60
+            y: 120
+            width: 130
+            height: 130
+            bg_opa: 0%
+            border_width: 0
+            widgets:
+              - label: {id: gp_dup, text: "\U000F005D", align: TOP_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_ddown, text: "\U000F0045", align: BOTTOM_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_dleft, text: "\U000F004D", align: LEFT_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_dright, text: "\U000F0054", align: RIGHT_MID, text_color: 0x444444, text_font: roboto20}
+        # FACE BUTTONS
+        - obj:
+            x: 820
+            y: 120
+            width: 130
+            height: 130
+            bg_opa: 0%
+            border_width: 0
+            widgets:
+              - label: {id: gp_y, text: "Y", align: TOP_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_a, text: "A", align: BOTTOM_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_x, text: "X", align: LEFT_MID, text_color: 0x444444, text_font: roboto20}
+              - label: {id: gp_b, text: "B", align: RIGHT_MID, text_color: 0x444444, text_font: roboto20}
+        # SHOULDER BUTTONS
+        - label: {id: gp_l, text: "LB", x: 60, y: 80, text_color: 0x444444, styles: hud_text}
+        - label: {id: gp_r, text: "RB", x: 900, y: 80, text_color: 0x444444, styles: hud_text}
+        - label: {id: gp_zl, text: "LT", x: 60, y: 55, text_color: 0x444444, styles: hud_text}
+        - label: {id: gp_zr, text: "RT", x: 900, y: 55, text_color: 0x444444, styles: hud_text}
+        # CENTER BUTTONS
+        - label: {id: gp_minus, text: "\U000F0374", x: 420, y: 200, text_color: 0x444444, text_font: roboto20}
+        - label: {id: gp_plus, text: "\U000F0415", x: 560, y: 200, text_color: 0x444444, text_font: roboto20}
+        - label: {id: gp_home, text: "\U000F02DC", x: 490, y: 170, text_color: 0x444444, text_font: roboto20}
+        # STICK BUTTONS
+        - label: {id: gp_l3, text: "L3", x: 200, y: 310, text_color: 0x444444, styles: hud_text}
+        - label: {id: gp_r3, text: "R3", x: 760, y: 310, text_color: 0x444444, styles: hud_text}
+        # STICK INDICATORS (arcs showing axis position)
+        - arc:
+            id: gp_lx_arc
+            x: 160
+            y: 340
+            width: 80
+            height: 80
+            min_value: -100
+            max_value: 100
+            value: 0
+            start_angle: 135
+            end_angle: 45
+            arc_color: 0x00D4FF
+            bg_color: 0x333333
+            clickable: false
+            widgets:
+              - label: {text: "L", align: CENTER, styles: hud_text}
+        - arc:
+            id: gp_rx_arc
+            x: 720
+            y: 340
+            width: 80
+            height: 80
+            min_value: -100
+            max_value: 100
+            value: 0
+            start_angle: 135
+            end_angle: 45
+            arc_color: 0x00D4FF
+            bg_color: 0x333333
+            clickable: false
+            widgets:
+              - label: {text: "R", align: CENTER, styles: hud_text}
+        - label:
+            id: gp_device_label
+            text: "No device"
+            x: 512
+            y: 10
+            align: TOP_MID
+            styles: hud_text
+
+globals:
+  - id: selected_option
+    type: int
+    initial_value: '0'
+  - id: last_btn
+    type: int
+    restore_value: no
+    initial_value: '-2'
+  - id: mock_is_playing
+    type: bool
+    initial_value: 'false'
+  - id: mock_volume
+    type: float
+    initial_value: '0.6'
+  - id: display_rotation
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: osk_enter_pressed
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: last_imu_rotation
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: rotation_locked
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: imu_rot_candidate
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  - id: imu_rot_count
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: sendspin_album_art_valid
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
+#external_components:
+#  - source:
+#      type: git
+#      url: "file:///Users/clyde/dev/opensourceprojects/esp/esphome"
+#      ref: "lvgl-rounding"
+#    components: [lvgl, image]
+#    refresh: 30s
+
+sensor:
+
+  - platform: usb_hidx
+    type: gamepad
+    axis: lx
+    id: gp_axis_lx
+    name: "Gamepad Left X"
+    internal: true
+    on_value:
+      - lambda: lv_arc_set_value(id(gp_lx_arc), (int)x);
+
+  - platform: usb_hidx
+    type: gamepad
+    axis: rx
+    id: gp_axis_rx
+    name: "Gamepad Right X"
+    internal: true
+    on_value:
+      - lambda: lv_arc_set_value(id(gp_rx_arc), (int)x);
+
+  # Lesson 1 Ultrasonic Sensor
+  - platform: ultrasonic
+    id: ultrasonic_sensor_001
+    trigger_pin: GPIO13
+    echo_pin: GPIO12
+    name: "Distance"
+    update_interval: 1s
+    timeout: 3m
+    filters:
+      - filter_out: nan
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: distance_label
+            text:
+              format: "Distance: %.1f m"
+              args: [x]
+
+  # Lesson 12 Light Sensor
+  - platform: bh1750
+    id: light_sensor_001
+    i2c_id: bsp2_bus
+    address: 0x5C
+    name: "Illuminance"
+    update_interval: 5s
+    on_value_range:
+      - below: 10
+        then:
+          - lvgl.label.update:
+              id: light_label
+              text: !lambda 'return str_sprintf("DARK: %.0f lx", id(light_sensor_001).state);'
+      - above: 500
+        then:
+          - lvgl.label.update:
+              id: light_label
+              text: !lambda 'return str_sprintf("BRIGHT: %.0f lx", id(light_sensor_001).state);'
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: light_label
+            text: !lambda 'return str_sprintf("LIGHT: %.0f lx", x);'
+
+  # Lesson 11 Temperature and Humidity
+  - platform: aht10
+    variant: AHT20  # Explicitly setting the variant for better internal timing
+    i2c_id: bsp2_bus
+    address: 0x38
+    update_interval: 10s
+    temperature:
+      name: "Temperature"
+      id: sensor_temp
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: temperature_label
+              text:
+                format: "%.1f°C"
+                args: [x]
+    humidity:
+      name: "Humidity"
+      id: sensor_hum
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: humidity_label
+              text:
+                format: "Hum: %.1f%%"
+                args: [x]
+
+  - platform: lsm6ds
+    accel_x:
+      name: "Accel X"
+      id: imu_ax
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: accel_data
+              text: !lambda |-
+                return str_sprintf("X:%.1f Y:%.1f Z:%.1f",
+                  id(imu_ax).state, id(imu_ay).state, id(imu_az).state);
+    accel_y:
+      name: "Accel Y"
+      id: imu_ay
+    accel_z:
+      name: "Accel Z"
+      id: imu_az
+    gyro_x:
+      name: "Gyro X"
+      id: imu_gx
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: gyro_data
+              text: !lambda |-
+                return str_sprintf("P:%.1f R:%.1f Y:%.1f",
+                  id(imu_gx).state, id(imu_gy).state, id(imu_gz).state);
+    gyro_y:
+      name: "Gyro Y"
+      id: imu_gy
+    gyro_z:
+      name: "Gyro Z"
+      id: imu_gz
+    temperature:
+      name: "IMU Temperature"
+      id: imu_temp
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: imu_temp_label
+              text:
+                format: "IMU Temp: %.1f°C"
+                args: [x]
+        # - switch:
+        #     id: lv_switch
+        #     bg_color: green
+        #     indicator:
+        #       checked:
+        #         bg_color: 0xFF0000
+        #     on_value:
+        #       - if:
+        #           condition:
+        #             lambda: return x;
+        #           then:
+        #             - lvgl.label.update:
+        #                 id: label_1_2
+        #                 text: !lambda |-
+        #                     ESP_LOGD("label", "update label");
+        #                     return "Switch is on";
+        #           else:
+        #             - lvgl.label.update:
+        #                 id: label_1_1
+        #                 text: !lambda return "Switch state:";
+        #             - lvgl.label.update:
+        #                 id: label_1_2
+        #                 text: "it's off"
+
+  - platform: adc
+    pin: GPIO16
+    id: button_adc_sensor
+    update_interval: 50ms
+    attenuation: 12db
+
+    filters:
+      - median:
+          window_size: 5
+          send_every: 1
+
+    on_value:
+      then:
+        - lambda: |-
+            int btn = -1;
+
+            // 1. IDLE CHECK (HIGH VOLTAGE)
+            // Since your log shows 3.286V when let go, anything above 3.15V is "OFF"
+            if (x > 3.15) {
+              btn = -1;
+            }
+            // 2. BUTTON LADDER (Based on your calibrated logs)
+            else if (x < 1.48) btn = 6; // DOWN/LEFT (~1.44V)
+            else if (x < 1.60) btn = 0; // UP/LEFT (~1.55V)
+            else if (x < 1.75) btn = 3; // LEFT (~1.64V)
+            else if (x < 1.95) btn = 8; // DOWN/RIGHT (~1.85V)
+            else if (x < 2.10) btn = 2; // UP/RIGHT (~2.02V)
+            else if (x < 2.40) btn = 5; // RIGHT (~2.19V)
+            else if (x < 2.75) btn = 7; // DOWN (~2.57V)
+            else if (x < 3.10) btn = 1; // UP (~2.93V)
+            else               btn = -1; // Catch-all for noise
+
+            if (btn != id(last_btn)) {
+              id(last_btn) = btn;
+              auto *obj = id(adc_btns_view).obj;
+
+              // 3. UNSET ALL: Explicitly loop through all 9 buttons to clear highlight
+              for (int i = 0; i <= 8; i++) {
+                lv_btnmatrix_clear_btn_ctrl(obj, i, LV_BTNMATRIX_CTRL_CHECKED);
+              }
+
+              if (btn == -1) {
+                id(rgb_leds).turn_off().perform();
+                ESP_LOGI("button_adc", "CLEAN RELEASE DETECTED (%.3fV)", x);
+              } else {
+                // Highlight the specific button
+                lv_btnmatrix_set_btn_ctrl(obj, btn, LV_BTNMATRIX_CTRL_CHECKED);
+
+                // LED Mixing Logic
+                float r=0, g=0, b=0, w=0;
+                if (btn == 0 || btn == 1 || btn == 2) g = 1.0; // UP components
+                if (btn == 6 || btn == 7 || btn == 8) w = 1.0; // DOWN components
+                if (btn == 0 || btn == 3 || btn == 6) r = 1.0; // LEFT components
+                if (btn == 2 || btn == 5 || btn == 8) b = 1.0; // RIGHT components
+
+                id(rgb_leds).turn_on()
+                  .set_red(r).set_green(g).set_blue(b).set_white(w)
+                  .perform();
+
+                ESP_LOGI("button_adc", "MATCH: btn=%d (%.3fV)", btn, x);
+              }
+              // Force redraw to ensure "Checked" state is visually removed
+              lv_obj_invalidate(obj);
+            }
+
+  - platform: adc
+    pin: GPIO17
+    id: gas_sensor_adc
+    name: "Gas Sensor Voltage"
+    update_interval: 500ms
+    attenuation: 12db
+    on_value:
+      then:
+        # Update Gas Bar (Idle 0.18V, Max ~2.7V)
+        - lvgl.bar.update:
+            id: gas_bar
+            value: !lambda |-
+              float val = (x - 0.18) * 35.0;
+              if (val < 0) return 0;
+              if (val > 100) return 100;
+              return (int)val;
+
+        # UI Warning Label Logic
+        - if:
+            condition: {lambda: "return x > 1.5;"}
+            then:
+              - lvgl.label.update: {id: gas_status_label, text: "GAS DETECTED!"}
+            else:
+              - lvgl.label.update: {id: gas_status_label, text: "Air Quality: Clean"}
+
+binary_sensor:
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP A"
+    id: gp_btn_a
+    internal: true
+    button_a: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_a
+          text_color: 0x00FF00
+    on_release:
+      - lvgl.label.update:
+          id: gp_a
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP B"
+    id: gp_btn_b
+    internal: true
+    button_b: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_b
+          text_color: 0xFF0000
+    on_release:
+      - lvgl.label.update:
+          id: gp_b
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP X"
+    id: gp_btn_x
+    internal: true
+    button_x: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_x
+          text_color: 0x0088FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_x
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP Y"
+    id: gp_btn_y
+    internal: true
+    button_y: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_y
+          text_color: 0xFFFF00
+    on_release:
+      - lvgl.label.update:
+          id: gp_y
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP LB"
+    id: gp_btn_l
+    internal: true
+    button_l: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_l
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_l
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP RB"
+    id: gp_btn_r
+    internal: true
+    button_r: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_r
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_r
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP LT"
+    id: gp_btn_zl
+    internal: true
+    button_zl: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_zl
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_zl
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP RT"
+    id: gp_btn_zr
+    internal: true
+    button_zr: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_zr
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_zr
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP Minus"
+    id: gp_btn_minus
+    internal: true
+    button_minus: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_minus
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_minus
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP Plus"
+    id: gp_btn_plus
+    internal: true
+    button_plus: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_plus
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_plus
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP Home"
+    id: gp_btn_home
+    internal: true
+    button_home: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_home
+          text_color: 0xFFFFFF
+    on_release:
+      - lvgl.label.update:
+          id: gp_home
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP L3"
+    id: gp_btn_l3
+    internal: true
+    button_l3: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_l3
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_l3
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP R3"
+    id: gp_btn_r3
+    internal: true
+    button_r3: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_r3
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_r3
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP D-Up"
+    id: gp_dpad_up
+    internal: true
+    dpad_up: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_dup
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_dup
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP D-Left"
+    id: gp_dpad_left
+    internal: true
+    dpad_left: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_dleft
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_dleft
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP D-Right"
+    id: gp_dpad_right
+    internal: true
+    dpad_right: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_dright
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_dright
+          text_color: 0x444444
+  - platform: usb_hidx
+    type: gamepad
+    name: "GP D-Down"
+    id: gp_dpad_down
+    internal: true
+    dpad_down: true
+    on_press:
+      - lvgl.label.update:
+          id: gp_ddown
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: gp_ddown
+          text_color: 0x444444
+  - platform: gpio
+    pin: GPIO24
+    name: "Motion Sensor"
+    device_class: motion
+    on_press:
+      - output.turn_off: led_27_output
+      - logger.log: "Motion detected - LED OFF"
+      - lvgl.label.update:
+          id: motion_icon
+          text: "\U000F0583"
+          text_color: 0x00D4FF
+    on_release:
+      - output.turn_on: led_27_output
+      - logger.log: "Motion stopped - LED ON"
+      - lvgl.label.update:
+          id: motion_icon
+          text: "\U000F0583"
+          text_color: 0x444444
+  - platform: gpio
+    pin:
+      number: GPIO07
+      inverted: true
+    id: mag_sensor
+    on_press:
+      - lvgl.label.update:
+          id: mag_icon
+          text: "\U000F0348"
+          text_color: 0x00D4FF
+    on_release:
+      - lvgl.label.update:
+          id: mag_icon
+          text: "\U000F0347"
+          text_color: 0x444444
+  - platform: gpio
+    pin:
+      number: GPIO2
+      mode: INPUT_PULLUP
+      inverted: false  # <--- Change this from true to false
+    name: "Touch Button"
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - output.turn_on: led_27_output
+        - lambda: |-
+            auto *obj = id(adc_btns_view).obj;
+            lv_btnmatrix_clear_btn_ctrl_all(obj, LV_BTNMATRIX_CTRL_CHECKED);
+            lv_btnmatrix_set_btn_ctrl(obj, 4, LV_BTNMATRIX_CTRL_CHECKED);
+    on_release:
+      then:
+        - output.turn_off: led_27_output
+        - lambda: |-
+            lv_btnmatrix_clear_btn_ctrl_all(id(adc_btns_view).obj, LV_BTNMATRIX_CTRL_CHECKED);
+            id(last_btn) = -1;
+font:
+  - file: "gfonts://Roboto Mono"
+    id: mono_font
+    size: 8
+  - file: "gfonts://Roboto Mono"
+    id: mono_font_16
+    size: 16
+    bpp: 4
+  - file: "gfonts://Roboto Mono"
+    id: title_font
+    size: 20
+    bpp: 4
+  - file: "fonts/roboto.ttf"
+    id: roboto20
+    size: 20
+    bpp: 4
+    glyphsets: GF_Latin_Kernel
+    glyphs:
+      - 'aAbBDcCxXyYzZáÁéÉíÍóÓőŐúÚűŰ0'
+    extras:
+      - file: 'fonts/materialdesignicons-webfont.ttf'
+        glyphs: [
+          "\U000F004B", # mdi-arrow-up
+          "\U000F006E", # mdi-arrow-down
+          "\U000F012C", # mdi-check
+          "\U000F179B", # mdi-light-recessed
+          "\U000F0748", # mdi-wall-sconce-round
+          "\U000F1A1B", # mdi-gas-burner
+          "\U000F02DC", # mdi-home
+          "\U000F0A02", # mdi-menu-left
+          "\U000F035F", # mdi-menu-right
+          "\U000F0156", # mdi-close
+          "\U000F0C5F", # mdi-close-network-outline
+          "\U000f0084", # mdi-battery-charging
+          "\U000f0091", # mdi-battery-unknown
+          "\U000F0200", # mdi-ethernet
+          "\U000F1CD1", # mdi-ethernet-off
+          "\U000F0929", # mdi-wifi-strength-off
+          "\U000F091F", # mdi-wifi-strength-1 (Low)
+          "\U000F0922", # mdi-wifi-strength-2 (Medium-Low)
+          "\U000F0925", # mdi-wifi-strength-3 (Medium-High)
+          "\U000F0928", # mdi-wifi-strength-4 (Full)
+          "\U000F0D41", # mdi-zigbee
+          "\U000F0AE5", # mdi-matter
+          "\U000F1119", # mdi-antenna
+          "\U000F00AF", # mdi-bluetooth
+          "\U000F043A", # mdi-meshtastic
+          "\U000F0347", # mdi-magnet-off
+          "\U000F0348", # mdi-magnet-on
+          "\U000F0A71", # mdi-motion-sensor
+          "\U000F0552", # mdi-arrow-top-left
+          "\U000F0553", # mdi-arrow-top-right
+          "\U000F0554", # mdi-arrow-bottom-left
+          "\U000F0555", # mdi-arrow-bottom-right
+          "\U000F0460", # mdi-refresh
+          "\U000F04AD", # mdi-skip-previous
+          "\U000F040A", # mdi-play-pause
+          "\U000F04AE", # mdi-skip-next
+          "\U000F07DC", # mdi-micro-sd
+          "\U000F004D", # mdi-arrow-left
+          "\U000F004E", # mdi-arrow-right
+          "\U000F0583", # mdi-walk
+          "\U000F0374", # mdi-minus-circle
+          "\U000F0415", # mdi-plus-circle
+          "\U000F005B", # mdi-arrow-top-left
+          "\U000F005C", # mdi-arrow-top-right
+          "\U000F005D", # mdi-arrow-up
+          "\U000F0042", # mdi-arrow-bottom-left
+          "\U000F0043", # mdi-arrow-bottom-right
+          "\U000F0045", # mdi-arrow-down
+          "\U000F0054", # mdi-arrow-right
+          "\U000F0741", # mdi-gesture-tap
+        ]
+  - file: "fonts/roboto.ttf"
+    id: roboto10
+    size: 10
+    bpp: 4
+    extras:
+      - file: 'fonts/materialdesignicons-webfont.ttf'
+        glyphs: [
+          "\U000F004B", # mdi-arrow-up
+          "\U000F006E", # mdi-arrow-down
+          "\U000F012C", # mdi-check
+          "\U000F179B", # mdi-light-recessed
+          "\U000F0748", # mdi-wall-sconce-round
+          "\U000F1A1B", # mdi-gas-burner
+          "\U000F02DC", # mdi-home
+          "\U000F0A02", # mdi-menu-left
+          "\U000F035F", # mdi-menu-right
+          "\U000F0156", # mdi-close
+          "\U000F0C5F", # mdi-close-network-outline
+          "\U000f0084", # mdi-battery-charging
+          "\U000f0091", # mdi-battery-unknown
+          "\U000F0200", # mdi-ethernet
+          "\U000F1CD1", # mdi-ethernet-off
+          "\U000F0929", # mdi-wifi-strength-off
+          "\U000F091F", # mdi-wifi-strength-1 (Low)
+          "\U000F0922", # mdi-wifi-strength-2 (Medium-Low)
+          "\U000F0925", # mdi-wifi-strength-3 (Medium-High)
+          "\U000F0928", # mdi-wifi-strength-4 (Full)
+          "\U000F0D41", # mdi-zigbee
+          "\U000F0AE5", # mdi-matter
+          "\U000F1119", # mdi-antenna
+          "\U000F00AF", # mdi-bluetooth
+          "\U000F043A", # mdi-meshtastic
+          "\U000F0347", # mdi-magnet-off
+          "\U000F0348", # mdi-magnet-on
+          "\U000F0A71", # mdi-motion-sensor
+          "\U000F0552", # mdi-arrow-top-left
+          "\U000F0553", # mdi-arrow-top-right
+          "\U000F0554", # mdi-arrow-bottom-left
+          "\U000F0555", # mdi-arrow-bottom-right
+          "\U000F0460", # mdi-refresh
+          "\U000F04AD", # mdi-skip-previous
+          "\U000F040A", # mdi-play-pause
+          "\U000F04AE", # mdi-skip-next
+          "\U000F07DC", # mdi-micro-sd
+          "\U000F004D", # mdi-arrow-left
+          "\U000F004E", # mdi-arrow-right
+          "\U000F0583", # mdi-walk
+          "\U000F0374", # mdi-minus-circle
+          "\U000F0415", # mdi-plus-circle
+          "\U000F005B", # mdi-arrow-top-left
+          "\U000F005C", # mdi-arrow-top-right
+          "\U000F005D", # mdi-arrow-up
+          "\U000F0042", # mdi-arrow-bottom-left
+          "\U000F0043", # mdi-arrow-bottom-right
+          "\U000F0045", # mdi-arrow-down
+          "\U000F0054", # mdi-arrow-right
+          "\U000F0741", # mdi-gesture-tap
+        ]
+  - file: "fonts/Helvetica.ttf"
+    id: helv20
+    bpp: 2
+    size: 20
+    extras:
+      - file: 'fonts/materialdesignicons-webfont.ttf'
+        glyphs: [
+          "\U000F004B", # mdi-arrow-up
+          "\U000F006E", # mdi-arrow-down
+          "\U000F012C", # mdi-check
+          "\U000F179B", # mdi-light-recessed
+          "\U000F0748", # mdi-wall-sconce-round
+          "\U000F1A1B", # mdi-gas-burner
+          "\U000F02DC", # mdi-home
+          "\U000F0A02", # mdi-menu-left
+          "\U000F035F", # mdi-menu-right
+          "\U000F0156", # mdi-close
+          "\U000F0C5F", # mdi-close-network-outline
+          "\U000f0084", # mdi-battery-charging
+          "\U000f0091", # mdi-battery-unknown
+          "\U000F0200", # mdi-ethernet
+          "\U000F1CD1", # mdi-ethernet-off
+          "\U000F0929", # mdi-wifi-strength-off
+          "\U000F091F", # mdi-wifi-strength-1 (Low)
+          "\U000F0922", # mdi-wifi-strength-2 (Medium-Low)
+          "\U000F0925", # mdi-wifi-strength-3 (Medium-High)
+          "\U000F0928", # mdi-wifi-strength-4 (Full)
+          "\U000F0D41", # mdi-zigbee
+          "\U000F0AE5", # mdi-matter
+          "\U000F1119", # mdi-antenna
+          "\U000F00AF", # mdi-bluetooth
+          "\U000F043A", # mdi-meshtastic
+          "\U000F0347", # mdi-magnet-off
+          "\U000F0348", # mdi-magnet-on
+          "\U000F0A71", # mdi-motion-sensor
+          "\U000F0552", # mdi-arrow-top-left
+          "\U000F0553", # mdi-arrow-top-right
+          "\U000F0554", # mdi-arrow-bottom-left
+          "\U000F0555", # mdi-arrow-bottom-right
+          "\U000F0460", # mdi-refresh
+          "\U000F04AD", # mdi-skip-previous
+          "\U000F040A", # mdi-play-pause
+          "\U000F04AE", # mdi-skip-next
+          "\U000F07DC", # mdi-micro-sd
+          "\U000F004D", # mdi-arrow-left
+          "\U000F004E", # mdi-arrow-right
+          "\U000F0583", # mdi-walk
+          "\U000F0374", # mdi-minus-circle
+          "\U000F0415", # mdi-plus-circle
+          "\U000F005B", # mdi-arrow-top-left
+          "\U000F005C", # mdi-arrow-top-right
+          "\U000F005D", # mdi-arrow-up
+          "\U000F0042", # mdi-arrow-bottom-left
+          "\U000F0043", # mdi-arrow-bottom-right
+          "\U000F0045", # mdi-arrow-down
+          "\U000F0054", # mdi-arrow-right
+          "\U000F0741", # mdi-gesture-tap
+        ]
+
+  - file: "fonts/Helvetica.ttf"
+    id: helv30
+    bpp: 2
+    size: 30
+    extras:
+      - file: 'fonts/materialdesignicons-webfont.ttf'
+        glyphs: [
+          "\U000F004B", # mdi-arrow-up
+          "\U000F006E", # mdi-arrow-down
+          "\U000F012C", # mdi-check
+          "\U000F179B", # mdi-light-recessed
+          "\U000F0748", # mdi-wall-sconce-round
+          "\U000F1A1B", # mdi-gas-burner
+          "\U000F02DC", # mdi-home
+          "\U000F0A02", # mdi-menu-left
+          "\U000F035F", # mdi-menu-right
+          "\U000F0156", # mdi-close
+          "\U000F0C5F", # mdi-close-network-outline
+          "\U000f0084", # mdi-battery-charging
+          "\U000f0091", # mdi-battery-unknown
+          "\U000F0200", # mdi-ethernet
+          "\U000F1CD1", # mdi-ethernet-off
+          "\U000F0929", # mdi-wifi-strength-off
+          "\U000F091F", # mdi-wifi-strength-1 (Low)
+          "\U000F0922", # mdi-wifi-strength-2 (Medium-Low)
+          "\U000F0925", # mdi-wifi-strength-3 (Medium-High)
+          "\U000F0928", # mdi-wifi-strength-4 (Full)
+          "\U000F0D41", # mdi-zigbee
+          "\U000F0AE5", # mdi-matter
+          "\U000F1119", # mdi-antenna
+          "\U000F00AF", # mdi-bluetooth
+          "\U000F043A", # mdi-meshtastic
+          "\U000F0347", # mdi-magnet-off
+          "\U000F0348", # mdi-magnet-on
+          "\U000F0A71", # mdi-motion-sensor
+          "\U000F0552", # mdi-arrow-top-left
+          "\U000F0553", # mdi-arrow-top-right
+          "\U000F0554", # mdi-arrow-bottom-left
+          "\U000F0555", # mdi-arrow-bottom-right
+          "\U000F0460", # mdi-refresh
+          "\U000F04AD", # mdi-skip-previous
+          "\U000F040A", # mdi-play-pause
+          "\U000F04AE", # mdi-skip-next
+          "\U000F07DC", # mdi-micro-sd
+          "\U000F004D", # mdi-arrow-left
+          "\U000F004E", # mdi-arrow-right
+          "\U000F0583", # mdi-walk
+          "\U000F0374", # mdi-minus-circle
+          "\U000F0415", # mdi-plus-circle
+          "\U000F005B", # mdi-arrow-top-left
+          "\U000F005C", # mdi-arrow-top-right
+          "\U000F005D", # mdi-arrow-up
+          "\U000F0042", # mdi-arrow-bottom-left
+          "\U000F0043", # mdi-arrow-bottom-right
+          "\U000F0045", # mdi-arrow-down
+          "\U000F0054", # mdi-arrow-right
+          "\U000F0741", # mdi-gesture-tap
+        ]
+
+  - file: "fonts/roboto-condensed.ttf"
+    id: roboto64
+    size: 64
+    bpp: 4
+    glyphs: '-+X'
+  - file: "fonts/roboto-condensed.ttf"
+    id: roboto42
+    size: 28
+    bpp: 4
+    glyphs: 'aAbBcCxXyYzZáÁéÉíÍóÓőŐúÚűŰ'
+  - file: fonts/montserrat.ttf
+    id: mont20
+    glyphs: 'aAbBDcCxXyYzZáÁéÉíÍóÓőŐúÚűŰ0'
+    size: 20
+    bpp: 4
+  - file: "fonts/space-mono.ttf"
+    id: space16
+    size: 16
+    bpp: 4
+    glyphsets:
+      - GF_Latin_Kernel
+    glyphs:
+      - '0123456789+- .:'
+  - file: "fonts/space-mono.ttf"
+    id: space40
+    size: 40
+    bpp: 4
+
+color:
+  - id: color_back
+    hex: "404040"
+  - id: color_blue
+    hex: 0000FF
+
+image:
+  defaults:
+    resize: 100x100
+  rgb565:
+    - file: images/cat.jpg
+      id: cat_img
+    - file: images/background-landscape.png
+      id: background_main
+      resize: 1024x600
+    - file: https://raw.githubusercontent.com/RealDeco/xiaozhi-esphome/main/images/Gwen/240x240/playing.png
+      id: fallback_playing_image
+      resize: 80x80
+      type: RGB565
+      dither: NONE
+
+generic_image:
+  - platform: sendspin
+    id: sendspin_album_art
+    format: jpg
+    type: RGB565
+    resize: 80x80
+    image_source: ALBUM
+    on_image_decoded:
+      - lambda: id(sendspin_album_art_valid) = true;
+      - lvgl.image.update:
+          id: album_art
+          src: sendspin_album_art
+    on_image_error:
+      - lambda: id(sendspin_album_art_valid) = false;
+      - lvgl.image.update:
+          id: album_art
+          src: fallback_playing_image
+
+sendspin:
+  id: sendspin_hub
+  task_stack_in_psram: false
+
+  # binary:
+  #   opaque:
+  #   - file: images/logo-text-trans.svg
+  #     resize: 100x100
+  #     id: alpha_binary
+
+  # grayscale:
+  #   alpha_channel:
+  #     - file: images/bluemax.png
+  #       resize: 100x100
+  #       id: bluemax_png
+  #       transparency: alpha_channel
+
+# SD card images moved to inline rgb565 above
+
+interval:
+  - interval: 100ms
+    then:
+      - lambda: |-
+          if (id(osk_enter_pressed)) {
+            id(osk_enter_pressed) = false;
+            auto textarea = id(terminal_input);
+            const char* text = lvgl_textarea_get_text(textarea);
+            if (text && strlen(text) > 0) {
+              std::string cmd = text;
+              std::string output = "$ " + cmd + "\n";
+              if (id(ssh_client)->get_state() == esphome::microssh::SSH_CONNECTED) {
+                id(ssh_client)->send_command(cmd);
+                output += "[Command sent to SSH server]\n";
+              } else if (cmd.find("ssh") == 0) {
+                output += "Connecting to SSH...\n";
+                id(ssh_client)->connect_ssh();
+              } else {
+                output += "Not connected. Type 'ssh' to connect.\n";
+              }
+              lvgl_textarea_add_text(id(terminal_output), output.c_str());
+              lvgl_textarea_set_text(textarea, "");
+            }
+          }
+          if (!id(rotation_locked)) {
+            float ax = id(imu_ax).state;
+            float ay = id(imu_ay).state;
+            int new_rot = -1;
+            if (ax > 4.0f)       new_rot = 90;
+            else if (ax < -4.0f) new_rot = 270;
+            else if (ay < -4.0f) new_rot = 180;
+            else if (ay > 4.0f)  new_rot = 0;
+            if (new_rot != -1) {
+              if (new_rot == id(imu_rot_candidate)) {
+                id(imu_rot_count) = id(imu_rot_count) + 1;
+              } else {
+                id(imu_rot_candidate) = new_rot;
+                id(imu_rot_count) = 1;
+              }
+              if (id(imu_rot_count) >= 5 && new_rot != id(last_imu_rotation)) {
+                id(last_imu_rotation) = new_rot;
+                id(display_rotation) = new_rot;
+                id(lvgl_component).set_rotation(
+                  static_cast<esphome::display::DisplayRotation>(new_rot));
+                lvgl_invalidate_screen();
+              }
+            } else {
+              id(imu_rot_count) = 0;
+            }
+          }
+          static std::string last_output = "";
+          std::string current_output = id(ssh_client)->get_output();
+          if (current_output != last_output) {
+            lvgl_textarea_set_text(id(terminal_output), current_output.c_str());
+            last_output = current_output;
+            lvgl_scroll_to_bottom(id(terminal_output));
+          }
+          auto state = id(ssh_client)->get_state();
+          if (state == esphome::microssh::SSH_CONNECTED) {
+            lvgl_label_set_text(id(connection_status), "Connected");
+            lvgl_set_text_color(id(connection_status), 0x00FF00, LV_PART_MAIN);
+          } else {
+            lvgl_label_set_text(id(connection_status), "Disconnected");
+            lvgl_set_text_color(id(connection_status), 0xFF0000, LV_PART_MAIN);
+          }
+          // ===== VIRTUAL LED SYNC =====
+          {
+            auto &color = id(rgb_leds).current_values;
+            uint8_t r = 0, g = 0, b = 0, w = 0;
+            auto mode = static_cast<uint8_t>(color.get_color_mode());
+            if (mode & 2) { // RGB mode
+              r = (uint8_t)(color.get_color_brightness() * color.get_red()   * 255);
+              g = (uint8_t)(color.get_color_brightness() * color.get_green() * 255);
+              b = (uint8_t)(color.get_color_brightness() * color.get_blue()  * 255);
+            }
+            if (mode & 1) { // WHITE mode
+              w = (uint8_t)(color.get_white() * 255);
+            }
+            lvgl_set_bg_color_rgb(id(led_red), r, 0, 0, LV_PART_MAIN);
+            lvgl_set_bg_color_rgb(id(led_yellow), w, w, 0, LV_PART_MAIN);
+            lvgl_set_bg_color_rgb(id(led_green), 0, g, 0, LV_PART_MAIN);
+            lvgl_set_bg_color_rgb(id(led_blue), 0, 0, b, LV_PART_MAIN);
+          }
+
+# text_sensor:
+#   - platform: usb_hidx
+#     type: device
+#     id: usb_device_name
+#     name: "USB Device"
+#     internal: true
+#     on_value:
+#       - lambda: lvgl_label_set_text(id(gp_device_label), x.c_str());
+
+#   - platform: homeassistant
+#     id: ha_player_state
+#     entity_id: media_player.esp32_p4_elecrow_all_in_one
+#     on_value:
+#       then:
+#         - lambda: |-
+#             if (x == "idle" || x == "off") {
+#               lvgl_label_set_text(id(track_name), "Idle");
+#               lvgl_label_set_text(id(artist_name), "");
+#             }
+
+#   - platform: homeassistant
+#     id: ha_media_title
+#     entity_id: media_player.your_player_id  # Replace with your actual entity ID
+#     attribute: media_title
+#     on_value:
+#       then:
+#         - lvgl.label.update:
+#             id: track_name
+#             text: !lambda 'return x.c_str();'
+
+#   - platform: homeassistant
+#     id: ha_media_artist
+#     entity_id: media_player.your_player_id  # Replace with your actual entity ID
+#     attribute: media_artist
+#     on_value:
+#       then:
+#         - lvgl.label.update:
+#             id: artist_name
+#             text: !lambda 'return x.c_str();'
+
+#   - platform: homeassistant
+#     id: ha_track_name
+#     entity_id: media_player.esp32_p4_elecrow_all_in_one
+#     attribute: media_title
+#     on_value:
+#       then:
+#         - lvgl.label.update:
+#             id: track_name
+#             text: !lambda 'return x.empty() ? "Idle" : x.c_str();'
+
+#   - platform: homeassistant
+#     id: ha_artist_name
+#     entity_id: media_player.esp32_p4_elecrow_all_in_one
+#     attribute: media_artist
+#     on_value:
+#       then:
+#         - lvgl.label.update:
+#             id: artist_name
+#             text: !lambda 'return x.c_str();'
+
+#   - platform: homeassistant
+#     id: ha_album_art_url
+#     entity_id: media_player.esp32_p4_elecrow_all_in_one
+#     attribute: entity_picture
+#     on_value:
+#       then:
+#         - lambda: |-
+#             if (!x.empty()) {
+#               std::string url = x;
+#               // Prepend HA URL if it's a relative proxy path
+#               if (url.find("http") == std::string::npos) {
+#                 url = "http://home-assistant.local:8123" + url;
+#               }
+#               // Call your C++ function to download the image into PSRAM
+#               // This function must be defined in your 'includes:' file
+#               download_album_art(url.c_str());
+#             }
+text_sensor:
+  - platform: usb_hidx
+    type: device
+    id: usb_device_name
+    name: "USB Device"
+    internal: true
+    on_value:
+      - lambda: lvgl_label_set_text(id(gp_device_label), x.c_str());
+
+  - platform: homeassistant
+    id: ha_player_state
+    entity_id: media_player.esp32_p4_elecrow_all_in_one
+    on_value:
+      then:
+        - lambda: |-
+            if (x == "idle" || x == "off") {
+              lvgl_label_set_text(id(track_name), "Idle");
+              lvgl_label_set_text(id(artist_name), "");
+            }
+
+  - platform: sendspin
+    id: sendspin_title
+    type: title
+    on_value:
+      - lambda: id(sendspin_album_art_valid) = false;
+      - lvgl.label.update:
+          id: track_name
+          text: !lambda 'return x.empty() ? "Idle" : x.c_str();'
+
+  - platform: sendspin
+    id: sendspin_artist
+    type: artist
+    on_value:
+      - lvgl.label.update:
+          id: artist_name
+          text: !lambda 'return x.c_str();'
+
+  - platform: homeassistant
+    id: ha_track_name
+    entity_id: media_player.esp32_p4_elecrow_all_in_one
+    attribute: media_title
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: track_name
+            text: !lambda 'return x.empty() ? "Idle" : x.c_str();'
+
+  - platform: homeassistant
+    id: ha_artist_name
+    entity_id: media_player.esp32_p4_elecrow_all_in_one
+    attribute: media_artist
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: artist_name
+            text: !lambda 'return x.c_str();'
+
+  - platform: homeassistant
+    id: ha_album_art_url
+    entity_id: media_player.esp32_p4_elecrow_all_in_one
+    attribute: entity_picture
+    on_value:
+      then:
+        - lambda: |-
+            if (!x.empty()) {
+              std::string url = x;
+              if (url.find("http") == std::string::npos) {
+                url = "http://home-assistant.local:8123" + url;
+              }
+              auto img = id(album_art_img);
+              img->set_url(url);
+              img->update();
+            }
+  - platform: usb_hidx
+    type: keyboard
+    name: "Keyboard Input"
+    id: keyboard_input_sensor
+    internal: true
+    on_value:
+      - lambda: |-
+          if (x.empty()) return;
+          char c = x[0];
+          auto textarea = id(terminal_input);
+          if (c == '\n') {
+            id(ssh_client)->handle_key('\n');
+            lvgl_textarea_set_text(textarea, "");
+          } else if (c == '\b') {
+            const char* current_text = lvgl_textarea_get_text(textarea);
+            if (current_text && strlen(current_text) > 0) {
+              std::string s = current_text;
+              s.pop_back();
+              lvgl_textarea_set_text(textarea, s.c_str());
+            }
+            id(ssh_client)->handle_key('\b');
+          } else if (c >= 32 && c <= 126) {
+            char buf[2] = {c, 0};
+            lvgl_textarea_add_text(textarea, buf);
+            id(ssh_client)->handle_key(c);
+          }
+
+i2s_audio:
+  - id: i2s_output
+    i2s_lrclk_pin: GPIO21
+    i2s_bclk_pin: GPIO22
+  - id: i2s_input
+    i2s_lrclk_pin: GPIO3
+
+speaker:
+  - platform: i2s_audio
+    id: speaker_output
+    i2s_audio_id: i2s_output
+    dac_type: external
+    i2s_dout_pin: GPIO23
+    channel: stereo
+    buffer_duration: 100ms
+    bits_per_sample: 16bit
+    sample_rate: 48000
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: speaker_output
+    num_channels: 2
+    task_stack_in_psram: true
+    source_speakers:
+      - id: announcement_mixing_input
+      - id: media_mixing_input
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+microphone:
+  - platform: i2s_audio
+    id: microphone_input
+    i2s_audio_id: i2s_input
+    i2s_din_pin: GPIO04
+    adc_type: external
+    pdm: true
+    channel: left
+    sample_rate: 16000
+
+media_source:
+  - platform: audio_http
+    id: http_announcement_source
+  - platform: audio_http
+    id: http_media_source
+  - platform: sendspin
+    id: sendspin_media_source
+
+rtttl:
+  id: buzzer
+  speaker: speaker_output
+
+media_player:
+  - platform: sendspin
+    id: sendspin_group_media_player
+    name: Sendspin Group Media Player
+
+  - platform: speaker_source
+    name: ${friendly_name} Speaker
+    id: speaker_player
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
+      sources:
+        - http_announcement_source
+    media_pipeline:
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+      speaker: media_resampling_speaker
+      sources:
+        - http_media_source
+        - sendspin_media_source
+#     on_announcement:
+#       # Stop the wake word (mWW or VA) if the mic is capturing
+#       - if:
+#           condition:
+#             - microphone.is_capturing:
+#           then:
+#             - micro_wake_word.stop:
+
+#     on_idle:
+#       then:
+#         - if:
+#             condition:
+#               not:
+#                 voice_assistant.is_running:
+#             then:
+#               - micro_wake_word.start:
+
+# micro_wake_word:
+#   id: mww
+#   models:
+#     - okay_nabu
+#     - hey_mycroft
+#     - hey_jarvis
+#   on_wake_word_detected:
+#     - voice_assistant.start:
+#         wake_word: !lambda return wake_word;
+
+#voice_assistant:
+#  id: va
+#  microphone: microphone_input
+#  media_player: speaker_player
+#  micro_wake_word: mww
+#  on_end:
+#    # Wait a short amount of time to see if an announcement starts
+#    - wait_until:
+#        condition:
+#          - media_player.is_announcing:
+#        timeout: 0.5s
+#    # Announcement is finished and the I2S bus is free
+#    - wait_until:
+#        - and:
+#            - not:
+#                media_player.is_announcing:
+#            - not:
+#                speaker.is_playing:
+#    - micro_wake_word.start:
+#    #- lvgl.widget.update: {id: led_white, bg_color: 0x444444}
+#  on_client_connected:
+#    - micro_wake_word.start:
+#  on_client_disconnected:
+#    - micro_wake_word.stop:
+#  on_listening:
+#    - lvgl.label.update: {id: voice_text, text: "Listening..."}
+#  on_stt_end:
+#    - lvgl.label.update:
+#        id: voice_text
+#        text: !lambda 'return x.c_str();'

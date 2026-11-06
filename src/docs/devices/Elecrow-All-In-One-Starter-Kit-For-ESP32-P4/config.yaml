@@ -1,0 +1,24 @@
+esphome:
+  name: elecrow-esp32-p4-aio
+
+esp32:
+  variant: esp32p4
+  framework:
+    type: esp-idf
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+i2c:
+  - id: camera_i2c
+    sda: GPIO45
+    scl: GPIO46
+  - id: sensor_i2c
+    sda: GPIO18
+    scl: GPIO19
+
+spi:
+  clk_pin: GPIO09
+  mosi_pin: GPIO11
+  miso_pin: GPIO10

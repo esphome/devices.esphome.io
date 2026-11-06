@@ -1,0 +1,130 @@
+# Voice Assistant example for the Elecrow ESP32-P4 AIO.
+#
+# This is an experimental working-project configuration. It requires the
+# external audio components below and a Home Assistant API connection in the
+# main device configuration. Do not add credentials to this example file.
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/esphome/esphome
+      ref: 57397a318a2e08ea4c44bb7836358a7da20985f2
+    components:
+      - audio
+      - audio_http
+    refresh: 0s
+  - source: github://pr#15517
+    components:
+      - i2s_audio
+
+# The AIO microphone is PDM: GPIO3 is the clock and GPIO4 is the data line.
+i2s_audio:
+  - id: i2s_input
+    i2s_lrclk_pin: GPIO3
+  - id: i2s_output
+    i2s_lrclk_pin: GPIO21
+    i2s_bclk_pin: GPIO22
+
+microphone:
+  - platform: i2s_audio
+    id: microphone_input
+    i2s_audio_id: i2s_input
+    i2s_din_pin: GPIO4
+    adc_type: external
+    pdm: true
+    channel: left
+    sample_rate: 16000
+
+speaker:
+  - platform: i2s_audio
+    id: speaker_output
+    i2s_audio_id: i2s_output
+    dac_type: external
+    i2s_dout_pin: GPIO23
+    channel: stereo
+    buffer_duration: 100ms
+    bits_per_sample: 16bit
+    sample_rate: 48000
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: speaker_output
+    num_channels: 2
+    task_stack_in_psram: true
+    source_speakers:
+      - id: announcement_mixing_input
+      - id: media_mixing_input
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+media_source:
+  - platform: audio_http
+    id: http_announcement_source
+  - platform: audio_http
+    id: http_media_source
+
+media_player:
+  - platform: speaker_source
+    name: "ESP32-P4 AIO Speaker"
+    id: speaker_player
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
+      sources:
+        - http_announcement_source
+    media_pipeline:
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+      speaker: media_resampling_speaker
+      sources:
+        - http_media_source
+
+# Optional local wake-word support.
+micro_wake_word:
+  id: mww
+  models:
+    - okay_nabu
+    - hey_mycroft
+    - hey_jarvis
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: voice_assistant_id
+  microphone: microphone_input
+  media_player: speaker_player
+  micro_wake_word: mww
+  on_end:
+    - wait_until:
+        condition:
+          - media_player.is_announcing:
+        timeout: 0.5s
+    - wait_until:
+        - and:
+            - not:
+                media_player.is_announcing:
+            - not:
+                speaker.is_playing
+    - micro_wake_word.start:
+  on_client_connected:
+    - micro_wake_word.start
+  on_client_disconnected:
+    - micro_wake_word.stop
+  on_listening:
+    - logger.log: "Voice assistant is listening"
+  on_stt_end:
+    - logger.log:
+        format: "Voice assistant heard: %s"
+        args:
+          - x.c_str()
