@@ -13,17 +13,9 @@ logger:
   level: INFO
 
 wifi:
-  # Fallback hotspot only — add your own ssid/password when you adopt this.
+  # Fallback hotspot only. Your own configuration adds your network; the ESPHome
+  # Device Builder does that for you when you create the device there.
   ap:
-
-time:
-  - platform: sntp
-    id: sntp_time
-
-font:
-  - file: "gfonts://Roboto"
-    id: font_clock
-    size: 16
 
 # The `board: esp32-trinity` preset supplies the whole HUB75 pinout, so no pins
 # are listed here. Set panel_width/panel_height to match your panel.
@@ -37,10 +29,13 @@ display:
     bit_depth: 5
     gamma_correct: CIE1931
     update_interval: 250ms
+    # A test pattern that needs no network: red, green and blue bars inside a
+    # white border. If you see all of it, the panel and the board are working.
     lambda: |-
-      it.clear();
-      auto now = id(sntp_time).now();
-      if (now.is_valid()) {
-        it.strftime(it.get_width() / 2, it.get_height() / 2, id(font_clock),
-                    Color(255, 255, 255), TextAlign::CENTER, "%H:%M", now);
-      }
+      const int w = it.get_width();
+      const int h = it.get_height();
+      const int third = w / 3;
+      it.filled_rectangle(0, 0, third, h, Color(255, 0, 0));
+      it.filled_rectangle(third, 0, third, h, Color(0, 255, 0));
+      it.filled_rectangle(2 * third, 0, w - 2 * third, h, Color(0, 0, 255));
+      it.rectangle(0, 0, w, h, Color(255, 255, 255));

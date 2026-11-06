@@ -24,19 +24,28 @@ RGB LED matrix panels. It is the work of Brian Lough (witnessmenow).
 
 1. Connect the HUB75 ribbon cable from the panel to the Trinity's output header.
 2. Feed 5&nbsp;V into the screw terminals — a matrix panel draws far more current than USB can supply.
-3. Flash the configuration below, adjusting `panel_width` and `panel_height` to match your panel.
+3. Create the device in the ESPHome Device Builder, which sets up Wi-Fi, `api:` and `ota:` for you. Merge in the
+   hardware configuration below, set `panel_width` and `panel_height` to match your panel, and flash it.
 
 ## Configuration
 
 The `hub75` display platform ships a **board preset for the Trinity**, so `board: esp32-trinity` supplies the
-entire pinout and no pins need listing. The example below draws a clock from SNTP as a minimal proof that the
-panel is scanning correctly.
+entire pinout and no pins need listing. The example below draws red, green and blue bars inside a white border.
+It needs no network, so it is a quick proof that the panel is scanning correctly.
 
 ```yaml file=config.yaml
 ```
 
 For reference, the preset resolves to R1 `GPIO25`, G1 `GPIO26`, B1 `GPIO27`, R2 `GPIO14`, G2 `GPIO12`,
 B2 `GPIO13`, A `GPIO23`, B `GPIO19`, C `GPIO5`, D `GPIO17`, E `GPIO18`, LAT `GPIO4`, OE `GPIO15`, CLK `GPIO16`.
+
+### Clock
+
+Once the board is on your Wi-Fi, add this to replace the test pattern with a clock from network time. Until the
+time arrives it shows a dim `--:--`, so a dark panel still means a real fault.
+
+```yaml file=clock.yaml
+```
 
 ## Notes
 
