@@ -46,7 +46,6 @@ select:
 
   - platform: "tuya"
     id: "vertically"
-    internal: true
     name: "Oscillate vertically"
     enum_datapoint: 5
     optimistic: true
