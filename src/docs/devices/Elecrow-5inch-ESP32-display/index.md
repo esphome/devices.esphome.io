@@ -11,56 +11,56 @@ board: esp32
 
 ## Drivers
 
-* Processor: ESP32-S3-WROOM-1-N4R8 (using `esp32-s3-devkitc-1` board)
-* Touchscreen: `gt911`
-* Display: ILI6122 & ILI5960 (using `rpi_dpi_rgb` plaform)
+- Processor: ESP32-S3-WROOM-1-N4R8 (using `esp32-s3-devkitc-1` board)
+- Touchscreen: `gt911`
+- Display: ILI6122 & ILI5960 (using `rpi_dpi_rgb` plaform)
 
 ## GPIO Pinout
 
 ### I²C (used for touchscreen)
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO19 | i2c SDA     |
-| GPIO20 | i2c SCL     |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO19 | i2c SDA  |
+| GPIO20 | i2c SCL  |
 
 ### Backlight
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO2  | backlight   |
+| Pin   | Function  |
+| ----- | --------- |
+| GPIO2 | backlight |
 
 ### Display
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO40 | de_pin      |
-| GPIO39 | hsync_pin   |
-| GPIO41 | vsync_pin   |
-| GPIO0  | pclk_pin    |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO40 | de_pin    |
+| GPIO39 | hsync_pin |
+| GPIO41 | vsync_pin |
+| GPIO0  | pclk_pin  |
 
 ### Display Data pins
 
 ```yaml
 red:
-  - 45        #r1
-  - 48        #r2
-  - 47        #r3
-  - 21        #r4
-  - 14        #r5
+  - 45 #r1
+  - 48 #r2
+  - 47 #r3
+  - 21 #r4
+  - 14 #r5
 green:
-  - 5         #g0
-  - 6         #g1
-  - 7         #g2
-  - 15        #g3
-  - 16        #g4
-  - 4         #g5
+  - 5 #g0
+  - 6 #g1
+  - 7 #g2
+  - 15 #g3
+  - 16 #g4
+  - 4 #g5
 blue:
-  - 8         #b1
-  - 3         #b2
-  - 46        #b3
-  - 9         #b4
-  - 1         #b5
+  - 8 #b1
+  - 3 #b2
+  - 46 #b3
+  - 9 #b4
+  - 1 #b5
 ```
 
 ## Simple Configuration
@@ -71,9 +71,9 @@ esphome:
   platformio_options:
     board_build.esp-idf.memory_type: qio_opi
     board_build.flash_mode: dio
-  
+
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -124,24 +124,24 @@ display:
     pclk_frequency: 12MHz
     data_pins:
       red:
-        - 45        #r1
-        - 48        #r2
-        - 47        #r3
-        - 21        #r4
-        - 14        #r5
+        - 45 #r1
+        - 48 #r2
+        - 47 #r3
+        - 21 #r4
+        - 14 #r5
       green:
-        - 5         #g0
-        - 6         #g1
-        - 7         #g2
-        - 15        #g3
-        - 16        #g4
-        - 4         #g5
+        - 5 #g0
+        - 6 #g1
+        - 7 #g2
+        - 15 #g3
+        - 16 #g4
+        - 4 #g5
       blue:
-        - 8         #b1
-        - 3         #b2
-        - 46        #b3
-        - 9         #b4
-        - 1         #b5
+        - 8 #b1
+        - 3 #b2
+        - 46 #b3
+        - 9 #b4
+        - 1 #b5
     lambda: |-
       auto red = Color(255, 0, 0);
       auto green = Color(0, 255, 0);
@@ -162,7 +162,7 @@ binary_sensor:
     y_max: 90
     on_press:
       - lambda: |-
-            ESP_LOGI("btn", "Button pressed");
+          ESP_LOGI("btn", "Button pressed");
 ```
 
 ## Advanced Configuration (using LGVL graphics library)
@@ -176,9 +176,9 @@ esphome:
   platformio_options:
     board_build.esp-idf.memory_type: qio_opi
     board_build.flash_mode: dio
-  
+
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -224,24 +224,24 @@ display:
     pclk_frequency: 12MHz
     data_pins:
       red:
-        - 45        #r1
-        - 48        #r2
-        - 47        #r3
-        - 21        #r4
-        - 14        #r5
+        - 45 #r1
+        - 48 #r2
+        - 47 #r3
+        - 21 #r4
+        - 14 #r5
       green:
-        - 5         #g0
-        - 6         #g1
-        - 7         #g2
-        - 15        #g3
-        - 16        #g4
-        - 4         #g5
+        - 5 #g0
+        - 6 #g1
+        - 7 #g2
+        - 15 #g3
+        - 16 #g4
+        - 4 #g5
       blue:
-        - 8         #b1
-        - 3         #b2
-        - 46        #b3
-        - 9         #b4
-        - 1         #b5
+        - 8 #b1
+        - 3 #b2
+        - 46 #b3
+        - 9 #b4
+        - 1 #b5
 
 i2c:
   sda: GPIO19
@@ -255,7 +255,7 @@ globals:
   - id: random_int_var
     type: int
     restore_value: no
-    initial_value: '0'
+    initial_value: "0"
 
 binary_sensor:
   - platform: lvgl
@@ -272,7 +272,7 @@ binary_sensor:
             id: power_kw
             text:
               format: "%dkW"
-              args: [ 'id(random_int_var)' ]
+              args: ["id(random_int_var)"]
 image:
   - file: mdi:sun-wireless-outline
     id: solar_power_icon
@@ -320,9 +320,9 @@ lvgl:
         align: TOP_LEFT
         checkable: false
         widgets:
-        - label:
-            align: center
-            text: "Button"
+          - label:
+              align: center
+              text: "Button"
     - obj: # Meter
         height: 240
         width: 240
@@ -386,7 +386,7 @@ lvgl:
               y: 8
               x: 99
               text: "+10"
-          - label:  # value label
+          - label: # value label
               styles: title_style
               id: power_kw
               y: -10

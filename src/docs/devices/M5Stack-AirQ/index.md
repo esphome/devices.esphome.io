@@ -8,18 +8,24 @@ difficulty: 2
 
 ## Product Images
 
-![M5Stack AirQ](M5stack-AirQsensorDisplay2.jpg "M5Stack AirQ ESPhome Screen")
+![M5Stack AirQ](M5stack-AirQsensorDisplay.jpeg "M5Stack AirQ esphome edition")
 ![M5Stack AirQ](M5stack-AirQ.webp "M5Stack AirQ Product Details")
 
 ## Description
 
-M5Stack AirQ is an integrated, low-power air quality monitoring device designed to provide comprehensive air quality monitoring solutions. It features multiple components, including the SEN55 air quality sensor and the SCD40 CO2 sensor, enabling the monitoring of PM1.0, PM2.5, PM4, PM10 particles, temperature, humidity, VOC, and CO2 concentrations. Powered by the M5stack StampS3 main controller utilizing ESP32-S3FN8 and equipped with 8M Flash memory.
+M5Stack AirQ is an integrated, low-power air quality monitoring device designed to provide comprehensive air quality
+monitoring solutions. It features multiple components, including the SEN55 air quality sensor and the SCD40 CO2 sensor,
+enabling the monitoring of PM1.0, PM2.5, PM4, PM10 particles, temperature, humidity, VOC, and CO2 concentrations.
+Powered by the M5stack StampS3 main controller utilizing ESP32-S3FN8 and equipped with 8M Flash memory.
 
-This ESPhome YAML will enable the ability to display some of the sensor data on the integrated paperwhite display, as well as send all of the sensor data to Home Assistant.
+This ESPHome YAML will enable the ability to display some of the sensor data on the integrated paperwhite display, as
+well as send all of the sensor data to Home Assistant.
 
-The device comes with a 1.54-inch e-ink display with a resolution of 200x200, providing a clear visual representation of the data.
+The device comes with a 1.54-inch e-ink display with a resolution of 200x200, providing a clear visual representation of
+the data.
 
-This YAML was adapted from a sample provided by **joshblake87** at https://www.reddit.com/r/Esphome/comments/1e2q8jj/m5_stack_airq_air_quality_sensor/
+This YAML was adapted from a sample provided by **joshblake87** at
+[https://www.reddit.com/r/Esphome/comments/1e2q8jj/m5_stack_airq_air_quality_sensor/](https://www.reddit.com/r/Esphome/comments/1e2q8jj/m5_stack_airq_air_quality_sensor/)
 
 ## Known Issues
 
@@ -27,22 +33,22 @@ This YAML was adapted from a sample provided by **joshblake87** at https://www.r
 
 ## GPIO Pinout
 
-|  Pin   | Function       |
-| ------ | -------------- |
-| GPIO1 | Ink Screen Busy |
-| GPIO2 | Ink Screen RST  |
-| GPIO3 | Ink Screen D/C  |
-| GPIO4 | Ink Screen CS   |
-| GPIO5 | Ink Screen SCK  |
-| GPIO6 | Ink Screen MOSI |
-| GPIO8 | Button B        |
-| GPIO9 | beep            |
+| Pin    | Function           |
+| ------ | ------------------ |
+| GPIO1  | Ink Screen Busy    |
+| GPIO2  | Ink Screen RST     |
+| GPIO3  | Ink Screen D/C     |
+| GPIO4  | Ink Screen CS      |
+| GPIO5  | Ink Screen SCK     |
+| GPIO6  | Ink Screen MOSI    |
+| GPIO8  | Button B           |
+| GPIO9  | beep               |
 | GPIO10 | SEN55 Power Switch |
-| GPIO11 | SEN55 SDA      |
-| GPIO12 | SEN55 SCL      |
-| GPIO26 | Speaker Pin 2  |
-| GPIO15 | GROVE A SCL    |
-| GPIO13 | GROVE A SDA    |
+| GPIO11 | SEN55 SDA          |
+| GPIO12 | SEN55 SCL          |
+| GPIO26 | Speaker Pin 2      |
+| GPIO15 | GROVE A SCL        |
+| GPIO13 | GROVE A SDA        |
 
 ## Example Configuration
 
@@ -64,13 +70,10 @@ substitutions:
   friendlyname: AirQ
   location: Office
   sensor_interval: 60s
-
-# Security related substitutions - CHANGE THESE VALUES!
-  encryption_key: "YOUR_32_CHARACTER_ENCRYPTION_KEY_HERE"
-  ota_password: "YOUR_OTA_PASSWORD_HERE"
-  ap_password: "airq-device"  # Fallback AP password
-# Sensor calibration
-  altitude_compensation: "207m"  # Local altitude for CO2 sensor
+  log_level: DEBUG
+  altitude_compensation: "0m" # Local altitude for CO2 sensor
+  temp_offset: -3.0
+  temp_time_constant: 1200
 
 esphome:
   name: ${devicename}
@@ -83,30 +86,23 @@ esphome:
     board_build.upload.maximum_size: 8388608
     board_build.vendor: M5Stack
   on_boot:
-  - priority: 800
-    then:
-      - output.turn_on: enable
-  - priority: 800
-    then:
-      - pcf8563.read_time
+    - priority: 800
+      then:
+        - output.turn_on: enable
+    - priority: 200 # na wifi/sensor init
+      then:
+        - script.execute: warmup_refresh
 
 esp32:
-  board: esp32-s3-devkitc-1 #m5stack-stamps3
   variant: esp32s3
-  framework:
-    type: arduino
 
-# Enable logging
 logger:
+  level: ${log_level}
 
-# Enable Home Assistant API
 api:
-  encryption:
-    key: "${encryption_key}"
 
 ota:
   - platform: esphome
-    password: "${ota_password}"
 
 wifi:
   ssid: !secret wifi_ssid
@@ -115,7 +111,6 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "${devicename} Fallback Hotspot"
-    password: "${ap_password}"
 
 captive_portal:
 
@@ -125,8 +120,8 @@ output:
     id: enable
 
 web_server:
-   port: 80
-   include_internal: true
+  port: 80
+  include_internal: true
 
 i2c:
   sda: GPIO11
@@ -140,42 +135,45 @@ spi:
   mosi_pin: GPIO06
 
 time:
-  - platform: pcf8563
-    address: 0x51
-    update_interval: 10min
+  - platform: homeassistant
+    id: ha_time
+
   - platform: sntp
     id: sntp_time
-    timezone: CST6CDT,M3.2.0,M11.1.0
-#   US Central Time zone, update with your own
-#    servers:
-#      - YOUR HOME ASSISTANT IP HERE
-    on_time_sync:
-      then:
-        pcf8563.write_time:
+    timezone: Europe/Amsterdam
+    # optioneel: eigen NTP servers
+    # servers:
+    #   - 0.nl.pool.ntp.org
+    #   - 1.nl.pool.ntp.org
 
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
     pin: GPIO21
     num_leds: 1
-    rmt_channel: 0
     chipset: SK6812
     name: "LED"
-    restore_mode: RESTORE_AND_ON
+    restore_mode: RESTORE_AND_OFF
     id: id_led
+    color_correct: [20%, 20%, 20%]
+
+script:
+  - id: warmup_refresh
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: |-
+              return id(uptime_sensor).state < 120;
+          then:
+            - component.update: disp
+            - delay: 1s
 
 text_sensor:
   - platform: wifi_info
-    ip_address:
-      name: IP
     ssid:
       name: SSID
-    bssid:
-      name: BSSID
-    mac_address:
-      name: MAC
-    dns_address:
-      name: DNS
+      id: ssid
 
   - platform: template
     name: "VOC IAQ Classification"
@@ -226,6 +224,12 @@ text_sensor:
       }
 
 sensor:
+  - platform: uptime
+    name: "Uptime"
+    id: uptime_sensor
+    update_interval: 1s
+    internal: true
+
   - platform: scd4x
     co2:
       name: CO2
@@ -254,7 +258,7 @@ sensor:
             float MAX_VALUE = 100.0;
             if (MIN_VALUE <= x && x <= MAX_VALUE) return x;
             else return {};
-    altitude_compensation: 207m
+    altitude_compensation: ${altitude_compensation}
     address: 0x62
     update_interval: $sensor_interval
 
@@ -313,9 +317,9 @@ sensor:
         std_initial: 50
         gain_factor: 230
     temperature_compensation:
-      offset: 0
+      offset: ${temp_offset}
       normalized_offset_slope: 0
-      time_constant: 0
+      time_constant: ${temp_time_constant}
     acceleration_mode: low
     store_baseline: true
     address: 0x69
@@ -361,7 +365,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: GPIO08
-#      ignore_strapping_warning: true
+      #      ignore_strapping_warning: true
       mode:
         input: true
         pullup: true
@@ -377,7 +381,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: GPIO42
-#      ignore_strapping_warning: true
+    #      ignore_strapping_warning: true
     name: Button Power
 
 button:
@@ -390,7 +394,7 @@ button:
     on_press:
       then:
         - scd4x.perform_forced_calibration:
-            value: !lambda 'return id(co2_cal).state;'
+            value: !lambda "return id(co2_cal).state;"
 
   - platform: template
     name: "SEN55 Force Manual Clean"
@@ -448,65 +452,268 @@ display:
     busy_pin:
       number: GPIO01
       inverted: false
-    full_update_every: 6
+    full_update_every: 5
     reset_duration: 2ms
-    update_interval: 10s
+    update_interval: $sensor_interval
     lambda: |-
-      auto now = id(sntp_time).now().strftime("%I:%M%p %m/%d/%y").c_str();
-      it.printf(it.get_width()/2, 0, id(f16), TextAlign::TOP_CENTER, "${location} @ %s", now);
+      // 1) Warming up check: eerste 120 s enkel melding tonen
+      if (id(uptime_sensor).state < 120) {
+        it.fill(COLOR_OFF);
+        it.printf(it.get_width()/2, it.get_height()/2 - 16,
+                  id(f18), COLOR_ON, TextAlign::CENTER,
+                  "Warming up sensors");
+        it.printf(it.get_width()/2, it.get_height()/2 + 16,
+                  id(f16), COLOR_ON, TextAlign::CENTER,
+                  "Waiting for 2 minutes");
+        return;
+      }
 
-      it.print(0, 23, id(f24), TextAlign::TOP_LEFT, "PM 1: ");
-      it.print(0, 48, id(f24), TextAlign::TOP_LEFT, "PM 2.5: ");
-      it.print(0, 73, id(f24), TextAlign::TOP_LEFT, "PM 4: ");
-      it.print(0, 98, id(f24), TextAlign::TOP_LEFT, "PM 10: ");
-      it.print(0, 123, id(f24), TextAlign::TOP_LEFT, "CO2: ");
-      it.print(0, 148, id(f24), TextAlign::TOP_LEFT, "VOC: ");
-      it.print(0, 173, id(f24), TextAlign::TOP_LEFT, "NOx: ");
+      // 1) GRID lijnen
+      // Verticale verdeellijn
+      it.line(100, 0,   100, 200);
+      // Horizontale bovenste scheiding
+      //it.line(0,   50, 200, 0);
+      // Middenlijn onder Sen55 alleen rechts (x ≥ 100)
+      // it.line(100,120,200,120);
+      // Onderste scheiding
+      it.line(it.get_width()-1, 0, it.get_width()-1, it.get_height());
 
-      it.printf(it.get_width() - 50, 23, id(f24), TextAlign::TOP_RIGHT, "%.1f", id(PM1_0).state);
-      it.print(it.get_width(), 23, id(f18), TextAlign::TOP_RIGHT, "µg/m³");
+      // 2) Vakken
+      // SCD40 linksonder, zonder onderrand
+      it.line(0,   50, 0,   160);   // linkerkant
+      it.line(0,   50, 100, 50);    // bovenkant
+      //it.line(100, 50, 100,160);    // rechterkant
+      // Sen55 rechtsboven (0→120)
+      it.rectangle(100, 0, 100, 160);
+      // Wi-Fi rechtsonder (160→200)
+      //it.rectangle(100,160,100, 40);
+      // Optioneel: vak linksonder voor je logo
+      it.rectangle(0, 160,100, 40);
 
-      it.printf(it.get_width() - 50, 48, id(f24), TextAlign::TOP_RIGHT, "%.1f", id(PM2_5).state);
-      it.print(it.get_width(), 48, id(f18), TextAlign::TOP_RIGHT, "µg/m³");
+      // KLOK & DATUM (kleiner font)
+      auto t = id(sntp_time).now();
+      char buf[20];
+      snprintf(buf, sizeof(buf), "%02d:%02d", t.hour, t.minute);
+      it.printf(2, 0,   id(f24), COLOR_ON,  TextAlign::TOP_LEFT,  "%s", buf);
+      t.strftime(buf, sizeof(buf), "%Y-%m-%d");
+      it.printf(2, 30,  id(f12), COLOR_ON,  TextAlign::TOP_LEFT,  "%s", buf);
 
-      it.printf(it.get_width() - 50, 73, id(f24), TextAlign::TOP_RIGHT, "%.1f", id(PM4_0).state);
-      it.print(it.get_width(), 73, id(f18), TextAlign::TOP_RIGHT, "µg/m³");
+      // SCD40 LINKS
+      it.printf(5, 52,  id(f16), COLOR_ON, TextAlign::TOP_LEFT, "SCD40");
+      it.printf(5, 75,  id(f12), COLOR_ON, TextAlign::TOP_LEFT, "Co2:");
+      it.printf(90,75,  id(f16), COLOR_ON, TextAlign::TOP_RIGHT, "%.0f", id(CO2).state);
+      it.printf(5, 95,  id(f12), COLOR_ON, TextAlign::TOP_LEFT, "Temp:");
+      it.printf(90,95,  id(f16), COLOR_ON, TextAlign::TOP_RIGHT, "%.1f", id(temperature).state);
+      it.printf(5,115,  id(f12), COLOR_ON, TextAlign::TOP_LEFT, "Humid:");
+      it.printf(90,115, id(f16), COLOR_ON, TextAlign::TOP_RIGHT, "%.1f", id(humidity).state);
 
-      it.printf(it.get_width() - 50, 98, id(f24), TextAlign::TOP_RIGHT, "%.1f", id(PM10_0).state);
-      it.print(it.get_width(), 98, id(f18), TextAlign::TOP_RIGHT, "µg/m³");
+      // SEN55 RECHTS
+      it.printf(105,5,  id(f16), COLOR_ON, TextAlign::TOP_LEFT, "SEN55");
+      const char* labels[] = {"PM1.0:","PM2.5:","PM4.0:","PM10:","VOC:","NOX:"};
+      float vals[] = {
+        id(PM1_0).state, id(PM2_5).state, id(PM4_0).state, id(PM10_0).state,
+        id(voc).state, id(nox).state
+      };
+      for(int i = 0; i < 6; i++) {
+        int y = 25 + i * 20;
+        it.printf(105, y, id(f12), COLOR_ON, TextAlign::TOP_LEFT,  labels[i]);
+        it.printf(190, y, id(f16), COLOR_ON, TextAlign::TOP_RIGHT,
+                  i < 4 ? "%.1f" : "%.0f", vals[i]);
+      }
 
-      it.printf(it.get_width() - 50, 123, id(f24), TextAlign::TOP_RIGHT, "%.0f", id(CO2).state);
-      it.print(it.get_width(), 123, id(f18), TextAlign::TOP_RIGHT, "ppm");
+      // 6) Wi-Fi (rechtsonder, y=160→200)
+      it.printf(105,161, id(f16), COLOR_ON, TextAlign::TOP_LEFT, "WIFI");
+      it.printf(105,180, id(f12), COLOR_ON, TextAlign::TOP_LEFT, "%s", id(ssid).state.c_str());
 
-      it.printf(it.get_width() - 50, 148, id(f24), TextAlign::TOP_RIGHT, "%.0f", id(voc).state);
-      it.print(it.get_width(), 148, id(f18), TextAlign::TOP_RIGHT, "ppb");
-
-      it.printf(it.get_width() - 50, 173, id(f24), TextAlign::TOP_RIGHT, "%.0f", id(nox).state);
-      it.print(it.get_width(), 173, id(f18), TextAlign::TOP_RIGHT, "ppb");
+      // 7) Logo of friendlyname (linksonder)
+      it.filled_rectangle(1, 161, 98, 39, COLOR_ON);
+      it.print(50, 180, id(f18), COLOR_OFF, TextAlign::CENTER, "${friendlyname}");
 
 font:
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
     id: f16
     size: 16
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
     id: f18
     size: 18
   - file:
@@ -515,60 +722,465 @@ font:
       weight: 500
     id: f12
     size: 12
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
     id: f24
     size: 24
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
     id: f36
     size: 36
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
     id: f48
     size: 48
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
   - file:
       type: gfonts
       family: Noto Sans Display
       weight: 500
     id: f32
     size: 32
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
 
   - file:
       type: gfonts
@@ -576,12 +1188,93 @@ font:
       weight: 500
     id: f64
     size: 64
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
 
   - file:
       type: gfonts
@@ -589,12 +1282,93 @@ font:
       weight: 800
     id: f64b
     size: 64
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
 
   - file:
       type: gfonts
@@ -602,12 +1376,93 @@ font:
       weight: 800
     id: f55b
     size: 55
-    glyphs: ['&', '@', '!', ',', '.', '"', '%', '(', ')', '+', '-', '_', ':', '°', '0',
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-        'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-        'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-        'u', 'v', 'w', 'x', 'y', 'z','å', 'ä', 'ö', '/', 'µ', '³', '’']
+    glyphs:
+      [
+        "&",
+        "@",
+        "!",
+        ",",
+        ".",
+        '"',
+        "%",
+        "(",
+        ")",
+        "+",
+        "-",
+        "_",
+        ":",
+        "°",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        " ",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "å",
+        "ä",
+        "ö",
+        "/",
+        "µ",
+        "³",
+        "’",
+      ]
 
   - file:
       type: gfonts
@@ -673,19 +1528,19 @@ font:
       weight: 500
     id: font_small
     size: 30
-    glyphs: "!\"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»"
+    glyphs: '!"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»'
   - file:
       type: gfonts
       family: Open Sans
       weight: 500
     id: font_medium
     size: 45
-    glyphs: "!\"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»"
+    glyphs: '!"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»'
   - file:
       type: gfonts
       family: Open Sans
       weight: 300
     id: font_xsmall
-    size: 16  
-    glyphs: "!\"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»"
+    size: 16
+    glyphs: '!"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz»'
 ```

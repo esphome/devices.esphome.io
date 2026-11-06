@@ -26,7 +26,7 @@ esphome:
 
 rtl87xx:
   board: generic-rtl8710bn-2mb-788k
-  
+
 # Enable logging
 logger:
 
@@ -93,5 +93,4 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay
-
 ```

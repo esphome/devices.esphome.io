@@ -33,7 +33,7 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+esp8266:
   board: esp8285
 
 wifi:
@@ -140,7 +140,8 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3tVURf8)
+[Amazon Link](https://www.amazon.com/dp/B07FM3P87S)
 
 ## GPIO Pinout
 
@@ -27,7 +27,8 @@ board: esp8266
 ---
 esphome:
   name: bedroom_ss30
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

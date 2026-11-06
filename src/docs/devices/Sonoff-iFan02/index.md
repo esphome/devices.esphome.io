@@ -22,14 +22,14 @@ esphome:
   name: ifan02
   friendly_name: iFan02
   on_boot: #This toggle thing makes sure the states get restored on reboot
-    priority : -100
+    priority: -100
     then:
       - delay: 200ms
       - fan.toggle: ifan02_fan
       - fan.toggle: ifan02_fan
       - delay: 200ms
       - light.toggle: ifan02_light
-      - delay: 1ms  
+      - delay: 1ms
       - light.toggle: ifan02_light
 
 esp8266:
@@ -39,11 +39,11 @@ esp8266:
 logger:
 api:
 ota:
-  
+
 wifi:
   networks:
-  - ssid: !secret wifi_ssid
-    password: !secret wifi_password
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -51,7 +51,6 @@ wifi:
     password: !secret wifi_password
 
 captive_portal:
-
   - platform: status
     name: "Sonoff iFan02 Status"
 

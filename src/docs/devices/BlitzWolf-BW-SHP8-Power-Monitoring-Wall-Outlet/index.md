@@ -5,7 +5,7 @@ type: plug
 standard: eu
 board: esp8266
 ---
-  ![alt text](/BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
+  ![alt text](./BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
 
 Model reference: BW-SHP8
 
@@ -38,7 +38,8 @@ substitutions:
   restore_mode: "ALWAYS_ON"
 
 esphome:
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 binary_sensor:

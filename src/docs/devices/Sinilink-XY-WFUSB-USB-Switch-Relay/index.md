@@ -6,7 +6,7 @@ standard: global
 board: esp8266
 ---
 
-This device can be found on [Aliexpress](https://www.aliexpress.com/wholesale?SearchText=Sinilink+XY-WFUSB)
+This device can be found on [AliExpress](https://www.aliexpress.com/wholesale?SearchText=Sinilink+XY-WFUSB)
 for about 5 USD.
 
 ![alt text](Sinilink.png "Product Image")
@@ -30,15 +30,15 @@ GPIO0 has to be connected to GND to enter programming mode.
 
 ## GPIO Pinout
 
-| Pin    | Function             | Note                                                               |
-| ------ | -------------------- | ------------------------------------------------------------------ |
-| GPIO00 | User (Pad GPIO-0)    | Pulled-up to HIGH, boot fails if pulled LOW                        |
-| GPIO01 | User (Pad TX)        | HIGH at boot, spits debug output at boot, boot fails if pulled LOW |
-| GPIO03 | User (Pad RX)        | HIGH at boot                                                       |
-| GPIO04 | Toggle Button        | Pin input LOW when button is pressed                               |
-| GPIO05 | Relay and Red LED    | USB socket power with LED is ON when pin output HIGH               |
-| GPIO14 | Green LED            | LED is ON when pin output HIGH                                     |
-| GPIO16 | Blue LED             | LED is ON when pin output HIGH                                     |
+| Pin    | Function          | Note                                                               |
+| ------ | ----------------- | ------------------------------------------------------------------ |
+| GPIO00 | User (Pad GPIO-0) | Pulled-up to HIGH, boot fails if pulled LOW                        |
+| GPIO01 | User (Pad TX)     | HIGH at boot, spits debug output at boot, boot fails if pulled LOW |
+| GPIO03 | User (Pad RX)     | HIGH at boot                                                       |
+| GPIO04 | Toggle Button     | Pin input LOW when button is pressed                               |
+| GPIO05 | Relay and Red LED | USB socket power with LED is ON when pin output HIGH               |
+| GPIO14 | Green LED         | LED is ON when pin output HIGH                                     |
+| GPIO16 | Blue LED          | LED is ON when pin output HIGH                                     |
 
 ## Basic Config
 
@@ -112,15 +112,15 @@ switch:
         return false;
       }
     turn_on_action:
-        - switch.turn_on:
-            id: green_led
-        - switch.turn_on:
-            id: switch_relay
+      - switch.turn_on:
+          id: green_led
+      - switch.turn_on:
+          id: switch_relay
     turn_off_action:
-        - switch.turn_off:
-            id: green_led
-        - switch.turn_off:
-            id: switch_relay
+      - switch.turn_off:
+          id: green_led
+      - switch.turn_off:
+          id: switch_relay
 
 # Button
 binary_sensor:
@@ -196,6 +196,6 @@ light:
 
 ## Useful links
 
-* [Tasmota page](https://templates.blakadder.com/sinilink_XY-WFUSB.html)
-* [Andreas Spiess' review and guide](https://www.youtube.com/watch?v=lrHhn2AVzSA)
-* [Scargill's Tech Blog](https://tech.scargill.net/aliexpress-sinilink-wifi-usb-controller/)
+- [Tasmota page](https://templates.blakadder.com/sinilink_XY-WFUSB.html)
+- [Andreas Spiess' review and guide](https://www.youtube.com/watch?v=lrHhn2AVzSA)
+- [Scargill's Tech Blog](https://tech.scargill.net/aliexpress-sinilink-wifi-usb-controller/)
