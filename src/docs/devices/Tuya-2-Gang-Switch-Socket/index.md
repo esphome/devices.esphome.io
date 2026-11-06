@@ -1,7 +1,7 @@
 ---
 title: Tuya 2 Gang Switch Socket
 date-published: 2024-07-10
-type: switch, plug
+type: switch
 standard: au
 board: bk72xx
 ---
@@ -16,17 +16,17 @@ These devices are sold under many brands on Aliexpress.
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| P0     | Bottom Button Blue LED (H) |
-| P6     | Top Button Relay L2 (H)    |
-| P7     | Top Button Blue LED (H)    |
-| P8     | Top Button (L)             |
-| P9     | Status LED RED (H)         |
-| P10    | Bottom Button (L)          |
-| P11    | GPO Button (L)             |
-| P24    | Bottom Button Relay L1 (H) |
-| P26    | GPO Relay (H)              |
+| Pin | Function                   |
+| --- | -------------------------- |
+| P0  | Bottom Button Blue LED (H) |
+| P6  | Top Button Relay L2 (H)    |
+| P7  | Top Button Blue LED (H)    |
+| P8  | Top Button (L)             |
+| P9  | Status LED RED (H)         |
+| P10 | Bottom Button (L)          |
+| P11 | GPO Button (L)             |
+| P24 | Bottom Button Relay L1 (H) |
+| P26 | GPO Relay (H)              |
 
 The light output relays are connected to the RED button LED.
 
@@ -54,7 +54,7 @@ bk72xx:
 ##  Binary Sensors  ##
 ## ---------------- ##
 binary_sensor:
-# Top Button
+  # Top Button
   - platform: gpio
     id: button_1
     pin:
@@ -65,8 +65,8 @@ binary_sensor:
       then:
         - light.toggle: light1
     internal: True
-  
-# Bottom Button
+
+  # Bottom Button
   - platform: gpio
     id: button_2
     pin:
@@ -78,7 +78,7 @@ binary_sensor:
         - light.toggle: light2
     internal: True
 
-# Button 3(GPO)
+  # Button 3(GPO)
   - platform: gpio
     id: button_3
     pin:
@@ -89,15 +89,15 @@ binary_sensor:
 ##      Switch      ##
 ## ---------------- ##
 switch:
-#GPO
+  #GPO
   - platform: gpio
     pin: P26
     name: ${device_friendly_name}
     id: relay
-    restore_mode: always on   # default when power is turned on
+    restore_mode: always on # default when power is turned on
     icon: mdi:power-socket-au
 
-#Button LED (RED)
+  #Button LED (RED)
   - platform: gpio
     id: Top_buttonLED
     pin:
@@ -112,11 +112,11 @@ switch:
 ##      Relays      ##
 ## ---------------- ##
 output:
-# Relay L1
+  # Relay L1
   - platform: gpio
     id: relay1
     pin: P6
-# Relay L2
+  # Relay L2
   - platform: gpio
     id: relay2
     pin: P24
@@ -124,13 +124,13 @@ output:
 ##    Lights    ##
 ## ------------ ##
 light:
-# Light L1
+  # Light L1
   - platform: binary
     name: ${device_friendly_name}_1
     icon: ${device_icon}
     output: relay1
     id: light1
-# Light L2
+  # Light L2
   - platform: binary
     name: ${device_friendly_name}_2
     icon: ${device_icon}

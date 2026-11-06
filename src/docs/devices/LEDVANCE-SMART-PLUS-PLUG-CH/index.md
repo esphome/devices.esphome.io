@@ -5,9 +5,10 @@ type: plug
 standard: ch
 board: bk72xx
 ---
+
 LEDVANCE SMART PLUS PLUG CH based on BK7231T chip (WB2S).
 Can be flashed with esphome kickstart via tuya-cloudcutter.
-`voltage_divider`, `current_resistor` and `multiply` are estimated and can be adjusted according [this instructions](https://esphome.io/components/sensor/hlw8012.html#calibration).
+`voltage_divider`, `current_resistor` and `multiply` are estimated and can be adjusted according [this instructions](https://esphome.io/components/sensor/hlw8012/#calibration).
 
 ## Product Image
 
@@ -15,14 +16,14 @@ Can be flashed with esphome kickstart via tuya-cloudcutter.
 
 ## GPIO Pinout
 
-| Pin     | Function                           |
-| ------- | ---------------------------------- |
-| GPIO6   | Relay                              |
-| GPIO7   | Button                             |
-| GPIO10  | LED                                |
-| GPIO11  | BBL0937SEL                         |
-| GPIO24  | BL0937CF1                          |
-| GPIO26  | BL0937CF                           |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO6  | Relay      |
+| GPIO7  | Button     |
+| GPIO10 | LED        |
+| GPIO11 | BBL0937SEL |
+| GPIO24 | BL0937CF1  |
+| GPIO26 | BL0937CF   |
 
 ## Basic Configuration
 

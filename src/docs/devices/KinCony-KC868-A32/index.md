@@ -10,23 +10,23 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO39 | ANALOG_A1           |
-| GPIO34 | ANALOG_A2           |
-| GPIO36 | ANALOG_A3           |
-| GPIO35 | ANALOG_A4           |
-| GPIO15 | IIC_Bus_1_SDA       |
-| GPIO13 | IIC_Bus_1_SCL       |
-| GPIO4  | IIC_Bus_2_SDA       |
-| GPIO5  | IIC_Bus_2_SCL       |
-| GPIO32 | 1-Wire GPIO         |
-| GPIO33 | 1-Wire GPIO         |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO16 | RS485_RXD           |
-| GPIO14 | RS485_TXD           |
-| GPIO33 | Extend_Serial_RXD   |
-| GPIO32 | Extend_Serial_TXD   |
+| Pin    | Function          |
+| ------ | ----------------- |
+| GPIO39 | ANALOG_A1         |
+| GPIO34 | ANALOG_A2         |
+| GPIO36 | ANALOG_A3         |
+| GPIO35 | ANALOG_A4         |
+| GPIO15 | IIC_Bus_1_SDA     |
+| GPIO13 | IIC_Bus_1_SCL     |
+| GPIO4  | IIC_Bus_2_SDA     |
+| GPIO5  | IIC_Bus_2_SCL     |
+| GPIO32 | 1-Wire GPIO       |
+| GPIO33 | 1-Wire GPIO       |
+| GPIO14 | 1-Wire GPIO       |
+| GPIO16 | RS485_RXD         |
+| GPIO14 | RS485_TXD         |
+| GPIO33 | Extend_Serial_RXD |
+| GPIO32 | Extend_Serial_TXD |
 
 [Additional pinout/design details](https://www.kincony.com/arduino-esp32-32-channel-relay-module-kc868-a32.html)
 
@@ -38,7 +38,7 @@ esphome:
   name: KC868-A32
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Enable logging
 logger:
@@ -46,16 +46,16 @@ logger:
 # Enable Home Assistant API
 api:
 
- # Example configuration entry
+  # Example configuration entry
 i2c:
-   - id: bus_a
-     sda: 15
-     scl: 13
-     scan: true
-   - id: bus_b
-     sda: 4
-     scl: 5
-     scan: true
+  - id: bus_a
+    sda: 15
+    scl: 13
+    scan: true
+  - id: bus_b
+    sda: 4
+    scl: 5
+    scan: true
 
 # Example configuration entry
 ethernet:
@@ -67,35 +67,35 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     i2c_id: bus_a
     address: 0x24
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 9-16
+  - id: "pcf8574_hub_out_2" # for output channel 9-16
     i2c_id: bus_a
     address: 0x25
 
-  - id: 'pcf8574_hub_out_3'  # for output channel 17-24
+  - id: "pcf8574_hub_out_3" # for output channel 17-24
     i2c_id: bus_a
     address: 0x21
 
-  - id: 'pcf8574_hub_out_4'  # for output channel 25-32
+  - id: "pcf8574_hub_out_4" # for output channel 25-32
     i2c_id: bus_a
     address: 0x22
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     i2c_id: bus_b
     address: 0x24
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     i2c_id: bus_b
     address: 0x25
 
-  - id: 'pcf8574_hub_in_3'  # for input channel 17-24
+  - id: "pcf8574_hub_in_3" # for input channel 17-24
     i2c_id: bus_b
     address: 0x21
 
-  - id: 'pcf8574_hub_in_4'  # for input channel 25-32
+  - id: "pcf8574_hub_in_4" # for input channel 25-32
     i2c_id: bus_b
     address: 0x22
 

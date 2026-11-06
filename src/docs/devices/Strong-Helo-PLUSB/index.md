@@ -9,25 +9,32 @@ difficulty: 4
 
 ![Strong Helo PLUSB 2x USB Power Monitoring Plug](strong_HELO-PLUSB-EU.webp "HELO-PLUSB-EU")
 
-This plug has a socket output switched by a relay and a separately switchable dual USB power output. Has a rubber edge around the front face, and a push button above the socket. A red LED under the button switches on with the relay, and a blue one can be freely configured. It contains a TYWE3S module and a BL0937 power monitoring chip.
+This plug has a socket output switched by a relay and a separately switchable dual USB power output. Has a rubber edge
+around the front face, and a push button above the socket. A red LED under the button switches on with the relay, and a
+blue one can be freely configured. It contains a TYWE3S module and a BL0937 power monitoring chip.
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO00 | Button                             |
-| GPIO04 | BL0937 CF                          |
-| GPIO05 | HLWBL CF1                          |
-| GPIO12 | HLWBL SELi                         |
-| GPIO13 | Status LED (inverted)              |
-| GPIO14 | Relay 1 (socket)                   |
-| GPIO15 | Relay 2 (USB power)                |
+| Pin    | Function              |
+| ------ | --------------------- |
+| GPIO00 | Button                |
+| GPIO04 | BL0937 CF             |
+| GPIO05 | HLWBL CF1             |
+| GPIO12 | HLWBL SELi            |
+| GPIO13 | Status LED (inverted) |
+| GPIO14 | Relay 1 (socket)      |
+| GPIO15 | Relay 2 (USB power)   |
 
 ## Initial Setup
 
-Remove the 4 screws at the back of the device. Requires triangular bit to unscrew case, but Torx 7 also works. Remove the daughterboard by unscrewing the interal screws. The daughter-board is held by 3 internal smaller screws, remove that too, but be careful as wires are short. No need to remove the main board, as the MCU is on the daughter-board. Disconnect the internal cable connecting the two. This way the module becomes relatively easily accessible.
+Remove the 4 screws at the back of the device. Requires triangular bit to unscrew case, but Torx 7 also works. Remove
+the daughterboard by unscrewing the interal screws. The daughter-board is held by 3 internal smaller screws, remove that
+too, but be careful as wires are short. No need to remove the main board, as the MCU is on the daughter-board.
+Disconnect the internal cable connecting the two. This way the module becomes relatively easily accessible.
 
-The TYWE3S module is ESP8266-based, so it can be flashed directly with ESPHome. You need to solder your USB-TTL adapter to the RX, TX, GND and 3V3 pins, then just hold down the onboard button while powering on the adapter. When only the red LED lights up, the board is in bootloader mode.
+The TYWE3S module is ESP8266-based, so it can be flashed directly with ESPHome. You need to solder your USB-TTL adapter
+to the RX, TX, GND and 3V3 pins, then just hold down the onboard button while powering on the adapter. When only the red
+LED lights up, the board is in bootloader mode.
 
 ![HELO-PLUSB-EU MCU](mcu_pinout.jpg "HELO-PLUSB-EU MCU Pinout")
 
@@ -38,16 +45,17 @@ substitutions:
   device_name: plug-helo-plusb
   friendly_name: "Helo PLUSB Plug"
   device_description: "Strong Helo PLUSB 2x USB Power Monitoring Plug (HELO-PLUSB-EU)"
-  voltage_div: "1655.66630552546"  # Lower value gives lower voltage readout. Calibrate for higher accuracy.
+  voltage_div: "1655.66630552546" # Lower value gives lower voltage readout. Calibrate for higher accuracy.
   current_res: "0.00092" # Higher value gives lower watt readout. Calibrate for higher accuracy.
   current_mul: "0.914285714285714" # Muliplier for current sensor filter. Calibrate for higher accuracy.
 
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true
+  restore_from_flash: true
 
 sensor:
   - platform: hlw8012
@@ -80,16 +88,16 @@ binary_sensor:
       - invert:
       - delayed_off: 10ms
     on_multi_click:
-    - timing: #short press to toggle socket relay
-        - ON for at most 1s
-      then:
-        - switch.toggle:
-            id: switch_skt
-    - timing: #long press to toggle USB power output
-        - ON for at least 1s
-      then:
-        - switch.toggle:
-            id: switch_usb
+      - timing: #short press to toggle socket relay
+          - ON for at most 1s
+        then:
+          - switch.toggle:
+              id: switch_skt
+      - timing: #long press to toggle USB power output
+          - ON for at least 1s
+        then:
+          - switch.toggle:
+              id: switch_usb
 
 output:
   - platform: gpio

@@ -80,7 +80,7 @@ support for this particular chipset.
 
 ## Flashing
 
-It is often possible to use [tuya-convert](/guides/tuya-convert/) for the
+It is often possible to use [tuya-convert](/devices/tuya-convert) for the
 Espressif-based modules, and
 [tuya-cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter/)
 for the Beken-based modules, to flash ESPHome over-the-air, without opening up

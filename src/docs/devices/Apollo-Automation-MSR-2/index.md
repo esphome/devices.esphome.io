@@ -13,7 +13,8 @@ made-for-esphome: true
 
 ## Description
 
-The Apollo Automation MSR-2 is a mmWave CO2 multisensor. We improved on the MSR-1 design and shrunk down the size by 30%. It has the following features:
+The Apollo Automation MSR-2 is a mmWave CO2 multisensor. We improved on the MSR-1 design and shrunk down the size by
+30%. It has the following features:
 
 - HLK-LD2410B+BLE 24GHz Human Presence mmWave Radar Sensor Module.
 - LTR-390UV LUX and UV Sensor.
@@ -30,6 +31,11 @@ The Apollo Automation MSR-2 is a mmWave CO2 multisensor. We improved on the MSR-
 2. Connect to "MSR2 Hotspot".
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
+
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/MSR-2/blob/main/Integrations/ESPHome/MSR-2.yaml
+```
 
 ## Links
 

@@ -9,15 +9,23 @@ difficulty: 4
 
 ## General Notes
 
-These plugs with/without energy monitoring are sold under many brands on Aliexpress / taobao / pinduoduo, and are available in both 16A or 20A.
+These plugs with/without energy monitoring are sold under many brands on Aliexpress / taobao / pinduoduo, and are
+available in both 16A or 20A.
 
-The 20A smart plug with energy monitor is *not* flashable using tuya-cloudcutter. The main module version on smart life app is V1.1.23, which is on the known patched firmware list.
+The 20A smart plug with energy monitor is _not_ flashable using tuya-cloudcutter. The main module version on smart life
+app is V1.1.23, which is on the known patched firmware list.
 
-The socket is not glued but factory pressed. I do not recommend using a screwdriver to pry it open, I did and I left some damage on the side (see picture). It may be better to try opening by pushing a tool through the earth pin to apply force, holding the outer shell. After opening we can see that it is using a CB2S wifi module with the BK7231N chip.
+The socket is not glued but factory pressed. I do not recommend using a screwdriver to pry it open, I did and I left
+some damage on the side (see picture). It may be better to try opening by pushing a tool through the earth pin to apply
+force, holding the outer shell. After opening we can see that it is using a CB2S wifi module with the BK7231N chip.
 
 ![cb2s](cb2s.jpg)
 
-It is not possible to separate the PCB from the case without unsoldering the main socket pins. Therefore I chose to use a rotary tool to make a hole in the external casing. This provides us with access the 3v3 GND RX1 TX1 pins without soldering. I compiled the below configuration on esphome, saved the uf2 binary, and flashed it using ltchiptool with default settings, holding everything in place by hand while flashing the firmware. Press the physical button on the PCB for around 5-10 seconds to flash.
+It is not possible to separate the PCB from the case without unsoldering the main socket pins. Therefore I chose to use
+a rotary tool to make a hole in the external casing. This provides us with access the 3v3 GND RX1 TX1 pins without
+soldering. I compiled the below configuration on esphome, saved the uf2 binary, and flashed it using ltchiptool with
+default settings, holding everything in place by hand while flashing the firmware. Press the physical button on the PCB
+for around 5-10 seconds to flash.
 
 ## Product Images
 

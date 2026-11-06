@@ -9,7 +9,7 @@ board: esp8266
 Arlec Grid Connect products are a Tuya-based smart devices
 sold by Bunnings and Kmart respectively in Australia.
 
-![image](/brilliant-mirabella-genio-smart-plugs.jpg)
+![image](./brilliant-mirabella-genio-smart-plugs.jpg)
 
 ## Basic Configuration
 

@@ -8,7 +8,8 @@ board: esp8266
 
 ## Description
 
-MXQ SP06 Smart Plug with Night Light is a small 10A 110-240V plug with built-in night light. It is based on Tuya hardware, and the initial firmware can be flashed using the "tuya-convert" technique.
+MXQ SP06 Smart Plug with Night Light is a small 10A 110-240V plug with built-in night light. It is based on Tuya
+hardware, and the initial firmware can be flashed using the "tuya-convert" technique.
 
 ## GPIO Pinout
 
@@ -29,7 +30,8 @@ substitutions:
 
 esphome:
   name: mxq_night_light_01
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

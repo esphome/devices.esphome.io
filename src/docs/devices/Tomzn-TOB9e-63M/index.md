@@ -18,18 +18,18 @@ difficulty: 3
 - Energy measurement starts from 0 on every power-up
 - Not provide Power Apparent & Factor data
 
-![Front View](/TOB9e-63M_front.png "TOB9e Front View")
-![Opened View](/TOB9e-63M_opened.jpg "TOB9e Opened View")
+![Front View](./TOB9e-63M_front.png "TOB9e Front View")
+![Opened View](./TOB9e-63M_opened.jpg "TOB9e Opened View")
 
 ## GPIO Pinout
 
-| Pin    | Function            | Notes    |
-| ------ | ------------------- |----------|
-| GPIO00 | Button              |          |
-| GPIO12 | Relay               |          |
-| GPIO13 | Status LED - Blue   | inverted |
-| GPIO03 | CSE7759B meter      |          |
-| GPIO07 | soldered, unknown   |          |
+| Pin    | Function          | Notes    |
+| ------ | ----------------- | -------- |
+| GPIO00 | Button            |          |
+| GPIO12 | Relay             |          |
+| GPIO13 | Status LED - Blue | inverted |
+| GPIO03 | CSE7759B meter    |          |
+| GPIO07 | soldered, unknown |          |
 
 ## Required for CSE7759B meter
 
@@ -44,6 +44,6 @@ uart:
   rx_pin: RX
   baud_rate: 4800
 
-sensor:  
+sensor:
   - platform: cse7766
 ```

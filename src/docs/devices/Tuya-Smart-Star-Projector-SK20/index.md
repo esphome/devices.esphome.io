@@ -10,7 +10,8 @@ board: bk72xx
 
 ## Notes
 
-Credit for all the work goes to [M4GNV5](https://www.elektroda.com/rtvforum/topic3973047.html), I've just made a few minor changes to suit my preferences.
+Credit for all the work goes to [M4GNV5](https://www.elektroda.com/rtvforum/topic3973047.html), I've just made a few
+minor changes to suit my preferences.
 
 ## Basic Configuration
 

@@ -22,13 +22,16 @@ They are available from aliexpress.
 
 ## GPIO Pinout
 
-This board has headers for every GPIO pin on its ESP32 via 2 sets of 2x10 headers, and an additional 6 pin header below the ESP32 for flashing. The micro USB is for power only, no serial connection.
+This board has headers for every GPIO pin on its ESP32 via 2 sets of 2x10 headers, and an additional 6 pin header below
+the ESP32 for flashing. The micro USB is for power only, no serial connection.
 
-I was able to flash it using the ESPhome web tool and an FTDI connector. I was able to use the 5V pin with the FTDI set to 5V as well and connected to the GPIO pins, but 3.3V should be used if possible (it would not flash for me at 3.3V). I was unable to flash with a USB cable.
+I was able to flash it using the ESPHome web tool and an FTDI connector. I was able to use the 5V pin with the FTDI set
+to 5V as well and connected to the GPIO pins, but 3.3V should be used if possible (it would not flash for me at 3.3V). I
+was unable to flash with a USB cable.
 
-| GPIO  | Connected onboard to
-| ----- | --------------------- |
-| GPIO0  | Button               |
+| GPIO   | Connected onboard to |
+| ------ | -------------------- |
+| GPIO00 | Button               |
 | GPIO16 | Relay                |
 | GPIO23 | LED                  |
 
@@ -39,29 +42,21 @@ esphome:
   name: ESP32 relayboard
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 
 # Enable logging
 logger:
 
-# Enable Home Assistant API
-api:
-  encryption:
-    key: "xxxx"
-
-ota:
-  password: "xxxx"
-
 wifi:
-  ssid: "wifi_ssid"
-  password: "wifi_password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "ESP32 Fallback Hotspot"
-    password: "xxxx"
+    password: !secret wifi_password
 
 captive_portal:
 
@@ -82,7 +77,7 @@ switch:
 binary_sensor:
   - platform: gpio
     pin:
-      number: GPIO0
+      number: GPIO00
       mode: INPUT_PULLUP
     name: Button
     filters:
@@ -90,9 +85,10 @@ binary_sensor:
       - delayed_on_off: 50ms
     on_press:
       then:
-        - switch.turn_on: ESP32_relay
+        - switch.toggle: ESP32_relay
 ```
 
 ## Enclosure
 
-A 3D-printable case design for this board is available [here](https://github.com/clydebarrow/3dmodels/tree/main/ESP32%20Relay%20x1).
+A 3D-printable case design for this board is
+[available on GitHub](https://github.com/clydebarrow/3dmodels/tree/main/ESP32%20Relay%20x1).

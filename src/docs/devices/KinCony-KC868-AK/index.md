@@ -10,18 +10,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | Free GPIO           |
-| GPIO39 | Free GPIO           |
-| GPIO34 | Free GPIO           |
-| GPIO35 | Free GPIO           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO16 | RS485_RXD           |
-| GPIO14 | RS485_TXD           |
-| GPIO33 | RS232_RXD           |
-| GPIO32 | RS232_TXD           |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO36 | Free GPIO |
+| GPIO39 | Free GPIO |
+| GPIO34 | Free GPIO |
+| GPIO35 | Free GPIO |
+| GPIO4  | IIC_SDA   |
+| GPIO5  | IIC_SCL   |
+| GPIO16 | RS485_RXD |
+| GPIO14 | RS485_TXD |
+| GPIO33 | RS232_RXD |
+| GPIO32 | RS232_TXD |
 
 [Additional pinout/design details](https://www.kincony.com/esp32-programmable-keyboard.html)
 
@@ -33,7 +33,7 @@ esphome:
   name: kc868-ak
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Example configuration entry for ESP32
 i2c:
@@ -55,19 +55,19 @@ captive_portal:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     address: 0x25
 
-  - id: 'pcf8574_hub_in_3'  # for input channel 17-24
+  - id: "pcf8574_hub_in_3" # for input channel 17-24
     address: 0x21
 
-  - id: 'pcf8574_hub_in_4'  # for input channel 25-32
+  - id: "pcf8574_hub_in_4" # for input channel 25-32
     address: 0x22
 
-  - id: 'pcf8574_hub_in_5'  # for input channel 33-40
+  - id: "pcf8574_hub_in_5" # for input channel 33-40
     address: 0x26
 
 # Individual outputs

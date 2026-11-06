@@ -1,7 +1,7 @@
 ---
 title: LocalBytes Smart Bulb (RGB+CT)
 date-published: 2024-03-14
-type: bulb
+type: light
 standard: uk,eu
 board: esp8266
 project-url: github://JamesSwift/localbytes-bulb-9w-rgbct/localbytes-bulb-9w-rgbct.yaml
@@ -9,19 +9,19 @@ difficulty: 2
 ---
 
 ![alt text](LocalBytes-Bulb.png "LocalBytes Bulb")
-Maker: https://mylocalbytes.com/
+Maker: [https://mylocalbytes.com/](https://mylocalbytes.com/)
 
 Preflashed with Tasmota, OTA flash to ESPHome
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO4  | LED Red             |
-| GPIO5  | LED White           |
-| GPIO12 | LED Green           |
-| GPIO13 | LED Warm White      |
-| GPIO14 | LED Blue            |
+| Pin    | Function       |
+| ------ | -------------- |
+| GPIO4  | LED Red        |
+| GPIO5  | LED White      |
+| GPIO12 | LED Green      |
+| GPIO13 | LED Warm White |
+| GPIO14 | LED Blue       |
 
 ## Basic Configuration
 

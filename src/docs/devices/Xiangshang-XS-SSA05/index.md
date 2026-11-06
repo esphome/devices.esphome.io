@@ -19,10 +19,12 @@ difficulty: 3
 
 ## Initial Install
 
-This device requires the use of a serial connection for the first upload. Ensure that you use a serial adapter to connect to the device and upload the firmware.
+This device requires the use of a serial connection for the first upload. Ensure that you use a serial adapter to
+connect to the device and upload the firmware.
 It cannot be converted to ESPHome using tuya-convert or tuya-cloudcutter.
 
-To flash the device, you must attach GND, 3.3V, RX, and TX, and bridge IO0 to ground. You may need to hold down the button while powering on the device to put it into bootloader mode.
+To flash the device, you must attach GND, 3.3V, RX, and TX, and bridge IO0 to ground. You may need to hold down the
+button while powering on the device to put it into bootloader mode.
 
 DO NOT ATTACH MAIN AC POWER TO DEVICE WHEN FLASHING
 
@@ -147,8 +149,10 @@ output:
 
 Opening the device can be tricky. Here’s a helpful method to open it:
 
-- Position the plug face-up on top of the jaws of a vice or two parallel flat surfaces, ensuring only the outer shell rests on them.
+- Position the plug face-up on top of the jaws of a vice or two parallel flat surfaces, ensuring only the outer shell
+  rests on them.
 - Use a small punch to hammer through the ground hole and pop the rear cover and PCB out of the back.
 
-Additionally, the GND and TX pins are difficult to access. A precision soldering iron is recommended to solder leads to these pins.
+Additionally, the GND and TX pins are difficult to access. A precision soldering iron is recommended to solder leads to
+these pins.
 You may need to bend and hold the back case open while soldering.
