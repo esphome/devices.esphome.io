@@ -182,7 +182,8 @@ jobs:
             page="HEAD:src/docs/devices/$d/index.md"
             # The tree is local in a blobless clone, so this only says whether the
             # page exists; a failed blob fetch in git show then fails the step.
-            [ -n "$(git ls-tree HEAD -- "src/docs/devices/$d/index.md")" ] || continue  # page removed
+            entry=$(git ls-tree HEAD -- "src/docs/devices/$d/index.md")
+            [ -n "$entry" ] || continue  # page removed
             content=$(git show "$page")
             if printf '%s' "$content" | grep -q 'file='; then
               dirs="$dirs $d"

@@ -172,6 +172,8 @@ const downloadCases: [string, string[], boolean][] = [
     false,
   ],
   ["a logged fetch line beside a real error", ["WARNING ConnectionError fetching", "ERROR Traceback"], false],
+  ["a download error line beside a crash", ["ERROR ConnectionError fetching", "ERROR Traceback"], false],
+  ["an unrelated 'failed to resolve' message", ["Failed config", "sensor: [source config.yaml:4]", "  Failed to resolve ID 'x'"], false],
   ["an error line that is a download failure", ["ERROR Failed to resolve fonts.gstatic.com"], true],
 ];
 
@@ -210,6 +212,19 @@ test("the sandbox's timeout exit (124) is an inconclusive warning, not a config 
   assert.equal(findings.length, 1);
   assert.equal(findings[0].level, "warning");
   assert.match(findings[0].message, /time limit; inconclusive/);
+});
+
+test("a memory or process kill in the sandbox (137) is an inconclusive warning", async () => {
+  const findings = await esphomeFindings({ "index.md": fence("file=config.yaml"), "config.yaml": CONFIG }, 137);
+  assert.equal(findings[0].level, "warning");
+  assert.match(findings[0].message, /memory or process limit; inconclusive/);
+});
+
+test("docker failing to start the sandbox (125) is fatal, not a config error", async () => {
+  await assert.rejects(
+    esphomeFindings({ "index.md": fence("file=config.yaml"), "config.yaml": CONFIG }, 125),
+    /sandbox could not run esphome/
+  );
 });
 
 test("an add-on skipped because its base failed gets a notice", async () => {

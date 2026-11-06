@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 import yaml from "js-yaml";
 import { changedPaths } from "./changed-paths.ts";
 import { scanExternalCode } from "./external-code-scan.ts";
-import { NETWORK_FAILURE_RE, stripAnsi } from "./review-made-for-esphome.ts";
+import { stripAnsi } from "./review-made-for-esphome.ts";
 import { ESPHOME_YAML_SCHEMA, findYamlFences, type Issue } from "./validate-yaml-configs.ts";
 
 const execFileAsync = promisify(execFile);
@@ -54,9 +54,10 @@ export interface Page {
 }
 
 const NETWORK_COMPONENTS = ["wifi", "ethernet", "openthread"];
-// Download failures: CI runs ESPHome without network access.
+// Download failures: CI runs ESPHome without network access. Each phrase is
+// network-specific, so an ordinary validation message can't match.
 const DOWNLOAD_FAILURE_RE =
-  /Max retries exceeded|NameResolutionError|Failed to resolve|Could not download|Unable to download|ConnectionError/i;
+  /Could not download|Unable to download|Max retries exceeded|NameResolutionError|ConnectionError|Failed to resolve '?[\w-]+(\.[\w-]+)+|Temporary failure in name resolution|Network is unreachable|Could not resolve host/i;
 const SECRETS_FILES = new Set(["secrets.yaml", "secrets.yml"]);
 
 type Mapping = Record<string, unknown>;
@@ -83,8 +84,9 @@ export function loadPage(deviceDir: string, repoRoot: string): Page | null {
   let md: string;
   try {
     md = fs.readFileSync(indexPath, "utf8");
-  } catch {
-    return null;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw new FatalError(`could not read ${indexPath}: ${String(err)}`);
   }
   const refs = [
     ...new Set(
@@ -165,11 +167,10 @@ export function trimEsphomeError(stdout: string, stderr: string, workDir: string
 
 /** True when every failing component, or every error line without a `Failed config` block, is a download. */
 export function isDownloadOnlyFailure(lines: string[]): boolean {
-  const isDownload = (text: string): boolean =>
-    NETWORK_FAILURE_RE.test(text) || DOWNLOAD_FAILURE_RE.test(text);
+  const isDownload = (text: string): boolean => DOWNLOAD_FAILURE_RE.test(text);
   const errors = lines.filter((l) => !/\b(INFO|WARNING|DEBUG|VERBOSE)\b/.test(l));
   if (errors.length === 0) return false;
-  if (!/^Failed config/.test(errors[0])) return isDownload(errors.join("\n"));
+  if (!/^Failed config/.test(errors[0])) return errors.every(isDownload);
   const sections: string[][] = [];
   for (const line of errors.slice(1)) {
     if (!/^\s/.test(line) || sections.length === 0) sections.push([]);
@@ -227,7 +228,9 @@ async function esphomeConfig(
   runner: Runner,
   cwd: string,
   entry: string
-): Promise<{ ok: true } | { ok: false; stdout: string; stderr: string; timedOut: boolean }> {
+): Promise<
+  { ok: true } | { ok: false; stdout: string; stderr: string; timedOut: boolean; limited: boolean }
+> {
   try {
     await runner.limit(() =>
       execFileAsync(runner.bin, ["config", entry], {
@@ -240,19 +243,37 @@ async function esphomeConfig(
     return { ok: true };
   } catch (err) {
     // `code` is the errno string for a spawn failure, else the exit status.
-    const e = err as { code?: string | number; signal?: string; stdout?: string; stderr?: string };
+    const e = err as {
+      code?: string | number;
+      killed?: boolean;
+      signal?: string;
+      stdout?: string;
+      stderr?: string;
+    };
     if (e.code === "ENOENT") {
       throw new FatalError(`esphome not found (${runner.bin}); install it with \`pip install esphome\``);
     }
     if (e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
-      return { ok: false, stdout: "", stderr: "`esphome config` printed more than 64 MiB of output", timedOut: false };
+      return {
+        ok: false,
+        stdout: "",
+        stderr: "`esphome config` printed more than 64 MiB of output",
+        timedOut: false,
+        limited: false,
+      };
     }
     if (typeof e.code === "string") {
       throw new FatalError(`esphome could not be run (${runner.bin}, ${e.code}): ${String(err)}`);
     }
-    // 124 is the sandbox's own `timeout`; a signal with no exit status is Node's limit.
-    const timedOut = e.code === 124 || (e.code == null && !!e.signal);
-    return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut };
+    // Exit statuses from scripts/sandbox/run.sh: 125-127 are docker or the shell
+    // failing to run anything, 137 is a kill at the memory or process cap.
+    if (e.code === 125 || e.code === 126 || e.code === 127) {
+      throw new FatalError(`the sandbox could not run esphome (${runner.bin}, exit ${e.code}):\n${e.stderr ?? ""}`);
+    }
+    // 124 is the sandbox's own `timeout`; SIGTERM after a kill is Node's own limit.
+    const timedOut = e.code === 124 || (e.killed === true && e.signal === "SIGTERM");
+    const limited = e.code === 137;
+    return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut, limited };
   }
 }
 
@@ -280,12 +301,12 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
       ? "`esphome config` fails"
       : `\`esphome config\` fails with this file merged onto \`${target.mergeOnto}\` ` +
         "(plus `api:`, `ota:` and Wi-Fi, as a user's config would have)";
-  if (result.timedOut) {
+  if (result.timedOut || result.limited) {
     page.findings.push({
       check: "esphome",
       level: "warning",
       file,
-      message: "`esphome config` hit the CI time limit; inconclusive",
+      message: `\`esphome config\` hit the CI ${result.timedOut ? "time" : "memory or process"} limit; inconclusive`,
     });
     return "inconclusive";
   }
@@ -485,9 +506,12 @@ async function main(): Promise<number> {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const devicesRoot = path.join(repoRoot, "src", "docs", "devices");
 
-  const pages = selectDirs(flags, positional, devicesRoot)
-    .map((d) => loadPage(path.join(devicesRoot, d), repoRoot))
-    .filter((p): p is Page => p !== null);
+  const pages: Page[] = [];
+  for (const d of selectDirs(flags, positional, devicesRoot)) {
+    const page = loadPage(path.join(devicesRoot, d), repoRoot);
+    if (page) pages.push(page);
+    else if (!flags.has("--all")) console.log(`skip ${d}: no index.md with file= configs`);
+  }
   if (pages.length === 0) {
     console.log("No device pages with file= configs to check.");
     return 0;
