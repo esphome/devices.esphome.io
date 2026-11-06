@@ -9,7 +9,7 @@ board: esp8266
 NEO Coolcam Smart Plugs are a Tuya-based smart plugs
 sold by Bunnings and Kmart respectively in Australia.
 
-![image](/brilliant-mirabella-genio-smart-plugs.jpg)
+![image](./brilliant-mirabella-genio-smart-plugs.jpg)
 
 ## Basic Configuration
 

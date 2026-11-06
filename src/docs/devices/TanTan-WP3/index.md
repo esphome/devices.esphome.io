@@ -8,7 +8,8 @@ board: esp8266
 
 ![alt text](tantan-wp3-plug.jpg "TanTan WP3 Plug")
 
-The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/tantan_WP3.html) documentation and adapted through trial and error.
+The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/tantan_WP3.html) documentation and
+adapted through trial and error.
 
 ## GPIO Pinout
 
@@ -45,7 +46,7 @@ logger:
 api:
 
 ota:
-- platform: esphome
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid

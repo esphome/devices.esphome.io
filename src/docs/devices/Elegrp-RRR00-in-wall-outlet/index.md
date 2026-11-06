@@ -5,7 +5,7 @@ type: plug
 standard: us
 board: bk72xx
 Made-for-esphome: False
-difficulty: 4 
+difficulty: 4
 ---
 
 [Amazon Link](https://www.amazon.com/dp/B0CBBMVV5F)
@@ -23,28 +23,29 @@ The relays are individual, 16A relays. Nice!
 ![Relays detail](relays.jpg "Relays Detail")
 
 Inside is a CBU module, which has a Beken BK7231N:
-https://fccid.io/2ANDL-CBU/User-Manual/CBU-User-Manual-updated-5064101.pdf
+[https://fccid.io/2ANDL-CBU/User-Manual/CBU-User-Manual-updated-5064101.pdf](https://fccid.io/2ANDL-CBU/User-Manual/CBU-User-Manual-updated-5064101.pdf)
 
 ## Pinout
 
-The PCB on my outlet had some wrong labels for pins. This confused me until I ohmed straight from the base PCB to the CBU module.
+The PCB on my outlet had some wrong labels for pins. This confused me until I ohmed straight from the base PCB to the
+CBU module.
 Below are the correct labels, in case it helps you.
 
-| CBU module Pin| Function     |Use on outlet                       | Label on ELEGRP PCB (mostly incorrect)
-| ------------- | -------------|------------------------------------|---------------------------------------
-| 3             |P20, SCL1, TCK|RED LED (LED3) active high             | CEN (incorrect)
-| 8             |P8, PWM2      |Lower switch button active low (SW2)    | ADC (incorrect)
-| 10            |P6, PWM0      |Upper switch button active low (SW1)     | P8 (incorrect)
-| 1             |P14, SCK      |Upper white LED (LED1) active high        | P7 (incorrect)
-| 19            |P9, PWM3      |Active high upper outlet enable (R15, Q1)  | P6 (incorrect)
-| 17            |P28           |Lower white LED (LED2) active high          | P26 (incorrect)
-| 9             |P7, PWM1      |Active high lower outlet enable (R16, Q2)    | P24 (incorrect)
-| 15            |P11, TX1      |Programming and TX to BL0942 energy monitor    | TX1
-| 16            |P10, TX1      |Programming and RX from BL0942 energy monitor     | RX1
-| 13            |GND           |Module GND. Connect to programmer ground when programming|GND
-| 14            |3V3           | 3.3V supply to CBU module. Power when programming       | 3.3V
+| CBU module Pin | Function       | Use on outlet                                             | Label on ELEGRP PCB (mostly incorrect) |
+| -------------- | -------------- | --------------------------------------------------------- | -------------------------------------- |
+| 3              | P20, SCL1, TCK | RED LED (LED3) active high                                | CEN (incorrect)                        |
+| 8              | P8, PWM2       | Lower switch button active low (SW2)                      | ADC (incorrect)                        |
+| 10             | P6, PWM0       | Upper switch button active low (SW1)                      | P8 (incorrect)                         |
+| 1              | P14, SCK       | Upper white LED (LED1) active high                        | P7 (incorrect)                         |
+| 19             | P9, PWM3       | Active high upper outlet enable (R15, Q1)                 | P6 (incorrect)                         |
+| 17             | P28            | Lower white LED (LED2) active high                        | P26 (incorrect)                        |
+| 9              | P7, PWM1       | Active high lower outlet enable (R16, Q2)                 | P24 (incorrect)                        |
+| 15             | P11, TX1       | Programming and TX to BL0942 energy monitor               | TX1                                    |
+| 16             | P10, TX1       | Programming and RX from BL0942 energy monitor             | RX1                                    |
+| 13             | GND            | Module GND. Connect to programmer ground when programming | GND                                    |
+| 14             | 3V3            | 3.3V supply to CBU module. Power when programming         | 3.3V                                   |
 
-See this pinout for more detail on the CBU side: https://docs.libretiny.eu/boards/cbu/cbu.svg
+See this pinout for more detail on the CBU side: [https://docs.libretiny.eu/boards/cbu/cbu.svg](https://docs.libretiny.eu/boards/cbu/cbu.svg)
 
 ![CBU SVG](https://docs.libretiny.eu/boards/cbu/cbu.svg "CBU SVG from LibreTiny")
 
@@ -61,159 +62,199 @@ CEN is the fourth down on the right of the module, GND is second from right on b
 Watch ESPHome for some sign of a flash starting, then release CEN. (as of Nov 2024)
 Once flashed and on your network, remove soldered wires and re-assemble!
 
-## YAML Configuration
-
-Here is my config, with the correct pins and a fallback WiFi for OTA in case I change the name of my wifi.
-To use, you must create a secrets.yaml file next to this file when compiling, and put your secrets in there.
-See this link: https://esphome.io/guides/faq.html#how-do-i-use-my-home-assistant-secrets-yaml
+## Basic Configuration
 
 ```yaml
-# YAML config start
 substitutions:
-  device_name: "RRR00"
-  friendly_name: "Smart In-Wall Outlet with Energy Monitoring"
+  device_name: "elegrp-rrr00"
+  friendly_name: "Elegrp RRR00 Power Monitoring Outlet"
 
 esphome:
-  name: "${device_name}"
-  friendly_name: "${friendly_name}"
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+  project:
+    name: Elegrp.RRR00
+    version: 1.0.0
 
 bk72xx:
   board: cbu
 
+# CRITICAL: UART logging MUST be disabled for BL0942 to work
+logger:
+  baud_rate: 0
+
+api:
+
+ota:
+  - platform: esphome
+
 wifi:
-  networks:
-    - ssid: !secret wifi1_ssid
-      password: !secret wifi1_pw
-    - ssid: !secret fallbackSSID
-      password: !secret fallbackPW
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "${device_name} Fallback"
-    password: !secret fallback_ap_pw
-# Captive portal to be able to set the WiFi PW back (requires wifi and AP)
+  ap: {}
+
 captive_portal:
 
-# Enable logging
-logger:
-  # Set baud to 0 to disable UART logging https://esphome.io/components/logger
-  baud_rate: 0  # (UART logging may interfere with BL0942)
+time:
+  - platform: homeassistant
+    id: homeassistant_time
 
-# Enable Home Assistant API
-api:
-  password: ""
-# Use OTA in future so we don't have to re-solder to re-flash
-ota:
-  platform: esphome
-  password: ""
-
-# Device Specific Config
-
+# Status LED - Red LED (P20, incorrectly labeled CEN on PCB)
 status_led:
   pin:
-    number: P20 # Red LED Incorrectly labeled CEN on PCB
-    inverted: no # no invert to be normally off, only on when blinking
+    number: P20
+    inverted: false
 
-# Belling BL0942 on RX1 and TX1 https://esphome.io/components/sensor/bl0942.html
 uart:
   rx_pin: RX1
   tx_pin: TX1
   baud_rate: 4800
   stop_bits: 1
 
+binary_sensor:
+  # Upper switch button (P6, incorrectly labeled P8 on PCB)
+  - platform: gpio
+    id: button_1
+    pin:
+      number: P6
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Button 1"
+    on_press:
+      - switch.toggle: relay_1
+    filters:
+      - delayed_on: 50ms
+
+  # Lower switch button (P8, incorrectly labeled ADC on PCB)
+  - platform: gpio
+    id: button_2
+    pin:
+      number: P8
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "Button 2"
+    on_press:
+      - switch.toggle: relay_2
+    filters:
+      - delayed_on: 50ms
+
+output:
+  # Upper white LED (P14, incorrectly labeled P7 on PCB)
+  - platform: gpio
+    pin: P14
+    inverted: false
+    id: upper_white_led
+
+  # Lower white LED (P28, incorrectly labeled P26 on PCB)
+  - platform: gpio
+    pin: P28
+    inverted: false
+    id: lower_white_led
+
+light:
+  - platform: binary
+    output: upper_white_led
+    id: light_upper_white
+    internal: true
+
+  - platform: binary
+    output: lower_white_led
+    id: light_lower_white
+    internal: true
+
+switch:
+  # Upper relay (P9, incorrectly labeled P6 on PCB)
+  - platform: gpio
+    name: "Relay 1"
+    pin: P9
+    id: relay_1
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - light.turn_on: light_upper_white
+    on_turn_off:
+      - light.turn_off: light_upper_white
+
+  # Lower relay (P7, incorrectly labeled P24 on PCB)
+  - platform: gpio
+    name: "Relay 2"
+    pin: P7
+    id: relay_2
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - light.turn_on: light_lower_white
+    on_turn_off:
+      - light.turn_off: light_lower_white
+
+button:
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+  - platform: factory_reset
+    id: factory_reset_button
+    name: "Factory Reset"
+    disabled_by_default: true
+    entity_category: config
+    icon: mdi:restart-alert
+
 sensor:
   - platform: wifi_signal
-    name: "${device_name} Outlet WiFi Signal"
+    name: "WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "Uptime"
     update_interval: 60s
   - platform: bl0942
     voltage:
-      name: '${device_name} Outlet Voltage'
+      name: "Outlet Voltage"
       accuracy_decimals: 3
       filters:
-      - sliding_window_moving_average:
-          window_size: 64
-          send_every: 64
-          send_first_at: 64
+        - sliding_window_moving_average:
+            window_size: 64
+            send_every: 64
+            send_first_at: 64
     frequency:
-      name: "${device_name} Outlet Frequency"
+      name: "Outlet Frequency"
       accuracy_decimals: 3
       filters:
-      - sliding_window_moving_average:
-          window_size: 64
-          send_every: 64
-          send_first_at: 64
+        - sliding_window_moving_average:
+            window_size: 64
+            send_every: 64
+            send_first_at: 64
     current:
-      name: '${device_name} Outlet Total Current'
+      name: "Outlet Total Current"
       accuracy_decimals: 3
       filters:
-      - sliding_window_moving_average:
-          window_size: 64
-          send_every: 64
-          send_first_at: 64
+        - sliding_window_moving_average:
+            window_size: 64
+            send_every: 64
+            send_first_at: 64
     power:
-      name: '${device_name} Outlet Total Power'
+      name: "Outlet Total Power"
+      id: power_monitor
       accuracy_decimals: 3
     energy:
-      name: '${device_name} Outlet Total Energy'
+      name: "Outlet Total Energy"
       accuracy_decimals: 3
+  - platform: total_daily_energy
+    name: "Total Daily Energy"
+    power_id: power_monitor
+    unit_of_measurement: "kWh"
+    state_class: total_increasing
+    device_class: energy
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
 
-binary_sensor:
-  - platform: status
-    # Status for helping see if it is online
-    name: "${device_name} Outlet Status"
-
-  - platform: gpio
-    name: "Upper Outlet button"
-    # Upper switch button SW1 shorts P6 low when pressed.
-    pin:
-      number: P6 # Incorrectly labeled P8 on PCB
-      mode: INPUT_PULLUP
-      inverted: True
-    on_press:
-      - switch.toggle: upperRelay
-
-  - platform: gpio
-    name: "Lower Outlet button"
-    # Lower switch button SW2 shorts P8 low when pressed.
-    pin:
-      number:  P8 # Incorrectly labeled ADC on PCB
-      mode: INPUT_PULLUP
-      inverted: True
-    on_press:
-      - switch.toggle: lowerRelay
-
-switch:
-  - platform: gpio
-    # Upper outlet active-high to energize on P9
-    name: "Upper Outlet"
-    pin: P9 # Incorrectly labeled P6 on PCB
-    id: upperRelay
-    # restore_mode: ALWAYS_ON
-    on_turn_on:
-      - switch.turn_on: upperLED
-    on_turn_off:
-      - switch.turn_off: upperLED
-
-  - platform: gpio
-    # Lower outlet active-high to energize on P7
-    name: "Lower Outlet"
-    pin: P7 # Incorrectly labeled P24 on PCB
-    id: lowerRelay
-    # restore_mode: ALWAYS_ON
-    on_turn_on:
-      - switch.turn_on: lowerLED
-    on_turn_off:
-      - switch.turn_off: lowerLED
-
-  - platform: gpio
-    # Upper LED active-high on P14
-    name: "Upper LED"
-    pin: P14 # Incorrectly labeled P7 on PCB
-    id: upperLED
-  
-  - platform: gpio
-    # Lower LED active-high on P28
-    name: "Lower LED"
-    pin: P28 # Incorrectly labeled P26 on PCB
-    id: lowerLED
-# YAML config end
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "SSID"
+  - platform: libretiny
+    version:
+      name: "LibreTiny Version"
 ```

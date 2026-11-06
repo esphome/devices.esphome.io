@@ -19,12 +19,13 @@ board: esp8266
 # https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-dimmable-9w-led-gls-bulb/
 esphome:
   name: genio22
-  platform: ESP8266
-  board: esp01_1m
   on_boot:
     priority: 100 # Highest priority, ensures light turns on without delay.
     then:
       - light.turn_on: genio22
+
+esp8266:
+  board: esp01_1m
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password

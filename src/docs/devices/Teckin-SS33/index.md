@@ -23,7 +23,8 @@ board: esp8266
 ---
 esphome:
   name: outdoor_ss33
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

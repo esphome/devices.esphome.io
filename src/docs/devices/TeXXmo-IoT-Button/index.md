@@ -19,13 +19,13 @@ board: esp8266
 
 ## Flashing Pinout
 
-| Pin Hole Shape | Purpose |
-| ------ | ----------------------- |
-| [ ] | 3V3 Input (do not connect if powering off of battery) |
-| ( ) | Txd |
-| ( ) | Rxd |
-| ( ) | GPIO0 (must pull to ground before flashing) |
-| ( ) | Gnd |
+| Pin Hole Shape | Purpose                                               |
+| -------------- | ----------------------------------------------------- |
+| [ ]            | 3V3 Input (do not connect if powering off of battery) |
+| ( )            | Txd                                                   |
+| ( )            | Rxd                                                   |
+| ( )            | GPIO0 (must pull to ground before flashing)           |
+| ( )            | Gnd                                                   |
 
 ## Basic Configuration
 
@@ -44,14 +44,15 @@ globals:
 
 esphome:
   name: ${name}
-  platform: ESP8266
-  board: esp8285
   on_boot:
     # Raise the power pin very early (pri 700) to keep the ESP awake
     # until we're done sending the event
     priority: 700
     then:
       - output.turn_on: power_pin
+
+esp8266:
+  board: esp8285
 
 wifi:
   ssid: !secret wifi_ssid

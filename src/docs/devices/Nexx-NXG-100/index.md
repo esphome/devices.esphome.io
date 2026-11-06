@@ -9,13 +9,14 @@ board: esp8266
 
 ## Product
 
-![alt text](/NXG-100_with_app_Black_320x192.jpg "Product Image")
+![alt text](./NXG-100_with_app_Black_320x192.jpg "Product Image")
 
 [https://getnexx.com/pages/support](https://getnexx.com/pages/support)
 
-Case has a close fit, but a knife edge near the corner can be used to open the case. Standard serial header pattern present on the board as shown:
+Case has a close fit, but a knife edge near the corner can be used to open the case. Standard serial header pattern
+present on the board as shown:
 
-![alt text](/NXG-100_pcb.jpg "PCB Image")
+![alt text](./NXG-100_pcb.jpg "PCB Image")
 
 ## GPIO Pinout
 
@@ -37,7 +38,8 @@ On each transition of the door sensor, the green LED will blink.
 ```yaml
 esphome:
   name: nxg100
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 ota:
@@ -163,7 +165,8 @@ Similarly if the door is open, the open button does nothing.
 ```yaml
 esphome:
   name: nxg100
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 ota:

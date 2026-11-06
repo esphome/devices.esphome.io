@@ -9,14 +9,15 @@ board: esp8266
 ## General Notes
 
 This device have two versions, with ESP or Bekken microcontroller.
-You are now looking at ESP configuration, Bekken version can be found [here](./Gosund-SP211-BK72XX).
+You are now looking at ESP configuration, Bekken version can be found [in the Gosund SP211 BK72XX documentation](../Gosund-SP211-BK72XX/).
 
 ## Configuration
 
 ```yaml
 esphome:
   name: sp211
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:

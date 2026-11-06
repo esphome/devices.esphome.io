@@ -21,9 +21,9 @@ for gate control and alarms
 
 Available pre-flashed with ESPHome or SUPLA.
 
-Maker: https://smartbob.pl
+Maker: [https://smartbob.pl](https://smartbob.pl)
 
-Product page: https://smartbob.pl/pl/lite-1-poziom/3-sm-lite-1616r.html
+Product page: [https://smartbob.pl/pl/lite-1-poziom/3-sm-lite-1616r.html](https://smartbob.pl/pl/lite-1-poziom/3-sm-lite-1616r.html)
 
 ## SM-LITE-1616R V1.5 version basic description
 
@@ -172,7 +172,7 @@ ota:
 
 # PROCESOR
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

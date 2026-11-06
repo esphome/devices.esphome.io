@@ -13,11 +13,14 @@ project-url: https://docs.m5stack.com/en/core/fire
 
 ## Description
 
-M5Stack FIRE Kit features an ESP32 Core, 16M Flash + 8M PSRAM, 9-Axis IMU sensor (6-Axis posture acceleration measurement + 3-Axis magnetic measurement), power management IC, speaker, microphone, and a 2 inch 320x240 LCD screen. The middle part is called M5GO base which provides a 500 mAh battery, M-BUS socket, LED bar and three more GROVE Ports. The bottom part is a charge table, which can be connected to the M5GO base via POGO pins.
+M5Stack FIRE Kit features an ESP32 Core, 16M Flash + 8M PSRAM, 9-Axis IMU sensor (6-Axis posture acceleration
+measurement + 3-Axis magnetic measurement), power management IC, speaker, microphone, and a 2 inch 320x240 LCD screen.
+The middle part is called M5GO base which provides a 500 mAh battery, M-BUS socket, LED bar and three more GROVE Ports.
+The bottom part is a charge table, which can be connected to the M5GO base via POGO pins.
 
 ## GPIO Pinout
 
-|  Pin   | Function       |
+| Pin    | Function       |
 | ------ | -------------- |
 | GPIO39 | Button A       |
 | GPIO38 | Button B       |
@@ -49,7 +52,7 @@ M5Stack FIRE Kit features an ESP32 Core, 16M Flash + 8M PSRAM, 9-Axis IMU sensor
 ## IP5306 Power Management
 
 M5Stack Fire uses a customized version of the IP5306 Power Management circuit
-[Customized IP5306 Datasheet]("https://github.com/m5stack/M5-Schematic/blob/master/Core/IIC_IP5306_REG_V1.4.pdf")
+[Customized IP5306 Datasheet](https://github.com/m5stack/M5-Schematic/blob/master/Core/IIC_IP5306_REG_V1.4.pdf)
 
 | I2C Address | Function                |
 | ----------- | ----------------------- |
@@ -73,11 +76,14 @@ ip5306:
     id: full
 ```
 
-Using the [IP5306 ESPHome Component]("https://github.com/ssieb/custom_components/tree/master/components/ip5306") by [@ssieb]("https://github.com/ssieb")
+Using the [IP5306 ESPHome Component](https://github.com/ssieb/custom_components/tree/master/components/ip5306) by
+[@ssieb](https://github.com/ssieb)
 
 ## Wifi Issues due to GPIO15
 
-When the M5GO bottom is attached, GPIO15 (side lights pin) needs to be setup as an output pin, otherwise Wifi will fail to connect frequently. If you do not want to setup the side lights component (to save memory, for example), you can use the following alternative instead:
+When the M5GO bottom is attached, GPIO15 (side lights pin) needs to be setup as an output pin, otherwise Wifi will fail
+to connect frequently. If you do not want to setup the side lights component (to save memory, for example), you can use
+the following alternative instead:
 
 ```yml
 output:
@@ -86,7 +92,8 @@ output:
     pin: GPIO15
 ```
 
-Source: [Official M5Stack repo](https://github.com/m5stack/M5Unified/blob/d26d2415f409b664631ff066ceeaffd6a753a4ff/src/M5Unified.cpp#L499).
+Source:
+[Official M5Stack repo](https://github.com/m5stack/M5Unified/blob/d26d2415f409b664631ff066ceeaffd6a753a4ff/src/M5Unified.cpp#L499).
 
 ## Example Configuration
 
@@ -98,7 +105,7 @@ esphome:
   name: m5stackfire
 
 esp32:
-  board: m5stack-fire
+  variant: esp32
 
 wifi:
   ssid: !secret wifi_ssid

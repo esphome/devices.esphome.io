@@ -8,24 +8,37 @@ board: bk72xx
 
 Treatlife DS02F Switch![image](treatlife_DS02F.jpg)
 
-[Amazon Link](https://amzn.to/400MRsE)
+[Amazon Link](https://www.amazon.com/dp/B08P5D3ZKW)
 
 ## Notes
 
-The Treatlife DS02F is similar to the DS03, but lacking the control for the light. This device comes with a Tuya WB3S chip and there are now two methods to make this device compatible with ESPHome:
+The Treatlife DS02F is similar to the DS03, but lacking the control for the light. This device comes with a Tuya WB3S
+chip and there are now two methods to make this device compatible with ESPHome:
 
 1. **Use [Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to flash the device.**
 2. **Swap out the chip with a compatible one.**
 
 ### Using Cloudcutter
 
-[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the process of flashing Tuya-based devices. It allows you to bypass the need for physically opening the device and swapping out chips. By leveraging the cloud APIs, Cloudcutter enables you to flash the firmware remotely, making it a convenient and less intrusive option. Follow the instructions on the [Cloudcutter GitHub repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to use this method for flashing your DS02F device.
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the process of
+flashing Tuya-based devices. It allows you to bypass the need for physically opening the device and swapping out chips.
+By leveraging the cloud APIs, Cloudcutter enables you to flash the firmware remotely, making it a convenient and less
+intrusive option. Follow the instructions on the
+[Cloudcutter GitHub repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to use this method for flashing
+your DS02F device.
 
 ### Swap chip
 
-The main board has the appropriate footprint for an ESP-12F. Further instructions can be found [here](https://community.home-assistant.io/t/treatlife-dual-outlet-indoor-dimmer-plug-wb3s-to-esp-12-transplant/256798). When desoldering the WB3S chip, take care if you use a heat gun near the black foam light guards around the speed LEDs and main switch LED. When overheated, the foam shrinks to less than half its original size. With a little patience, it is instead possible to peel the foam and adhesive off the PCB, set them to the side, and replace them after swapping out the WB3S.
+The main board has the appropriate footprint for an ESP-12F. Further instructions can be found
+[in the Home Assistant community][1]. When desoldering the WB3S chip, take care if you use a heat gun near the black
+foam light guards around the speed LEDs and main switch LED. When overheated, the foam shrinks to less than half its
+original size. With a little patience, it is instead possible to peel the foam and adhesive off the PCB, set them to
+the side, and replace them after swapping out the WB3S.
 
-Like the Treatlife DS03, the Tuya MCU UART runs at a baud rate of 115200. You may see a warning like `Invalid baud_rate: Integration requested baud_rate 9600 but you have 115200!` logged, but it is safe to ignore.
+[1]: https://community.home-assistant.io/t/treatlife-dual-outlet-indoor-dimmer-plug-wb3s-to-esp-12-transplant/256798
+
+Like the Treatlife DS03, the Tuya MCU UART runs at a baud rate of 115200. You may see a warning like
+`Invalid baud_rate: Integration requested baud_rate 9600 but you have 115200!` logged, but it is safe to ignore.
 
 ## GPIO Pinout
 
@@ -38,17 +51,17 @@ Like the Treatlife DS03, the Tuya MCU UART runs at a baud rate of 115200. You ma
 
 ### BK72XX-Based Pinout
 
-| Pin   | Function |
-| ----- | -------- |
-| RX1   | Tuya Rx  |
-| TX1   | Tuya Tx  |
+| Pin | Function |
+| --- | -------- |
+| RX1 | Tuya Rx  |
+| TX1 | Tuya Tx  |
 
 ### ESP32-C3F Pinout
 
-| Pin   | Function |
-| ----- | -------- |
-| GPIO20| Tuya Rx  |
-| GPIO21| Tuya Tx  |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO20 | Tuya Rx  |
+| GPIO21 | Tuya Tx  |
 
 ## Basic Configuration
 
@@ -89,13 +102,13 @@ uart:
   baud_rate: 115200
 
 tuya:
- id: tuyamcu
- on_datapoint_update:
-   - sensor_datapoint: 101
-     datapoint_type: int
-     then:
-       - lambda: |-
-           id(inverted_light_mode).publish_state(x == 1);
+  id: tuyamcu
+  on_datapoint_update:
+    - sensor_datapoint: 101
+      datapoint_type: int
+      then:
+        - lambda: |-
+            id(inverted_light_mode).publish_state(x == 1);
 
 fan:
   - platform: "tuya"

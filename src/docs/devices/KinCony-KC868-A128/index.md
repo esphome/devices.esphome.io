@@ -10,20 +10,20 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO39 | ANALOG_A1           |
-| GPIO34 | ANALOG_A2           |
-| GPIO36 | ANALOG_A3           |
-| GPIO35 | ANALOG_A4           |
-| GPIO5  | IIC_Bus_1_SDA       |
-| GPIO16 | IIC_Bus_1_SCL       |
-| GPIO15 | IIC_Bus_2_SDA       |
-| GPIO4  | IIC_Bus_2_SCL       |
-| GPIO13 | RS485_RXD           |
-| GPIO14 | RS485_TXD           |
-| GPIO32 | Extend_Serial_RXD   |
-| GPIO33 | Extend_Serial_TXD   |
+| Pin    | Function          |
+| ------ | ----------------- |
+| GPIO39 | ANALOG_A1         |
+| GPIO34 | ANALOG_A2         |
+| GPIO36 | ANALOG_A3         |
+| GPIO35 | ANALOG_A4         |
+| GPIO5  | IIC_Bus_1_SDA     |
+| GPIO16 | IIC_Bus_1_SCL     |
+| GPIO15 | IIC_Bus_2_SDA     |
+| GPIO4  | IIC_Bus_2_SCL     |
+| GPIO13 | RS485_RXD         |
+| GPIO14 | RS485_TXD         |
+| GPIO32 | Extend_Serial_RXD |
+| GPIO33 | Extend_Serial_TXD |
 
 [Additional pinout/design details](https://www.kincony.com/arduino-esp32-128-channel-relay-module-kc868-a128.html)
 
@@ -35,7 +35,7 @@ esphome:
   name: KC868-A128
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Enable logging
 logger:
@@ -43,18 +43,18 @@ logger:
 # Enable Home Assistant API
 api:
 
- # Example configuration entry
+  # Example configuration entry
 i2c:
-   - id: bus_a
-     sda: 5
-     scl: 16
-     scan: true
-     frequency: 400kHz
-   - id: bus_b
-     sda: 15
-     scl: 4
-     scan: true
-     frequency: 400kHz
+  - id: bus_a
+    sda: 5
+    scl: 16
+    scan: true
+    frequency: 400kHz
+  - id: bus_b
+    sda: 15
+    scl: 4
+    scan: true
+    frequency: 400kHz
 
 # Example configuration entry
 ethernet:
@@ -66,82 +66,82 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-16
+  - id: "pcf8574_hub_out_1" # for output channel 1-16
     i2c_id: bus_a
     address: 0x24
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 17-32
+  - id: "pcf8574_hub_out_2" # for output channel 17-32
     i2c_id: bus_a
     address: 0x25
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_3'  # for output channel 33-48
+  - id: "pcf8574_hub_out_3" # for output channel 33-48
     i2c_id: bus_a
     address: 0x21
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_4'  # for output channel 49-64
+  - id: "pcf8574_hub_out_4" # for output channel 49-64
     i2c_id: bus_a
     address: 0x22
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_5'  # for output channel 65-80
+  - id: "pcf8574_hub_out_5" # for output channel 65-80
     i2c_id: bus_a
     address: 0x26
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_6'  # for output channel 81-96
+  - id: "pcf8574_hub_out_6" # for output channel 81-96
     i2c_id: bus_a
     address: 0x27
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_7'  # for output channel 97-112
+  - id: "pcf8574_hub_out_7" # for output channel 97-112
     i2c_id: bus_a
     address: 0x20
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_8'  # for output channel 113-128
+  - id: "pcf8574_hub_out_8" # for output channel 113-128
     i2c_id: bus_a
     address: 0x23
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_1'  # for a128-input channel 1-16
+  - id: "pcf8574_hub_in_1" # for a128-input channel 1-16
     i2c_id: bus_b
     address: 0x24
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_2'  # for a128-input channel 17-32
+  - id: "pcf8574_hub_in_2" # for a128-input channel 17-32
     i2c_id: bus_b
     address: 0x25
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_3'  # for a128-input channel 33-48
+  - id: "pcf8574_hub_in_3" # for a128-input channel 33-48
     i2c_id: bus_b
     address: 0x21
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_4'  # for a128-input channel 49-64
+  - id: "pcf8574_hub_in_4" # for a128-input channel 49-64
     i2c_id: bus_b
     address: 0x22
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_5'  # for a128-input channel 65-80
+  - id: "pcf8574_hub_in_5" # for a128-input channel 65-80
     i2c_id: bus_b
     address: 0x26
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_6'  # for a128-input channel 81-96
+  - id: "pcf8574_hub_in_6" # for a128-input channel 81-96
     i2c_id: bus_b
     address: 0x27
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_7'  # for a128-input channel 97-112
+  - id: "pcf8574_hub_in_7" # for a128-input channel 97-112
     i2c_id: bus_b
     address: 0x20
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_8'  # for a128-input channel 113-128
+  - id: "pcf8574_hub_in_8" # for a128-input channel 113-128
     i2c_id: bus_b
     address: 0x23
     pcf8575: true

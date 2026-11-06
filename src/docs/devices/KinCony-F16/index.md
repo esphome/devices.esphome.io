@@ -16,31 +16,20 @@ board: esp32
 
 ## ESPHome Configuration
 
-Here is an example YAML configuration for the KinCony-F16 board with Tuya integration.
+Here is an example YAML configuration for the KinCony-F16 board.
 
 ```yaml
 esphome:
   name: f16
   friendly_name: f16
-  platformio_options:
-    board_build.extra_flags:
-      # WIFI_CONTROL_SELF_MODE = 0
-      # WIFI_CONTROL_SELF_MODE = 1
-      - "-DWIFI_CONTROL_SELF_MODE=1"
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: arduino
 
-external_components:
-  - source:
-      type: git
-      url: https://github.com/hzkincony/esphome-tuya-wifi-mcu
-      ref: v1.1.0
-
 # Enable logging
 
-  # hardware_uart: USB_SERIAL_JTAG
+# hardware_uart: USB_SERIAL_JTAG
 # Enable Home Assistant API
 api:
 
@@ -54,25 +43,25 @@ ethernet:
   reset_pin: GPIO1
 
 i2c:
-   - id: bus_a
-     sda: 8
-     scl: 18
-     scan: true
-     frequency: 400kHz
+  - id: bus_a
+    sda: 8
+    scl: 18
+    scan: true
+    frequency: 400kHz
 
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-16
+  - id: pcf8574_hub_out_1 # for output channel 1-16
     i2c_id: bus_a
     address: 0x25
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-16
+  - id: pcf8574_hub_in_1 # for input channel 1-16
     i2c_id: bus_a
     address: 0x24
     pcf8575: true
 
 uart:
-  - id: uart_1    #RS485
+  - id: uart_1 #RS485
     baud_rate: 9600
     debug:
       direction: BOTH
@@ -81,18 +70,6 @@ uart:
         timeout: 10ms
     tx_pin: 16
     rx_pin: 17
-
-  - id: tuya_mcu_uart
-    tx_pin: GPIO39
-    rx_pin: GPIO38
-    baud_rate: 9600
-
-tuya_wifi_mcu:
-  # tuya mcu product id
-  product_id: chmzlgjpadpqxdko
-  uart_id: tuya_mcu_uart
-  wifi_reset_pin: 28
-  wifi_led_pin: 16
 
 switch:
   - platform: uart
@@ -108,13 +85,6 @@ switch:
       number: 0
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output1-tuya
-    dp_id: 1
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output01"
 
   - platform: gpio
     name: "f16-output02"
@@ -124,13 +94,6 @@ switch:
       number: 1
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output2-tuya
-    dp_id: 2
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output02"
 
   - platform: gpio
     name: "f16-output03"
@@ -140,13 +103,6 @@ switch:
       number: 2
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output3-tuya
-    dp_id: 3
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output03"
 
   - platform: gpio
     name: "f16-output04"
@@ -156,13 +112,6 @@ switch:
       number: 3
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output4-tuya
-    dp_id: 4
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output04"
 
   - platform: gpio
     name: "f16-output05"
@@ -172,13 +121,6 @@ switch:
       number: 4
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output5-tuya
-    dp_id: 5
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output05"
 
   - platform: gpio
     name: "f16-output06"
@@ -188,13 +130,6 @@ switch:
       number: 5
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output6-tuya
-    dp_id: 6
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output06"
 
   - platform: gpio
     name: "f16-output07"
@@ -204,13 +139,6 @@ switch:
       number: 6
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output7-tuya
-    dp_id: 101
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output07"
 
   - platform: gpio
     name: "f16-output08"
@@ -220,13 +148,6 @@ switch:
       number: 7
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output8-tuya
-    dp_id: 102
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output08"
 
   - platform: gpio
     name: "f16-output09"
@@ -236,13 +157,6 @@ switch:
       number: 8
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output9-tuya
-    dp_id: 103
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output09"
 
   - platform: gpio
     name: "f16-output10"
@@ -252,13 +166,6 @@ switch:
       number: 9
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output10-tuya
-    dp_id: 104
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output10"
 
   - platform: gpio
     name: "f16-output11"
@@ -268,13 +175,6 @@ switch:
       number: 10
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output11-tuya
-    dp_id: 105
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output11"
 
   - platform: gpio
     name: "f16-output12"
@@ -284,13 +184,6 @@ switch:
       number: 11
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output12-tuya
-    dp_id: 106
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output12"
 
   - platform: gpio
     name: "f16-output13"
@@ -300,13 +193,6 @@ switch:
       number: 12
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output13-tuya
-    dp_id: 107
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output13"
 
   - platform: gpio
     name: "f16-output14"
@@ -316,13 +202,6 @@ switch:
       number: 13
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output14-tuya
-    dp_id: 108
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output14"
 
   - platform: gpio
     name: "f16-output15"
@@ -332,13 +211,6 @@ switch:
       number: 14
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output15-tuya
-    dp_id: 109
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output15"
 
   - platform: gpio
     name: "f16-output16"
@@ -348,13 +220,6 @@ switch:
       number: 15
       mode: OUTPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-output16-tuya
-    dp_id: 110
-    # hide from homeassistant ui
-    internal: true
-    # bind other switch, sync state
-    bind_switch_id: "f16_output16"
 
 binary_sensor:
   - platform: gpio
@@ -365,12 +230,6 @@ binary_sensor:
       number: 0
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input1-tuya
-    dp_id: 111
-    bind_binary_sensor_id: f16_input01
-    internal: true
-
   - platform: gpio
     name: "f16-input02"
     id: "f16_input02"
@@ -379,12 +238,6 @@ binary_sensor:
       number: 1
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input2-tuya
-    dp_id: 112
-    bind_binary_sensor_id: f16_input02
-    internal: true
-
   - platform: gpio
     name: "f16-input03"
     id: "f16_input03"
@@ -393,12 +246,6 @@ binary_sensor:
       number: 2
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input3-tuya
-    dp_id: 113
-    bind_binary_sensor_id: f16_input03
-    internal: true
-
   - platform: gpio
     name: "f16-input04"
     id: "f16_input04"
@@ -407,12 +254,6 @@ binary_sensor:
       number: 3
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input4-tuya
-    dp_id: 114
-    bind_binary_sensor_id: f16_input04
-    internal: true
-
   - platform: gpio
     name: "f16-input05"
     id: "f16_input05"
@@ -421,12 +262,6 @@ binary_sensor:
       number: 4
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input5-tuya
-    dp_id: 115
-    bind_binary_sensor_id: f16_input05
-    internal: true
-
   - platform: gpio
     name: "f16-input06"
     id: "f16_input06"
@@ -435,12 +270,6 @@ binary_sensor:
       number: 5
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input6-tuya
-    dp_id: 116
-    bind_binary_sensor_id: f16_input06
-    internal: true
-
   - platform: gpio
     name: "f16-input07"
     id: "f16_input07"
@@ -449,12 +278,6 @@ binary_sensor:
       number: 6
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input7-tuya
-    dp_id: 117
-    bind_binary_sensor_id: f16_input07
-    internal: true
-
   - platform: gpio
     name: "f16-input08"
     id: "f16_input08"
@@ -463,12 +286,6 @@ binary_sensor:
       number: 7
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input8-tuya
-    dp_id: 118
-    bind_binary_sensor_id: f16_input08
-    internal: true
-
   - platform: gpio
     name: "f16-input09"
     id: "f16_input09"
@@ -477,12 +294,6 @@ binary_sensor:
       number: 8
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input9-tuya
-    dp_id: 119
-    bind_binary_sensor_id: f16_input09
-    internal: true
-
   - platform: gpio
     name: "f16-input10"
     id: "f16_input10"
@@ -491,12 +302,6 @@ binary_sensor:
       number: 9
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input10-tuya
-    dp_id: 120
-    bind_binary_sensor_id: f16_input10
-    internal: true
-
   - platform: gpio
     name: "f16-input11"
     id: "f16_input11"
@@ -505,12 +310,6 @@ binary_sensor:
       number: 10
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input11-tuya
-    dp_id: 121
-    bind_binary_sensor_id: f16_input11
-    internal: true
-
   - platform: gpio
     name: "f16-input12"
     id: "f16_input12"
@@ -519,12 +318,6 @@ binary_sensor:
       number: 11
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input12-tuya
-    dp_id: 122
-    bind_binary_sensor_id: f16_input12
-    internal: true
-
   - platform: gpio
     name: "f16-input13"
     id: "f16_input13"
@@ -533,12 +326,6 @@ binary_sensor:
       number: 12
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input13-tuya
-    dp_id: 123
-    bind_binary_sensor_id: f16_input13
-    internal: true
-
   - platform: gpio
     name: "f16-input14"
     id: "f16_input14"
@@ -547,12 +334,6 @@ binary_sensor:
       number: 13
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input14-tuya
-    dp_id: 124
-    bind_binary_sensor_id: f16_input14
-    internal: true
-
   - platform: gpio
     name: "f16-input15"
     id: "f16_input15"
@@ -561,12 +342,6 @@ binary_sensor:
       number: 14
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input15-tuya
-    dp_id: 125
-    bind_binary_sensor_id: f16_input15
-    internal: true
-
   - platform: gpio
     name: "f16-input16"
     id: "f16_input16"
@@ -575,13 +350,8 @@ binary_sensor:
       number: 15
       mode: INPUT
       inverted: true
-  - platform: tuya_wifi_mcu
-    name: f16-input16-tuya
-    dp_id: 126
-    bind_binary_sensor_id: f16_input16
-    internal: true
 
-##pull-up resistance on PCB
+  ##pull-up resistance on PCB
   - platform: gpio
     name: "f16-W1-io48"
     pin:
@@ -605,7 +375,7 @@ binary_sensor:
     pin:
       number: 15
       inverted: true
-## without resistance on PCB
+  ## without resistance on PCB
   - platform: gpio
     name: "f16-W1-io13"
     pin:
@@ -616,13 +386,13 @@ binary_sensor:
     name: "f16-W1-io14"
     pin:
       number: 14
-      inverted:  false
+      inverted: false
 
   - platform: gpio
     name: "f16-433M"
     pin:
       number: 40
-      inverted:  false
+      inverted: false
 
 sensor:
   - platform: adc
@@ -631,7 +401,7 @@ sensor:
     update_interval: 5s
     attenuation: 11db
     filters:
-      - lambda:
+      - lambda: |-
           if (x >= 3.11) {
             return x * 1.60256;
           } else if (x <= 0.15) {
@@ -646,7 +416,7 @@ sensor:
     attenuation: 11db
     filters:
       # - multiply: 1.51515
-      - lambda:
+      - lambda: |-
           if (x >= 3.11) {
             return x * 1.60256;
           } else if (x <= 0.15) {

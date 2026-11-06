@@ -5,16 +5,17 @@ type: switch
 standard: us
 board: esp8266
 ---
-[Amazon Link](https://amzn.to/3RAaQhx)
+
+[Amazon Link](https://www.amazon.com/dp/B09C1R7PDK)
 
 [Device on Martin Jerry](https://www.martinjerry.com/us-ss01-support)
 
 ## GPIO Pinout
 
-| Pin   | Function |
-| ----- | -------- |
-| GPIO3 | button |
-| GPIO5 | relay  |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO3  | button   |
+| GPIO5  | relay    |
 | GPIO12 | red LED  |
 | GPIO14 | blue LED |
 

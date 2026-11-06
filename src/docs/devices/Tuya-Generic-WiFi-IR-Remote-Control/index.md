@@ -8,24 +8,28 @@ board: bk72xx
 
 ## General Notes
 
-This devices has a CB3S board. It can be bought at Aliexpress, e.g. [here](https://www.aliexpress.com/item/1005007804859733.html) (February 2025).
+This devices has a CB3S board. It can be bought [on Aliexpress](https://www.aliexpress.com/item/1005007804859733.html)
+(February 2025).
 
-Despite appearing outwardly identical to the [Tuya Generic IRC03 IR Blaster](/devices/Tuya-Generic-IRC03-IR-Blaster), the IRC03 has a custom PCB with the BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts between the two devices differ as a result.
+Despite appearing outwardly identical to the [Tuya Generic IRC03 IR Blaster](/devices/Tuya-Generic-IRC03-IR-Blaster),
+the IRC03 has a custom PCB with the BK7231N directly integrated into it as opposed to using the CB3S module. The pinouts
+between the two devices differ as a result.
 
 ![IRRemote](tuya-generic-wifi-ir-remote-control.jpg)
 
 ## GPIO Pinout
 
-| Pin | Function      |
-| --- | ------------- |
-| P6  | Button        |
-| P7  | IR Receiver   |
-| P8  | LED           |
-| P26 | IR Transmitter|
+| Pin | Function       |
+| --- | -------------- |
+| P6  | Button         |
+| P7  | IR Receiver    |
+| P8  | LED            |
+| P26 | IR Transmitter |
 
 ## Flashing
 
-This device can be flashed using [Tuya Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) using device profile _tuya-generic-universal-ir-remote-control-cb3s-v2.0.0_.
+This device can be flashed using [Tuya Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) using device
+profile _tuya-generic-universal-ir-remote-control-cb3s-v2.0.0_.
 
 ## Configuration
 

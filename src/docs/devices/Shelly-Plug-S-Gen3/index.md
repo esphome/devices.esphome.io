@@ -3,7 +3,7 @@ title: Shelly Plug S Gen3
 date-published: 2024-12-05
 type: plug
 standard: eu
-board: esp32c3
+board: esp32
 difficulty: 4
 ---
 
@@ -12,31 +12,31 @@ Generation 3 of Shelly Plug-S
 At this moment there is NO way to Flash it OTA. You need to open the Plug and use UART!
 
 As always, first take a dump!
-```esptool -b 115200 --port COM11 read_flash 0x00000 0x800000 shelly_plug_s_gen3.bin```
+`esptool -b 115200 --port COM11 read_flash 0x00000 0x800000 shelly_plug_s_gen3.bin`
 
 ## UART Pinout
 
-| Pin      | Colour       |
-| -------- | ------------ |
-| Reset    | Brown        |
-| 3v3      | Red          |
-| RX       | Blue         |
-| TX       | Yellow       |
-| BootSEL  | Purple       |
-| GND      | Black        |
+| Pin     | Colour |
+| ------- | ------ |
+| Reset   | Brown  |
+| 3v3     | Red    |
+| RX      | Blue   |
+| TX      | Yellow |
+| BootSEL | Purple |
+| GND     | Black  |
 
 ![Shelly Plug S Gen3](../Shelly-Plug-S-Gen3/pinout_small.png "Shelly Plug S Gen3")
 
 ## GPIO Pinout
 
-| Pin    | Function                    |
-| ------ | --------------------------- |
-| GPIO3  | Internal Temperature        |
-| GPIO4  | Relay                       |
-| GPIO5  | LED WS2812                  |
-| GPIO6  | BL0942 TX                   |
-| GPIO7  | BL0942 RX                   |
-| GPIO18 | Button                      |
+| Pin    | Function             |
+| ------ | -------------------- |
+| GPIO3  | Internal Temperature |
+| GPIO4  | Relay                |
+| GPIO5  | LED WS2812           |
+| GPIO6  | BL0942 TX            |
+| GPIO7  | BL0942 RX            |
+| GPIO18 | Button               |
 
 ```yaml
 substitutions:
@@ -58,7 +58,7 @@ esphome:
     - script.execute: set_rgb
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: esp-idf
 
@@ -83,7 +83,7 @@ globals:
   - id: rgb_ready
     type: bool
     restore_value: false
-    initial_value: 'false'
+    initial_value: "false"
 
 script:
   - id: set_rgb
@@ -91,15 +91,15 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(rgb_ready);'
+            lambda: "return id(rgb_ready);"
           then:
             - if:
                 condition:
-                  lambda: 'return id(relay).state;'
+                  lambda: "return id(relay).state;"
                 then:
                   - if:
                       condition:
-                        lambda: 'return id(ring_on).remote_values.is_on();'
+                        lambda: "return id(ring_on).remote_values.is_on();"
                       then:
                         - light.turn_on:
                             id: rgb_light1
@@ -116,7 +116,7 @@ script:
                 else:
                   - if:
                       condition:
-                        lambda: 'return id(ring_off).remote_values.is_on();'
+                        lambda: "return id(ring_off).remote_values.is_on();"
                       then:
                         - light.turn_on:
                             id: rgb_light1
@@ -279,17 +279,17 @@ sensor:
     uart_id: uart_0
     address: 0
     voltage:
-      name: 'Voltage'
+      name: "Voltage"
       id: bvoltage
       icon: mdi:alpha-v-circle-outline
       device_class: voltage
     current:
-      name: 'Current'
+      name: "Current"
       id: bcurrent
       icon: mdi:alpha-a-circle-outline
       device_class: current
     power:
-      name: 'Power'
+      name: "Power"
       id: bpower
       icon: mdi:transmission-tower
       device_class: power
@@ -304,7 +304,7 @@ sensor:
                 data_template:
                   message: Switch turned off because power exceeded ${max_power}W
     energy:
-      name: 'Energy'
+      name: "Energy"
       id: benergy
       icon: mdi:lightning-bolt
       device_class: energy
@@ -319,7 +319,7 @@ sensor:
 
 ## Open the device
 
-![Seal](../Shelly-Plug-S-Gen3/seal(plombe).jpeg "Seal [thx to bkbartk]")
+![Seal](<../Shelly-Plug-S-Gen3/seal(plombe).jpeg> "Seal [thx to bkbartk]")
 This little seal need to drill open, best you use a prick punch with an M3.5-M4 Drill.
 ![Drill](../Shelly-Plug-S-Gen3/drill_1.png "Drill M3.5 or M4")
 

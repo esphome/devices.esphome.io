@@ -9,9 +9,9 @@ difficulty: 2
 
 ## Product Images
 
-![Product Image](/sonoff_RE5V1C.webp "Product Image")
-![PCB Top](/sonoff_RE5V1C_top.jpg "PCB Top")
-![PCB Bottom](/sonoff_RE5V1C_bottom.jpg "PCB Bottom")
+![Product Image](./sonoff_RE5V1C.webp "Product Image")
+![PCB Top](./sonoff_RE5V1C_top.jpg "PCB Top")
+![PCB Bottom](./sonoff_RE5V1C_bottom.jpg "PCB Bottom")
 
 ## Specification
 
@@ -33,23 +33,23 @@ difficulty: 2
 
 ### Wired on board
 
-| Pin    | Function         |
-| ------ | ---------------- |
-| GPIO00 | Button           |
-| GPIO12 | Relay, Red LED   |
-| GPIO13 | Green LED        |
+| Pin    | Function       |
+| ------ | -------------- |
+| GPIO00 | Button         |
+| GPIO12 | Relay, Red LED |
+| GPIO13 | Green LED      |
 
 ### On Top of PCB
 
-| Pin    | Name   | Comment |
-| ------ | ------ | ------- |
-| GPIO02 | I02    |         |
-|        | 3V3    |         |
-| GPIO04 | RX     | PWM out |
-| GPIO05 | TX     |         |
-|        | GND    |         |
-| GPIO03 | ERX    | U0RXD   |
-| GPIO01 | ETX    | U0TXD   |
+| Pin    | Name | Comment |
+| ------ | ---- | ------- |
+| GPIO02 | I02  |         |
+|        | 3V3  |         |
+| GPIO04 | RX   | PWM out |
+| GPIO05 | TX   |         |
+|        | GND  |         |
+| GPIO03 | ERX  | U0RXD   |
+| GPIO01 | ETX  | U0TXD   |
 
 ## Board Configuration
 
@@ -63,5 +63,4 @@ esp8266:
 
 logger:
   esp8266_store_log_strings_in_flash: False
-
 ```

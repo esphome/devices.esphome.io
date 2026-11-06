@@ -8,25 +8,42 @@ board: bk72xx
 
 ## Notice
 
-- This smart plug is flashable using tuya-cloudcutter, I picked `1.1.8 - BK7231N / oem_bk7231n_plug`
+- This smart plug is flashable using tuya-cloudcutter.
+  - For firmware v1.1.8, use: `1.1.8 - BK7231N / oem_bk7231n_plug`
+  - For firmware v1.3.5 (variant of this plug), use: `1.3.5 - BK7231T / oem_bk7231s_dltj`.
+- GPIO differences for the firmware v1.3.5 variant:
+  - `P6` = Status LED
+  - `P8` = CF1 pin
 
 ## Product Images
 
 ![plug with box](denver-shp-102-box.jpg)
 
-## GPIO Pinout
+## GPIO Pinout For Variant With V1.1.8 Firmware
 
-| Pin | Function      |
-| --- | ------------- |
-| P6  | CF1 pin       |
-| P7  | CF pin        |
-| P8  | Blue LED      |
-| P10 | Red LED       |
-| P11 | Switch button |
-| P24 | SEL pin       |
-| P26 | Relay         |
+| Pin | Function                     |
+| --- | ---------------------------- |
+| P6  | CF1 pin                      |
+| P7  | CF pin                       |
+| P8  | Blue LED                     |
+| P10 | Red LED                      |
+| P11 | Switch button                |
+| P24 | SEL pin                      |
+| P26 | Relay                        |
 
-## Basic configuration
+## GPIO Pinout For Variant With V1.3.5 Firmware
+
+| Pin | Function                     |
+| --- | ---------------------------- |
+| P6  | Blue LED                     |
+| P7  | CF pin                       |
+| P8  | CF1 pin                      |
+| P10 | Red LED                      |
+| P11 | Switch button                |
+| P24 | SEL pin                      |
+| P26 | Relay                        |
+
+## Basic Configuration For Variant With V1.1.8 Firmware
 
 ```yml
 esphome:

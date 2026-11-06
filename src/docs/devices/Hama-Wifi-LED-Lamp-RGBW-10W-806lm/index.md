@@ -1,7 +1,7 @@
 ---
 title: Hama Wifi Led Lamp RGBW 10W 806lm
 date-published: 2024-01-09
-type: bulb
+type: light
 standard: eu
 board: bk72xx
 ---
@@ -15,13 +15,13 @@ Profile name: 1.1.2 - BK7231T / oem_bk7231s_light_ty
 
 ## GPIO Pinout
 
-| Function   | GPIO-Pin |
-| ---------- | -------- |
-| PWM_red    | 26       |
-| PWM_green  | 6        |
-| PWM_blue   | 24       |
-| PWM_cold   | 8        |
-| PWM_warn   | 6        |
+| Function  | GPIO-Pin |
+| --------- | -------- |
+| PWM_red   | 26       |
+| PWM_green | 6        |
+| PWM_blue  | 24       |
+| PWM_cold  | 8        |
+| PWM_warn  | 6        |
 
 ## Basic Configuration
 

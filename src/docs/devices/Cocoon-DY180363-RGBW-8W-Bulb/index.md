@@ -11,7 +11,8 @@ difficulty: 2
 
 The Cocoon DY180363 was a RGB Smart Bulb sold at Aldi in Australia & the UK between 2020 and 2023.
 
-The bulb had a few variants (`-E` for AU/Taiwan, and `-B` for the rest of the world), but this configuration should work for both.
+The bulb had a few variants (`-E` for AU/Taiwan, and `-B` for the rest of the world), but this configuration should work
+for both.
 
 [https://support.cocoonproducts.com.au/hc/en-au/sections/360000250915-Smart-LED-Light-Bulb-E27](https://support.cocoonproducts.com.au/hc/en-au/sections/360000250915-Smart-LED-Light-Bulb-E27)
 
@@ -31,11 +32,13 @@ The bulb had a few variants (`-E` for AU/Taiwan, and `-B` for the rest of the wo
 Notes on the configuration code:
 
 - Use the `mini`fied version to complete the initial flash, otherwise the compiled image will be too big for OTA.
-- Then, once flashed, you can use the full example after updating the `use_address` value under `wifi:` to point to the new bulb  
+- Then, once flashed, you can use the full example after updating the `use_address` value under `wifi:` to point to the
+  new bulb  
 
 ### Minified Configuration
 
-Take the output of this ESPHome build (which should be less than 500kb) and use it with [tuya-convert](https://github.com/ct-Open-Source/tuya-convert) to get a good base-flash.
+Take the output of this ESPHome build (which should be less than 500kb) and use it with
+[tuya-convert](https://github.com/ct-Open-Source/tuya-convert) to get a good base-flash.
 
 ```yaml
 esphome:

@@ -9,7 +9,9 @@ difficulty: 3
 
 ## Bootloop Workaround
 
-Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only (not on AC). Here's a workaround: https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868
+Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only
+(not on AC). Here's a workaround:
+[https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868](https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868)
 
 ## GPIO Pinout
 
@@ -42,14 +44,16 @@ esphome:
     then:
       - if:
           condition:
-            lambda: 'return id(v_sensor).state > 10;'
+            lambda: 'return id(v_sensor).state > 90 || (id(v_sensor).state > 10 && id(a_sensor).state > 0.1);'
           then:
             - switch.turn_on: relay_1
           else:
             - switch.turn_off: relay_1
 
 esp32:
-  board: nodemcu-32s
+  variant: esp32
+  framework:
+    type: esp-idf
 
 wifi:
   ssid: !secret wifi_ssid
@@ -151,12 +155,9 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: "$friendly_name ESP32 Internal Temp"
     id: esp32_temp
-    lambda: return temperatureRead();
 
   - platform: template
     name: $friendly_name Power Factor
@@ -164,13 +165,11 @@ sensor:
     id: power_factor
     lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
 
-  - platform: esp32_hall
-    name: $friendly_name ESP32 Hall Sensor
-    update_interval: 60s
-
 binary_sensor:
   - platform: gpio
-    pin: GPIO00
+    pin:
+      number: GPIO00
+      ignore_strapping_warning: true
     id: reset
     internal: true
     filters:
@@ -196,7 +195,7 @@ binary_sensor:
                   state: ON
   - platform: template # this is a fake sensor to tell the screen which info to show on display
     id: page
-    publish_initial_state: true
+    trigger_on_initial_state: true
     internal: true
   - platform: template
     name: $friendly_name Load
@@ -225,10 +224,10 @@ display:
       it.display_kwh(false);
       it.printf(0, "%.1f", id(v_sensor).state);
       it.printf(1, "%.1f", id(a_sensor).state);
-    } else {  
+    } else {
       it.display_voltage(false);
       it.display_kwh(true);
-      it.printf(0, "%.1f", id(wh_sensor).state);
+      it.printf(0, "%.1f", id(wh_sensor).state/1000);
       it.printf(1, "%.1f", id(w_sensor).state);
     }
 
@@ -242,7 +241,7 @@ output:
 switch:
   - platform: template
     name: $friendly_name
-    optimistic: true
+    lambda: 'return id(v_sensor).state > 90 || (id(v_sensor).state > 10 && id(a_sensor).state > 0.1);'
     id: relay_1
     turn_off_action:
       - switch.turn_on: relay_off
@@ -262,10 +261,12 @@ switch:
     restore_mode: ALWAYS_OFF
     internal: true
     id: relay_on
-    pin: GPIO02
+    pin:
+      number: GPIO02
+      ignore_strapping_warning: true
     on_turn_on:
       - delay: 500ms
-      - switch.turn_off: relay_on  # bi-stable relay so no need to keep on
+      - switch.turn_off: relay_on # bi-stable relay so no need to keep on
       - light.turn_on: switch_led
     interlock: [relay_off]
   - platform: restart
@@ -295,6 +296,7 @@ light:
     pin:
       number: GPIO05
       inverted: True
+      ignore_strapping_warning: true
 
 interval:
   - interval: 30s
