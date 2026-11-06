@@ -1,0 +1,12 @@
+# Additional config for config.yaml and battery-deep-sleep.yaml: Home Assistant API, ESPHome OTA and the clock.
+# Merge it into your config, e.g. with `packages:`. Add your own `wifi:` credentials and API encryption key.
+
+api:
+
+ota:
+  - platform: esphome
+    # Needed to write the stock flash layout (see "OTA from Shelly Stock Firmware"). Keep it in every build.
+    allow_partition_access: true
+
+time:
+  - platform: homeassistant

@@ -114,7 +114,6 @@ binary_sensor:
         input: true
         pullup: true
       inverted: true
-      allow_other_uses: true
     filters:
       - delayed_on_off: 50ms
 

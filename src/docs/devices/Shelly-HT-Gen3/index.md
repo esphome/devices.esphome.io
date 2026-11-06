@@ -19,26 +19,26 @@ E-Paper segment display with 91 active segments, 10 digits and 13 icons.
 
 ## GPIO Pinout
 
-| GPIO | Function | Notes |
-|--------|----------------|-----------------------------------------------|
-| GPIO0 | Button | XTAL_32K_P, ext. pull-up, deep sleep wakeup |
-| GPIO1 | I2C SDA | Shared bus (SHT31 + UC8119), ext. pull-up |
-| GPIO2 | Power Rail ADC | Reads regulated 3.3V rail, not battery |
-| GPIO3 | I2C SCL | 100kHz, external pull-up on FPC |
-| GPIO4 | Battery ADC | Via voltage divider (÷3), GPIO18 enable |
-| GPIO5 | Battery Presence | HIGH when batteries are connected |
-| GPIO6 | UC8119 BUSY_N | LOW=busy, external pull-up on FPC |
-| GPIO7 | UC8119 RESET_N | Active LOW, 10ms pulse |
-| GPIO8 | USB Detect | HIGH=USB connected, LOW=battery |
-| GPIO10 | UC8119 Enable | Display power gate, HIGH=on |
-| GPIO18 | Batt Power En | Enables power-path for battery ADC |
+| GPIO   | Function         | Notes                                       |
+| ------ | ---------------- | ------------------------------------------- |
+| GPIO0  | Button           | XTAL_32K_P, ext. pull-up, deep sleep wakeup |
+| GPIO1  | I2C SDA          | Shared bus (SHT31 + UC8119), ext. pull-up   |
+| GPIO2  | Power Rail ADC   | Reads regulated 3.3V rail, not battery      |
+| GPIO3  | I2C SCL          | 100kHz, external pull-up on FPC             |
+| GPIO4  | Battery ADC      | Via voltage divider (÷3), GPIO18 enable     |
+| GPIO5  | Battery Presence | HIGH when batteries are connected           |
+| GPIO6  | UC8119 BUSY_N    | LOW=busy, external pull-up on FPC           |
+| GPIO7  | UC8119 RESET_N   | Active LOW, 10ms pulse                      |
+| GPIO8  | USB Detect       | HIGH=USB connected, LOW=battery             |
+| GPIO10 | UC8119 Enable    | Display power gate, HIGH=on                 |
+| GPIO18 | Batt Power En    | Enables power-path for battery ADC          |
 
 ## I2C Devices
 
-| Device | Address | Function |
-|--------|---------|--------------------------|
-| SHT31 | 0x44 | Temperature & Humidity |
-| UC8119 | 0x50 | E-Paper Segment Display |
+| Device | Address | Function                |
+| ------ | ------- | ----------------------- |
+| SHT31  | 0x44    | Temperature & Humidity  |
+| UC8119 | 0x50    | E-Paper Segment Display |
 
 ## Serial Pinout (PCB Test Pads)
 
@@ -47,15 +47,15 @@ E-Paper segment display with 91 active segments, 10 digits and 13 icons.
 The UART pads are bare test points on the PCB (no header installed).
 Use pogo pins, test clips, or solder temporary wires for flashing.
 
-| Pad | Function       |
-|-----|----------------|
-| 1   | NC             |
-| 2   | RXD            |
-| 3   | CHIP_EN        |
-| 4   | GND            |
-| 5   | TXD            |
-| 6   | VCC 3V3        |
-| 7   | BOOT / GPIO9   |
+| Pad | Function     |
+| --- | ------------ |
+| 1   | NC           |
+| 2   | RXD          |
+| 3   | CHIP_EN      |
+| 4   | GND          |
+| 5   | TXD          |
+| 6   | VCC 3V3      |
+| 7   | BOOT / GPIO9 |
 
 ## Flashing
 
@@ -73,7 +73,8 @@ Requirements:
 - The ESPHome build must use the Shelly **stock partition table**, so the image fits the
   layout on the device. Save the CSV below as `csv/HTG3-stock.csv` next to your YAML.
   The `partitions` and `CONFIG_PARTITION_TABLE_OFFSET` lines are already set in `config.yaml`.
-- `allow_partition_access: true` must be set in the `ota:` block (see "Network, OTA and time" below).
+- `allow_partition_access: true` must be set in the `ota:` block
+  (see [Network, OTA and time](#network-ota-and-time) below).
 
 ```csv
 # Shelly H&T Gen3 stock partition table (read from the official 2.0.1 package, partition-table.bin at 0xf000).
@@ -127,9 +128,24 @@ esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
 
 ## Battery Powered Configuration (Deep Sleep)
 
-Use the same network, OTA and time additions as above.
+Add the [network, OTA and time](#network-ota-and-time) settings below to this one as well.
 
 ```yaml file=battery-deep-sleep.yaml
+```
+
+## Network, OTA and time
+
+The two examples below only describe the hardware. Add this file to get the Home Assistant API, ESPHome OTA updates
+(including `allow_partition_access: true`, which the OTA flashing above needs) and the clock from Home Assistant.
+Include it with [packages](https://esphome.io/components/packages/) and add your own `wifi:` credentials and API
+encryption key:
+
+```yaml file=network-ota-time.yaml
+```
+
+```yaml inline
+packages:
+  network: !include network-ota-time.yaml
 ```
 
 ## Display Layout
@@ -158,15 +174,15 @@ The UC8119 segment display has the following layout (all segments shown):
 
 **Zones:**
 
-| Zone | Digits | Function |
-|------|--------|----------|
-| Top left | T1 T2 : T3 T4 | Clock (HH:MM) |
-| Top right | Arrow + Battery | Arrow, 5-segment battery |
-| Center left | D1 D2 . D3 | Temperature (XX.X) |
-| Center right | UNIT | °C/°F (small digit + °) |
-| Icon row 1 | ❄ ♨ ❀ ☰ 📅 | Frost, Heat, Vent, ?, Cal |
-| Icon row 2 | Signal, BT, Globe | WiFi, Bluetooth, Globe |
-| Bottom right | H1 H2 % | Humidity (XX%) |
+| Zone         | Digits            | Function                  |
+| ------------ | ----------------- | ------------------------- |
+| Top left     | T1 T2 : T3 T4     | Clock (HH:MM)             |
+| Top right    | Arrow + Battery   | Arrow, 5-segment battery  |
+| Center left  | D1 D2 . D3        | Temperature (XX.X)        |
+| Center right | UNIT              | °C/°F (small digit + °)   |
+| Icon row 1   | ❄ ♨ ❀ ☰ 📅       | Frost, Heat, Vent, ?, Cal |
+| Icon row 2   | Signal, BT, Globe | WiFi, Bluetooth, Globe    |
+| Bottom right | H1 H2 %           | Humidity (XX%)            |
 
 ## Battery Measurement
 
