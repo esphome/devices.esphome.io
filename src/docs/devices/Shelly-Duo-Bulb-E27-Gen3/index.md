@@ -37,7 +37,7 @@ Remove the frosted cover and the LED board to reach the driver PCB with the modu
 are covered with sealant, which has to be removed carefully, and have to be soldered. Connect a 3.3 V USB-to-serial
 adapter; the colour is the marker in the picture. Take the bulb out of the socket and power it only from the adapter.
 
-![Pinout](bulb_duo_gen3_uart.png "UART pinout")
+![Pinout](bulb_duo_gen3_uart.jpg "UART pinout")
 
 | Function        | Colour |
 | --------------- | ------ |
