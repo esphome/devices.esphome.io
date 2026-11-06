@@ -1,0 +1,73 @@
+esphome:
+  name: philips-series-600
+  friendly_name: Philips Series 600
+  name_add_mac_suffix: true
+  min_version: 2026.5.3
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/tuct/levoit
+      ref: 1.4.3
+    components: [philips]
+
+logger:
+  # UART0 on the ESP32-C3 is GPIO20/21 — the same pins as the MCU link.
+  # Log over the native USB so those pins stay free.
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  # Set up a wifi access point using the device name above
+  ap:
+
+uart:
+  - id: uart_mcu
+    tx_pin: GPIO21
+    rx_pin: GPIO20
+    baud_rate: 115200
+
+philips:
+  id: purifier
+  model: AC0650
+
+fan:
+  - platform: philips
+    philips: purifier
+    id: philips_fan
+    name: "Fan"
+
+sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_prefilter
+    name: "Pre-filter"
+    type: filter_clean
+  - platform: philips
+    philips: purifier
+    id: philips_hepa
+    name: "HEPA Filter"
+    type: filter_lifetime
+
+button:
+  - platform: philips
+    philips: purifier
+    id: philips_reset_prefilter
+    name: "Reset Pre-filter"
+    type: reset_prefilter
+  - platform: philips
+    philips: purifier
+    id: philips_reset_hepa
+    name: "Reset HEPA Filter"
+    type: reset_hepa
+
+text_sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_mcu_version
+    name: "MCU Version"
+    type: mcu_version
