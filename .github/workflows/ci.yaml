@@ -157,7 +157,7 @@ jobs:
       # imports. Bump it to a newer device-builder main commit to pick up
       # importer changes; ESPHome is the latest stable release that commit's
       # `esphome` extra accepts, shared by both checks.
-      DEVICE_BUILDER_REF: 302899f8f81cd86a7ec11c2115c5122c8eba6ffb
+      DEVICE_BUILDER_REF: 2ff818fd2913cd204263eef4c128356db4ad2895
     steps:
       - name: Checkout scripts
         uses: actions/checkout@v7.0.1
