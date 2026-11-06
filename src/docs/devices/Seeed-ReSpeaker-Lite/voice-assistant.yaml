@@ -2,8 +2,9 @@
 # configuration above. Requires ESPHome 2026.7.3 or newer — see the note about
 # microWakeWord on older releases.
 
-# voice_assistant talks to Home Assistant over the native API, so the component
-# has to be present here.
+# voice_assistant talks to Home Assistant over the native API, so it needs
+# `api:`. Leave this line out if your configuration already has one, as a
+# Device Builder configuration does.
 api:
 
 number:

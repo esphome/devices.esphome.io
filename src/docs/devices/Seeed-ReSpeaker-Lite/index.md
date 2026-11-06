@@ -27,13 +27,16 @@ DSP with a socketed Seeed XIAO ESP32-S3 module, which is the part ESPHome runs o
 ## Setup
 
 1. Seat the XIAO ESP32-S3 module in the socket and connect the board over USB-C.
-2. Flash the configuration below. The XIAO enters its bootloader by holding **BOOT** while tapping **RESET**.
-3. Adopt the device in Home Assistant and add it to a voice assistant pipeline.
+2. Create the device in the ESPHome Device Builder, which sets up Wi-Fi, `api:` and `ota:` for you. Merge in the
+   hardware configuration below, and the voice assistant layer if you want voice control.
+3. Flash it. The XIAO enters its bootloader by holding **BOOT** while tapping **RESET**.
+4. Add the device in Home Assistant when it is discovered, and add it to a voice assistant pipeline.
 
 ## Configuration
 
-This is the hardware configuration — buses, codec, microphone and speaker. It brings the board up as a
-media player without assuming anything about how you want to use it.
+This is the hardware configuration — buses, codec, microphone, speaker and media player. It is not a complete
+device on its own: Home Assistant can only reach it once your configuration adds Wi-Fi and `api:`, which the
+Device Builder does when you create the device.
 
 ```yaml file=config.yaml
 ```
