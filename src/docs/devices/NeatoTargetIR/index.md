@@ -13,6 +13,8 @@ difficulty: 1
 
 ## Overview
 
+<!-- CI test edit -->
+
 The NeatoFx Target IR is a self-contained WiFi-enabled infrared hit detector and prop controller.
 Wire it up, configure it from any browser, and it runs your prop — relay, servo, LEDs, and
 scoring — with no custom coding or external controller required.
