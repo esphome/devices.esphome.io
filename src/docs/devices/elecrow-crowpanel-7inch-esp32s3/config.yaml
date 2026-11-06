@@ -12,6 +12,9 @@ esp32:
     type: esp-idf
     advanced:
       execute_from_psram: true
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
 
 psram:
   mode: octal
