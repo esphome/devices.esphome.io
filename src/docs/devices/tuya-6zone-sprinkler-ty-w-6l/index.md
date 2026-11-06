@@ -60,9 +60,14 @@ only ground and the two data lines:
 **CRITICAL WARNING**: **NEVER connect 3.3V from the USB adapter while the board
 is powered from 24VAC**. You can damage the board.
 
-The UART pads sit on the low voltage side, but the 24 VAC adapter is plugged into
-mains while you flash. Touch nothing on the board except the pads you are
-probing, and unplug the transformer as soon as the write finishes.
+The UART pads sit on the low voltage side, but the board is powered while you
+flash, so the 24 VAC supply must come from an isolating transformer whose
+secondary is not referenced to earth. A mains-referenced 24 VAC supply puts
+hazardous voltage on GND, RX and TX, and therefore on the USB adapter and the
+computer. If you cannot confirm that the transformer is isolating, put a USB
+isolator between the adapter and the computer. Touch nothing on the board except
+the pads you are probing, and unplug the transformer as soon as the write
+finishes.
 
 ### 1. Back up the original firmware first
 
