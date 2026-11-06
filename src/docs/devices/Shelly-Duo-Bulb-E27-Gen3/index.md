@@ -17,15 +17,21 @@ Product page: <https://www.shelly.com/products/shelly-duo-bulb-e27-gen3>.
 Both white channels are driven directly by PWM from two GPIOs, so ESPHome's `cwww` light works without an external
 component.
 
-Tested on a real bulb: flashing over UART and a normal ESPHome run with the configuration below. Not tested: OTA from
-the Shelly firmware.
+Tested on a real bulb: flashing over UART, OTA from the Shelly firmware and a normal ESPHome run.
 
 > **Warning:** The bulb contains a **non-isolated mains power supply**. Never open it or connect a serial adapter while
 > it is connected to mains voltage.
 
 ## Flashing
 
-### UART
+### Option 1: OTA from the stock firmware (Free-Shelly-OTA)
+
+The bulb does not have to be opened. The community tool [Free-Shelly-OTA](https://github.com/oxynatOr/free-shelly-ota)
+can send an ESPHome image to the bulb while it still runs the Shelly firmware. The steps and the ESPHome settings it
+needs are on the tool's
+[device page](https://github.com/oxynatOr/free-shelly-ota/blob/main/docs/devices/DuoBulbG3.md).
+
+### Option 2: UART
 
 Remove the frosted cover and the LED board to reach the driver PCB with the module. The pads on the edge of the module
 are covered with sealant, which has to be removed carefully, and have to be soldered. Connect a 3.3 V USB-to-serial
