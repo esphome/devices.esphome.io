@@ -1,6 +1,4 @@
 api:
-  encryption:
-    key: "xxxxxxx"
   services:
     - service: send_raw_command
       variables:
