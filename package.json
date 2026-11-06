@@ -16,6 +16,7 @@
     "preview": "astro preview",
     "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
+    "validate-esphome": "tsx scripts/validate-esphome-configs.ts",
     "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
     "check-workflow-scripts": "for f in .github/scripts/*.cjs; do node --check \"$f\" || exit 1; done",
     "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",

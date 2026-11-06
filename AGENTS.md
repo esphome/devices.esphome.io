@@ -6,9 +6,9 @@ device is one folder under `src/docs/devices/<DeviceName>/` holding an `index.md
 configs the page pulls in.
 
 The rules below are what CI enforces (`npm run validate-devices`, `npm run validate-yaml`,
-`npm run lint-frontmatter`, markdownlint, yamllint, the CRLF check and the external link check), plus the pull
-request template and the Made for ESPHome standard. If a document ever disagrees with CI, the validator scripts
-in `scripts/` win; fix the document. The same rules are repeated for other tools in
+`npm run validate-esphome`, `npm run lint-frontmatter`, markdownlint, yamllint, the CRLF check and the external
+link check), plus the pull request template and the Made for ESPHome standard. If a document ever disagrees with
+CI, the validator scripts in `scripts/` win; fix the document. The same rules are repeated for other tools in
 `.github/copilot-instructions.md` and `.github/skills/code-review/SKILL.md`, so keep those in step when a rule
 changes.
 
@@ -23,6 +23,7 @@ Node 22.12 or newer.
 npm install
 npm run validate-devices    # folder names, frontmatter, aliases, then validate-yaml
 npm run validate-yaml       # the example-config rules below
+npm run validate-esphome    # esphome config + Device Builder import on changed pages (see below)
 npm run lint-frontmatter    # yamllint on the frontmatter of changed .md/.mdx (needs yamllint on PATH)
 npm run check-links         # external links in changed markdown
 npm test                    # script unit tests and workflow-script syntax checks
@@ -54,7 +55,7 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
   scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
   and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole
   catalog, so a broken untouched page can still fail CI. Only the no-inline-yaml rule, the Made for ESPHome
-  `url=` requirement, `lint-frontmatter` and `check-links` are limited to pages the PR changes.
+  `url=` requirement, `validate-esphome`, `lint-frontmatter` and `check-links` are limited to pages the PR changes.
 
 ## Device folder and page
 
@@ -133,6 +134,20 @@ Automations, Home Assistant integration and extra components go in separate, des
 - No passwords on `password:`, `*_password:` or `psk:` keys, neither literal nor `!secret`. Leave the key out.
 - No static IP addresses (`manual_ip`) in `wifi:` or `ethernet:` blocks.
 - Do not include `web_server:` in any config on a device page.
+
+### ESPHome and Device Builder checks (`npm run validate-esphome`)
+
+Every changed device folder with `file=` configs must pass `esphome config` (`config.yaml` and files with their own
+`esphome: name:` on their own, other files merged onto `config.yaml`), and the page must import into the ESPHome
+Device Builder; the check prints why not. Locally it needs `esphome` on PATH, and for the import check
+`DEVICE_BUILDER_DIR` pointing at an esphome/device-builder checkout with `DEVICE_BUILDER_PYTHON` set to a Python
+that has it installed (`pip install "<checkout>[esphome]"`); without them that check is skipped. Pass device folder
+names to check specific pages.
+
+CI never runs code a page's yaml pulls in. A page whose configs use `external_components:`, a `packages:` entry
+that is not a local `!include`, a git source, an `!include` outside the device folder, or Python files in the
+folder gets a "Not validated" notice instead of either check; this does not fail the PR. Everything else runs in
+a container with no network and no token, so configs that download fonts, images or models get a warning.
 
 ## Markdown style
 

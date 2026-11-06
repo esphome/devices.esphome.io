@@ -58,6 +58,7 @@ import matter from "gray-matter";
 import * as yaml from "js-yaml";
 import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
 import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
+import { changedPaths, type ChangedPath } from "./changed-paths.ts";
 
 // Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
 // the JS boolean `true`) and the rare string form. Anything else — missing,
@@ -160,14 +161,14 @@ function checkSensitiveInTree(
   }
 }
 
-interface YamlFence {
+export interface YamlFence {
   fileAttr: string | null; // null when the fence has no `file=` attr
   urlAttr: string | null; // null when the fence has no `url=` attr
   inline: boolean; // true when the fence carries the bare `inline` marker
   lineNumber: number; // 1-indexed source line of the fence opener
 }
 
-function findYamlFences(md: string): YamlFence[] {
+export function findYamlFences(md: string): YamlFence[] {
   const lines = md.split(/\r?\n/);
   const fences: YamlFence[] = [];
   let inFence: { char: string; len: number } | null = null;
@@ -202,7 +203,7 @@ function findYamlFences(md: string): YamlFence[] {
   return fences;
 }
 
-interface Issue {
+export interface Issue {
   file: string;
   line?: number;
   message: string;
@@ -345,58 +346,35 @@ function walkMarkdown(dir: string, out: string[], depth = 0): void {
 // requirement applies. Only `D` (deletion) and `U` (unmerged, shouldn't
 // appear in CI) are ignored.
 function findChangedMarkdown(devicesRoot: string): Set<string> | null {
-  const base = process.env.BASE_SHA;
-  const head = process.env.HEAD_SHA;
-  if (!base || !head) return null;
-  let out: string;
-  try {
-    out = execFileSync(
-      "git",
-      [
-        "diff",
-        "--name-status",
-        "-z",
-        `${base}..${head}`,
-        "--",
-        "src/docs/devices",
-      ],
-      { encoding: "utf8" }
-    );
-  } catch (err) {
-    console.error(`git diff failed: ${(err as Error).message}`);
-    process.exit(1);
-  }
+  const changes = prChanges();
+  if (changes === null) return null;
   const changed = new Set<string>();
-  const tokens = out.split("\0");
-  let i = 0;
-  while (i < tokens.length) {
-    const status = tokens[i];
-    if (!status) { i++; continue; }
-    const code = status[0];
-    let candidatePath: string | null = null;
-    if (code === "R" || code === "C") {
-      // Format: <Rxx|Cxx>\0<old>\0<new> — take the new path, similarity
-      // index ignored: any rename/copy onto a device markdown must follow
-      // the rules.
-      candidatePath = tokens[i + 2];
-      i += 3;
-    } else {
-      // Format: <code>\0<path>
-      const p = tokens[i + 1];
-      i += 2;
-      // A = added, M = modified, T = type change. D (deleted) and U
-      // (unmerged — shouldn't appear in CI) are ignored.
-      if (code === "A" || code === "M" || code === "T") candidatePath = p;
-    }
-    if (!candidatePath) continue;
-    if (!/\.(md|mdx)$/i.test(candidatePath)) continue;
-    const abs = path.resolve(process.cwd(), candidatePath);
+  for (const c of changes) {
+    // A = added, M = modified, T = type change, R/C = the new path of a
+    // rename/copy. D (deleted) and U (unmerged) are ignored.
+    if (!["A", "M", "T", "R", "C"].includes(c.status)) continue;
+    if (!/\.(md|mdx)$/i.test(c.path)) continue;
+    const abs = path.resolve(process.cwd(), c.path);
     // Restrict to the devices tree (the path-spec already does, but be
     // defensive against future trigger changes).
     if (!abs.startsWith(devicesRoot + path.sep) && abs !== devicesRoot) continue;
     changed.add(abs);
   }
   return changed;
+}
+
+// The PR's changes under src/docs/devices between BASE_SHA and HEAD_SHA, or
+// null when the env vars are absent (local runs and push builds).
+function prChanges(): ChangedPath[] | null {
+  const base = process.env.BASE_SHA;
+  const head = process.env.HEAD_SHA;
+  if (!base || !head) return null;
+  try {
+    return changedPaths(base, head, "src/docs/devices");
+  } catch (err) {
+    console.error(`git diff failed: ${(err as Error).message}`);
+    process.exit(1);
+  }
 }
 
 // Identify the device directories this PR newly adds — i.e. each
@@ -409,43 +387,14 @@ function findChangedMarkdown(devicesRoot: string): Set<string> | null {
 // and `push` builds have no meaningful diff base), so the one-device rule
 // is enforced on pull_request events only.
 function findAddedDevices(): string[] | null {
-  const base = process.env.BASE_SHA;
-  const head = process.env.HEAD_SHA;
-  if (!base || !head) return null;
-  let out: string;
-  try {
-    out = execFileSync(
-      "git",
-      ["diff", "--name-status", "-z", `${base}..${head}`, "--", "src/docs/devices"],
-      { encoding: "utf8" }
-    );
-  } catch (err) {
-    console.error(`git diff failed: ${(err as Error).message}`);
-    process.exit(1);
-  }
+  const changes = prChanges();
+  if (changes === null) return null;
   const devices = new Set<string>();
-  const tokens = out.split("\0");
-  let i = 0;
-  while (i < tokens.length) {
-    const status = tokens[i];
-    if (!status) { i++; continue; }
-    const code = status[0];
-    let candidatePath: string | null = null;
-    if (code === "R" || code === "C") {
-      // <Rxx|Cxx>\0<old>\0<new>. A rename relocates an existing device, so
-      // it isn't a new one; a copy spawns a new device dir, so take the new
-      // path.
-      if (code === "C") candidatePath = tokens[i + 2];
-      i += 3;
-    } else {
-      const p = tokens[i + 1];
-      i += 2;
-      if (code === "A") candidatePath = p;
-    }
-    if (!candidatePath) continue;
-    const m = candidatePath.match(
-      /^src\/docs\/devices\/([^/]+)\/index\.(?:md|mdx)$/i
-    );
+  for (const c of changes) {
+    // A rename relocates an existing device, so it isn't a new one; a copy
+    // spawns a new device dir.
+    if (c.status !== "A" && c.status !== "C") continue;
+    const m = c.path.match(/^src\/docs\/devices\/([^/]+)\/index\.(?:md|mdx)$/i);
     if (m) devices.add(m[1]);
   }
   return [...devices].sort();

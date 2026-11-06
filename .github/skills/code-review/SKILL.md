@@ -11,10 +11,10 @@ folder per device under `src/docs/devices/<DeviceName>/`, each with an `index.md
 one or more example `.yaml` config files pulled into the page with fenced code blocks.
 
 Review PRs against the rules below. They mirror what CI enforces (`npm run validate-devices`,
-`npm run validate-yaml`, `npm run lint-frontmatter`, markdownlint, yamllint, and the external
-link check) plus the pull request template checklist and the Made for ESPHome standard, so a
-clean review here should mean a green CI run. Prefer citing the specific rule and file:line
-when requesting a change.
+`npm run validate-yaml`, `npm run validate-esphome`, `npm run lint-frontmatter`, markdownlint,
+yamllint, and the external link check) plus the pull request template checklist and the Made
+for ESPHome standard, so a clean review here should mean a green CI run. Prefer citing the
+specific rule and file:line when requesting a change.
 
 ## What to look at first
 
@@ -54,6 +54,12 @@ The first config is the bare hardware definition a user starts from. In `config.
 
 Richer examples (automations, Home Assistant integration, extra components) belong in
 **separate** `file=` config blocks later on the page, not in `config.yaml`.
+
+## ESPHome validity and Device Builder import
+
+`npm run validate-esphome`: each `file=` yaml passes `esphome config` (an add-on file without
+`esphome: name:` is checked merged onto `config.yaml`), and the page must import into the ESPHome
+Device Builder; the check prints why not.
 
 ## Secrets, passwords, and network config (all example YAML)
 
