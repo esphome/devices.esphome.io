@@ -8,7 +8,12 @@ board: bk72xx
 
 ## General Notes
 
-The DETA [Smart Single Switch (6911HA)](https://www.bunnings.com.au/deta-smart-single-gang-light-switch-touch-activated-with-grid-connect_p0098811) and [Smart Double Switch (6912HA)](https://www.bunnings.com.au/deta-smart-double-gang-light-switch-touch-activated-with-grid-connect_p0098812) are made by Arlec as part of the [Grid Connect ecosystem](https://grid-connect.com.au/), and are sold at Bunnings in Australia and New Zealand.
+The DETA [Smart Single Switch (6911HA)][1] and [Smart Double Switch (6912HA)][2] are made by Arlec as part of the
+[Grid Connect ecosystem][3], and are sold at Bunnings in Australia and New Zealand.
+
+[1]: https://www.bunnings.com.au/deta-smart-single-gang-light-switch-touch-activated-with-grid-connect_p0098811
+[2]: https://www.bunnings.com.au/deta-smart-double-gang-light-switch-touch-activated-with-grid-connect_p0098812
+[3]: https://grid-connect.com.au/
 
 ### Series 1
 
@@ -16,15 +21,28 @@ Series 1 models could be OTA flashed using using tuya-convert.
 
 ### Series 2
 
-Recently purchased devices are using the Beken BK7231T microcontroller and can be OTA flashed using using Cloudcutter.
+[Triple 6903HA][4] and [Quad 6904HA][5] The pin outs on the 3 & 4 gang switches are different to the 1 and 2 gang
+switches. Some 4 gang switches are on random Tuya firmware 1.1.5 and may need to use the "Lonsonho" brand
+"X804A 4 Gang Smart Wifi Switch" option in Cloudcutter, otherwise use the Deta single gang switch.
 
-[Triple 6903HA](https://www.bunnings.com.au/deta-smart-touch-activated-triple-gang-light-switch-with-grid-connect_p0161014) and [Quad 6904HA](https://www.bunnings.com.au/deta-smart-touch-activated-quad-gang-light-switch-with-grid-connect_p0161015) The pin outs on the 3 & 4 gang switches are different to the 1 and 2 gang switches. Some 4 gang switches are on random Tuya firmware 1.1.5 and may need to use the “Lonsonho” brand “X804A 4 Gang Smart Wifi Switch” option in Cloudcutter, otherwise use the Deta single gang switch.
+[4]: https://www.bunnings.com.au/deta-smart-touch-activated-triple-gang-light-switch-with-grid-connect_p0161014
+[5]: https://www.bunnings.com.au/deta-smart-touch-activated-quad-gang-light-switch-with-grid-connect_p0161015
+
+### Series 3
+
+Recently purchased devices are using the Beken BK7231N microcontroller and need flashing with a serial flasher. There
+are headers on the board.
 
 ## Getting it up and running
 
 ### Cloudcutter
 
-[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the process of flashing Tuya-based devices. It allows you to bypass the need for physically opening the device and swapping out chips. By leveraging the cloud APIs, Cloudcutter enables you to flash the firmware remotely, making it a convenient and less intrusive option. Follow the instructions on the [Cloudcutter GitHub repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to use this method for flashing your device.
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the process of
+flashing Tuya-based devices. It allows you to bypass the need for physically opening the device and swapping out chips.
+By leveraging the cloud APIs, Cloudcutter enables you to flash the firmware remotely, making it a convenient and less
+intrusive option. Follow the instructions on the
+[Cloudcutter GitHub repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to use this method for flashing
+your device.
 
 ### Disassembly
 
@@ -32,7 +50,8 @@ If you can't or don't wish to use Cloudcutter, you can flash directly to the out
 
 ## Overview
 
-This guide covers the DETA Smart Switches, including the [Single (6911HA)](https://www.bunnings.com.au/deta-smart-single-gang-light-switch-touch-activated-with-grid-connect_p0098811) and [Double (6912HA)](https://www.bunnings.com.au/deta-smart-double-gang-light-switch-touch-activated-with-grid-connect_p0098812), which are part of the [Grid Connect ecosystem](https://grid-connect.com.au/). These switches are available at Bunnings stores in Australia and New Zealand.
+This guide covers the DETA Smart Switches, including the [Single (6911HA)][1] and [Double (6912HA)][2], which are part
+of the [Grid Connect ecosystem][3]. These switches are available at Bunnings stores in Australia and New Zealand.
 
 ## Series Information
 
@@ -45,13 +64,20 @@ This guide covers the DETA Smart Switches, including the [Single (6911HA)](https
 - **Microcontroller**: Beken BK7231T
 - **Flashing Method**: OTA via Cloudcutter
 
-> **Note**: The [Triple 6903HA](https://www.bunnings.com.au/deta-smart-touch-activated-triple-gang-light-switch-with-grid-connect_p0161014) and [Quad 6904HA](https://www.bunnings.com.au/deta-smart-touch-activated-quad-gang-light-switch-with-grid-connect_p0161015) models have different pinouts compared to the 1 and 2 gang switches.
+> **Note**: The [Triple 6903HA][4] and [Quad 6904HA][5] models have different pinouts compared to the 1 and 2 gang
+switches.
+>
+### Series 3 - Flashing
+
+- **Microcontroller**: Beken BK7231N
+- **Flashing Method**: Serial
 
 ## Setup Guide
 
 ### Using Cloudcutter
 
-[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the flashing process. Follow the [official guide](https://github.com/tuya-cloudcutter/tuya-cloudcutter) for instructions.
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the flashing process.
+Follow the [official guide](https://github.com/tuya-cloudcutter/tuya-cloudcutter) for instructions.
 
 ### Manual Flashing
 
@@ -61,7 +87,8 @@ If you prefer to flash manually, you'll need a USB to serial adapter. Follow the
 2. Unscrew the two exposed screws.
 3. Remove the clear panel and the small PCB underneath.
 
-> **Tip**: You can convert these switches to ESPHome by replacing the WB3S chip with an ESP-12E or ESP-12F chip and adding a 10k pull-down resistor on GPIO15.
+> **Tip**: You can convert these switches to ESPHome by replacing the WB3S chip with an ESP-12E or ESP-12F chip and
+adding a 10k pull-down resistor on GPIO15.
 
 ## GPIO Pinouts
 
@@ -89,19 +116,21 @@ Triple 6903HA
 
 ### BK72XX-Based Models
 
-| Pin    | Function                       |
-| ------ | ------------------------------ |
-| P6     | Relay, Left  _(includes LED)_  |
-| P9     | Status LED _(inverted)_        |
-| P14    | Button, Left                   |
-| P24    | Button, Right                  |
-| P26    | Relay, Right _(includes LED)_  |
+| Pin | Function                      |
+| --- | ----------------------------- |
+| P6  | Relay, Left _(includes LED)_  |
+| P9  | Status LED _(inverted)_       |
+| P14 | Button, Left                  |
+| P24 | Button, Right                 |
+| P26 | Relay, Right _(includes LED)_ |
 
 > **Note**: Each relay shares a pin with its associated LED.
 
 ## Advanced Modifications
 
-To gain individual control of button LEDs, remove specific diodes and solder a wire from the cathode side of the diode pad to a spare GPIO pin. [See this example](https://community-assets.home-assistant.io/optimized/4X/f/9/b/f9b1f8ea23ccc1049ea4eda1765e3f19fb173925_2_666x500.jpeg).
+To gain individual control of button LEDs, remove specific diodes and solder a wire from the cathode side of the diode
+pad to a spare GPIO pin.
+[See this example](https://community-assets.home-assistant.io/optimized/4X/f/9/b/f9b1f8ea23ccc1049ea4eda1765e3f19fb173925_2_666x500.jpeg).
 
 ## Configuration Examples
 
@@ -125,7 +154,11 @@ bk72xx:
   board: generic-bk7231t-qfn32-tuya
 
 packages:
-  device_base: !include { file: common/device_base.yaml, vars: { friendlyname : 'Deta Double Gang Switch'} }
+  device_base:
+    !include {
+      file: common/device_base.yaml,
+      vars: { friendlyname: "Deta Double Gang Switch" },
+    }
 
 #################################
 
@@ -196,6 +229,84 @@ binary_sensor:
       then:
         - light.toggle: light_right
     internal: True
+```
+
+### 2 Gang Configuration for ESP
+
+```yaml
+esphome:
+ name: "deta6912ha"
+ friendly_name: DETA Smart Double Switch
+
+esp8266:
+  board: esp01_1m
+  early_pin_init: False
+
+logger:
+  baud_rate: 0
+ 
+captive_portal:
+  
+api:
+  encryption:
+    key: !secret api_key
+  
+ota:
+  platform: esphome
+  password: !secret ota_password
+  
+wifi:
+ ssid: !secret wifi_ssid
+ password: !secret wifi_password
+ ap:
+   ssid: "DETA Smart Double Switch"
+   password: !secret wifi_ap_password
+
+status_led:
+  pin:
+    number: GPIO4
+    inverted: False
+
+output:
+  - platform: gpio
+    pin: GPIO13
+    id: relay1
+  - platform: gpio
+    pin: GPIO14
+    id: relay2
+  
+light:
+  - platform: binary
+    name: "Light 1"
+    output: relay1
+    id: light1
+  - platform: binary
+    name: "Light 2"
+    output: relay2
+    id: light2
+
+binary_sensor:
+  - platform: gpio
+    id: button1
+    pin:
+      number: GPIO16
+      mode: INPUT
+      inverted: True
+    on_press:
+      - light.toggle: light1
+  - platform: gpio
+    id: button2
+    pin:
+      number: GPIO12
+      mode: INPUT
+      inverted: True
+    on_press:
+      - light.toggle: light2
+
+
+switch:
+  - platform: restart
+    name: "Restart"
 ```
 
 ### 3 Gang Configuration for BK72XX (Series 2)
@@ -274,7 +385,7 @@ output:
   # Relay 2
   - platform: gpio
     id: relay_2
-    pin: P26  
+    pin: P26
   # Relay 3
   - platform: gpio
     id: relay_3
@@ -298,7 +409,7 @@ light:
     output: relay_2
     id: light_2
 
-   # Light 3
+    # Light 3
   - platform: binary
     name: ${friendlyname_3}
     icon: ${deviceicon}
@@ -357,10 +468,11 @@ substitutions:
 #################################
 
 esphome:
-  platform: ESP8266
-  board: esp01_1m
   name: ${device_name}
-  esp8266_restore_from_flash: true
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
 
 wifi:
   ssid: !secret wifi_ssid
@@ -553,7 +665,7 @@ output:
   # Relay 2
   - platform: gpio
     id: relay_2
-    pin: P26  
+    pin: P26
   # Relay 3
   - platform: gpio
     id: relay_3
@@ -581,14 +693,14 @@ light:
     output: relay_2
     id: light_2
 
-   # Light 3
+    # Light 3
   - platform: binary
     name: ${friendlyname_3}
     icon: ${deviceicon}
     output: relay_3
     id: light_3
 
-   # Light 4
+    # Light 4
   - platform: binary
     name: ${friendlyname_4}
     icon: ${deviceicon}
@@ -661,10 +773,11 @@ substitutions:
 #################################
 
 esphome:
-  platform: ESP8266
-  board: esp01_1m
   name: ${device_name}
-  esp8266_restore_from_flash: true
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
 
 wifi:
   ssid: !secret wifi_ssid

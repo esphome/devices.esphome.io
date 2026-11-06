@@ -9,7 +9,7 @@ board: esp8266
 The Mirabella Genio is a Tuya-based smart bulb sold by Kmart in
 Australia.
 
-![mirabella-genio](/mirabella-genio-b22-rgbw.jpg)
+![mirabella-genio](./mirabella-genio-b22-rgbw.jpg)
 
 ## Basic Configuration
 

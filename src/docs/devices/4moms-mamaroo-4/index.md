@@ -10,10 +10,14 @@ board: esp32
 
 ## Product description
 
-We bought a 4moms Mamaroo 4 multi-motion baby swing for our baby and I realized it has built-in bluetooth module. Witch made me thinking if I can reverse-engineer original app to control swing using BLE client.
-Luckily there already was a [project](https://github.com/chrisrosset/mamaroo-mqtt) that helped me a bit. I used some tools ([apktool](https://apktool.org/) and [jadx](https://github.com/skylot/jadx)) to decompile android apk file and understand how it works.
+We bought a 4moms Mamaroo 4 multi-motion baby swing for our baby and I realized it has built-in bluetooth module. Witch
+made me thinking if I can reverse-engineer original app to control swing using BLE client.
+Luckily there already was a [project](https://github.com/chrisrosset/mamaroo-mqtt) that helped me a bit. I used some
+tools ([apktool](https://apktool.org/) and [jadx](https://github.com/skylot/jadx)) to decompile android apk file and
+understand how it works.
 
-Finally I was able to made this config witch lets you fully control your swing using external ESP32 module. Also it should be possible to put it inside the swing and connect to power jack using step-down module.
+Finally I was able to made this config witch lets you fully control your swing using external ESP32 module. Also it
+should be possible to put it inside the swing and connect to power jack using step-down module.
 
 ## Config
 
@@ -32,7 +36,7 @@ esphome:
   comment: ${device_description}
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: arduino
 

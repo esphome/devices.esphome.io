@@ -112,10 +112,10 @@ esp32_ble_tracker:
 
 ## Related materials
 
-- [ESPHome Bluetooth/BLE](https://esphome.io/components/#bluetooth-ble)
-- [ESP32 Bluetooth Low Energy Tracker Hub](https://esphome.io/components/esp32_ble_tracker.html#esp32-bluetooth-low-energy-tracker-hub)
+- [ESPHome Bluetooth/BLE](https://esphome.io/components/#bluetoothble)
+- [ESP32 Bluetooth Low Energy Tracker Hub](https://esphome.io/components/esp32_ble_tracker/)
 - [Tasmota discussion on Sonoff BLE data](https://github.com/arendst/Tasmota/discussions/15220)
-- [Home Assistant support request](https://community.home-assistant.io/t/add-support-for-sonoff-s-mate-and-r5-ewelink-remote-sub-devices/614342/1)
+- [Home Assistant support request](https://community.home-assistant.io/t/614342/1)
 
 ## Home Assistant automation example
 

@@ -8,9 +8,13 @@ board: esp32
 
 ![Product Image](Xiaomi_Mijia_Bedside_Lamp_2.jpg "Product Image")
 
-The Bedside Lamp 2 is a smart RGBWW LED lamp, produced by Yeelight for the Xiaomi Mijia brand. It can be controlled via the WiFi network and from a touch panel on the front of the device. The touch panel contains a power button, a button that changes the color of the light and a slider that can be used to change the brightness of the light.
+The Bedside Lamp 2 is a smart RGBWW LED lamp, produced by Yeelight for the Xiaomi Mijia brand. It can be controlled via
+the WiFi network and from a touch panel on the front of the device. The touch panel contains a power button, a button
+that changes the color of the light and a slider that can be used to change the brightness of the light.
 
-An [external component](https://github.com/mmakaay/esphome-xiaomi_bslamp2) was created for ESPHome, which makes it possible to fully control every aspect of the lamp and to integrate the lamp in your Home Assistant setup or any other setup if you can make use of MQTT.
+An [external component](https://github.com/mmakaay/esphome-xiaomi_bslamp2) was created for ESPHome, which makes it
+possible to fully control every aspect of the lamp and to integrate the lamp in your Home Assistant setup or any other
+setup if you can make use of MQTT.
 
 ## Features
 
@@ -48,7 +52,8 @@ An [external component](https://github.com/mmakaay/esphome-xiaomi_bslamp2) was c
 
 ## Documentation
 
-All information on how to build, flash and configure the ESPHome firmware can be found in the component repository. Here are some useful links:
+All information on how to build, flash and configure the ESPHome firmware can be found in the component repository. Here
+are some useful links:
 
 * [The GitHub repo](https://github.com/mmakaay/esphome-xiaomi_bslamp2)
 * [Documentation index](https://github.com/mmakaay/esphome-xiaomi_bslamp2/blob/dev/README.md)
@@ -60,6 +65,7 @@ All information on how to build, flash and configure the ESPHome firmware can be
 
 ## Contacting the author
 
-* [Discussion thread on the Home Assistant community website](https://community.home-assistant.io/t/custom-firmware-esphome-xiaomi-bslamp2/284406)
+*
+  [Discussion thread on the Home Assistant community website](https://community.home-assistant.io/t/custom-firmware-esphome-xiaomi-bslamp2/284406)
 * [Issues and feature requests on GitHub](https://github.com/mmakaay/esphome-xiaomi_bslamp2/issues)
 * [ESPHome Discord Community](https://discord.gg/KhAMKrd) (user @MauriceM)

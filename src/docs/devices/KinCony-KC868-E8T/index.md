@@ -11,7 +11,7 @@ board: esp32
 ## GPIO Pinout
 
 | Pin    | Function                      |
-| ------ | ------------------------------|
+| ------ | ----------------------------- |
 | GPIO4  | IIC_SDA                       |
 | GPIO5  | IIC_SCL                       |
 | GPIO14 | 1-Wire GPIO                   |
@@ -32,7 +32,7 @@ board: esp32
 # Basic Config
 esphome:
   name: KC868-E8T
-  on_boot:  #Power chip BL0939 initialization
+  on_boot: #Power chip BL0939 initialization
     priority: 600
     then:
       - uart.write:
@@ -56,7 +56,7 @@ esphome:
           data: [0xA5, 0x39, 0x00, 0x00, 0x00, 0x21]
 
 esp32:
-  board: esp32dev
+  variant: esp32
 uart:
   - id: uart_1
     tx_pin: GPIO12
@@ -94,41 +94,41 @@ sensor:
     uart_id: uart_1
     update_interval: 10s
     voltage:
-      name: 'BL0939A Voltage'
+      name: "BL0939A Voltage"
     current_1:
-      name: 'BL0939A Current 1'
+      name: "BL0939A Current 1"
     current_2:
-      name: 'BL0939A Current 2'
+      name: "BL0939A Current 2"
     active_power_1:
-      name: 'BL0939A Active Power 1'
+      name: "BL0939A Active Power 1"
     active_power_2:
-      name: 'BL0939A Active Power 2'
+      name: "BL0939A Active Power 2"
     energy_1:
-      name: 'BL0939A Energy 1'
+      name: "BL0939A Energy 1"
     energy_2:
-      name: 'BL0939A Energy 2'
+      name: "BL0939A Energy 2"
     energy_total:
-      name: 'BL0939A Energy Total'
+      name: "BL0939A Energy Total"
 
   - platform: bl0939
     uart_id: uart_2
     update_interval: 10s
     voltage:
-      name: 'BL0939B Voltage'
+      name: "BL0939B Voltage"
     current_1:
-      name: 'BL0939B Current 1'
+      name: "BL0939B Current 1"
     current_2:
-      name: 'BL0939B Current 2'
+      name: "BL0939B Current 2"
     active_power_1:
-      name: 'BL0939B Active Power 1'
+      name: "BL0939B Active Power 1"
     active_power_2:
-      name: 'BL0939B Active Power 2'
+      name: "BL0939B Active Power 2"
     energy_1:
-      name: 'BL0939B Energy 1'
+      name: "BL0939B Energy 1"
     energy_2:
-      name: 'BL0939B Energy 2'
+      name: "BL0939B Energy 2"
     energy_total:
-      name: 'BL0939B Energy Total'
+      name: "BL0939B Energy Total"
 
 # Example configuration entry for ESP32
 i2c:
@@ -138,10 +138,10 @@ i2c:
   id: bus_a
 
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
 # Individual outputs

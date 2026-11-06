@@ -10,9 +10,9 @@ difficulty: 3
 
 ## General Notes
 
-This device contains an ESP32-C3 and ships with Tasmota firmware.
-To flash it, the device can easily be disassembled by unscrewing the screw at the plug side.
-Alternatively, this procedure by kadam12g works as well—start at step 21: https://github.com/kadam12g/ESPHome-Shelly-Plus-Plug-S?tab=readme-ov-file
+This device contains an ESP32 and ships with Tasmota firmware.
+To flash it, the device can be disassembled by unscrewing the screw in the hole at the bottom side of the plug.
+Alternatively, this procedure by kadam12g works as well—start at step 21: [https://github.com/kadam12g/ESPHome-Shelly-Plus-Plug-S?tab=readme-ov-file](https://github.com/kadam12g/ESPHome-Shelly-Plus-Plug-S?tab=readme-ov-file)
 
 ### Example Configuration
 
@@ -45,7 +45,7 @@ esphome:
             - light.turn_off: led
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -57,6 +57,7 @@ api:
 
 # Allow Over-The-Air updates
 ota:
+  - platform: esphome
 
 # Allow provisioning Wi-Fi via serial
 improv_serial:
@@ -94,6 +95,7 @@ light:
     pin:
       number: GPIO02
       inverted: true
+      ignore_strapping_warning: true
 
 binary_sensor:
   - platform: gpio

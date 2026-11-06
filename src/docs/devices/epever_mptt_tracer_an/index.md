@@ -6,7 +6,7 @@ standard: global
 board: esp32
 ---
 
-![image](/tracer-an.jpg)
+![image](./tracer-an.jpg)
 
 Tested with Tracer-AN Series 10A/20A/30A/40A and XTRA Series
 10A/20A/30A/40A. Probably works for other EPEver MPPT controllers as
@@ -1244,4 +1244,4 @@ sensor:
 
 ## See Also
 
-- [EPEVER Tracer Modbus Registers](http://www.solar-elektro.cz/data/dokumenty/1733_modbus_protocol.pdf)
+- [EPEVER Tracer Modbus Registers](https://www.solarpoweredhome.co.uk/1733_modbus_protocol.pdf)

@@ -15,8 +15,10 @@ made-for-esphome: true
 
 The Apollo Automation TEMP_PRO-1 is a PoE temperature multisensor with the following features:
 
-- PoE or wifi. The board can be powered from PoE through the vertical RJ45, this also provides the internet connection to the board for rock solid connection. It can also be powered from USBC with ethernet or wifi for the connection
-- SHT30 Temperature and Humidity Probe. Has a dust proof housing. Great for measuring attics, crawlspaces, basements, or anywhere else
+- PoE or wifi. The board can be powered from PoE through the vertical RJ45, this also provides the internet connection
+  to the board for rock solid connection. It can also be powered from USBC with ethernet or wifi for the connection
+- SHT30 Temperature and Humidity Probe. Has a dust proof housing. Great for measuring attics, crawlspaces, basements, or
+  anywhere else
 - DS18b20 - Waterproof temperature probe. Can be used in freezers, fish tanks, pools, or anywhere else
 - 2 Expansion ports for additional sensors such as CO2, GPIO, or other
 - DFRobot I2C expansion port - Allows things like Mics gas sensor and more
@@ -34,9 +36,14 @@ The Apollo Automation TEMP_PRO-1 is a PoE temperature multisensor with the follo
 4. In Home Assistant, look at discovered devices.
 5. If you'd like to switch to the ethernet version please follow the guide on our wiki
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/TEMP_PRO-1/blob/main/Integrations/ESPHome/TEMP_PRO-1_W.yaml
+```
+
 ## Links
 
-- [Shop](https://apolloautomation.com/products/temp-pro-1?utm_source=esphome&utm_medium=social)
+- [Shop](https://apolloautomation.com/products/temp-pro-1)
 - [GitHub](https://github.com/ApolloAutomation/TEMP_PRO-1)
 - [Wiki](https://wiki.apolloautomation.com/)
 - [Discord](https://dsc.gg/ApolloAutomation)

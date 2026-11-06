@@ -8,7 +8,8 @@ board: bk72xx
 
 ## Holman 4x34mm Wifi Spotlight Value Pack
 
-Sold by Bunnings Warehouse this is a AU/NZ standard wall Low voltage spotlight based on the Beken BK7231N module. Now that ESPHome natively supports BK72XX microcontrollers, you can also put ESPHome directly onto the device.
+Sold by Bunnings Warehouse this is a AU/NZ standard wall Low voltage spotlight based on the Beken BK7231N module. Now
+that ESPHome natively supports BK72XX microcontrollers, you can also put ESPHome directly onto the device.
 
 The unit uses the Tuya CBU Wifi Module.
 

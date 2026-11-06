@@ -11,11 +11,13 @@ difficulty: 3
 
 Model reference: HRI-485X
 
-Manufacturer: [Heltec](https://vi.aliexpress.com/item/1005005792072535.html?spm=a2g0o.productlist.main.3.7cae4ff8eSDdJB&algo_pvid=fecf356a-9467-48dc-9b02-721346b7f6ad&algo_exp_id=fecf356a-9467-48dc-9b02-721346b7f6ad-1&pdp_npi=4%40dis%21EUR%2127.64%2126.26%21%21%2129.57%21%21%402103245417043199788201496e1ef7%2112000034369167466%21sea%21SK%21168837343%21&curPageLogUid=jVcZde3gM0fm)
+Manufacturer:
+[Heltec](https://vi.aliexpress.com/item/1005005792072535.html?spm=a2g0o.productlist.main.3.7cae4ff8eSDdJB&algo_pvid=fecf356a-9467-48dc-9b02-721346b7f6ad&algo_exp_id=fecf356a-9467-48dc-9b02-721346b7f6ad-1&pdp_npi=4%40dis%21EUR%2127.64%2126.26%21%21%2129.57%21%21%402103245417043199788201496e1ef7%2112000034369167466%21sea%21SK%21168837343%21&curPageLogUid=jVcZde3gM0fm)
 
 ## Basic Config
 
-Configuration contains modbus sensors as example. First of leds on fron panel is always on (directly connected to power source), second is configured as indication of HA client connected, third led is ESPhome Status led)
+Configuration contains modbus sensors as example. First of leds on fron panel is always on (directly connected to power
+source), second is configured as indication of HA client connected, third led is ESPHome Status led)
 
 GPIO16 is pin for powering MAX3485 chip. (Manufacturers magic ...)
 
@@ -25,7 +27,7 @@ esphome:
   friendly_name: Heltec-Modbus
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
   

@@ -9,7 +9,7 @@ board: bk72xx
 ## General Notes
 
 This device have two versions, with ESP or Bekken microcontroller.
-You are now looking at Bekken configuration, ESP version can be found [here](./Gosund-SP211).
+You are now looking at Bekken configuration, ESP version can be found [in the Gosund SP211 ESP documentation](../Gosund-SP211/).
 
 ## Configuration
 

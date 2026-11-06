@@ -3,7 +3,7 @@ title: Teckin SS42
 date-published: 2023-11-08
 type: plug
 standard: eu
-board: esp8286
+board: esp8266
 ---
 
 ![image](teckin-ss42.webp)
@@ -25,7 +25,8 @@ board: esp8286
 ---
 esphome:
   name: outdoor_ss42
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:

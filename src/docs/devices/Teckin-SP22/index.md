@@ -33,7 +33,7 @@ esphome:
 
 esp8266:
   board: esp01_1m
-  
+
 # Enable logging
 logger:
 
@@ -115,5 +115,4 @@ sensor:
       name: "HLW8012 Energy"
     update_interval: 10s
     change_mode_every: 3
-
 ```

@@ -15,14 +15,14 @@ which comes as a colour changing LED strip with controller and transformer.
 
 ## GPIO Pinout
 
-| Pin    | Function      |
-| ------ | ------------- |
-| P9     | Cold White    |
-| P24    | Warm White    |
-| P16    | WS2812        |
-| P6     | Power for LEDs|
-| P7     | Button        |
-| P26    | IR-Receiver   |
+| Pin | Function       |
+| --- | -------------- |
+| P9  | Cold White     |
+| P24 | Warm White     |
+| P16 | WS2812         |
+| P6  | Power for LEDs |
+| P7  | Button         |
+| P26 | IR-Receiver    |
 
 ```yaml
 # LSC Smart Connect XXL-LED-Stripe 3202086
@@ -73,17 +73,17 @@ light:
     rgb_order: RBG
     power_supply: led_power
     effects:
-     - random:
-     - pulse:
-     - strobe:
-     - flicker:
-     - addressable_rainbow:
-     - addressable_color_wipe:
-     - addressable_scan:
-     - addressable_twinkle:
-     - addressable_random_twinkle:
-     - addressable_fireworks:
-     - addressable_flicker:
+      - random:
+      - pulse:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
     on_turn_on:
       - light.turn_off: white_light
 
@@ -98,8 +98,8 @@ output:
     power_supply: led_power
 
 power_supply:
-    id: led_power
-    pin: P6
+  id: led_power
+  pin: P6
 
 remote_receiver:
   pin:
