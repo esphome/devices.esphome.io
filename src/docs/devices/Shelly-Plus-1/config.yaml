@@ -12,10 +12,6 @@ esp32:
     type: esp-idf
     sdkconfig_options:
       CONFIG_FREERTOS_UNICORE: y
-    advanced:
-      flash_chip: generic
-      minimum_chip_revision: '3.0'
-      sram1_as_iram: false
 
 logger:
 
