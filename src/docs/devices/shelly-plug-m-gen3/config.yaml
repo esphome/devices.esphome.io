@@ -33,10 +33,13 @@ sensor:
       b_constant: 3350
       reference_resistance: 10kOhm
       reference_temperature: 298.15K
-    on_value_range:
-      - above: ${max_temp}
-        then:
-          - switch.turn_off: switch_relay
+    on_value:
+       then:
+         - if:
+             condition:
+               lambda: 'return x > ${max_temp};'
+             then:
+               - switch.turn_off: switch_relay
   - platform: resistance
     id: temp_resistance_reading
     sensor: temp_analog_reading
@@ -68,12 +71,6 @@ sensor:
         - above: ${max_power}
           then:
             - switch.turn_off: switch_relay
-            - homeassistant.service:
-                service: persistent_notification.create
-                data:
-                  title: Message from ${devicename}
-                data_template:
-                  message: Switch turned off because power exceeded ${max_power}W
     energy:
       name: "Energy"
       id: benergy
