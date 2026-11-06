@@ -14,15 +14,17 @@ project-url: https://github.com/witnessmenow/ESP32-Trinity
 The [ESP32 Trinity](https://esp32trinity.com/) is an open-source ESP32 board built specifically for driving HUB75
 RGB LED matrix panels. It is the work of Brian Lough (witnessmenow).
 
-- ESP32-WROVER-E with 4&nbsp;MB PSRAM
-- HUB75 output header wired directly to the panel connector, so there is no hand-wiring
+- ESP32-WROOM-32D module, with no PSRAM
+- A HUB75 socket that plugs straight onto the panel's input header, so there is no ribbon cable or hand-wiring
 - Screw terminals for 5&nbsp;V panel power, with the board able to run from the same supply
-- Two buttons, a Qwiic/STEMMA connector and a microSD slot
+- Two capacitive touch pads (`GPIO32`, `GPIO33`) and an add-on header; microSD and Qwiic come on separate add-on boards
 - USB-C for power and flashing
 
 ## Setup
 
-1. Connect the HUB75 ribbon cable from the panel to the Trinity's output header.
+1. Plug the Trinity straight onto the panel's input header. On most panels that is the connector the PCB arrows
+   point away from, and the arrows on the Trinity should point the same way. If it doesn't fit, use the 2×8
+   stacking header that comes with it.
 2. Feed 5&nbsp;V into the screw terminals — a matrix panel draws far more current than USB can supply.
 3. Create the device in the ESPHome Device Builder, which sets up Wi-Fi, `api:` and `ota:` for you. Merge in the
    hardware configuration below, set `panel_width` and `panel_height` to match your panel, and flash it.
