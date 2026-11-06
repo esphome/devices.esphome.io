@@ -149,16 +149,16 @@ jobs:
         if: steps.promote.outputs.marked-ready
         uses: actions/github-script@v9.0.0
         env:
-          PR_NUMBER: ${{ steps.promote.outputs.marked-ready }}
+          PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const { requestCopilotReview } = require('./.github/scripts/request-copilot-review.cjs');
-            await requestCopilotReview({
+            const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReviews({
               github,
               core,
               ...context.repo,
-              prNumber: Number(process.env.PR_NUMBER),
+              prNumbers: process.env.PR_NUMBERS,
             });
 
   promote:
@@ -222,14 +222,14 @@ jobs:
         if: steps.promote.outputs.marked-ready
         uses: actions/github-script@v9.0.0
         env:
-          PR_NUMBER: ${{ steps.promote.outputs.marked-ready }}
+          PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const { requestCopilotReview } = require('./.github/scripts/request-copilot-review.cjs');
-            await requestCopilotReview({
+            const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReviews({
               github,
               core,
               ...context.repo,
-              prNumber: Number(process.env.PR_NUMBER),
+              prNumbers: process.env.PR_NUMBERS,
             });

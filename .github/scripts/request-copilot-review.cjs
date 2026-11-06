@@ -6,8 +6,9 @@
 // review, so the timeline is read back to confirm the request was recorded.
 
 const COPILOT_REVIEWER = "copilot-pull-request-reviewer[bot]";
-// The timeline names the reviewer by its display login.
-const COPILOT_LOGIN = "Copilot";
+// The timeline names the reviewer by its display login; the reviews API uses
+// the bot account.
+const COPILOT_LOGINS = new Set(["Copilot", COPILOT_REVIEWER]);
 
 async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
   const readTimeline = () =>
@@ -45,18 +46,23 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
   }
   const seen = new Set(before.map((event) => event.id));
   const copilotRequests = events.filter(
-    (event) => event.event === "review_requested" && event.requested_reviewer?.login === COPILOT_LOGIN
+    (event) => event.event === "review_requested" && COPILOT_LOGINS.has(event.requested_reviewer?.login)
   );
   // Ours is a bot-filed request that was not there before; the ruleset files under a user.
   if (copilotRequests.some((event) => event.actor?.type === "Bot" && !seen.has(event.id))) {
     core.info(`Requested a Copilot review on #${prNumber}.`);
     return;
   }
-  const pending = copilotRequests.at(-1);
-  if (pending && !reviewedSince(events, pending.created_at)) {
-    core.info(
-      `A Copilot review requested by ${pending.actor?.login} is still pending on #${prNumber}.`
-    );
+  // The latest request or removal decides whether a review is still queued.
+  const last = events
+    .filter(
+      (event) =>
+        (event.event === "review_requested" || event.event === "review_request_removed") &&
+        COPILOT_LOGINS.has(event.requested_reviewer?.login)
+    )
+    .at(-1);
+  if (last?.event === "review_requested" && !reviewedSince(events, last.created_at)) {
+    core.info(`A Copilot review requested by ${last.actor?.login} is still pending on #${prNumber}.`);
     return;
   }
   core.warning(
@@ -69,7 +75,7 @@ function reviewedSince(events, since) {
   return events.some(
     (event) =>
       event.event === "reviewed" &&
-      event.user?.login === COPILOT_LOGIN &&
+      COPILOT_LOGINS.has(event.user?.login) &&
       Date.parse(event.submitted_at) >= Date.parse(since)
   );
 }
@@ -83,4 +89,13 @@ module.exports = async ({ github, context, core }) => {
   await requestCopilotReview({ github, core, ...context.repo, prNumber: pull.number });
 };
 
+// Requests a review on each PR in a comma-separated list, the promotion jobs'
+// marked-ready output.
+async function requestCopilotReviews({ github, core, owner, repo, prNumbers }) {
+  for (const number of String(prNumbers).split(",").filter(Boolean)) {
+    await requestCopilotReview({ github, core, owner, repo, prNumber: Number(number) });
+  }
+}
+
 module.exports.requestCopilotReview = requestCopilotReview;
+module.exports.requestCopilotReviews = requestCopilotReviews;

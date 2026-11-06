@@ -138,6 +138,28 @@ test("a Copilot review still pending is logged, not warned", async () => {
   assert.match(infos[0], /requested by someone is still pending on #9/);
 });
 
+test("a Copilot request that was removed is not pending", async () => {
+  const earlier = [
+    copilotRequest(1, "User"),
+    { id: 2, event: "review_request_removed", requested_reviewer: { login: "Copilot" }, created_at: LATER },
+  ];
+  const { github } = makeGithub({ before: earlier, after: earlier });
+  const { core, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.match(warnings[0], /recorded none/);
+});
+
+test("a completed review under the bot account login ends the pending request", async () => {
+  const earlier = [
+    copilotRequest(1, "User", OLD),
+    { id: 2, event: "reviewed", user: { login: "copilot-pull-request-reviewer[bot]" }, submitted_at: LATER },
+  ];
+  const { github } = makeGithub({ before: earlier, after: earlier });
+  const { core, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.match(warnings[0], /recorded none/);
+});
+
 test("a failed timeline read after the request warns instead of failing", async () => {
   const { github, calls } = makeGithub({ timelineError: "after" });
   const { core, warnings } = makeCore();
@@ -160,4 +182,18 @@ test("the exported helper takes a PR number", async () => {
   const { core } = makeCore();
   await copilot.requestCopilotReview({ github, core, ...REPO, prNumber: 12 });
   assert.equal(calls[0].pull_number, 12);
+});
+
+test("the list helper requests a review on each marked-ready PR", async () => {
+  const calls: unknown[] = [];
+  const github = {
+    paginate: async () => [],
+    rest: {
+      issues: { listEventsForTimeline: () => {} },
+      pulls: { requestReviewers: async (args: { pull_number: number }) => void calls.push(args.pull_number) },
+    },
+  };
+  const { core } = makeCore();
+  await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
+  assert.deepEqual(calls, [8, 10]);
 });

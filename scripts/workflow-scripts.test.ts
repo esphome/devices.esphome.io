@@ -777,6 +777,7 @@ type PullRequest = {
   node_id?: string;
   head?: { sha: string };
   labels?: { name: string }[];
+  user?: { type: string };
 };
 
 // Mock for the promote script. `pr` seeds pulls.get, `checks` seeds
@@ -842,7 +843,7 @@ function makePromoteGithub(
 
 function makePr(
   labelNames: string[],
-  extra: { state?: string; draft?: boolean } = {}
+  extra: { state?: string; draft?: boolean; authorType?: string } = {}
 ): PullRequest {
   return {
     number: 42,
@@ -851,6 +852,7 @@ function makePr(
     node_id: "PR_node",
     head: { sha: "sha1" },
     labels: labelNames.map((name) => ({ name })),
+    user: { type: extra.authorType ?? "User" },
   };
 }
 
@@ -906,6 +908,19 @@ test("promote: a green draft the bot created is marked ready for review", async 
   // Its ready_for_review event triggers no workflow, so the job asks Copilot.
   assert.deepEqual(core._outputs, { "marked-ready": "42" });
   assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
+});
+
+test("promote: a bot-authored draft is marked ready without a Copilot handoff", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true, authorType: "Bot" }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+  });
+  const core = freshCore();
+  await promoteScript({ github, context, core });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 1);
+  assert.deepEqual(core._outputs, {});
 });
 
 test("promote: a draft a human created stays a draft", async () => {

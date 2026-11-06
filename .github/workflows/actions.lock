@@ -33,6 +33,7 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
     '.github/workflows/merge-conflicts.yml':
         - 'actions/checkout@v7.0.1'
+        - 'actions/create-github-app-token@v3.3.0'
         - 'actions/github-script@v9.0.0'
     '.github/workflows/pr-validation-feedback.yml':
         - 'actions/checkout@v7.0.1'
