@@ -210,7 +210,7 @@ binary_sensor:
                 - lambda: '(id(Auto_Sleep_Disable) = 1);'
       - timing:  # Single Click
           - ON for at most 1s
-          - OFF for at least 0.5s
+          - OFF for at least 1.1s
         then:
           - script.execute: Sleep_Trigger
 
@@ -405,6 +405,14 @@ sensor:
           // Calculate Rectangle and Arc Heights
 
           double Oil_Height = x;  // Inches
+
+          const double tank_depth = id(Tank_Orientation) == 1 ? id(Tank_Height) : id(Tank_Width);
+          if (Oil_Height < 0.0) {
+            Oil_Height = 0.0;
+          } else if (Oil_Height > tank_depth) {
+            Oil_Height = tank_depth;
+          }
+
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
 
