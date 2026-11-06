@@ -5,6 +5,7 @@ type: plug
 standard: us
 board: bk72xx
 ---
+
 ![Product Image](Globe-Outdoor-Smart-Plug-CCRCOWF32PK.jpg "Box Image")
 
 I purchased this at Costco in Canada in November of 2024. The Costco item number was 1829553.
@@ -16,15 +17,16 @@ Inside I found a CB2S module and a board that looks exactly like the one here.
 
 ## GPIO Pinout
 
-| Pin | Function            |
-| --- | --------------------|
-| P6  | (PWM0) Pushbutton   |
-| P7  | (PWM1) Status LED   |
-| P8  | (PWM2) Relay        |
-| P10 | (RXD1) UART 1 RX    |
-| P11 | (TXD1) UART 1 TX    |
+| Pin | Function          |
+| --- | ----------------- |
+| P6  | (PWM0) Pushbutton |
+| P7  | (PWM1) Status LED |
+| P8  | (PWM2) Relay      |
+| P10 | (RXD1) UART 1 RX  |
+| P11 | (TXD1) UART 1 TX  |
 
-Disassembly is straightforward but DO NOT open the device while it is plugged into mains power as that presents a safety hazard. There are six phillips head screws on the bottom; they are all the same size. Remove those screws and set aside.
+Disassembly is straightforward but DO NOT open the device while it is plugged into mains power as that presents a safety
+hazard. There are six phillips head screws on the bottom; they are all the same size. Remove those screws and set aside.
 
 I refer you to [Feit Electric PLUG3/WIFI/WP/2](/devices/Feit-PLUG3-WIFI-WP-2) for further instructions on flashing.
 
@@ -98,4 +100,4 @@ text_sensor:
 ## References
 
 [Feit Electric PLUG3/WIFI/WP/2](/devices/Feit-PLUG3-WIFI-WP-2)
-<https://docs.libretiny.eu/boards/cb2s/> - CB2S pinout
+[https://docs.libretiny.eu/boards/cb2s/](https://docs.libretiny.eu/boards/cb2s/) - CB2S pinout

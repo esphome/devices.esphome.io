@@ -6,12 +6,13 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3nAvoWf)
+[Amazon Link](https://www.amazon.com/dp/B07DP12DQP)
 
 ```yaml
 esphome:
   name: yeeron_plug
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 web_server: # Enable Web Server (optional)

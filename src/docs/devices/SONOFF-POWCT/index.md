@@ -24,9 +24,9 @@ difficulty: 3
 
 ## Basic Configuration
 
-Based on Sonoff POW Elite 20a (POWR320D) (Source: <https://devices.esphome.io/devices/Sonoff-POW-Elite-20a>).
+Based on Sonoff POW Elite 20a (POWR320D) (Source: [https://devices.esphome.io/devices/Sonoff-POW-Elite-20a](https://devices.esphome.io/devices/Sonoff-POW-Elite-20a)).
 
-To get the correct current and power values, the measurement must be divided by the PI number.
+To get the correct current and power values, the measurement must be divided by the M_PI constant.
 
 ```yaml
 # Basic Config
@@ -38,14 +38,16 @@ esphome:
     then:
       - if:
           condition:
-            lambda: 'return id(v_sensor).state > 10;'
+            lambda: "return id(v_sensor).state > 10;"
           then:
             - switch.turn_on: relay_1
           else:
             - switch.turn_off: relay_1
 
 esp32:
-  board: nodemcu-32s
+  variant: esp32
+  framework:
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -80,18 +82,18 @@ sensor:
     current_1:
       name: Current
       id: a_sensor
-      unit_of_measurement: 'A'
+      unit_of_measurement: "A"
       accuracy_decimals: 3
       icon: mdi:current-ac
     voltage:
       name: Voltage
       id: v_sensor
-      unit_of_measurement: 'V'
+      unit_of_measurement: "V"
       icon: mdi:sine-wave
     frequency:
       name: Frequency
       id: f_sensor
-      unit_of_measurement: 'Hz'
+      unit_of_measurement: "Hz"
     active_power_1:
       name: Power
       id: w_sensor
@@ -108,7 +110,7 @@ sensor:
     name: Total Daily Energy
     power_id: w_sensor
     id: kw_sensor
-    unit_of_measurement: 'kWh'
+    unit_of_measurement: "kWh"
     state_class: total_increasing
     device_class: energy
     accuracy_decimals: 3
@@ -117,13 +119,9 @@ sensor:
       # Multiplication factor from W to kW is 0.001
       - multiply: 0.001
 
-  - platform: template
+  - platform: internal_temperature
     name: ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
     id: esp32_temp
-    icon: mdi:thermometer
-    lambda: return temperatureRead();
 
   - platform: template
     name: Power Factor

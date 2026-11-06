@@ -11,37 +11,37 @@ difficulty: 2
 
 ## Description
 
-This is a very capable little automation/relay/io board from aliexpress [aliexpress](https://www.aliexpress.us/item/3256805999936525.html)
+This is a very capable little automation/relay/io board from
+[AliExpress](https://www.aliexpress.us/item/3256805999936525.html)  
 It runs on 12V or 24V depending on your configuration and is perfect for industrial and home automation
 
-![Product](./ES32A08.jpg "Product Image")
+![Product](./ES32A08.jpg "Product Image")  
 [Schematic](./Schematic_ES32A08.pdf)
 
-## Basic Configuration
-
-### exposes
+### Exposes
 
 - 8 Relay Outputs (Labeled O1-O8)
 - 8 24V Inputs (Labeled I1-I8)
 - 4 Analag inputs (0-20ma) (Labeled ADC1-ADC4)
-- 2 Analog inputs (0-10V) (Labeled ADC5-ADC6) (ADC7-ADC8 are not usable when using wifi)
-- 4 input buttons (Labeled KEY1-KEY4)
-- 1 status LED (Labeled "status LED")
+- 2 Analog inputs (0-10V) (Labeled ADC5-ADC6) (ADC7-ADC8 are not usable when using WiFi)
+- 4 Input buttons (Labeled KEY1-KEY4)
+- 1 Status LED (Labeled "status LED")
 - 1 4 Digit 7 Segment display (listens on configurable homeassistant text sensor) (still a little buggy)
 
-### known limitations
+### Known limitations
 
 - 4 Digit display has problems with trailing dots
-- RS485 is not enabled but would work using GPIO1 -> TXD and GPIO3 -> RXD
-- my C++ is the most limiting factor here :D
-- io has not been tested yet !
+- RS485 has a hardware bug and can't be used reliably, see
+  [https://github.com/makstech/esphome-es32a08-expansion-board-example/issues/2#issuecomment-3165396638](https://github.com/makstech/esphome-es32a08-expansion-board-example/issues/2#issuecomment-3165396638)
+
+## Example Configuration
 
 ```yaml
 esphome:
   name: xxx
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
   

@@ -8,18 +8,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO34 | ANALOG_A1           |
-| GPIO35 | ANALOG_A2           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO13 | 1-Wire GPIO         |
-| GPIO32 | 1-Wire GPIO         |
-| GPIO33 | 1-Wire GPIO         |
-| GPIO15 | 433MHz Transmitter  |
-| GPIO2  | 433MHz Receiver     |
+| Pin    | Function           |
+| ------ | ------------------ |
+| GPIO34 | ANALOG_A1          |
+| GPIO35 | ANALOG_A2          |
+| GPIO4  | IIC_SDA            |
+| GPIO5  | IIC_SCL            |
+| GPIO14 | 1-Wire GPIO        |
+| GPIO13 | 1-Wire GPIO        |
+| GPIO32 | 1-Wire GPIO        |
+| GPIO33 | 1-Wire GPIO        |
+| GPIO2 | 433MHz Transmitter |
+| GPIO15  | 433MHz Receiver    |
 
 [Additional pinout/design details](https://www.kincony.com/arduino-esp32-8-channel-relay-module-kc868-a8.html)
 
@@ -29,8 +29,9 @@ board: esp32
 # Basic Config
 esphome:
   name: kc868-a8
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
 i2c:
   sda: 4
@@ -46,10 +47,10 @@ ethernet:
   phy_addr: 0
 
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
 # Individual outputs

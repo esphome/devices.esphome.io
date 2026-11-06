@@ -48,34 +48,87 @@ python.exe -m esptool -b 115200 --port COM3 read_flash 0x00000 0x400000 your/fol
 ## Recommended Config
 
 ```yaml
+substitutions:
+  friendly_name: Mi Desk Lamp Pro
+  device_name: mi-desklamp-pro
+
+# Basic Config
 esphome:
-  name: midesklamppro
+  name: ${device_name}
+  friendly_name: ${devicename_friendly}
+  comment: ${friendly_name}
 
 esp32:
-  board: esp32doit-devkit-v1
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:
       CONFIG_FREERTOS_UNICORE: y
     advanced:
       ignore_efuse_mac_crc: true
+      # See https://github.com/esphome/issues/issues/6333
+      ignore_efuse_custom_mac: true
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  fast_connect: on
+  ap:
+    ssid: ${device_name}
+    password: !secret ap_password
+    ap_timeout: 1min
 
 # Enable logging
 logger:
 
+# Enable captive portal (fallback AP)
+captive_portal:
+
+# Enable Home Assistant API
 api:
   reboot_timeout: 0s
   encryption:
     key: !secret encryption_key
 
+# Enable over-the-air updates
 ota:
-  password: !secret password
+  - platform: esphome
+    password: !secret ota_password
+
+# Enable Web server
+web_server:
+  port: 80
+
+# Sync time with Home Assistant
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+# Text sensors with general information
+text_sensor:
+  - platform: version
+    name: "Version"
+    icon: mdi:cube-outline
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      icon: mdi:lan
 
 sensor:
+  # Uptime sensor
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    icon: mdi:clock-outline
+
+  # WiFi Signal sensor
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    icon: mdi:wifi
+
+  # Knob
   - platform: rotary_encoder
     id: rotation
     pin_a: GPIO26
@@ -109,6 +162,7 @@ sensor:
             value: 0
 
 binary_sensor:
+  # Knob push-button
   - platform: gpio
     id: button
     pin:
@@ -119,7 +173,7 @@ binary_sensor:
       then:
         - light.toggle:
             id: light1
-            transition_length: 0.5s
+            transition_length: 0.2s
     filters:
       - delayed_off: 5ms
 
@@ -148,6 +202,7 @@ output:
     id: output_cw
     power_supply: power
     frequency: 100000Hz
+
   - platform: ledc
     pin: GPIO4
     id: output_ww
@@ -163,13 +218,14 @@ power_supply:
 light:
   - platform: cwww
     id: light1
-    name: "Mi Desk Lamp Pro"
+    name: "Light"
     default_transition_length: 0s
     constant_brightness: true
     cold_white: output_cw
     warm_white: output_ww
     cold_white_color_temperature: 4800 K
-    warm_white_color_temperature: 2500 K #2500k is the original value of the lamp. To correct binning for 2700k to look more like 2700k use 2650k instead
+    # 2500k is the original value of the lamp. To correct binning for 2700k to look more like 2700k use 2650k instead
+    warm_white_color_temperature: 2500 K
     restore_mode: RESTORE_DEFAULT_OFF
     gamma_correct: 1
 ```

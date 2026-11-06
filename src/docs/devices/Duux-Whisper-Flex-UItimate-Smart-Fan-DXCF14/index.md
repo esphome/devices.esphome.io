@@ -8,26 +8,26 @@ made-for-esphome: False
 difficulty: 3
 ---
 
-![Duux Whisper Flex Ultimater Smart Fan](duux_DXCF14.png  "Duux Whisper Flex Ultimate Smart Fan")
+![Duux Whisper Flex Ultimater Smart Fan](duux_DXCF14.png "Duux Whisper Flex Ultimate Smart Fan")
 
 ## GPIO Pinout
 
-| Pin    | Function   |
-| ------ | ---------- |
-| GPIO00 | Nono       |
-| GPIO01 | None       |
-| GPIO02 | None       |
-| GPIO03 | None       |
-| GPIO04 | None       |
-| GPIO05 | None       |
-| GPIO09 | None       |
-| GPIO10 | None       |
-| GPIO12 | None       |
-| GPIO13 | Tuya Rx    |
-| GPIO14 | None       |
-| GPIO15 | Tuya Tx    |
-| GPIO16 | None       |
-|  FLAG  | None       |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO00 | Nono     |
+| GPIO01 | None     |
+| GPIO02 | None     |
+| GPIO03 | None     |
+| GPIO04 | None     |
+| GPIO05 | None     |
+| GPIO09 | None     |
+| GPIO10 | None     |
+| GPIO12 | None     |
+| GPIO13 | Tuya Rx  |
+| GPIO14 | None     |
+| GPIO15 | Tuya Tx  |
+| GPIO16 | None     |
+| FLAG   | None     |
 
 ## Basic Configuration
 

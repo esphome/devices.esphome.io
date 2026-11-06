@@ -12,13 +12,16 @@ board: esp8266
 
 Looks like device chip was replaced to non-flashable custom tasmota chip.
 
-Please be aware, that there is a new version of that outlet, often having the phrase `EP2` instead or in addition to `SP111`, sold starting in November 2020. For that version, the tuya script does not longer work! Also a breakless opening of the plug is much harder due to a removed screw on the bottom of the device.
+Please be aware, that there is a new version of that outlet, often having the phrase `EP2` instead or in addition to
+`SP111`, sold starting in November 2020. For that version, the tuya script does not longer work! Also a breakless
+opening of the plug is much harder due to a removed screw on the bottom of the device.
 
 ## Flashing
 
-The older devices can be flashed [using tuya-convert](/guides/tuya-convert/). Fresh out of the factory it will be in autoconfig mode. When plugged in for the first time tuya-convert will pick it up directly.
+The older devices can be flashed [using tuya-convert](/devices/tuya-convert). Fresh out of the factory it will be in
+autoconfig mode. When plugged in for the first time tuya-convert will pick it up directly.
 
-![Hardly visible screw on original SP111](/gosund-sp111.JPG "Hardly visible screw on original SP111")
+![Hardly visible screw on original SP111](./gosund-sp111.JPG "Hardly visible screw on original SP111")
 
 Make sure the plug has that screw on the bottom!
 
@@ -55,19 +58,19 @@ substitutions:
 
 esphome:
   name: $devicename
-  platform: ESP8266
-  board: esp8285
-# This allows the device to restore the last saved relay state, either "ON" or "OFF" for the switch later in this config
-  esp8266_restore_from_flash: true
 
+esp8266:
+  board: esp8285
+  # This allows the device to restore the last saved relay state, either "ON" or "OFF" for the switch later in this config
+  restore_from_flash: true
 
 preferences:
-  flash_write_interval: 1min  # set to 5min to prevent wearing out the onboard flash module too quickly
-  
+  flash_write_interval: 1min # set to 5min to prevent wearing out the onboard flash module too quickly
+
 # Enable logging
 logger:
   baud_rate: 0
-  
+
 # Enable Home Assistant API
 api:
   encryption:
@@ -83,7 +86,7 @@ wifi:
 
 captive_portal:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -183,9 +186,9 @@ switch:
     name: "${devicename} - Switch"
     icon: mdi:power
     optimistic: true
-# This is where the "restore_from_flash" comes in. I set it to try to restore from flash and, if that fails, set it to ON
+    # This is where the "restore_from_flash" comes in. I set it to try to restore from flash and, if that fails, set it to ON
     restore_mode: RESTORE_DEFAULT_ON
-    lambda: 'return id(relay).state;'
+    lambda: "return id(relay).state;"
     id: button_switch
     turn_on_action:
       - switch.turn_on: relay
