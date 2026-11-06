@@ -37,15 +37,17 @@ Things to keep in mind with Beken chips:
    3.3 V supply rated for at least 500 mA. Most USB-UART adapters cannot deliver that current
    reliably, and a brownout during flash erase aborts the write.
 2. If the module only powers up reliably on its own board, the board must be fed from a supply that
-   is galvanically isolated from mains (isolated bench supply, or a mains isolation transformer for
-   the whole board). A mains-referenced supply puts hazardous voltage on GND, RX, TX and therefore on
-   the USB adapter and the computer. If you have no isolated supply, put a USB isolator between the
-   adapter and the computer and treat every pin as live.
+   is galvanically isolated from mains, and you must be able to confirm it (isolated bench supply, or
+   a mains isolation transformer for the whole board). A mains-referenced supply puts hazardous
+   voltage on GND, RX, TX and therefore on the USB adapter and the computer. A USB isolator between
+   the adapter and the computer protects the computer only: the adapter leads and the pads on the
+   board stay live. If you cannot verify the isolation, do not flash the board while it is powered.
    **Never connect the 3.3 V line of the USB-UART adapter while the board is powered.** Only GND, RX
    and TX go to the adapter.
-3. Bridge the CEN pin to GND before powering the chip, and remove the bridge before the writing starts.
-4. An order that works: power up the module, plug in the USB adapter, launch the flash command,
-   wait a few seconds, then remove the CEN-to-GND bridge.
+3. Launch the flash command first, it waits for the chip.
+4. While the command is running, briefly bridge CEN to GND and release it. CEN is the reset pin, so
+   holding it to GND keeps the chip in reset and the tool never connects. If the tool reports
+   `No response received`, run the command again and repeat the reset a little later.
 
 **Warning: this device works with mains voltage. Take all necessary precautions and never work on it
 while it is connected to mains.**
