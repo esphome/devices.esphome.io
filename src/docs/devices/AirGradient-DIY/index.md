@@ -20,8 +20,8 @@ If you have multiple sensor boards, you will likely need to make each sensor nam
 
 ### OLED Support
 
-If you are using the 64x48 OLED shield that's included in the kit, you can use this config. Note that you will need to
-place `fonts/helvetica.ttf` (or another font of your choosing) in the ESPHome config directory.
+If you are using the 64x48 OLED shield that's included in the kit, you can use this config. ESPHome downloads the
+Roboto font from Google Fonts when it builds; swap `gfonts://Roboto` for any other font you prefer.
 
 This config will print all four sensor states to the display.
 
