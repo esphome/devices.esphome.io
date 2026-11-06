@@ -19,11 +19,11 @@ Color Temperature: 3000-6000K
 Brightness: 600 lumens
 Voltage: 110V~240V
 Power: 7W
-Base:  E27
+Base: E27
 
 ## Product Images
 
-![Athom E27 7W Bulb](/Athom-E27-7W-Bulb.png "Athom E27 7W Bulb")
+![Athom E27 7W Bulb](./Athom-E27-7W-Bulb.png "Athom E27 7W Bulb")
 
 ## GPIO Pinout
 
@@ -47,11 +47,12 @@ substitutions:
 esphome:
   name: "${device_name}"
   name_add_mac_suffix: true
-  platform: ESP8266
-  board: esp8285
   project:
     name: "${project_name}"
     version: "${project_version}"
+
+esp8266:
+  board: esp8285
 
 api:
 
@@ -98,7 +99,6 @@ output:
   - platform: esp8266_pwm
     id: white_output
     pin: GPIO5
-
 
 light:
   - platform: rgbww

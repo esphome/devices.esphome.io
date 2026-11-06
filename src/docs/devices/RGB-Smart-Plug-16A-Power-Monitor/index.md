@@ -6,11 +6,11 @@ standard: eu
 board: esp8266
 ---
 
-This plug can be found under many brand names (Lonsonho, Avatto, Vansware, … ) Identified by the packaging and the sticker inside the plug. At this time seems to be only EU plug with 16A, RGB color led and power metering.
+This plug can be found under many brand names (Lonsonho, Avatto, Vansware, … ) Identified by the packaging and the
+sticker inside the plug. At this time seems to be only EU plug with 16A, RGB color led and power metering.
 
 More info:
-<https://templates.blakadder.com/XS-A12.html>
-<https://tasmota.github.io/docs/#/devices/RGB-Smart-Plug-16A>
+[https://templates.blakadder.com/XS-A12.html](https://templates.blakadder.com/XS-A12.html)
 
 ## GPIO Pinout
 
@@ -26,7 +26,7 @@ More info:
 
 ## Basic Configuration
 
-Most of this code is from from <https://devices.esphome.io/devices/awp04l/>
+Most of this code is from from [https://devices.esphome.io/devices/awp04l/](https://devices.esphome.io/devices/awp04l/)
 
 ```yaml
 # Check or edit all secrets to match yours.
@@ -40,7 +40,8 @@ substitutions:
 esphome:
   name: $devicename
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -128,7 +129,7 @@ sensor:
     change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
     update_interval: 10s #10s setting => 20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -208,7 +209,7 @@ light:
       - flicker
       - random
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the red light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the red light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms

@@ -9,13 +9,22 @@ board: esp8266
 An example of how to integrate a T1 T2 or T3 Sonoff light switch (R1) into Home Assistant
 using ESPHome.
 
-![Product Image](/sonoff_1t_t3.png "Product Image")
+![Product Image](./sonoff_1t_t3.png "Product Image")
 
 ## T1
 
 ``` yaml
+esphome:
+  name: "sonoff-t1"
+  friendly_name: "Sonoff T1"
+  name_add_mac_suffix: false
+
 esp8266:
   board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 binary_sensor:
   - platform: gpio
@@ -53,8 +62,17 @@ status_led:
 ## T2
 
 ``` yaml
+esphome:
+  name: "sonoff-t2"
+  friendly_name: "Sonoff T2"
+  name_add_mac_suffix: false
+
 esp8266:
   board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 binary_sensor:
   - platform: gpio
@@ -113,6 +131,11 @@ status_led:
 ## T3
 
 ``` yaml
+esphome:
+  name: "sonoff-t3"
+  friendly_name: "Sonoff T3"
+  name_add_mac_suffix: false
+
 esp8266:
   board: esp01_1m
 

@@ -17,24 +17,29 @@ Each relay has COM+NO+NC exposed. Relay load of up to 250VAC or 30VDC.
 
 The board can be powered either via 7-80VDC, or via 5VDC (separate connectors).
 
-I bought it from: https://www.aliexpress.com/item/1005003516399175.html (no affiliation, no guarantee it will continue to exist).
+I bought it from:
+[https://www.aliexpress.com/item/1005003516399175.html](https://www.aliexpress.com/item/1005003516399175.html)
+(no affiliation, no guarantee it will continue to exist).
 
-Search for more: https://www.aliexpress.com/wholesale?SearchText=esp-12f+relay+2+channel
+Search for more:
+[https://www.aliexpress.com/wholesale?SearchText=esp-12f+relay+2+channel](https://www.aliexpress.com/wholesale?SearchText=esp-12f+relay+2+channel)
 
-Technical specification here: http://www.chinalctech.com/cpzx/Programmer/Relay_Module/510.html (Link working 23 May 2024)
+Technical specification here:
+[http://www.chinalctech.com/cpzx/Programmer/Relay_Module/510.html](http://www.chinalctech.com/cpzx/Programmer/Relay_Module/510.html)
+(link working 23 May 2024)
 
 ## GPIO Pinout
 
 This board has headers for every GPIO pin on its ESP-12F.
 
-| Pin   | Comment                                                 |
-| ----- | ------------------------------------------------------- |
-| 5V    | Do not use 5V for programming                           |
-| TX    | 3.3V level!                                             |
-| RX    | 3.3V level!                                             |
-| GPIO0 | 3.3V level! (pulled up, connect to GND for flashing)    |
-| GND   |                                                         |
-| GND   |                                                         |
+| Pin   | Comment                                              |
+| ----- | ---------------------------------------------------- |
+| 5V    | Do not use 5V for programming                        |
+| TX    | 3.3V level!                                          |
+| RX    | 3.3V level!                                          |
+| GPIO0 | 3.3V level! (pulled up, connect to GND for flashing) |
+| GND   |                                                      |
+| GND   |                                                      |
 
 | Pin    | Comment                                           |
 | ------ | ------------------------------------------------- |
@@ -52,14 +57,14 @@ This board has headers for every GPIO pin on its ESP-12F.
 | GPIO15 | 3.3V level                                        |
 | GND    |                                                   |
 
-| Pin    | Comment                                  |
-| ------ | ---------------------------------------- |
-| ADC    | 0V-1V only                               |
-| EN     | Pulled up                                |
-| GPI16  | 3.3V level, Blue LED on Board (inverted) |
-| GPI14  | 3.3V level                               |
-| GPI12  | 3.3V level                               |
-| GPI13  | 3.3V level                               |
+| Pin   | Comment                                  |
+| ----- | ---------------------------------------- |
+| ADC   | 0V-1V only                               |
+| EN    | Pulled up                                |
+| GPI16 | 3.3V level, Blue LED on Board (inverted) |
+| GPI14 | 3.3V level                               |
+| GPI12 | 3.3V level                               |
+| GPI13 | 3.3V level                               |
 
 ## Basic Config
 
@@ -90,5 +95,5 @@ switch:
   - platform: gpio
     name: Led16
     pin: GPIO16
-    inverted: true  
+    inverted: true
 ```

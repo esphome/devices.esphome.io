@@ -10,9 +10,11 @@ difficulty: 4
 
 ![Sonoff MiniR4 Extreme](sonoff-mini-r4.jpg "Product Image")
 
-Advertised as Smallest Wi-Fi Smart Switch Ever, with one relay, one external input, one button. Switch is really small, approx 40x30mm, easily fits behind wall switch.
+Advertised as Smallest Wi-Fi Smart Switch Ever, with one relay, one external input, one button. Switch is really small,
+approx 40x30mm, easily fits behind wall switch.
 
-Product page: [https://sonoff.tech/product/diy-smart-switches/minir4/](https://sonoff.tech/product/diy-smart-switches/minir4/)
+Product page:
+[https://sonoff.tech/product/diy-smart-switches/minir4/](https://sonoff.tech/product/diy-smart-switches/minir4/)
 
 ## Features
 
@@ -37,7 +39,8 @@ Pins are very easy to find as they are lebelled, but due to small size they are 
 ![Sonoff MiniR4 Extreme](wires_angle.jpg "Top View")
 
 Rx, Tx, Gnd available on ESP module,
-Vcc (3V3) on main board, pad is covered with some protecting coating - needs to be scratched, very subtly, for solder to cover it.
+Vcc (3V3) on main board, pad is covered with some protecting coating - needs to be scratched, very subtly, for solder to
+cover it.
 
 In order to enter programming mode need to hold button pressed while enabling power supply.
 Bootloader uses 76800 baud rate, once application is started 115200 is used.
@@ -67,7 +70,7 @@ esphome:
   comment: "Sonoff MiniR4 Extreme"
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

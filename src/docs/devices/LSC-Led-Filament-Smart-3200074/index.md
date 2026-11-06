@@ -106,7 +106,6 @@ text_sensor:
       name: IP Address
       entity_category: diagnostic
 
-
 binary_sensor:
   - platform: status
     name: Status

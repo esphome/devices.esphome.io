@@ -43,7 +43,7 @@ esphome:
     version: "${project_version}"
 
 esp32:
-  board: esp32doit-devkit-v1
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -285,7 +285,7 @@ esphome:
     version: "${project_version}"
 
 esp32:
-  board: esp32doit-devkit-v1
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -382,7 +382,7 @@ binary_sensor:
 ```
 
 If you want to use the Arduino framework you can use the Tasmota Arduino Core 2.0.5 for ESP32 Solo
-(https://github.com/tasmota/arduino-esp32/releases) port as follows:
+([https://github.com/tasmota/arduino-esp32/releases](https://github.com/tasmota/arduino-esp32/releases)) port as follows:
 
 ``` yaml
 esphome:
@@ -397,7 +397,6 @@ esphome:
     version: "${project_version}"
 
 esp32:
-  board: esp32doit-devkit-v1
   variant: esp32
   framework:
     type: arduino

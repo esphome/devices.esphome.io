@@ -1,0 +1,106 @@
+name: Outdated ESPHome Configuration
+description: Report site-wide issues with outdated ESPHome configurations
+title: "[Outdated Config] "
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thank you for helping keep our device configurations up to date!
+        Use this template to report configurations that need updating due to
+        ESPHome changes, deprecated components, or improved practices.
+
+  - type: textarea
+    id: what-needs-changing
+    attributes:
+      label: What needs to be changed and why?
+      description: Describe what configurations are outdated and the reason for the change
+      placeholder: |
+        Please describe:
+        - Which components/configurations are outdated
+        - Why they need to be updated (deprecated, better alternatives, security, etc.)
+        - ESPHome version that introduced the change
+        - Impact if not updated (warnings, errors, security issues, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    id: before-after-example
+    attributes:
+      label: Before and After Example (Optional)
+      description: Provide an example of the old configuration and the recommended new configuration
+      placeholder: |
+        **Before (old/outdated):**
+        ```yaml
+        # Old configuration example
+        ```
+
+        **After (recommended):**
+        ```yaml
+        # New recommended configuration
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: affected-devices
+    attributes:
+      label: Affected Devices or Categories
+      description: List specific devices or categories that are affected by this outdated configuration
+      placeholder: |
+        Examples:
+        - All devices using component X
+        - Sonoff devices with power monitoring
+        - ESP8266-based devices
+        - Specific device: "Device Name" (URL)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency Level
+      description: How urgent is this configuration update?
+      options:
+        - Low - Improvement/optimization
+        - Medium - Deprecated but still works
+        - High - Causes warnings or issues
+        - Critical - Broken/security issue
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: esphome-version
+    attributes:
+      label: ESPHome Version Information
+      description: Which ESPHome version introduced the change or deprecated the old method?
+      placeholder: e.g., "Deprecated in 2024.6.0", "New component available since 2024.7.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: documentation-links
+    attributes:
+      label: Related Documentation
+      description: Links to ESPHome documentation, changelog, or other relevant resources
+      placeholder: |
+        - https://esphome.io/...
+        - https://github.com/esphome/esphome/releases/...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other relevant information or context
+      placeholder: Include any additional context, migration notes, or considerations
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ### File Uploads
+        You can attach images, logs, or configuration files by dragging and dropping them into the text area above.

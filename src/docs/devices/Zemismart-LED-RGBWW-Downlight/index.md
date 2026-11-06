@@ -10,7 +10,7 @@ The Zemismart LED RGBW Downlight is a Tuya-based downlight available
 from various retailers online or from
 [zemismart.com](https://www.zemismart.com) direct.
 
-![image](/zemismart-rgbw-downlight.jpg)
+![image](./zemismart-rgbw-downlight.jpg)
 
 ## Basic Configuration
 

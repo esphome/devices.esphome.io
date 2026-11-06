@@ -9,13 +9,15 @@ board: esp8266
 
 ## General Notes
 
-This is for [Mirabella Genio Door & Window Sensor](https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-door-and-window-sensor/).
+This is for
+[Mirabella Genio Door & Window Sensor](https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-door-and-window-sensor/).
 
-The file [sb1_uart.h](https://github.com/brandond/esphome-tuya_pir/blob/master/sb1_uart.h) must be added to your Home Assistant /config/esphome directory for a succesful compile.
+The file [sb1_uart.h](https://github.com/brandond/esphome-tuya_pir/blob/master/sb1_uart.h) must be added to your Home
+Assistant /config/esphome directory for a succesful compile.
 
 Credit to [Brandon D](https://github.com/brandond) for the file and esphome config
 
-![Mirabella Genio Door & Window Sensor](/Mirabella-Door-Window-Sensor.jpg "Mirabella Genio Door & Window Sensor")
+![Mirabella Genio Door & Window Sensor](./Mirabella-Door-Window-Sensor.jpg "Mirabella Genio Door & Window Sensor")
 
 ## Basic Configuration
 
@@ -24,12 +26,13 @@ Credit to [Brandon D](https://github.com/brandond) for the file and esphome conf
 # https://mirabellagenio.net.au/door-%26-window-sensor
 esphome:
   name: mirabella_genio_door_window_sensor
-  platform: ESP8266
-  board: esp01_1m
   arduino_version: 2.5.1
-  board_flash_mode: dout
   includes:
     - sb1_uart.h
+
+esp8266:
+  board: esp01_1m
+  board_flash_mode: dout
 
 wifi:
   ssid: 'Wifi SSID'

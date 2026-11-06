@@ -1,5 +1,5 @@
 ---
-title: Mirrabella Genio I002340 Power Board with USB
+title: Mirabella Genio I002340 Power Board with USB
 date-published: 2020-01-19
 type: plug
 standard: au
@@ -32,7 +32,8 @@ substitutions:
 
 esphome:
   name: ${full_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -166,7 +167,8 @@ status_led:
 
 ## Button
 
-- The setup will turn on plugs 1 to 4 with each short press, then once all plugs are on, turn off plugs 1 to 4 with each short press.
+- The setup will turn on plugs 1 to 4 with each short press, then once all plugs are on, turn off plugs 1 to 4 with each
+  short press.
 - A long press will toggle all plugs on or off.
 - A double press will toggle the state of the usb ports.
 
@@ -175,4 +177,4 @@ status_led:
 | Location                                                                                           | Price |
 | -------------------------------------------------------------------------------------------------- | ----- |
 | [Kmart](https://www.kmart.com.au/product/mirabella-genio-wi-fi-powerboard-with-usb-ports/2736803I) | $49   |
-| [Costco](costco.com.au)                                                                            | $39   |
+| [Costco](https://costco.com.au)                                                                            | $39   |

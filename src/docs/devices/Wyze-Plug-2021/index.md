@@ -8,25 +8,27 @@ board: esp32
 
 ## Initial Install
 
-This device is glued together pretty tightly, but can be opened with the application of hot air and prying. It must be opened for the first upload.
+This device is glued together pretty tightly, but can be opened with the application of hot air and prying. It must be
+opened for the first upload.
 
 ## GPIO Pinout
 
-There are multiple versions of this device, all nominally using the WLPP1 base model number. An earlier version may use these GPIOs:
+There are multiple versions of this device, all nominally using the WLPP1 base model number. An earlier version may use
+these GPIOs:
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO15 | Button                             |
-| GPIO16 | Relay                              |
-| GPIO19 | Relay LED                          |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO15 | Button    |
+| GPIO16 | Relay     |
+| GPIO19 | Relay LED |
 
 A current device purchased in late 2023 has a model number of WLPP1CFH, which uses a ESP32C3 variant, and uses GPIOs:
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO10 | Button                             |
-| GPIO0  | Relay                              |
-| GPIO1  | Relay LED                          |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO10 | Button    |
+| GPIO0  | Relay     |
+| GPIO1  | Relay LED |
 
 ## Basic Configuration
 
@@ -37,8 +39,9 @@ substitutions:
 
 esphome:
   name: wyzeplug
-  platform: ESP32
-  board: esp-wrover-kit
+
+esp32:
+  variant: esp32
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password

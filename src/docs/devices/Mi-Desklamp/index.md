@@ -14,7 +14,8 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${friendly_name}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 # Enable logging
@@ -127,6 +128,8 @@ light:
 
 ![alt text](pcb-labeled.jpg "Mi Desk Lamp Pinout ESP8266")
 
-For serial flashing you need two power wires (GND, VDDPST- AKA VCC 3.3v), two serial wires (U0RX, U0TX) and the boot mode pin (GPIO0).
+For serial flashing you need two power wires (GND, VDDPST- AKA VCC 3.3v), two serial wires (U0RX, U0TX) and the boot
+mode pin (GPIO0).
 On your Serial Adaptor connect U0RX to TX and U0TX to RX.
-ESP also needs to be put into programming mode before the firmware can be uploaded by connecting GPIO0 pin to GND prior to applying power.
+ESP also needs to be put into programming mode before the firmware can be uploaded by connecting GPIO0 pin to GND prior
+to applying power.

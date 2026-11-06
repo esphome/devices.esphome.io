@@ -14,7 +14,7 @@ Use an RS485 transceiver like MAX485 to the device via ModBUS. Some devices come
 pre-installed with a cloud controller already plugged in to the ModBUS port, this
 has to be be disconnected (ESPHome will go instead).
 
-![Product Image](/ECO-375-mark2-lukket.jpg)
+![Product Image](./ECO-375-mark2-lukket.jpg)
 
 ## Basic configuration
 
@@ -32,8 +32,9 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: "${device_description}"
-  platform: ESP32
-  board: esp32-evb
+
+esp32:
+  variant: esp32
 
 ethernet:
   type: LAN8720
@@ -668,13 +669,12 @@ button:
       then:
         - lambda: |-
               // get local time and sync to device
-              time_t now = ::time(nullptr);
-              struct tm *time_info = ::localtime(&now);
-              uint16_t minute = time_info->tm_min;
-              uint16_t hour = time_info->tm_hour;
-              uint16_t day = time_info->tm_mday;
-              uint16_t month = time_info->tm_mon + 1;
-              uint16_t year = time_info->tm_year % 100;
+              auto time = ESPTime::from_epoch_local(::time(nullptr));
+              uint16_t minute = time.minute;
+              uint16_t hour = time.hour;
+              uint16_t day = time.day_of_month;
+              uint16_t month = time.month;
+              uint16_t year = time.year % 100;
               modbus_controller::ModbusController *controller = id(${modbus_ctrl_id});
               modbus_controller::ModbusCommandItem set_hour = modbus_controller::ModbusCommandItem::create_write_single_command(controller, 200, hour);
               modbus_controller::ModbusCommandItem set_minute = modbus_controller::ModbusCommandItem::create_write_single_command(controller, 201, minute);
