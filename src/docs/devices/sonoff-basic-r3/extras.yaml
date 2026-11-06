@@ -1,0 +1,39 @@
+api:
+  encryption:
+    key: ""
+
+ota:
+  - platform: esphome
+    encryption:
+
+wifi:
+  # ssid: "Your_WiFi_SSID_Here"
+  # password: "Your_WiFi_Password_Here"
+  ap:
+    ssid: "SONOFF Basic R3"
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    unit_of_measurement: minutes
+    filters:
+      - lambda: return x / 60.0;
+    entity_category: diagnostic
+
+  - platform: wifi_signal
+    id: wifi_rssi
+    name: RSSI
+    entity_category: diagnostic
+
+button:
+  - platform: restart
+    name: Restart
+
+binary_sensor:
+  - platform: status
+    name: Status
