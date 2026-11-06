@@ -57,6 +57,7 @@ import matter from "gray-matter";
 // js-yaml (v5) parses the example configs; gray-matter bundles its own copy.
 import * as yaml from "js-yaml";
 import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
 
 // Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
 // the JS boolean `true`) and the rare string form. Anything else — missing,
@@ -218,27 +219,12 @@ function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
     return issues;
   }
 
-  // Parse — tolerate ESPHome custom tags. Re-stamp the tag onto the
-  // resulting string so `password: !secret foo` parses to `"!secret foo"`,
-  // which the password check correctly recognises as non-literal.
-  const schema = yaml.CORE_SCHEMA.withTags(
-    // v4's DEFAULT_SCHEMA extras, so parsing matches the old behaviour.
-    yaml.mergeTag,
-    yaml.timestampTag,
-    yaml.binaryTag,
-    yaml.omapTag,
-    yaml.pairsTag,
-    yaml.setTag,
-    ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map((tag) =>
-      yaml.defineScalarTag(tag, {
-        resolve: (source) => (source === "" ? tag : `${tag} ${source}`),
-        identify: () => false,
-      })
-    )
-  );
+  // Parse — ESPHOME_SCHEMA tolerates ESPHome custom tags, so
+  // `password: !secret foo` parses to `"!secret foo"`, which the password
+  // check correctly recognises as non-literal.
   let parsed: unknown = undefined;
   try {
-    parsed = yaml.load(raw, { schema });
+    parsed = yaml.load(raw, { schema: ESPHOME_SCHEMA });
   } catch (err) {
     const e = err as yaml.YAMLException;
     issues.push({

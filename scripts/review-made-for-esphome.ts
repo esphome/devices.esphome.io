@@ -74,6 +74,7 @@ import {
   type UpstreamHost,
   type UpstreamRef,
 } from "../src/lib/upstream-url.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
 
 // ---------------------------------------------------------------------------
 // Shared conventions (kept in step with scripts/validate-yaml-configs.ts and
@@ -209,28 +210,6 @@ function findYamlFences(md: string): YamlFence[] {
   }
   return fences;
 }
-
-// ---------------------------------------------------------------------------
-// Expanded-YAML parsing — tolerate ESPHome custom tags, re-stamping scalar
-// tags (so `!secret wifi_password` parses to the string "!secret wifi_password"
-// and the password check can recognise it as a non-literal reference).
-// ---------------------------------------------------------------------------
-
-const ESPHOME_SCHEMA = yaml.CORE_SCHEMA.withTags(
-  // v4's DEFAULT_SCHEMA extras, so parsing matches the old behaviour.
-  yaml.mergeTag,
-  yaml.timestampTag,
-  yaml.binaryTag,
-  yaml.omapTag,
-  yaml.pairsTag,
-  yaml.setTag,
-  ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map((tag) =>
-    yaml.defineScalarTag(tag, {
-      resolve: (source) => (source === "" ? tag : `${tag} ${source}`),
-      identify: () => false,
-    })
-  )
-);
 
 // ---------------------------------------------------------------------------
 // Findings & per-page results
