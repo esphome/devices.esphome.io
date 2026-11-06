@@ -3,7 +3,7 @@ substitutions:
   device_icon: mdi:power-socket-au
   device_restore: ALWAYS_ON
 
-  # Higher value gives lower watt readout
+  # Higher value gives a lower watt reading
   current_res: "0.00225"
   # Lower value gives lower voltage readout
   voltage_div: "805"
