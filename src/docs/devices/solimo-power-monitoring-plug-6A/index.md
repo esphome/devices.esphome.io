@@ -18,6 +18,8 @@ difficulty: 4
 | PA05   | HLW8012 CF Pin             |
 | PA12   | HLWBL CF1 Pin              |
 
+## Basic Config
+
 ```yaml file=config.yaml
 
 ```
