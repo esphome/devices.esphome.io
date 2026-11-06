@@ -36,9 +36,9 @@
   },
   "devDependencies": {
     "@esphome/netlify-plugin-cloudflare-cache-purge": "github:esphome/netlify-plugin-cloudflare-cache-purge#v1.0.1",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.6",
     "js-yaml": "^5.5.0",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "vfile": "^6.0.3"
   }
 }
