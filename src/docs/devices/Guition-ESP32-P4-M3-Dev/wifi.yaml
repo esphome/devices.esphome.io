@@ -1,3 +1,5 @@
 # Enables Wi-Fi through the ESP32-C6 hosted coprocessor.
 # Add your own ssid/password (or !secret references) after adopting.
 wifi:
+  # Fallback hotspot until you add your network.
+  ap:

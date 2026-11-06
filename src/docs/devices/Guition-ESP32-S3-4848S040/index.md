@@ -52,4 +52,3 @@ update is a physical USB flash. Two of mine were in this state. Confirm port 323
 answers before you put the panel in a wall box, and always flash a real `ota:`
 block with a password. After one USB flash to a config with proper OTA, the panel
 updates wirelessly from then on.
-

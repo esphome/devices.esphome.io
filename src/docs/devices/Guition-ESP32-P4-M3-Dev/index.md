@@ -74,10 +74,8 @@ Minimum configuration required for the Guition JC-ESP32-P4-M3-Dev:
 
 ## ESP32 Hosted Configuration
 
-ESP32 Hosted ESP32-C6 coprocessor configuration:
-
-```yaml file=esp32-hosted.yaml
-```
+The ESP32-C6 coprocessor's `esp32_hosted:` block is part of `config.yaml` above, because Wi-Fi and Bluetooth on
+the ESP32-P4 both depend on it.
 
 ## Wi-Fi Configuration
 
@@ -108,9 +106,10 @@ The ESP32-C6 coprocessor firmware can be updated over-the-air using the esp32_ho
 ```yaml file=c6-firmware-update.yaml
 ```
 
-The firmware binary is embedded into the ESP32-P4's flash at compile time and can be deployed to the
-coprocessor on demand. The component automatically detects the current firmware version and compares it to
-the embedded version. If they differ, an update becomes available in Home Assistant.
+With `type: http`, the ESP32-P4 reads ESPHome's published ESP-Hosted firmware manifest every six hours by
+default and picks the newest C6 firmware its own host library supports. If that differs from what the C6 is
+running, an update becomes available in Home Assistant, and installing it downloads that firmware and writes it
+to the coprocessor.
 
 ## Example configuration: Alarmo announcements + media playback
 
