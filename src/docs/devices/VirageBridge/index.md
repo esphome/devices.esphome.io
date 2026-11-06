@@ -7,7 +7,7 @@ standard: global
 
 [Virage Laboratories](https://www.viragelabs.com)
 
-[VB-001 433 MHz to WiFi Bridge](https://www.viragelabs.com/product/viragebridge/)![image](virage_labs_VB-001.jpg)
+[VB-001 433 MHz to WiFi Bridge](https://www.viragelabs.com/)![image](virage_labs_VB-001.jpg)
 
 ## General Notes
 
