@@ -15,10 +15,14 @@ const REPO = { owner: "esphome", repo: "devices.esphome.io" };
 
 const OLD = "2020-01-01T00:00:00Z";
 const LATER = "2020-01-01T00:05:00Z";
-const copilotRequest = (id: number, actorType: string, createdAt = LATER) => ({
+// The account the workflow's token belongs to.
+const REQUESTER = "esphome-review-bot";
+// "ours" is a request filed by REQUESTER; anything else stands for the ruleset
+// or a maintainer.
+const copilotRequest = (id: number, by: "ours" | "other", createdAt = LATER) => ({
   id,
   event: "review_requested",
-  actor: { login: actorType === "Bot" ? "esphome[bot]" : "someone", type: actorType },
+  actor: { login: by === "ours" ? REQUESTER : "someone", type: "User" },
   requested_reviewer: { login: "Copilot" },
   created_at: createdAt,
 });
@@ -42,7 +46,7 @@ function makeGithub(
   const calls: Record<string, unknown>[] = [];
   const reads = [
     { name: "before", events: opts.before ?? [] },
-    { name: "after", events: opts.after ?? [copilotRequest(1, "Bot")] },
+    { name: "after", events: opts.after ?? [copilotRequest(1, "ours")] },
   ];
   const listEventsForTimeline = () => {};
   return {
@@ -56,6 +60,7 @@ function makeGithub(
         return read.events;
       },
       rest: {
+        users: { getAuthenticated: async () => ({ data: { login: REQUESTER } }) },
         issues: { listEventsForTimeline },
         pulls: {
           requestReviewers: async (args: Record<string, unknown>) => {
@@ -113,16 +118,16 @@ test("an accepted request GitHub never recorded warns", async () => {
   assert.match(warnings[0], /recorded none/);
 });
 
-test("a ruleset request filed under a user does not confirm ours", async () => {
-  const after = [copilotRequest(1, "User"), copilotReview(2, LATER)];
+test("a request filed by another account does not confirm ours", async () => {
+  const after = [copilotRequest(1, "other"), copilotReview(2, LATER)];
   const { github } = makeGithub({ after });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
-test("a bot request already on the timeline does not confirm this one", async () => {
-  const earlier = [copilotRequest(1, "Bot", OLD), copilotReview(2, LATER)];
+test("an earlier request by the same account does not confirm this one", async () => {
+  const earlier = [copilotRequest(1, "ours", OLD), copilotReview(2, LATER)];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
@@ -130,7 +135,7 @@ test("a bot request already on the timeline does not confirm this one", async ()
 });
 
 test("a Copilot review still pending is logged, not warned", async () => {
-  const earlier = [copilotReview(1, OLD), copilotRequest(2, "User")];
+  const earlier = [copilotReview(1, OLD), copilotRequest(2, "other")];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, infos, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
@@ -140,7 +145,7 @@ test("a Copilot review still pending is logged, not warned", async () => {
 
 test("a Copilot request that was removed is not pending", async () => {
   const earlier = [
-    copilotRequest(1, "User"),
+    copilotRequest(1, "other"),
     { id: 2, event: "review_request_removed", requested_reviewer: { login: "Copilot" }, created_at: LATER },
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
@@ -151,7 +156,7 @@ test("a Copilot request that was removed is not pending", async () => {
 
 test("a completed review under the bot account login ends the pending request", async () => {
   const earlier = [
-    copilotRequest(1, "User", OLD),
+    copilotRequest(1, "other", OLD),
     { id: 2, event: "reviewed", user: { login: "copilot-pull-request-reviewer[bot]" }, submitted_at: LATER },
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
