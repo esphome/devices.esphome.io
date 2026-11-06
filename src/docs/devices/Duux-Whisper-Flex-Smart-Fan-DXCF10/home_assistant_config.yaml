@@ -1,6 +1,8 @@
 substitutions:
   devicename: "ventilator"
   friendly: "Ventilator"
+# Define logging level: NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
+  log_level: "WARN"
 
 esphome:
   name: $devicename
