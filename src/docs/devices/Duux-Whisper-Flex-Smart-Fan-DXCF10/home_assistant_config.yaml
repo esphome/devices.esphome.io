@@ -24,12 +24,9 @@ logger:
   level: $log_level
 
 api:
-  encryption:
-    key:
 
 ota:
   - platform: esphome
-    encryption:
 
 wifi:
   ssid:
