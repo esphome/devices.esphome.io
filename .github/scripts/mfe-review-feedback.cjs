@@ -9,6 +9,7 @@
 // actions/github-script. Exported as a function so it can be linted
 // (`node --check`) and unit-tested with a mocked GitHub client.
 const fs = require("fs");
+const { findRunPullRequest } = require("./workflow-run-pr.cjs");
 const path = require("path");
 
 // Hidden markers so we only ever touch our own reviews/comments and never the
@@ -23,14 +24,12 @@ const MARKER_PASS = "<!-- made-for-esphome-pass -->";
 module.exports = async ({ github, context, core }) => {
   const artifactDir = process.env.MFE_ARTIFACT_DIR || "artifact";
 
-  const prNumber = parseInt(
-    fs.readFileSync(path.join(artifactDir, "pr-number.txt"), "utf8").trim(),
-    10
-  );
-  if (!Number.isInteger(prNumber)) {
-    core.setFailed("Could not read a PR number from the artifact.");
+  const runPr = await findRunPullRequest({ github, context });
+  if (!runPr) {
+    core.info("No open pull request matches this run's head commit; nothing to do.");
     return;
   }
+  const prNumber = runPr.number;
 
   // A report file means the review found blocking issues. Its absence is
   // ambiguous, so the review script also writes an explicit verdict to
