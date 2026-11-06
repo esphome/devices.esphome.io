@@ -37,7 +37,7 @@ difficulty: 3
 ## Better Configuration for Home Assistant
 
 The used Tuya MCU has a bug where it doesn't respond to the power off command when the display dims.
-Then it only wakes up the display and one has to press power off again. To remmedy this, the tuya fan component
+Then it only wakes up the display and one has to press power off again. To remedy this, the tuya fan component
 is kept internal and a template is exposed to Home Assistant. It checks if the device really powered off and
 if it didn't, it resends the power off command.
 
