@@ -43,21 +43,27 @@ esphome:
 
 bk72xx:
   board: wb2s
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: ""
 
-ota:
-  password: ""
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Sync time with Home Assistant
 time:
@@ -185,13 +191,4 @@ sensor:
     filters:
       - skip_initial: 5 # give time for data to settle to avoid NaN
 
-  - platform: uptime
-    name: ${friendly_name} Uptime
-    unit_of_measurement: minutes
-    filters:
-      - lambda: return x / 60.0;
-
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
 ```

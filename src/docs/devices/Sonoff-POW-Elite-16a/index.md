@@ -44,27 +44,24 @@ esp32:
   framework:
     type: esp-idf
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: $device_name
-    password: !secret wifi_failover
 
-captive_portal:
-
+# Enabling the logging component
 logger:
   level: INFO
   baud_rate: 0
 
+# Enable Home Assistant API
 api:
 
 ota:
   - platform: esphome
 
-#optional
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 #optional
 esp32_ble_tracker:
@@ -112,10 +109,6 @@ sensor:
   - platform: total_daily_energy
     name: $friendly_name Total Daily Energy
     power_id: w_sensor
-
-  - platform: wifi_signal
-    name: $friendly_name Wifi RSSI
-    update_interval: 60s
 
   - platform: uptime
     id: uptime_sensor
@@ -234,19 +227,6 @@ switch:
       - light.turn_off: switch_led
   - platform: restart
     name: $friendly_name Restart
-
-text_sensor:
-  - platform: template
-    name: $friendly_name Uptime
-    id: uptime_human
-    icon: mdi:clock-start
-  - platform: wifi_info
-    ip_address:
-      name: $friendly_name IP
-    ssid:
-      name: $friendly_name SSID
-    bssid:
-      name: $friendly_name BSSID
 
 light:
   - platform: monochromatic

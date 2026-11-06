@@ -60,72 +60,29 @@ libretuya:
   board: generic-bk7231t-qfn32-tuya
   framework:
     version: dev
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
-  ap:
-    ssid: "Lsc-Switch-01 Fallback Hotspot"
-    password: ""
+# Enable the captive portal
+captive_portal:
 
 #web_server:
 #  port: 80
 
-sensor:
-  - platform: wifi_signal
-    name: "WiFi Signal Sensor"
-    update_interval: 60s
-
-  - platform: uptime
-    name: Uptime Sensor
-    id: uptime_sensor
-    update_interval: 60s
-    on_raw_value:
-      then:
-        - text_sensor.template.publish:
-            id: uptime_human
-            state: !lambda |-
-              int seconds = round(id(uptime_sensor).raw_state);
-              int days = seconds / (24 * 3600);
-              seconds = seconds % (24 * 3600);
-              int hours = seconds / 3600;
-              seconds = seconds % 3600;
-              int minutes = seconds /  60;
-              seconds = seconds % 60;
-              return (
-                (days ? to_string(days) + "d " : "") +
-                (hours ? to_string(hours) + "h " : "") +
-                (minutes ? to_string(minutes) + "m " : "") +
-                (to_string(seconds) + "s")
-              ).c_str();
-
-text_sensor:
-  - platform: template
-    name: Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
-  - platform: wifi_info
-    ip_address:
-      name: IP Address
-      entity_category: diagnostic
-
 binary_sensor:
-  - platform: status
-    name: Status
-    entity_category: diagnostic
 
   - platform: gpio
     pin:
@@ -139,6 +96,7 @@ binary_sensor:
       - switch.toggle: relay
 
 switch:
+
   - platform: gpio
     # RED
     id: led_1
@@ -183,31 +141,27 @@ esphome:
 
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-web_server:
+# Enable Home Assistant API
+api:
 
+# Enable the captive portal
 captive_portal:
 
-api:
-  encryption:
-    key: !secret encryption_key
-
-ota:
-  password: !secret ota_password_new
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "lsc_plug_1 Hotspot"
-    password: "12345678"
-
-text_sensor:
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
+#web_server:
+#  port: 80
 
 status_led:
   pin: P26

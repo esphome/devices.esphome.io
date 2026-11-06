@@ -52,23 +52,27 @@ recommend peforming the following steps:
 ```yaml
 esphome:
   name: upk2esphome-bk7231t
+  
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
 
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-web_server:
-
-captive_portal:
-
+# Enable Home Assistant API
 api:
 
-ota:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
+# Enable the captive portal
+captive_portal:
 
 text_sensor:
   - platform: libretiny

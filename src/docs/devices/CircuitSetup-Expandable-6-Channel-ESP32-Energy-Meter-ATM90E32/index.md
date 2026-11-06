@@ -65,21 +65,22 @@ wifi:
     subnet: !secret ip_subnet
     dns1: !secret ip_dns1
 
-# mqtt:
-#  broker: !secret mqtt_broker
-#  username: !secret mqtt_user
-#  password: !secret mqtt_pass
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+web:
 
 spi:
   clk_pin: 18
@@ -248,21 +249,22 @@ wifi:
     subnet: !secret ip_subnet
     dns1: !secret ip_dns1
 
-# mqtt:
-#  broker: !secret mqtt_broker
-#  username: !secret mqtt_user
-#  password: !secret mqtt_pass
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 spi:
   clk_pin: 18
@@ -527,13 +529,17 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 spi:
   clk_pin: 18

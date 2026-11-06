@@ -149,6 +149,24 @@ substitutions:
 #################################
 esphome:
   name: ${devicename}
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
@@ -325,46 +343,27 @@ substitutions:
 #################################
 esphome:
   name: ${devicename}
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "ESPHOME"
-    password: "123456"
-
-#################################
-
-logger:
-
-web_server:
-
-captive_portal:
-
-api:
-
-ota:
-
-sensor:
-  - platform: wifi_signal
-    name: ${friendlyname} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${friendlyname} Uptime
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendlyname} IP
-    ssid:
-      name: ${friendlyname} SSID
-    bssid:
-      name: ${friendlyname} BSSID
-    mac_address:
-      name: ${friendlyname} Mac
 
 ## ---------------- ##
 ##    Status LED    ##
@@ -463,7 +462,6 @@ binary_sensor:
 substitutions:
   device_name: deta3gangswitch
   friendly_name: "3 Gang Switch"
-  device_ip: 192.168.0.x
 
 #################################
 
@@ -490,23 +488,30 @@ api:
   encryption:
     key: !secret api_encryption_key
 
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+    
+# OTA flashing
 ota:
-  password: !secret ota_password
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-# The web_server & sensor components can be removed without affecting core functionaility.
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
 
-sensor:
-  - platform: wifi_signal
-    name: ${device_name} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${device_name} Uptime
+# Enable the captive portal
+captive_portal:
 
-#################################
+# Enable the Web Server component 
+webserver:
 
 status_led:
   pin:
@@ -605,46 +610,27 @@ substitutions:
 #################################
 esphome:
   name: ${devicename}
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "ESPHOME"
-    password: "123456"
-
-#################################
-
-logger:
-
-web_server:
-
-captive_portal:
-
-api:
-
-ota:
-
-sensor:
-  - platform: wifi_signal
-    name: ${friendlyname} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${friendlyname} Uptime
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendlyname} IP
-    ssid:
-      name: ${friendlyname} SSID
-    bssid:
-      name: ${friendlyname} BSSID
-    mac_address:
-      name: ${friendlyname} Mac
 
 ## ---------------- ##
 ##    Status LED    ##
@@ -768,7 +754,6 @@ binary_sensor:
 substitutions:
   device_name: deta4gangswitch
   friendly_name: "4 Gang Switch"
-  device_ip: 192.168.0.x
 
 #################################
 
@@ -796,22 +781,24 @@ api:
     key: !secret api_encryption_key
 
 ota:
-  password: !secret ota_password
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-# The web_server & sensor components can be removed without affecting core functionaility.
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
 
-sensor:
-  - platform: wifi_signal
-    name: ${device_name} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${device_name} Uptime
+# Enable the captive portal
+captive_portal:
 
-#################################
+# Enable the Web Server component 
+webserver:
 
 status_led:
   pin:

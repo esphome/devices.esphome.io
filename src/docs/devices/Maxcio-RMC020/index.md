@@ -43,37 +43,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${friendly_name}
-    password: !secret ap_password
 
-  manual_ip:
-    static_ip: 192.168.1.131
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
-
-# Web server can be removed after enabling HA API
-web_server:
-  port: 80
 
 # Enable Home Assistant API
 api:
-#  encryption:
-#    key: !secret encryption_key
 
-ota:
-#  password: !secret OTA_Password
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # Enable time component for use by daily power sensor
 time:

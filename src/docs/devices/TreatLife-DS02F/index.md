@@ -76,24 +76,23 @@ esphome:
 # BK72XX-Based Board
 bk72xx:
   board: wb3s
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
-
-wifi:
-  ssid: "ssid"
-  password: "PASSWORD"
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "DS02F Fallback Hotspot"
-    password: "ul57sDUAqbcl"
-
+# Enable the captive portal
 captive_portal:
 
 uart:

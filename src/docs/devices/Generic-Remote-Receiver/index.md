@@ -26,15 +26,19 @@ esphome:
 esp32:
   variant: esp32
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
-ota: !secret ota
+# Enable Home Assistant API
+api:
 
-mqtt: !secret mqtt
+# Enable the captive portal
+captive_portal:
 
 remote_receiver:
   pin:
@@ -46,7 +50,6 @@ remote_receiver:
 
 binary_sensor: !include ircodes/carmp3.yaml
 ```
-
 ## ESP8266
 
 Although the ESP32 has built in hardware support for decoding the signals used by remote controls, the ESP8266
@@ -58,17 +61,24 @@ esphome:
 
 esp8266:
   board: d1_mini
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
 
-ota: !secret ota
+# Enable Home Assistant API
+api:
 
-mqtt: !secret mqtt
+# Enable the captive portal
+captive_portal:
 
 remote_receiver:
   pin:

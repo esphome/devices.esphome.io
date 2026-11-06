@@ -52,7 +52,12 @@ esp8266:
   restore_from_flash: true
   early_pin_init: False
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -77,9 +82,8 @@ time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 light:
   - platform: status_led
@@ -127,10 +131,6 @@ switch:
     id: relay
 
 sensor:
-  - platform: wifi_signal
-    name: "${devicename} - Wifi Signal"
-    update_interval: 60s
-    icon: mdi:wifi
 
   - platform: uptime
     name: "${devicename} - Uptime"

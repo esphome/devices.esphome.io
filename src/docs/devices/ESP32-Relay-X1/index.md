@@ -45,8 +45,17 @@ esp32:
   variant: esp32
   framework:
     type: esp-idf
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 wifi:
@@ -58,6 +67,7 @@ wifi:
     ssid: "ESP32 Fallback Hotspot"
     password: !secret wifi_password
 
+# Enable the captive portal
 captive_portal:
 
 light:

@@ -50,48 +50,30 @@ esp32:
       CONFIG_FREERTOS_UNICORE: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  safe_mode: true
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: none
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: ${device_ssid} Fallback Hotspot
-    password: !secret ap_password
+# Enable the captive portal
+captive_portal:
 
 # Sensors with general information.
 sensor:
   - platform: uptime
     name: "${friendly_name} Uptime"
     id: uptime_sensor
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: ${friendly_name} Signal strength
-    update_interval: 60s
-    internal: true
-
-text_sensor:
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
 
 switch:
   # this provides for a possibility to restart from the web console or Home automation should we ever need it
@@ -292,48 +274,30 @@ esp32:
       CONFIG_FREERTOS_UNICORE: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  safe_mode: true
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: none
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: ${device_ssid} Fallback Hotspot
-    password: !secret ap_password
+# Enable the captive portal
+captive_portal:
 
 # Sensors with general information.
 sensor:
   - platform: uptime
     name: "${friendly_name} Uptime"
     id: uptime_sensor
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: ${friendly_name} Signal strength
-    update_interval: 60s
-    internal: true
-
-text_sensor:
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
 
 switch:
   # this provides for a possibility to restart from the web console or Home automation should we ever need it

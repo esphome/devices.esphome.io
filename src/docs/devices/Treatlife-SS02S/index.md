@@ -77,22 +77,19 @@ bk72xx:
 esphome:
   name: ${device_name}
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${device_name}
-    password: !secret esphome_ap_password
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret esphome_ota_password
+# Enable the captive portal
+captive_portal:
 
 output:
   - platform: gpio

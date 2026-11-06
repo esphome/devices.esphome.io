@@ -48,8 +48,17 @@ esp32:
   variant: esp32
   framework:
     type: esp-idf
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -61,14 +70,6 @@ ota:
 
 # Allow provisioning Wi-Fi via serial
 improv_serial:
-
-wifi:
-  # Set up a wifi access point
-  ap: {}
-
-# In combination with the `ap` this allows the user
-# to provision wifi credentials to the device via WiFi AP.
-captive_portal:
 
 time:
   - platform: homeassistant
@@ -83,9 +84,6 @@ globals:
 dashboard_import:
   package_import_url: github://esphome/example-configs/esphome-web/esp32.yaml@main
   import_full_config: true
-
-# To have a "next url" for improv serial
-web_server:
 
 light:
   - platform: status_led
@@ -121,12 +119,8 @@ switch:
       - light.turn_off: led
 
 sensor:
-  - platform: wifi_signal
-    name: "Wifi Signal"
-    update_interval: 60s
-    icon: mdi:wifi
 
-  - platform: uptime
+- platform: uptime
     name: "Uptime"
     update_interval: 60s
     icon: mdi:clock-outline

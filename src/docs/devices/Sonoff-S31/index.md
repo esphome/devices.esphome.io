@@ -45,12 +45,23 @@ api:
 ota:
   platform: esphome
 
-# Device Specific Config
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
   baud_rate: 0 # (UART logging interferes with cse7766)
   logs:
     sensor: DEBUG # (Overide any global setting, to VERBOSE will spamming the cse7766 sensors)
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+# Device Specific Config
 
 uart:
   rx_pin: RX
@@ -70,9 +81,7 @@ binary_sensor:
     name: "Sonoff S31 Status"
 
 sensor:
-  - platform: wifi_signal
-    name: "Sonoff S31 WiFi Signal"
-    update_interval: 60s
+
   - platform: cse7766
     current:
       name: "Sonoff S31 Current"

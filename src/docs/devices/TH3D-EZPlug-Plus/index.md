@@ -42,6 +42,21 @@ wifi:
 logger:
 api:
 ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant
@@ -49,20 +64,7 @@ time:
 switch:
   - platform: restart
     name: Restart
-text_sensor:
-  - platform: version
-    name: Version
-  - platform: wifi_info
-    ip_address:
-      name: IP Address
-    ssid:
-      name: SSID
-    bssid:
-      name: BSSID
-    mac_address:
-      name: MAC Address
-    scan_results:
-      name: Scan Results
+
 switch:
   - platform: gpio
     pin: GPIO14
@@ -80,9 +82,6 @@ sensor:
     device_class: "duration"
     unit_of_measurement: s
     accuracy_decimals: 0
-  - platform: wifi_signal
-    name: Wifi Signal Strength
-    update_interval: 5min
   - platform: hlw8012
     sel_pin:
       number: GPIO12

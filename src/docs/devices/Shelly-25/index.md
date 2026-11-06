@@ -41,21 +41,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 i2c:
   sda: GPIO12
@@ -154,13 +157,8 @@ Thanks to [Datux](https://github.com/dtx3k) modified and tested by [gieljnssns](
 ```yaml
 substitutions:
   devicename: shelly_25
-  ip: 192.168.xx.xx
   channel_1: Relay 1
   channel_2: Relay 2
-
-  ssid: !secret ssid
-  password: !secret password
-
   max_power: "2000.0"
   max_temp: "70.0"
 
@@ -169,45 +167,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: ${ssid}
-  password: ${password}
-  power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
-  manual_ip:
-    static_ip: ${ip}
-    gateway: 192.168.xx.xx
-    subnet: 255.255.255.0
-    dns1: 8.8.8.8
-    dns2: 8.8.4.4
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${devicename}
-    password: ${password}
-    manual_ip:
-      static_ip: 192.168.100.2
-      gateway: 192.168.100.1
-      subnet: 255.255.255.0
-      dns1: 8.8.8.8
-      dns2: 8.8.4.4
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
   level: DEBUG
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: ${password}
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 time:
   - platform: sntp
@@ -366,21 +347,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret ssid1
-  password: !secret ssid1_pass
-  power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 i2c:
   sda: GPIO12
@@ -502,45 +486,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: ${ssid}
-  password: ${password}
-  power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
-  manual_ip:
-    static_ip: ${ip}
-    gateway: 192.168.xx.xx
-    subnet: 255.255.255.0
-    dns1: 8.8.8.8
-    dns2: 8.8.4.4
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${devicename}
-    password: ${password}
-    manual_ip:
-      static_ip: 192.168.100.2
-      gateway: 192.168.100.1
-      subnet: 255.255.255.0
-      dns1: 8.8.8.8
-      dns2: 8.8.4.4
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
   level: DEBUG
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: ${password}
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 time:
   - platform: sntp

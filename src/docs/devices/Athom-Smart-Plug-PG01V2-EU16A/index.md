@@ -32,25 +32,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
+ 
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
 captive_portal:
 
 # Enable logging
 logger:
   baud_rate: 0
 
-# Enable Home Assistant API
-api:
-
-ota:
-
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Time used for daily KWh usage
 time:
@@ -139,7 +142,4 @@ sensor:
   - platform: uptime
     name: "${upper_devicename} Uptime"
     icon: mdi:clock-outline
-  - platform: wifi_signal
-    name: "${upper_devicename} Wifi Signal"
-    update_interval: 60s
 ```

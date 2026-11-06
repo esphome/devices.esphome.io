@@ -33,15 +33,30 @@ USB/Charging Ports for Home Office Desk Tablets, 4ft Extension Cord, White
 substitutions:
   name: power_strip
   upper_name: Power Strip
-  platform: ESP8266
-  board: esp01_1m
 
 esphome:
   name: $name
-  platform: $platform
-  board: $board
 
-<<: !include ../secrets.yaml
+esp8266:
+  board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 binary_sensor:
   - platform: gpio

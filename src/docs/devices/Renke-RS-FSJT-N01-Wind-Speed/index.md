@@ -55,6 +55,28 @@ condition. That's why we're reading out the measurement every second, and apply 
 maximum blow speed of 5 measurements, averaging them every minute:
 
 ```yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 uart:
   rx_pin: GPIOXX
   tx_pin: GPIOXX

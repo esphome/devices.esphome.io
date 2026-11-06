@@ -38,25 +38,26 @@ rtl87xx:
   framework:
     version: latest
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-web_server:
-  port: 80
+# Enable the captive portal
+captive_portal:
 
-ota:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
-  ap:
-    ssid: "govee Fallback Hotspot"
-    password: !secret ap_password
+# Enable the Web Server component 
+webserver:
 
 # Output pins
 output:

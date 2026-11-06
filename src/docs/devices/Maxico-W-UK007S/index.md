@@ -44,13 +44,23 @@ esphome:
 esp8266:
   board: esp01_1m
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+# OTA flashing
 ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: sntp
@@ -89,11 +99,7 @@ switch:
           transition_length: 0s
 
 sensor:
-  # WiFi Signal Sensor
-  - platform: wifi_signal
-    name: "${friendly_name} WiFi Status"
-    update_interval: 60s
-  # Power Monitoring
+
   - platform: hlw8012
     sel_pin:
       number: GPIO12

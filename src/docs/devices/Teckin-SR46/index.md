@@ -27,14 +27,22 @@ esphome:
 
 esp8266:
   board: esp8285
-
+    
+# OTA flashing
 ota:
-  safe_mode: True
-  password: OTA_PASSWORD
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
 wifi:
   ssid: !secret wifi_ssid
@@ -50,9 +58,6 @@ uart:
   tx_pin: GPIO1
   rx_pin: GPIO3
   baud_rate: 9600
-
-logger:
-  baud_rate: 0
 
 tuya:
 

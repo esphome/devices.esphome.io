@@ -32,26 +32,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret <ssid>
-  password: !secret <password>
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: $friendly_name Fallback Hotspot
-    password: <password>
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
-  baud_rate: 0
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 uart:
   rx_pin: GPIO3
@@ -61,11 +59,8 @@ uart:
 tuya:
 
 sensor:
-  - platform: wifi_signal
-    name: $friendly_name Wifi Signal
-    update_interval: 60s
 
-  - platform: uptime
+- platform: uptime
     name: $friendly_name uptime
 
 light:

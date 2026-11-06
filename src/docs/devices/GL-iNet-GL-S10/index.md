@@ -131,6 +131,24 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 ## Configuration fo V1.x hardware revision
 ethernet:
@@ -139,10 +157,6 @@ ethernet:
   mdio_pin: GPIO18
   clk_mode: GPIO17_OUT
   phy_addr: 1
-
-api:
-logger:
-ota:
 
 dashboard_import:
   package_import_url: github://blakadder/bluetooth-proxies/gl-s10.yaml@main
@@ -227,6 +241,24 @@ esp32:
   variant: esp32
   framework:
     type: esp-idf
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Configuration fo V2.3 hardware revision
 ethernet:
@@ -236,10 +268,6 @@ ethernet:
   clk_mode: GPIO0_IN
   phy_addr: 1
   power_pin: GPIO5
-
-api:
-logger:
-ota:
 
 dashboard_import:
   package_import_url: github://blakadder/bluetooth-proxies/gl-s10_v2.yaml@main

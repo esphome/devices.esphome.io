@@ -60,13 +60,11 @@ wifi:
   password: !secret wifi_password
 
   ap:
-    ssid: $devicename Fallback Hotspot
-    password: !secret wifi_password
 
-captive_portal:
-
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
 ota:

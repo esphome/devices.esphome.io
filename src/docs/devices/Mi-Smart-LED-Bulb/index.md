@@ -31,51 +31,36 @@ esphome:
 esp8266:
   board: modwifi
 
-# WiFi connection
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  # use_address: ${device_name}.local
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${device_name}_fallback_ap
-    password: !secret ap_password
 
-# Enable captive portal
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Sync time with Home Assistant
 time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Text sensors with general information
-text_sensor:
-  - platform: version
-    name: ${friendly_name} ESPHome Version
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP Address
-
 sensor:
   # Uptime sensor
   - platform: uptime
     name: ${friendly_name} Uptime
-  # WiFi Signal sensor
-  - platform: wifi_signal
-    name: ${friendly_name} WiFi Signal
-    update_interval: 60s
 
 output:
   - platform: esp8266_pwm

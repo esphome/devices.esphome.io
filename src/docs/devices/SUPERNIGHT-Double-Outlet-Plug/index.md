@@ -82,20 +82,34 @@ substitutions:
   calibration_pre_cal_power_value: "129.1"
   calibration_expected_correct_value: "60.0"
 
-logger:
-api:
+esp8266:
+  board: esp8285
+  restore_from_flash: true
+      
+# OTA flashing
 ota:
-web_server:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
+
 time:
   - platform: sntp
     id: the_time
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "Supernight Fallback Hotspot"
-    password: !secret wifi_ap_password
-captive_portal:
 
 # We don't want to allow analog input until bootup is complete.
 globals:
@@ -140,8 +154,7 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
 
 sensor:
-  - platform: wifi_signal
-    name: "wifi_signal"
+
   - platform: hlw8012
     sel_pin:
       number: GPIO13

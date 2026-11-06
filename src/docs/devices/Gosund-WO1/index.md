@@ -47,18 +47,30 @@ esp8266:
   board: esp8285
   restore_from_flash: true
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-api:
+# OTA flashing
 ota:
-web_server:
-  port: 80
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
+  
 time:
   - platform: sntp
     id: the_time
-logger:
 
 # Device Specific Config
 
@@ -115,8 +127,7 @@ switch:
       - output.turn_off: bottom_outlet_led
 
 sensor:
-  - platform: wifi_signal
-    name: "wifi_signal"
+
   - platform: hlw8012
     model: BL0937
     sel_pin:

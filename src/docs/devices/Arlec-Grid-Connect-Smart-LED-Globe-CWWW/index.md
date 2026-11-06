@@ -52,7 +52,6 @@ esphome:
 
 esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true
 
 wifi:
   ssid: !secret wifi_ssid
@@ -61,14 +60,14 @@ wifi:
 
 captive_portal:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: "password"
+# Enable the captive portal
+captive_portal:
 
 output:
   - platform: esp8266_pwm

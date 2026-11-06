@@ -35,14 +35,19 @@ wifi:
   password: !secret wifi_password
   ap:
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: "ota_password"
+# Enable the captive portal
+captive_portal:
 
 sensor:
   - platform: uptime

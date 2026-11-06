@@ -53,35 +53,30 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
-
-api:
-  encryption:
-    key: !secret encryption_key
-
+  
+# OTA flashing
 ota:
-  password: !secret ota_secret
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   esp8266_store_log_strings_in_flash: false
 
-sensor:
-  - platform: uptime
-    name: DS 102 Uptime
-    update_interval: 60s
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 status_led:
   pin:
     number: GPIO0
     inverted: True
-
-text_sensor:
-  - platform: version
-    name: DS 102 Version
 
 binary_sensor:
   - platform: status
@@ -154,35 +149,30 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: true
-
-api:
-  encryption:
-    key: !secret encryption_key
-
+  
+# OTA flashing
 ota:
-  password: !secret ota_secret
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   esp8266_store_log_strings_in_flash: false
 
-sensor:
-  - platform: uptime
-    name: ${upper_name} Uptime
-    update_interval: 60s
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 status_led:
   pin:
     number: GPIO0
     inverted: True
-
-text_sensor:
-  - platform: version
-    name: ${upper_name} Version
 
 binary_sensor:
   - platform: status

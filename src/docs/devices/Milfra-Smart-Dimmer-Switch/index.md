@@ -62,28 +62,23 @@ esphome:
 
 bk72xx:
   board: cbu
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: CHANGEME
 
-ota:
-  password: CHANGEME
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "dimmer1"
-    password: !secret wifi_password
-  use_address: xxx.xxx.xxx.xxx
-
+# Enable the captive portal
 captive_portal:
 
 sensor:
@@ -122,29 +117,4 @@ select:
       1: "On"
       2: Memory
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP"
-      icon: "mdi:ip-outline"
-      update_interval: ${update_interval_wifi}
-    ssid:
-      name: "SSID"
-      icon: "mdi:wifi-settings"
-      update_interval: ${update_interval_wifi}
-    bssid:
-      name: "BSSID"
-      icon: "mdi:wifi-settings"
-      update_interval: ${update_interval_wifi}
-    mac_address:
-      name: "MAC"
-      icon: "mdi:network-outline"
-    scan_results:
-      name: "Wifi Scan"
-      icon: "mdi:wifi-refresh"
-      update_interval: ${update_interval_wifi}
-      disabled_by_default: true
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
 ```

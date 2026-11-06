@@ -58,10 +58,20 @@ esp8266:
 
 preferences:
   flash_write_interval: 1min
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
 ota:
@@ -78,6 +88,9 @@ wifi:
   ap:
 
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 dashboard_import:
   package_import_url: github://athom-tech/athom-configs/athom-presence-sensor.yaml
@@ -171,12 +184,6 @@ binary_sensor:
       }
 
 sensor:
-  - platform: uptime
-    name: "Uptime Sensor"
-
-  - platform: wifi_signal
-    name: "WiFi Signal Sensor"
-    update_interval: 60s
 
   - platform: bh1750
     name: "Light Sensor"
@@ -350,36 +357,6 @@ button:
       - delay: 1s
       - switch.turn_on: mmwave_sensor
       - button.press: Reset
-
-  - platform: restart
-    name: Restart_esp
-    id: restart_esp
-    entity_category: config
-    internal: true
-  - platform: template
-    name: "Restart_mmWave"
-    id: "restart_mmwave"
-    entity_category: config
-    internal: true
-    on_press:
-      - uart.write: "resetSystem\r\n"
-
-  - platform: template
-    name: Restart device
-    entity_category: config
-    on_press:
-      - button.press: restart_mmwave
-      - delay: 1s
-      - button.press: restart_esp
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Connected SSID"
-    mac_address:
-      name: "Mac Address"
 
 time:
   - platform: sntp

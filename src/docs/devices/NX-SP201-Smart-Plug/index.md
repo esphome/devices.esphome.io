@@ -58,26 +58,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enter you WIFI credentials
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable Logging.
+# Enabling the logging component
 logger:
 
-# Enable Home Assistant API.
+# Enable Home Assistant API
 api:
 
-# Enable over-the-air updates.
-ota:
-
-# Enable WEB server for status and updates.
-web_server:
-  port: 80
-
+# Enable the captive portal
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   - platform: gpio
@@ -165,26 +166,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enter you WIFI credentials
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable Logging.
+# Enabling the logging component
 logger:
 
-# Enable Home Assistant API.
+# Enable Home Assistant API
 api:
 
-# Enable over-the-air updates.
-ota:
-
-# Enable WEB server for status and updates.
-web_server:
-  port: 80
-
+# Enable the captive portal
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   - platform: gpio

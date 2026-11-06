@@ -12,22 +12,32 @@ difficulty: 3
 ```yaml
 substitutions:
   devicename: feit_electric_s9dfl-cct-wh-ag
+
 esphome:
   name: $devicename
   friendly_name: Feit Electric S9DFL/CCT/WH/AG
+   
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 bk72xx:
   board: cb3s
-logger:
-api:
-  password: ""
-ota:
-  password: ""
-wifi:
-  networks:
-  ap:
-    password: !secret captive_portal_ap_password
-web_server:
-captive_portal:
+
 output:
   - platform: libretiny_pwm
     # BP2308
@@ -45,6 +55,7 @@ output:
     inverted: true
     min_power: 0.000
     max_power: 0.995
+    
 light:
   - platform: color_temperature
     name: $devicename

@@ -155,10 +155,3 @@ output:
               - switch.toggle: relay_1
 ```
 
-### Add Reboot button to HA
-
-```yaml
-switch:
-  - platform: restart
-    name: ${friendlyname} REBOOT
-```

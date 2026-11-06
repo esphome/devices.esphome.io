@@ -25,15 +25,14 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant
@@ -48,19 +47,10 @@ substitutions:
   #voltage_div: "750"
   voltage_div: "950"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 sensor:
-  - platform: wifi_signal
-    name: "${plug_name} - WiFi Signal"
-    update_interval: 60s
-
-  - platform: uptime
-    name: "${plug_name} - Uptime"
-    icon: mdi:clock-outline
-    update_interval: 60s
 
   - platform: hlw8012
     sel_pin:
@@ -100,10 +90,6 @@ sensor:
         - multiply: 0.001
     unit_of_measurement: kWh
     icon: mdi:clock-alert
-
-text_sensor:
-  - platform: version
-    name: "${plug_name} - ESPHome Version"
 
 status_led:
   pin:

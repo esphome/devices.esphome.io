@@ -44,17 +44,24 @@ esp32:
   variant: esp32s3
   framework:
     type: esp-idf
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
 
-captive_portal:
+# Enabling the logging component
+logger:
 
+# Enable Home Assistant API
 api:
 
-ota:
-
-logger:
+# Enable the captive portal
+captive_portal:
 
 i2c:
   - id: internal_i2c

@@ -30,27 +30,23 @@ esphome:
 esp32:
   variant: esp32
 
-wifi:
-  ssid: "ssid"
-  password: "password"
+# OTA flashing
+ota:
+  - platform: esphome
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "Prodino1 Fallback Hotspot"
-    password: "Y43RDknj74vq"
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: "password"
+# Enable the captive portal
+captive_portal:
 
 #optional onewire
 #one_wire:

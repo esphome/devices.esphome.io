@@ -45,57 +45,19 @@ esphome:
 esp32:
   variant: esp32c3
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: !secret ota_password
-
-wifi:
-  networks:
-  - ssid: !secret guest_ssid
-    password: !secret guest_password
-  - ssid: !secret wifi_ssid
-    password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "ESPHome ${device_name}"
-    password: !secret wifi_password_backup
-
-# Enable NTP
-time:
-  - platform: sntp
-    id: my_time
-
-# General Config
-text_sensor:
-  - platform: version
-    name: "${device_name} Version"
-  - platform: wifi_info
-    ip_address:
-      name: "${device_name} IP Address"
-    ssid:
-      name: "${device_name} SSID"
-    bssid:
-      name: "${device_name} BSSID"
-
-sensor:
-  - platform: wifi_signal
-    name: "${device_name} WiFi Signal"
-    update_interval: 60s
-    filters:
-      - delta: 0.01
-      - throttle: 300s
-  - platform: uptime
-    name: "${device_name} Uptime"
-    filters:
-      - throttle: 300s
+# Enable the captive portal
+captive_portal:
 
 light:
   # RGB Mood Light
