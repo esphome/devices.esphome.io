@@ -10,6 +10,7 @@
 - Users should be able to apply updates to your device:
   - [ ] Device can be "taken control" of by the user using the ESPHome Builder
     - [ ] Configuration includes `dashboard_import:` to facilitate this ([documentation](https://esphome.io/components/esphome.html#adding-the-mac-address-as-a-suffix-to-the-device-name))
+      - [ ] The `package_import_url` resolves to the config file (paths are case-sensitive)
     - [ ] Configuration contains the `ota`.`esphome` component ([documentation](https://esphome.io/components/ota/esphome))
     - [ ] Serial flashing is not disabled
     - [ ] There are no references to secrets in the configuration - not even
