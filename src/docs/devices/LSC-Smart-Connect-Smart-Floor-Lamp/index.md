@@ -17,6 +17,7 @@ This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Actio
 | Retailer | Action |
 | Product | Smart Floor Lamp |
 | Article number | **3221699** |
+| Article Link | https://www.action.com/de-de/p/3221699/lsc-smart-connect-smarte-rgb-stehleuchte/ |
 
 ![Bottom of the lamp](3221699.png)
 
