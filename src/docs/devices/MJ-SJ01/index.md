@@ -8,25 +8,25 @@ board: esp8266
 
 ## GPIO Pinout
 
-| Pin    | Function                                           |
-| ------ | -------------------------------------------------- |
-| GPIO0  | up button (inverted, input_pullup)                 |
-| GPIO1  | down button (inverted, input_pullup)               |
-| GPIO3  | led5 (inverted)                                    |
-| GPIO4  | red led (inverted)                                 |
-| GPIO5  | led4 (inverted)                                    |
-| GPIO12 | led3 (inverted)                                    |
-| GPIO13 | pwm                                                |
-| GPIO14 | led2 (inverted)                                    |
-| GPIO15 | main button (input_pullup)                         |
-| GPIO16 | led1 + relay (inverted) + blue led + reset button  |
+| Pin    | Function                                          |
+| ------ | ------------------------------------------------- |
+| GPIO0  | up button (inverted, input_pullup)                |
+| GPIO1  | down button (inverted, input_pullup)              |
+| GPIO3  | led5 (inverted)                                   |
+| GPIO4  | red led (inverted)                                |
+| GPIO5  | led4 (inverted)                                   |
+| GPIO12 | led3 (inverted)                                   |
+| GPIO13 | pwm                                               |
+| GPIO14 | led2 (inverted)                                   |
+| GPIO15 | main button (input_pullup)                        |
+| GPIO16 | led1 + relay (inverted) + blue led + reset button |
 
 ## Flashing
 
 The header CN is under the board, visible after removing the 4 screws.
 
-| Pin    | Function                 |
-| ------ | ------------------------ |
+| Pin   | Function                  |
+| ----- | ------------------------- |
 | CN1-1 | TXD                       |
 | CN1-2 | RXD                       |
 | CN1-3 | GPIO2 (don't use)         |
@@ -36,13 +36,16 @@ The header CN is under the board, visible after removing the 4 screws.
 
 ## Light as fully-featured package
 
-[@joshuaboniface](https://github.com/joshuaboniface) has created a fully-featured, packaged configuration for this device,
+[@joshuaboniface](https://github.com/joshuaboniface) has created a fully-featured, packaged configuration for this
+device,
 which permits quick flashing with a pre-compiled binary as well as automatic adoption, deployment, and updates.
 
-[Github Project Link](https://github.com/joshuaboniface/martinjerrymjsd01-esphome)
+[Github Project Link](https://github.com/joshuaboniface/martinjerry-esphome)
 
-The functionality has been modified quite significantly from the example below, to provide an experience more like a WeMo
-dimmer switch as well as provide more flexibility for control in HomeAssistant dashboards and automations. See the README
+The functionality has been modified quite significantly from the example below, to provide an experience more like a
+WeMo
+dimmer switch as well as provide more flexibility for control in HomeAssistant dashboards and automations. See the
+README
 in the repository for more information and examples.
 
 ## Light
@@ -51,7 +54,7 @@ in the repository for more information and examples.
 # Light dimmer
 
 substitutions:
-  #   # https://esphome.io/guides/configuration-types.html#substitutions
+  #   # https://esphome.io/guides/configuration-types/
   device_name: martin_jerry_mj_sd01 # hostname & entity_id
   friendly_name: Martin Jerry MJ-SD01 # Displayed in HA frontend
   ip_address: !secret martin_jerry_mj_sd01_ip # use /config/esphome/secrets.yaml
@@ -70,7 +73,7 @@ substitutions:
 
 binary_sensor:
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: "${friendly_name} Up Button"
     id: up_button
     pin:
@@ -78,7 +81,7 @@ binary_sensor:
       inverted: True
       mode: INPUT_PULLUP
     on_press:
-      # https://esphome.io/components/binary_sensor/index.html#on-press
+      # https://esphome.io/components/binary_sensor/#on_press
       - if:
           condition:
             light.is_on: dimmer
@@ -102,7 +105,7 @@ binary_sensor:
                 id: dimmer
                 brightness: "${long_press_up}"
     on_click:
-      # https://esphome.io/components/binary_sensor/index.html#on-click
+      # https://esphome.io/components/binary_sensor/#on_click
       min_length: ${long_press_min}
       max_length: ${long_press_max}
       then:
@@ -110,7 +113,7 @@ binary_sensor:
             id: dimmer
             brightness: "${long_press_up}"
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: "${friendly_name} Down Button"
     id: down_button
     pin:
@@ -118,7 +121,7 @@ binary_sensor:
       inverted: True
       mode: INPUT_PULLUP
     on_press:
-      # https://esphome.io/components/binary_sensor/index.html#on-press
+      # https://esphome.io/components/binary_sensor/#on_press
       - if:
           condition:
             light.is_on: dimmer
@@ -142,7 +145,7 @@ binary_sensor:
                 id: dimmer
                 brightness: "${long_press_down}"
     on_click:
-      # https://esphome.io/components/binary_sensor/index.html#on-click
+      # https://esphome.io/components/binary_sensor/#on-click
       min_length: ${long_press_min}
       max_length: ${long_press_max}
       then:
@@ -150,7 +153,7 @@ binary_sensor:
             id: dimmer
             brightness: "${long_press_down}"
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: ${friendly_name} Main Button
     id: main_button
     pin:
@@ -159,7 +162,7 @@ binary_sensor:
     on_press:
       # TODO: Use "light.toggle: dimmer" instead of the code below if you want
       # to keep the previous brightness by default.
-      # https://esphome.io/components/binary_sensor/index.html#on-press
+      # https://esphome.io/components/binary_sensor/#on-press
       - if:
           condition:
             light.is_on: dimmer
@@ -170,7 +173,7 @@ binary_sensor:
                 id: dimmer
                 brightness: "${long_press_main}"
     on_click:
-      # https://esphome.io/components/binary_sensor/index.html#on-click
+      # https://esphome.io/components/binary_sensor/#on-click
       min_length: ${long_press_min}
       max_length: ${long_press_max}
       then:
@@ -185,7 +188,7 @@ light:
       number: GPIO4
       inverted: True
   - platform: monochromatic
-    # https://esphome.io/components/light/monochromatic.html
+    # https://esphome.io/components/light/monochromatic/
     name: "${friendly_name}"
     id: dimmer
     output: pwm
@@ -269,7 +272,7 @@ script:
 
 output:
   - platform: esp8266_pwm
-    # https://esphome.io/components/output/esp8266_pwm.html
+    # https://esphome.io/components/output/esp8266_pwm/
     power_supply: relay
     pin: GPIO13
     id: pwm
@@ -277,7 +280,7 @@ output:
     frequency: 300 Hz
     min_power: ${pwm_min_power}
   - platform: gpio
-    # https://esphome.io/components/output/gpio.html
+    # https://esphome.io/components/output/gpio/
     id: led2
     pin: GPIO14
     inverted: true
@@ -296,7 +299,7 @@ output:
 
 power_supply:
   - id: relay
-    # https://esphome.io/components/power_supply.html
+    # https://esphome.io/components/power_supply/
     pin:
       number: GPIO16
       inverted: True
@@ -306,12 +309,13 @@ power_supply:
 ## below is common between both light and fan
 
 esphome:
-  # https://esphome.io/components/esphome
+  # https://esphome.io/components/esphome/
   name: ${device_name}
-  platform: ESP8266
-  board: esp01_1m
   # esp8266_restore_from_flash: true
   # Can cause reduced flash lifetime due to frequent writes, enable as needed
+
+esp8266:
+  board: esp01_1m
 
 sensor:
   - platform: wifi_signal
@@ -319,7 +323,7 @@ sensor:
     update_interval: 600s
 
 wifi:
-  # https://esphome.io/components/wifi
+  # https://esphome.io/components/wifi/
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   manual_ip:
@@ -337,42 +341,42 @@ wifi:
       subnet: 255.255.255.0
 
 # web_server:
-  # port: 80
-  # https://esphome.io/components/web_server.html
-  # Can cause high memory usage on ESP8266, enable as needed
+# port: 80
+# https://esphome.io/components/web_server/
+# Can cause high memory usage on ESP8266, enable as needed
 
 logger:
-  # https://esphome.io/components/logger
+  # https://esphome.io/components/logger/
 
 api:
   encryption:
     key: !secret encryption_key
-  # https://esphome.io/components/api
+  # https://esphome.io/components/api/
 
 ota:
   password: !secret esphome_ota_password
-  # https://esphome.io/components/ota
+  # https://esphome.io/components/ota/
 ```
 
 ## Timed Fan control
 
-The MJ-SD01 can control a low power (<400W?) fan. Ignore the dimmer feature and use it as a timer, using the green leds as feedback on how much time is left.
+The MJ-SD01 can control a low power (&lt;400W?) fan. Ignore the dimmer feature and use it as a timer, using the green leds
+as feedback on how much time is left.
 
 ```yaml
 # Timed fan control
 
 substitutions:
-  #   # https://esphome.io/guides/configuration-types.html#substitutions
+  #   # https://esphome.io/guides/configuration-types/
   device_name: martin_jerry_mj_sd01 # hostname & entity_id
   friendly_name: Martin Jerry MJ-SD01 # Displayed in HA frontend
   ip_address: !secret martin_jerry_mj_sd01_ip # use /config/esphome/secrets.yaml
   max_time: "30" # number of minutes
   increment: "5" # number of minutes to add or remove with up/down buttons
 
-
 binary_sensor:
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: "${friendly_name} Up Button"
     id: up_button
     pin:
@@ -397,7 +401,7 @@ binary_sensor:
           then:
             - switch.turn_on: fan
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: "${friendly_name} Down Button"
     id: down_button
     pin:
@@ -415,7 +419,7 @@ binary_sensor:
                   id(fan).turn_off();
                 }
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     #name: ${friendly_name} Main Button
     id: main_button
     pin:
@@ -553,7 +557,7 @@ output:
 
 power_supply:
   - id: relay
-    # https://esphome.io/components/power_supply.html
+    # https://esphome.io/components/power_supply/
     pin:
       number: GPIO16
       inverted: True
@@ -563,13 +567,13 @@ power_supply:
 ## below is common between both light and fan
 
 esphome:
-  # https://esphome.io/components/esphome
+  # https://esphome.io/components/esphome/
   name: ${device_name}
-  platform: ESP8266
-  board: esp01_1m
   # esp8266_restore_from_flash: true
   # Can cause reduced flash lifetime due to frequent writes, enable as needed
-  
+
+esp8266:
+  board: esp01_1m
 sensor:
   - platform: wifi_signal
     name: "${friendly_name} WiFi Signal"
@@ -594,19 +598,19 @@ wifi:
       subnet: 255.255.255.0
 
 # web_server:
-  # port: 80
-  # https://esphome.io/components/web_server.html
-  # Can cause high memory usage on ESP8266, enable as needed
+# port: 80
+# https://esphome.io/components/web_server/
+# Can cause high memory usage on ESP8266, enable as needed
 
 logger:
-  # https://esphome.io/components/logger
+  # https://esphome.io/components/logger/
 
 api:
   encryption:
     key: !secret encryption_key
-  # https://esphome.io/components/api
+  # https://esphome.io/components/api/
 
 ota:
   password: !secret esphome_ota_password
-  # https://esphome.io/components/ota
+  # https://esphome.io/components/ota/
 ```

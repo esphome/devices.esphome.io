@@ -10,20 +10,20 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO39 | ANALOG_A2           |
-| GPIO34 | ANALOG_A3           |
-| GPIO35 | ANALOG_A4           |
-| GPIO5  | 74HC595-Data        |
-| GPIO16 | 74HC595-Clock       |
-| GPIO4  | 74HC595-Latch       |
-| GPIO15 | 74HC165-Data        |
-| GPIO32 | 74HC165-Clock       |
-| GPIO33 | 74HC165-LD          |
-| GPIO13 | RS485_RXD           |
-| GPIO14 | RS485_TXD           |
+| Pin    | Function      |
+| ------ | ------------- |
+| GPIO36 | ANALOG_A1     |
+| GPIO39 | ANALOG_A2     |
+| GPIO34 | ANALOG_A3     |
+| GPIO35 | ANALOG_A4     |
+| GPIO5  | 74HC595-Data  |
+| GPIO16 | 74HC595-Clock |
+| GPIO4  | 74HC595-Latch |
+| GPIO15 | 74HC165-Data  |
+| GPIO32 | 74HC165-Clock |
+| GPIO33 | 74HC165-LD    |
+| GPIO13 | RS485_RXD     |
+| GPIO14 | RS485_TXD     |
 
 [Additional pinout/design details](https://www.kincony.com/esp32-arduino-256-channel-io-module.html)
 
@@ -35,7 +35,7 @@ esphome:
   name: KC868-A256
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Enable logging
 logger:
@@ -53,7 +53,7 @@ ethernet:
 
 # Example configuration entry
 sn74hc595:
-  - id: 'sn74hc595_hub'
+  - id: "sn74hc595_hub"
     data_pin: 5
     clock_pin: 16
     latch_pin: 4

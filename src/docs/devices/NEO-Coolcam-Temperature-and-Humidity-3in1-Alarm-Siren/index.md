@@ -6,16 +6,27 @@ standard: global
 board: esp8266
 ---
 
-This is a Tuya siren with temperature and humidity sensor. Runs on USB and two CR123A batteries as backup (not supplied with the device).
+This is a Tuya siren with temperature and humidity sensor. Runs on USB and two CR123A batteries as backup (not supplied
+with the device).
 Hardware Versions
 
-There are, so far, three known hardware versions. The console will show one of these MCU Product ID’s: {"p":"ymf4oruxqx0xlogp","v":"1.0.0","m":0}, {"p":"ymf4oruxqx0xlogp","v":"1.0.1","m":0} , {"p":"ymf4oruxqx0xlogp","v":"1.0.2","m":0}, {“p”:”ymf4oruxqx0xlogp”,”v”:”1.0.3”,”m”:0} or {"p":"9fngbrgje6ljqhee","v":"1.0.2","m":0}
+There are, so far, three known hardware versions. The console will show one of these MCU Product ID’s:
+
+```json
+{"p":"ymf4oruxqx0xlogp","v":"1.0.0","m":0}
+{"p":"ymf4oruxqx0xlogp","v":"1.0.1","m":0}
+{"p":"ymf4oruxqx0xlogp","v":"1.0.2","m":0}
+{"p":"ymf4oruxqx0xlogp","v":"1.0.3","m":0}
+{"p":"9fngbrgje6ljqhee","v":"1.0.2","m":0}
+```
 
 The ymf versions work with tuya-convert but the 9fn version requires flashing the device with serial.
 
-The 1.0.1 version supports the TuyaSend0 command to query the MCU for the latest values but the 1.0.2 version does not appear to support that command at this time (2021-03-05).
+The 1.0.1 version supports the TuyaSend0 command to query the MCU for the latest values but the 1.0.2 version does not
+appear to support that command at this time (2021-03-05).
 
-In an order on 2021-01-31 for three devices, one of each hardware versions was received. In an order from 2020-12, the 1.0.1 version was received, which is rock solid.
+In an order on 2021-01-31 for three devices, one of each hardware versions was received. In an order from 2020-12, the
+1.0.1 version was received, which is rock solid.
 
 ![alt text](IMG_0354.webp "Neo Coolcam Temperature and Humidity 3 in 1 Alarm Siren")
 

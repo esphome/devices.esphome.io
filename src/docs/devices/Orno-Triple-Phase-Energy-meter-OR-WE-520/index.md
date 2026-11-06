@@ -22,7 +22,8 @@ Pull's D8 high on pluse from energy meter (800 per kilowatt)
 ```yaml
 esphome:
   name: energy_meter
-  platform: ESP8266
+
+esp8266:
   board: nodemcuv2
 
 # Enable logging
@@ -48,13 +49,13 @@ captive_portal:
 sensor:
   - platform: pulse_meter
     pin: D8
-    unit_of_measurement: 'kW'
+    unit_of_measurement: "kW"
     name: "Active Power"
     internal_filter: 100ms
     accuracy_decimals: 3
     id: orno_we_520_active_power
     filters:
-      - multiply: 0.075  # 800 pulses/kW
+      - multiply: 0.075 # 800 pulses/kW
     total:
       name: "Active Energy"
       id: orno_we_520_power_active_energy
@@ -64,6 +65,6 @@ sensor:
         - multiply: 0.00125
 
   - platform: total_daily_energy
-    name: 'Daily Energy'
+    name: "Daily Energy"
     power_id: orno_we_520_active_power
 ```

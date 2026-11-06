@@ -32,7 +32,7 @@ esphome:
       - switch.turn_on: zigbee_reset
 
 esp32:
-  board: esp-wrover-kit
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -152,6 +152,6 @@ binary_sensor:
 
 ## References
 
-https://github.com/syssi/esphome-zb-gw03
+[https://github.com/syssi/esphome-zb-gw03](https://github.com/syssi/esphome-zb-gw03)
 
-https://github.com/digiblur/Tasmota/tree/development/zigbee_router
+[https://github.com/digiblur/Tasmota/tree/development/zigbee_router](https://github.com/digiblur/Tasmota/tree/development/zigbee_router)

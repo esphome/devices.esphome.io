@@ -16,13 +16,13 @@ difficulty: 4
 
 ## GPIO Pinout
 
-| Pin    | Function           |
-| ------ | ------------------ |
-| GPIO7 | PWM 1         |
-| GPIO8  | PWM 2            |
-| GPIO9  | PWM 3            |
-| GPIO6  | PWM 4  |
-| GPIO24  | PWM 5 |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO7  | PWM 1    |
+| GPIO8  | PWM 2    |
+| GPIO9  | PWM 3    |
+| GPIO6  | PWM 4    |
+| GPIO24 | PWM 5    |
 
 ## PCB
 
@@ -63,28 +63,28 @@ web_server:
 
 # Output pins
 output:
-- platform: libretiny_pwm
-  id: red_color
-  pin: P7
-  inverted: False
-- platform: libretiny_pwm
-  id: green_color
-  pin: P8
-  inverted: False
-- platform: libretiny_pwm
-  id: blue_color
-  pin: P9
-  inverted: False
-- platform: libretiny_pwm
-  id: cold_white
-  pin: P6
-  inverted: False
-  # max_power: 50%
-- platform: libretiny_pwm
-  id: warm_white
-  pin: P24
-  inverted: False
-  # max_power: 50%
+  - platform: libretiny_pwm
+    id: red_color
+    pin: P7
+    inverted: False
+  - platform: libretiny_pwm
+    id: green_color
+    pin: P8
+    inverted: False
+  - platform: libretiny_pwm
+    id: blue_color
+    pin: P9
+    inverted: False
+  - platform: libretiny_pwm
+    id: cold_white
+    pin: P6
+    inverted: False
+    # max_power: 50%
+  - platform: libretiny_pwm
+    id: warm_white
+    pin: P24
+    inverted: False
+    # max_power: 50%
 
 #light device
 light:

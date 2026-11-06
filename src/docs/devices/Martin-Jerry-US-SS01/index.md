@@ -5,7 +5,8 @@ type: switch
 standard: us
 board: esp8266 | wb2s
 ---
-[Amazon Link](https://amzn.to/3RAaQhx)
+
+[Amazon Link](https://www.amazon.com/dp/B09C1R7PDK)
 
 [Device on Martin Jerry](https://www.martinjerry.com/us-ss01-support)
 
@@ -15,10 +16,10 @@ There are two versions of this switch. The older one had an esp8285 MCU. The new
 
 | ESP Pin | WB2S Pin | Function |
 | ------- | -------- | -------- |
-| GPIO3 | P10 | button |
-| GPIO5 | PWM2 | relay  |
-| GPIO12 | PWM4 | red LED  |
-| GPIO14 | PWM5 | blue LED |
+| GPIO3   | P10      | button   |
+| GPIO5   | PWM2     | relay    |
+| GPIO12  | PWM4     | red LED  |
+| GPIO14  | PWM5     | blue LED |
 
 ## Basic Configuration
 
@@ -175,4 +176,3 @@ button:
     name: Restart
     entity_category: diagnostic
 ```
-

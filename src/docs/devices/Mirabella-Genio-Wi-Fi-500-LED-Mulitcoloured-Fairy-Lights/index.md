@@ -26,7 +26,8 @@ This is for [Mirabella Genio Wi-Fi 500 LED Mulitcoloured Fairy Lights](https://w
 ```yaml
 esphome:
   name: fairy_lights
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
