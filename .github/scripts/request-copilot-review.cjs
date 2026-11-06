@@ -1,16 +1,36 @@
 // Requests a Copilot code review on a pull request. A failed request only
 // warns: Copilot review is advisory and must never block the PR.
 //
-// GitHub answers a request it will not act on (one made with GITHUB_TOKEN, or
-// by an identity without Copilot code review access) with a success and no
-// review, so the timeline is read back to confirm the request was recorded.
+// GitHub answers a request it will not act on (one made by an identity without
+// a Copilot seat, which includes GITHUB_TOKEN and GitHub Apps when the PR
+// author has no Copilot access) with a success and no review, so the timeline
+// is read back to confirm the request was recorded.
 
 const COPILOT_REVIEWER = "copilot-pull-request-reviewer[bot]";
 // The timeline names the reviewer by its display login; the reviews API uses
 // the bot account.
 const COPILOT_LOGINS = new Set(["Copilot", COPILOT_REVIEWER]);
 
-async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
+// The account the token belongs to: { login }, {} when it can't be told
+// (requests go ahead unconfirmed), or { stop: true } when the token is rejected.
+async function identify({ github, core }) {
+  try {
+    const { data } = await github.rest.users.getAuthenticated();
+    return { login: data.login };
+  } catch (err) {
+    // An expired or revoked token fails loudly so someone rotates it.
+    if (err.status === 401) {
+      core.setFailed(
+        `COPILOT_REVIEW_TOKEN was rejected (${err.message}); rotate esphome-review-bot's token.`
+      );
+      return { stop: true };
+    }
+    core.warning(`Could not identify the requesting account, so requests go unconfirmed: ${err.message}`);
+    return {};
+  }
+}
+
+async function requestCopilotReview({ github, core, owner, repo, prNumber, identity }) {
   const readTimeline = () =>
     github.paginate(github.rest.issues.listEventsForTimeline, {
       owner,
@@ -18,12 +38,15 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
       issue_number: prNumber,
       per_page: 100,
     });
-  let before;
-  try {
-    before = await readTimeline();
-  } catch (err) {
-    before = null;
-    core.warning(`Could not read the timeline of #${prNumber}, so the request goes unconfirmed: ${err.message}`);
+  const { login: requester, stop } = identity ?? (await identify({ github, core }));
+  if (stop) return;
+  let before = null;
+  if (requester) {
+    try {
+      before = await readTimeline();
+    } catch (err) {
+      core.warning(`Could not read the timeline of #${prNumber}, so the request goes unconfirmed: ${err.message}`);
+    }
   }
   try {
     await github.rest.pulls.requestReviewers({
@@ -48,8 +71,8 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
   const copilotRequests = events.filter(
     (event) => event.event === "review_requested" && COPILOT_LOGINS.has(event.requested_reviewer?.login)
   );
-  // Ours is a bot-filed request that was not there before; the ruleset files under a user.
-  if (copilotRequests.some((event) => event.actor?.type === "Bot" && !seen.has(event.id))) {
+  // Ours is a request this token's account filed that was not there before.
+  if (copilotRequests.some((event) => event.actor?.login === requester && !seen.has(event.id))) {
     core.info(`Requested a Copilot review on #${prNumber}.`);
     return;
   }
@@ -67,7 +90,7 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
   }
   core.warning(
     `GitHub accepted the Copilot review request on #${prNumber} but recorded none; ` +
-      "the requesting token likely has no Copilot code review access."
+      `${requester} likely has no Copilot seat.`
   );
 }
 
@@ -92,8 +115,12 @@ module.exports = async ({ github, context, core }) => {
 // Requests a review on each PR in a comma-separated list, the promotion jobs'
 // marked-ready output.
 async function requestCopilotReviews({ github, core, owner, repo, prNumbers }) {
-  for (const number of String(prNumbers).split(",").filter(Boolean)) {
-    await requestCopilotReview({ github, core, owner, repo, prNumber: Number(number) });
+  const numbers = String(prNumbers).split(",").filter(Boolean);
+  if (numbers.length === 0) return;
+  const identity = await identify({ github, core });
+  if (identity.stop) return;
+  for (const number of numbers) {
+    await requestCopilotReview({ github, core, owner, repo, prNumber: Number(number), identity });
   }
 }
 
