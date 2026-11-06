@@ -17,6 +17,18 @@ wifi:
   # Device Builder does that for you when you create the device there.
   ap:
 
+# The onboard LED is on GPIO2, one of the few pins the matrix leaves free.
+output:
+  - platform: gpio
+    id: onboard_led_output
+    pin: GPIO2
+
+light:
+  - platform: binary
+    id: onboard_led
+    name: Onboard LED
+    output: onboard_led_output
+
 # The `board: esp32-trinity` preset supplies the whole HUB75 pinout, so no pins
 # are listed here. Set panel_width/panel_height to match your panel.
 display:

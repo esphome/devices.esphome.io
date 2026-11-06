@@ -31,7 +31,8 @@ RGB LED matrix panels. It is the work of Brian Lough (witnessmenow).
 
 The `hub75` display platform ships a **board preset for the Trinity**, so `board: esp32-trinity` supplies the
 entire pinout and no pins need listing. The example below draws red, green and blue bars inside a white border.
-It needs no network, so it is a quick proof that the panel is scanning correctly.
+It needs no network, so it is a quick proof that the panel is scanning correctly. The onboard LED on `GPIO2` is
+exposed as a light.
 
 ```yaml file=config.yaml
 ```
