@@ -28,7 +28,7 @@ LEDs and valves.
 
 The BK7231N is flashed via UART with
 [ltchiptool](https://github.com/libretiny-eu/ltchiptool). No soldering required
-— dupont cables and a steady hand are enough.
+- dupont cables and a steady hand are enough.
 
 ### Connections (3.3V USB-TTL adapter)
 
@@ -68,23 +68,41 @@ If Option A fails, disconnect the 3.3V cable and use the 24VAC transformer:
 In Option B, **DO NOT connect the 3.3V cable from the USB adapter**. Only GND,
 TX and RX. The board generates its own 3.3V internally from the 24VAC.
 
-### Flashing process
+### 1. Back up the original firmware first
 
-1. Connect the dupont cables to the board
-2. Power the board (3.3V or 24VAC as described above)
-3. Enter download mode: briefly touch RST to GND (a couple of quick taps)
-4. Immediately run the flash command:
+Read the whole flash before writing anything. Once ESPHome is on the chip this is
+the only copy of the original firmware left:
 
 ```bash
 pip install ltchiptool
-ltchiptool flash write bk7231n config.yaml
-```
-
-### Backup original firmware (recommended)
-
-```bash
 ltchiptool flash read bk7231n backup_original.bin
 ```
+
+### 2. Compile the configuration
+
+`config.yaml` holds the hardware definition and `sprinkler-zone-control.yaml` the
+zone control application. Put both in the same file (append the second one to the
+first, or pull it in with `packages:` and `!include`) and compile:
+
+```bash
+esphome compile config.yaml
+```
+
+The build leaves a UF2 image in
+`.esphome/build/tuya-sprinkler-8z/.pioenvs/tuya-sprinkler-8z/firmware.uf2`.
+On the ESPHome Dashboard use Install, Manual download, UF2 package instead.
+
+### 3. Write the firmware
+
+Enter download mode (bridge CEN/RST to GND while powering the board, then release
+the bridge when the tool starts writing) and flash the compiled image:
+
+```bash
+ltchiptool flash write bk7231n firmware.uf2
+```
+
+ltchiptool only writes a compiled image, it does not compile ESPHome YAML, so pass
+the UF2 file and not `config.yaml`.
 
 ## Button usage
 
@@ -115,7 +133,15 @@ cancelled.
 
 ## Basic Configuration
 
+Hardware definition (pinout, shift registers, valves, buzzer and panel LEDs):
+
 ```yaml file=config.yaml
+```
+
+Zone control application (selection state machine, panel buttons, LED feedback and
+the `sprinkler` component). Append it to the hardware file before compiling:
+
+```yaml file=sprinkler-zone-control.yaml
 ```
 
 ## Project repository
