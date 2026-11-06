@@ -4,7 +4,7 @@ date-published: 2025-03-07
 type: relay
 standard: eu
 board: esp32
-project-url: https://github.com/SmartbobAutomatyka/SmartbobAutomatyka-GIT/tree/main/ESPHOME-YAML
+project-url: https://github.com/SmartbobAutomatyka/SmartbobAutomatyka-GIT/tree/main/ESPHOME/SM-LITE-1616R-V15V16V17
 difficulty: 1
 made-for-esphome: false
 ---
@@ -23,7 +23,7 @@ Available pre-flashed with ESPHome or SUPLA.
 
 Maker: [https://smartbob.pl](https://smartbob.pl)
 
-Product page: [https://smartbob.pl/pl/lite-1-poziom/3-sm-lite-1616r.html](https://smartbob.pl/pl/lite-1-poziom/3-sm-lite-1616r.html)
+Product page: [https://smartbob.pl/produkt/sm-lite-1616r/](https://smartbob.pl/produkt/sm-lite-1616r/)
 
 ## SM-LITE-1616R V1.5 version basic description
 
