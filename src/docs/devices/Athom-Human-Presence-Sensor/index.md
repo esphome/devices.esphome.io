@@ -10,7 +10,7 @@ difficulty: 1
 
 ![alt text](Athom-Human-Presence-Sensor.webp "Athom Human Presence Sensor - PS01")
 
-Maker: https://www.athom.tech/
+Maker: [https://www.athom.tech/](https://www.athom.tech/)
 
 ## Available from
 
@@ -19,18 +19,19 @@ Maker: https://www.athom.tech/
 
 ## Note
 
-Built-in CH340C serial port chip, connect the Type-C data cable to flash the firmware directly (the attached Type-C cable has no data cable, you need to prepare the Type-C data cable to flash the firmware)
+Built-in CH340C serial port chip, connect the Type-C data cable to flash the firmware directly (the attached Type-C
+cable has no data cable, you need to prepare the Type-C data cable to flash the firmware)
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO0  | Button              |
-| GPIO12 | Pir Output          |
-| GPIO13 | Radar RX            |
-| GPIO14 | Radar Output        |
-| GPIO15 | Radar TX            |
-| GPIO16 | LedLink             |
+| Pin    | Function     |
+| ------ | ------------ |
+| GPIO0  | Button       |
+| GPIO12 | Pir Output   |
+| GPIO13 | Radar RX     |
+| GPIO14 | Radar Output |
+| GPIO15 | Radar TX     |
+| GPIO16 | LedLink      |
 
 ## Basic Configuration
 
@@ -106,7 +107,6 @@ uart:
   #   sequence:
   #     - lambda: UARTDebug::log_string(direction, bytes);
 
-
 binary_sensor:
   - platform: status
     name: "Status"
@@ -155,7 +155,6 @@ binary_sensor:
       then:
         - light.turn_off: led
 
-
   - platform: template
     name: "Occupancy"
     id: occupancy
@@ -197,11 +196,9 @@ switch:
     turn_off_action:
       - uart.write: "sensorStop\r\n"
 
-
-
 number:
   - platform: template
-    name: Farthest Detection          #Value range: 1.9 ~ 12m  Default: 6
+    name: Farthest Detection #Value range: 1.9 ~ 12m  Default: 6
     id: Farthest_Detection
     entity_category: config
     min_value: 1.9
@@ -215,17 +212,16 @@ number:
     set_action:
       - switch.turn_off: mmwave_sensor
       - delay: 500ms
-      - uart.write: !lambda
-          std::string ranges = "setRange 1.8 " + str_sprintf("%.1f",id(Farthest_Detection).state) + "\r\n";
+      - uart.write:
+          !lambda std::string ranges = "setRange 1.8 " + str_sprintf("%.1f",id(Farthest_Detection).state) + "\r\n";
           return std::vector<uint8_t>(ranges.begin(), ranges.end());
       - delay: 500ms
       - uart.write: "saveConfig\r\n"
       - delay: 500ms
       - switch.turn_on: mmwave_sensor
 
-
   - platform: template
-    name: Maintain Sensitivity                 #Value range: 0 ~ 9   Default Maintain sensitivity: 7    Default Trigger sensitivity: 5
+    name: Maintain Sensitivity #Value range: 0 ~ 9   Default Maintain sensitivity: 7    Default Trigger sensitivity: 5
     id: Maintain_Sensitivity
     entity_category: config
     min_value: 0
@@ -238,17 +234,16 @@ number:
     set_action:
       - switch.turn_off: mmwave_sensor
       - delay: 500ms
-      - uart.write: !lambda
-          std::string sensitivitys = "setSensitivity " + str_sprintf("%.0f",id(Maintain_Sensitivity).state) + " " + str_sprintf("%.0f",id(Trigger_Sensitivity).state) + "\r\n";
+      - uart.write:
+          !lambda std::string sensitivitys = "setSensitivity " + str_sprintf("%.0f",id(Maintain_Sensitivity).state) + " " + str_sprintf("%.0f",id(Trigger_Sensitivity).state) + "\r\n";
           return std::vector<uint8_t>(sensitivitys.begin(), sensitivitys.end());
       - delay: 500ms
       - uart.write: "saveConfig\r\n"
       - delay: 500ms
       - switch.turn_on: mmwave_sensor
 
-
   - platform: template
-    name: Trigger Sensitivity     #Value range: 0 ~ 9   Default Maintain sensitivity: 7    Default Trigger sensitivity: 5
+    name: Trigger Sensitivity #Value range: 0 ~ 9   Default Maintain sensitivity: 7    Default Trigger sensitivity: 5
     id: Trigger_Sensitivity
     entity_category: config
     min_value: 0
@@ -261,17 +256,16 @@ number:
     set_action:
       - switch.turn_off: mmwave_sensor
       - delay: 500ms
-      - uart.write: !lambda
-          std::string sensitivityss = "setSensitivity " + str_sprintf("%.0f",id(Maintain_Sensitivity).state) + " " + str_sprintf("%.0f",id(Trigger_Sensitivity).state) + "\r\n";
+      - uart.write:
+          !lambda std::string sensitivityss = "setSensitivity " + str_sprintf("%.0f",id(Maintain_Sensitivity).state) + " " + str_sprintf("%.0f",id(Trigger_Sensitivity).state) + "\r\n";
           return std::vector<uint8_t>(sensitivityss.begin(), sensitivityss.end());
       - delay: 500ms
       - uart.write: "saveConfig\r\n"
       - delay: 500ms
       - switch.turn_on: mmwave_sensor
 
-
   - platform: template
-    name: Detection Delay      #Confirmation delay      Value range: 0 ～ 100  default 0.050 seconds.
+    name: Detection Delay #Confirmation delay      Value range: 0 ～ 100  default 0.050 seconds.
     id: Detection_Delay
     entity_category: config
     min_value: 0.1
@@ -294,7 +288,7 @@ number:
       - switch.turn_on: mmwave_sensor
 
   - platform: template
-    name: Fading Time           #Fade-out delay        Value range: 0.5 ～ 1500, default 15 seconds.
+    name: Fading Time #Fade-out delay        Value range: 0.5 ～ 1500, default 15 seconds.
     id: Fading_Time
     entity_category: config
     min_value: 1
@@ -316,9 +310,8 @@ number:
       - delay: 500ms
       - switch.turn_on: mmwave_sensor
 
-
   - platform: template
-    name: Blockade Time                  #Configure block time        Value range: 1 ～ 255, default 1 seconds.
+    name: Blockade Time #Configure block time        Value range: 1 ～ 255, default 1 seconds.
     id: Blockade_Time
     entity_category: config
     min_value: 1
@@ -332,8 +325,8 @@ number:
     set_action:
       - switch.turn_off: mmwave_sensor
       - delay: 500ms
-      - uart.write: !lambda
-          std::string blockades = "setInhibit " + str_sprintf("%.0f",x) + "\r\n";
+      - uart.write:
+          !lambda std::string blockades = "setInhibit " + str_sprintf("%.0f",x) + "\r\n";
           return std::vector<uint8_t>(blockades.begin(), blockades.end());
       - delay: 500ms
       - uart.write: "saveConfig\r\n"

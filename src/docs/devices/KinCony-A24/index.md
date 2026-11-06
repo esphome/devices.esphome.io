@@ -21,8 +21,9 @@ Here is an example YAML configuration for the KinCony-A24 board.
 ```yaml
 esphome:
   name: a24
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
 
 # Enable logging

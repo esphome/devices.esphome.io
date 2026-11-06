@@ -7,8 +7,6 @@ project-url: https://github.com/fpovoski/ESP32-Temperature-Monitoring-PWM-Contro
 difficulty: 1
 ---
 
-![ESP32 Control Board](UT_ECB1.JPG "ECB")
-
 ## Description
 
 The ESP32andmore ECB is a multi-sensor fans control board:
@@ -33,9 +31,3 @@ The ESP32andmore ECB is a multi-sensor fans control board:
 - [GitHub](https://github.com/fpovoski/ESP32-Temperature-Monitoring-PWM-Control-Board)
 - [Discord](https://discord.com/channels/1219774500510498887/1219774501013688416)
 - [YouTube](https://www.youtube.com/@esp32andmore)
-
-## Product Images
-
-![ESP32 Control Board](UT_ECB_2.JPG "ESP32 Control Board")
-
-![ECB Case](UT_ECB_3.png "ECB Case")

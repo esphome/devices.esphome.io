@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-![alt text](/aukey-plug.jpg "Aukey SH-PA1 Smart WiFi Plug")
+![alt text](./aukey-plug.jpg "Aukey SH-PA1 Smart WiFi Plug")
 
 ## GPIO Pinout
 
@@ -23,7 +23,8 @@ board: esp8266
 # Basic Config
 esphome:
   name: mini_tree
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
   platformio_options:
     upload_speed: 115200

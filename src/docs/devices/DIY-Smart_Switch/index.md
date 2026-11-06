@@ -18,13 +18,13 @@ These devices are sold under many brands on Aliexpress.
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| P6     | Rocker switch INPUT_PULLUP |
-| P7     | Relay (H)                  |
-| P8     | RF input ?                 |
-| P23    | Button INPUT_PULLUP        |
-| P26    | Blue Status LED (H)        |
+| Pin | Function                   |
+| --- | -------------------------- |
+| P6  | Rocker switch INPUT_PULLUP |
+| P7  | Relay (H)                  |
+| P8  | RF input ?                 |
+| P23 | Button INPUT_PULLUP        |
+| P26 | Blue Status LED (H)        |
 
 ## Configuration
 
@@ -46,22 +46,31 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
 ## ---------------- ##
 ##    Status LED    ##
+## If there is an error in ESPHome, the diode blinks. If everything is fine, the indicator can be controlled from HA
 ## ---------------- ##
-status_led:
-  pin:
-    number: P26
-    inverted: false
+
+light:
+  - platform: status_led
+    name: "Switch state"
+    id: led
+    pin:
+      number: P26
 ## ---------------- ##
 ##  Binary Sensors  ##
 ## ---------------- ##
 binary_sensor:
-# Button 1
+# Button back
   - platform: gpio
     id: button_1
     pin:
       number: P23
       inverted: true
       mode: INPUT_PULLUP
+    on_press:
+      then:
+        - switch.toggle: relay
+    filters:
+      - delayed_on_off: 50ms
 # Rocker switch
   - platform: gpio
     name: "${device_friendly_name} Switch"
@@ -83,11 +92,15 @@ switch:
     icon: ${device_icon}
     output: relayoutput
     id: relay
+       on_turn_on:
+      - light.turn_on: led
+    on_turn_off:
+      - light.turn_off: led
+    restore_mode: ALWAYS_OFF
 ## ---------------- ##
 ##      Relays      ##
 ## ---------------- ##
-output:
-# Relay L1
+
 output:
   # Relay
   - platform: gpio

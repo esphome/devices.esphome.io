@@ -8,15 +8,19 @@ board: esp8266
 
 Treatlife DS02S Switch![image](Treatlife-DS02S.png)
 
-[Amazon Link](https://amzn.to/2RHB44M)
+[Amazon Link](https://www.amazon.com/dp/B07YKFSWJN)
 
 ## Notes
 
 This TuyaMCU requires a baud rate of 9600 (see latest note on January 2022 for more info), unlike the DS03 dimmer.
 
-July 2021 - New device purchased now has Tuya WB3S Wifi Microcontroller in place of the previous TYWE3S, which is not ESP based. Luckily, the main board still has the appropriate footprint for an ESP-12F. Further instructions on how to swap microcontrollers can be found [here](https://community.home-assistant.io/t/treatlife-dual-outlet-indoor-dimmer-plug-wb3s-to-esp-12-transplant/256798)
+July 2021 - New device purchased now has Tuya WB3S Wifi Microcontroller in place of the previous TYWE3S, which is not
+ESP based. Luckily, the main board still has the appropriate footprint for an ESP-12F. Further instructions on how to
+swap microcontrollers can be found
+[in the Home Assistant community](https://community.home-assistant.io/t/treatlife-dual-outlet-indoor-dimmer-plug-wb3s-to-esp-12-transplant/256798)
 
-January 2022 - Newer models require a baudrate of 115200, similar to that of the DS03 dimmer. Like the DS03, it might say `Invalid baud_rate: Integration requested baud_rate 9600 but you have 115200!`, however this can be ignored.
+January 2022 - Newer models require a baudrate of 115200, similar to that of the DS03 dimmer. Like the DS03, it might
+say `Invalid baud_rate: Integration requested baud_rate 9600 but you have 115200!`, however this can be ignored.
 
 ## GPIO Pinout
 
@@ -35,7 +39,8 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -87,7 +92,8 @@ light:
 
 Below are some advanced configuration options that may be required if your dimmer is not behaving as expected.
 
-This will add a select component to allow changing the dimming mode on the MCU, giving you a drop-down of dimming mode options. Recommended to try out all and see which works best, then set it statically.
+This will add a select component to allow changing the dimming mode on the MCU, giving you a drop-down of dimming mode
+options. Recommended to try out all and see which works best, then set it statically.
 
 ```yaml
 select:
@@ -101,7 +107,9 @@ select:
       2: Mode 3 # Index 2
 ```
 
-Here is a script that will set the dimming mode in a more static fashion when ESPHome Reboots. This will select based on the index of the select component instead of by name of the mode. This can still be set via drop down if this script is included, it will just set it to this value every boot.
+Here is a script that will set the dimming mode in a more static fashion when ESPHome Reboots. This will select based on
+the index of the select component instead of by name of the mode. This can still be set via drop down if this script is
+included, it will just set it to this value every boot.
 
 ```yaml
 esphome:

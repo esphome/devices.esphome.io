@@ -6,7 +6,6 @@ standard: global
 board: esp32
 ---
 
-
 ## GPIO Pinout
 
 | Pin    | Function           |
@@ -28,7 +27,7 @@ esphome:
   friendly_name: KinCony KC868-AG Hub
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -43,7 +42,7 @@ remote_transmitter:
     carrier_duty_percent: 50%
 
 remote_receiver:
-  # see https://esphome.io/components/remote_transmitter.html#setting-up-infrared-devices
+  # see https://esphome.io/guides/setting_up_rmt_devices/#remote-setting-up-infrared
   # for details on discovering the correct codes for your devices
   - id: receiver_ir
     pin:
@@ -51,7 +50,7 @@ remote_receiver:
       inverted: True
     dump: all
 
-  # see https://esphome.io/components/remote_transmitter.html#setting-up-rf-devices
+  # see https://esphome.io/guides/setting_up_rmt_devices/#remote-setting-up-rf
   # for details on discovering the correct codes for your devices
   - id: receiver_rf
     pin:

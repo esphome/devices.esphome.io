@@ -5,6 +5,7 @@ type: plug
 standard: eu
 board: bk72xx
 ---
+
 LEDVANCE SMART PLUS PLUG EU based on BK7231T chip (WB2S).
 Can be flashed with esphome kickstart via tuya-cloudcutter.
 On publish date you need to use ESP-Home beta to build bk72xx targets.
@@ -16,14 +17,14 @@ voltage_divider and current_resistor are estimated.
 
 ## GPIO Pinout
 
-| Pin     | Function                           |
-| ------- | ---------------------------------- |
-| GPIO6   | Button                             |
-| GPIO7   | BL0937CF                           |
-| GPIO8   | BL0937CF1                          |
-| GPIO10  | LED inverted                       |
-| GPIO24  | Relay                              |
-| GPIO26  | BBL0937SEL                         |
+| Pin    | Function     |
+| ------ | ------------ |
+| GPIO6  | Button       |
+| GPIO7  | BL0937CF     |
+| GPIO8  | BL0937CF1    |
+| GPIO10 | LED inverted |
+| GPIO24 | Relay        |
+| GPIO26 | BBL0937SEL   |
 
 ## Basic Configuration
 
@@ -86,8 +87,6 @@ text_sensor:
     mac_address:
       name: ESP Mac Wifi Address
 
-
-
 light:
   - platform: status_led
     name: "led"
@@ -130,60 +129,61 @@ switch:
 # power monitoring
 #
 sensor:
-    # PC191HA includes a BL0937 chip for measuring power consumption
-    #     and BL0937 is a variation of hlw8012, but using inverted SEL pin functionality
+  # PC191HA includes a BL0937 chip for measuring power consumption
+  #     and BL0937 is a variation of hlw8012, but using inverted SEL pin functionality
   - platform: hlw8012
-    model: BL0937     # note that the model must be specified to use special calculation parameters
-    sel_pin:          # I believe that cf_pin reports either Voltage or Current depending on this select pin
-      inverted: true  # determine whether true reports Voltage
+    model: BL0937 # note that the model must be specified to use special calculation parameters
+    sel_pin: # I believe that cf_pin reports either Voltage or Current depending on this select pin
+      inverted: true # determine whether true reports Voltage
       number: P26
-    cf_pin:           # current or voltage (ele_pin: 7)
-      inverted: true  # the logic of BL0937 is opposite from HLW8012
+    cf_pin: # current or voltage (ele_pin: 7)
+      inverted: true # the logic of BL0937 is opposite from HLW8012
       number: P7
-    cf1_pin:          #  Power (vi_pin: 8)
-      inverted: true  # the logic of BL0937 is opposite from HLW8012
+    cf1_pin: #  Power (vi_pin: 8)
+      inverted: true # the logic of BL0937 is opposite from HLW8012
       number: P8
     update_interval: $update_interval_seconds # How often to measure and report values
 
     # PC191HA measures and returns Voltage OR Current according to the value of sel_pin,
     #     but it can change the value of sel_pin periodically
-    initial_mode: "VOLTAGE"             # reports VOLTAGE or CURRENT
-    change_mode_every: "4294967295"            # do NOT swap between reporting Volts or Amps (well, swap after 4000 years)
-        #   reporting Voltage or Current. Note that the first value reported should be ignored as inaccurate
+    initial_mode: "VOLTAGE" # reports VOLTAGE or CURRENT
+    change_mode_every:
+      "4294967295" # do NOT swap between reporting Volts or Amps (well, swap after 4000 years)
+      #   reporting Voltage or Current. Note that the first value reported should be ignored as inaccurate
 
     # Adjust according to the actual resistor values on board to calibrate the specific unit
-    voltage_divider:  "4456"               # LOWER VALUE GIVES LOWER VOLTAGE
-    current_resistor: "0.00045"          # HIGHER VALUE GIVES LOWER WATTAGE
+    voltage_divider: "4456" # LOWER VALUE GIVES LOWER VOLTAGE
+    current_resistor: "0.00045" # HIGHER VALUE GIVES LOWER WATTAGE
 
-# how the power monitoring values are returned to ESPHome
+    # how the power monitoring values are returned to ESPHome
     voltage:
       name: $friendly_name Voltage
-      id:   ${device_name_letters}_voltage
+      id: ${device_name_letters}_voltage
       unit_of_measurement: V
       accuracy_decimals: 1
       filters:
         - skip_initial: 2
     power:
       name: $friendly_name Power
-      id:   ${device_name_letters}_power
+      id: ${device_name_letters}_power
       unit_of_measurement: W
       accuracy_decimals: 2
       filters:
         - skip_initial: 2
 
     # power is simply current x voltage -- except that the pc191ha doesn't follow that formula.
-        # Setting current_resistor to give an accurate Amperage does NOT also give the correct Wattage
-        # my work-around is to calculate current from power / voltage
-  - platform: template  
+    # Setting current_resistor to give an accurate Amperage does NOT also give the correct Wattage
+    # my work-around is to calculate current from power / voltage
+  - platform: template
     name: $friendly_name Current
-    id:   ${device_name_letters}_current
+    id: ${device_name_letters}_current
     unit_of_measurement: A
     accuracy_decimals: 2
     update_interval: $update_interval_seconds
     lambda: |-
       return (id(${device_name_letters}_power).state / id(${device_name_letters}_voltage).state);
-    filters:  
-      - skip_initial: 5     # give time for data to settle to avoid NaN
+    filters:
+      - skip_initial: 5 # give time for data to settle to avoid NaN
 
   - platform: uptime
     name: ${friendly_name} Uptime

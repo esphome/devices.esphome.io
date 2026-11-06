@@ -9,7 +9,7 @@ Another Costco/Feit device. This template should work with DIM/WIFI, DIM/WIFI/2,
 
 Please take note that you will likely have to figure out how to reach the pins and do a serial firmware flash
 if the device is newer than March 2020. The tuya-convert method is non-functional with the most recent Tuya firmware.
-I have followed the method described [here](https://community.smartthings.com/t/costco-cheap-feit-smart-dimmer-wifi/208142)
+I have followed the method described [in this SmartThings community post](https://community.smartthings.com/t/costco-cheap-feit-smart-dimmer-wifi/208142)
 to perform a serial flash. It works as expected.
 
 I split these files myself, but the salient points are re-joined here. You will need to include your own WiFi, etc.

@@ -25,13 +25,13 @@ There are some unused GPIO pins exported to the main board. More information can
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO0  | Button 1            |
-| GPIO9  | Button 2            |
-| GPIO13 | Status LED          |
-| GPIO5  | Relay 1             |
-| GPIO12 | Relay 2             |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO0  | Button 1   |
+| GPIO9  | Button 2   |
+| GPIO13 | Status LED |
+| GPIO5  | Relay 1    |
+| GPIO12 | Relay 2    |
 
 ## Basic Configuration
 
@@ -115,7 +115,6 @@ sensor:
   - platform: wifi_signal
     name: ${friendly_name} WiFi Signal Sensor
     update_interval: 60s
-
 
 text_sensor:
   # IP address of device. Not really needed for HA (as HA already knows it), but for showing on the display during startup. The startup screen will leave on if no instance connects to the API.

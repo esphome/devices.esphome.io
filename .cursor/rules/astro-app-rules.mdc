@@ -1,0 +1,12 @@
+---
+description: Astro + Starlight App
+alwaysApply: true
+---
+
+# Astro + Starlight App
+
+- This is an Astro app using the Starlight docs theme, written in TypeScript with npm as the package manager.
+- Device documentation lives in `src/content/docs/devices/<slug>/index.md`. Astro content collections give type-safe access via `getCollection("docs")`.
+- Filter/listing pages (`src/pages/type/[type].astro`, `src/pages/board/[board].astro`, `src/pages/standards/[standard].astro`, `src/pages/made-for-esphome.astro`) wrap content in `<StarlightPage>` to reuse Starlight chrome.
+- Prefer editing existing Astro components before creating new ones.
+- Frontmatter validation is split: Zod schema in `src/content.config.ts` (field shapes, enums) and `scripts/validate-devices.ts` (folder name rules, date-not-future check).

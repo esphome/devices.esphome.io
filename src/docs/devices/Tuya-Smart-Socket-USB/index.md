@@ -1,7 +1,7 @@
 ---
 title: Tuya Smart Socket USB
 date-published: 2024-07-11
-type: relay, plug
+type: plug
 standard: global
 board: bk72xx
 ---
@@ -18,11 +18,11 @@ Contains CB2S BK7231n module.
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| P6     | Red Status LED (H)         |
-| P8     | Button INPUT_PULLUP        |
-| P24    | Relay (H)                  |
+| Pin | Function            |
+| --- | ------------------- |
+| P6  | Red Status LED (H)  |
+| P8  | Button INPUT_PULLUP |
+| P24 | Relay (H)           |
 
 ## Configuration
 

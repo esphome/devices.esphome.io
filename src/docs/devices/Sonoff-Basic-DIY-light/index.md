@@ -14,7 +14,7 @@ can be controlled by home assistant, whilst retaining the ease of use of
 a standard light that would also continue to work if the network went
 down, or Home Assistant failed etc.
 
-![Product Image](/sonoff_basic.jpg "Product Image")
+![Product Image](./sonoff_basic.jpg "Product Image")
 
 Use a *retractive* style light switch. That is one that is spring
 loaded and so always returns to the ``off`` position. It's effectively

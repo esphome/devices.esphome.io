@@ -1,0 +1,67 @@
+name: Device Configuration Issue
+description: Report an issue with an existing device configuration
+title: "[Config Issue] "
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thank you for reporting an issue with a device configuration!
+        Please provide as much detail as possible to help us resolve the
+        problem.
+
+  - type: input
+    id: device-name
+    attributes:
+      label: Device Name
+      description: What is the name of the device you're having issues with?
+      placeholder: e.g., "Sonoff Basic R2", "ESP32-CAM", "Shelly 1PM"
+    validations:
+      required: true
+
+  - type: input
+    id: device-url
+    attributes:
+      label: Device Page URL
+      description: Please provide the URL to the device page on devices.esphome.io
+      placeholder: https://devices.esphome.io/devices/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong?
+      description: Describe the issue you're experiencing with the device configuration
+      placeholder: |
+        Please describe:
+        - What you expected to happen
+        - What actually happens
+        - Any error messages you see
+        - Steps to reproduce the issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: esphome-version
+    attributes:
+      label: ESPHome Version
+      description: What version of ESPHome are you using?
+      placeholder: e.g., 2024.7.3, 2024.8.0-dev
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other information that might be helpful (hardware revisions, modifications, etc.)
+      placeholder: Include any additional context, configurations you've tried, or other relevant details
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ### File Uploads
+        You can attach images, logs, or configuration files by dragging and dropping them into the text area above.

@@ -28,9 +28,10 @@ substitutions:
 
 esphome:
   name: ${devicename}
-  platform: ESP8266
-  board: esp01_1m
   comment: "Shelly 1PM"
+
+esp8266:
+  board: esp01_1m
 
 logger:
 
@@ -85,18 +86,18 @@ sensor:
       state_class: measurement
       accuracy_decimals: 0
       filters:
-      # Map from sensor -> measured value
-      - calibrate_linear:
-          - 0.0 -> 1.0
-          - 110.33186 -> 20.62
-          - 131.01909 -> 24.32
-          - 341.33920 -> 62.08
-          - 5561.41553 -> 1000.0
-          - 2975.51221 -> 535.7
-          - 9612.66309 -> 1720.0
-          - 14891.35352 -> 2679.0
-      # Make everything below 2W appear as just 0W.
-      - lambda: if (x < 2) return 0; else return x;
+        # Map from sensor -> measured value
+        - calibrate_linear:
+            - 0.0 -> 1.0
+            - 110.33186 -> 20.62
+            - 131.01909 -> 24.32
+            - 341.33920 -> 62.08
+            - 5561.41553 -> 1000.0
+            - 2975.51221 -> 535.7
+            - 9612.66309 -> 1720.0
+            - 14891.35352 -> 2679.0
+        # Make everything below 2W appear as just 0W.
+        - lambda: if (x < 2) return 0; else return x;
     update_interval: 10s
 
   - platform: total_daily_energy
