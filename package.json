@@ -6,12 +6,20 @@
   "author": "",
   "license": "GPL-3.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=9.6.5"
+  },
   "scripts": {
     "dev": "npm run validate-devices && astro dev --host",
     "build": "npm run validate-devices && astro build",
     "preview": "astro preview",
     "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
+    "validate-esphome": "tsx scripts/validate-esphome-configs.ts",
+    "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
+    "check-workflow-scripts": "for f in .github/scripts/*.cjs; do node --check \"$f\" || exit 1; done",
+    "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",
     "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
     "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",
     "check-links": "tsx scripts/check-links.ts",
@@ -19,14 +27,18 @@
     "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/starlight": "^0.39.3",
-    "astro": "^6.4.4",
+    "@astrojs/markdown-remark": "^7.3.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.3.1",
     "gray-matter": "^4.0.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
-    "tsx": "^4.22.4"
+    "@esphome/netlify-plugin-cloudflare-cache-purge": "github:esphome/netlify-plugin-cloudflare-cache-purge#v1.0.1",
+    "@types/node": "^26.4.1",
+    "js-yaml": "^5.5.0",
+    "tsx": "^4.23.13",
+    "vfile": "^6.0.3"
   }
 }
