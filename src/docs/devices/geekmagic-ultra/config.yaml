@@ -68,3 +68,7 @@ display:
     lambda: |-
       it.fill(color_black);
       it.printf(0, 0, id(roboto), color_white, "Hello World!");
+
+external_components:
+  - source: github://esphome/esphome@dev
+    components: [gpio]
