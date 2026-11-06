@@ -6,7 +6,7 @@ standard: global
 board: esp32
 ---
 
-![image](/tracer-an.jpg)
+![image](./tracer-an.jpg)
 
 Tested with Tracer-AN Series 10A/20A/30A/40A and XTRA Series
 10A/20A/30A/40A. Probably works for other EPEver MPPT controllers as
@@ -399,6 +399,7 @@ sensor:
     register_type: read
     value_type: U_DWORD_R
     accuracy_decimals: 1
+    device_class: "power"
     filters:
       - multiply: 0.01
 
@@ -435,6 +436,7 @@ sensor:
     register_type: read
     value_type: U_DWORD_R
     accuracy_decimals: 1
+    device_class: "power"
     filters:
       - multiply: 0.01
 
@@ -471,6 +473,7 @@ sensor:
     register_type: read
     value_type: U_DWORD_R
     accuracy_decimals: 1
+    device_class: "power"
     filters:
       - multiply: 0.01
 
@@ -635,6 +638,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 0
     unit_of_measurement: "Wh"
+    device_class: "energy"
     filters:
       - multiply: 10.0
 
@@ -647,6 +651,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 0
     unit_of_measurement: "Wh"
+    device_class: "energy"
     filters:
       - multiply: 10.0
 
@@ -659,6 +664,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 1
     unit_of_measurement: "kWh"
+    device_class: "energy"
     filters:
       - multiply: 0.01
 
@@ -671,6 +677,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 1
     unit_of_measurement: "kWh"
+    device_class: "energy"
     filters:
       - multiply: 0.01
 
@@ -688,6 +695,7 @@ sensor:
         - sensor.template.publish:
             id: generated_charge_today
             state: !lambda "return x/12.0;"
+    device_class: "energy"
     filters:
       - multiply: 10.0
 
@@ -700,6 +708,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 0
     unit_of_measurement: "Wh"
+    device_class: "energy"
     filters:
       - multiply: 10.0
 
@@ -712,6 +721,7 @@ sensor:
     value_type: U_DWORD_R
     accuracy_decimals: 1
     unit_of_measurement: "kWh"
+    device_class: "energy"
     filters:
       - multiply: 0.01
 
@@ -723,6 +733,8 @@ sensor:
     register_type: read
     value_type: U_DWORD_R
     accuracy_decimals: 1
+    unit_of_measurement: "kWh"
+    device_class: "energy"
     filters:
       - multiply: 0.01
 
@@ -1232,4 +1244,4 @@ sensor:
 
 ## See Also
 
-- [EPEVER Tracer Modbus Registers](http://www.solar-elektro.cz/data/dokumenty/1733_modbus_protocol.pdf)
+- [EPEVER Tracer Modbus Registers](https://www.solarpoweredhome.co.uk/1733_modbus_protocol.pdf)

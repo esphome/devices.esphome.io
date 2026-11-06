@@ -7,9 +7,12 @@ board: esp8266
 ---
 
 This device did not have a serial number. FCC-ID is [2AKBP](https://fccid.io/2AKBP-X10S).
-This device shares the FCC-ID with [Kauf plugs](https://www.amazon.com/gp/product/B09JQ8MMNH/) and also [Cloudfree smartplug 2](https://cloudfree.shop/product/cloudfree-smart-plug-runs-tasmota/)
+This device shares the FCC-ID with [Kauf plugs](https://www.amazon.com/gp/product/B09JQ8MMNH/) and also
+[Cloudfree smartplug 2](https://cloudfree.shop/product/cloudfree-smart-plug-runs-tasmota/)
 
-This template was based on the AWP04L template and modified for this device. I used a Kill-A-Watt meter to measure voltage, current and watts of the plug with and without a downstream device turned on. The downstream device was an LED bulb. Power Factor was .93 on the Kill-A-Watt meter
+This template was based on the AWP04L template and modified for this device. I used a Kill-A-Watt meter to measure
+voltage, current and watts of the plug with and without a downstream device turned on. The downstream device was an LED
+bulb. Power Factor was .93 on the Kill-A-Watt meter
 
 The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/aoycocr_X10S.html) documentation.
 
@@ -38,17 +41,15 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome.html#esp8266-restore-from-flash
+  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
-  fast_connect: on #we only have one WiFi AP so just use the first one that matches
-  ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
-    ssid: ${friendly_name}_AP
-    password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 captive_portal:
 
@@ -138,7 +139,7 @@ sensor:
     change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
     update_interval: 10s #20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -242,7 +243,7 @@ light:
             if (state == 2)
               state = 0;
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the red light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the red light for other things as well.
 interval:
   - interval: 500ms
     then:
@@ -261,11 +262,13 @@ interval:
                 transition_length: 250ms
 ```
 
-Note: You will want to exclude the red_led and blue_led lights from your recorder component, especially if you use the included Throb custom animation, since that would fill your database with the on/off blinking status updates.
+Note: You will want to exclude the red_led and blue_led lights from your recorder component, especially if you use the
+included Throb custom animation, since that would fill your database with the on/off blinking status updates.
 
 ## Split Configuration
 
-If you have several of these plugs, you may prefer to keep the shared code in one file and only put the device-specific code in the files for each plug.
+If you have several of these plugs, you may prefer to keep the shared code in one file and only put the device-specific
+code in the files for each plug.
 
 In aoycocr_x10s_common:
 
@@ -275,18 +278,14 @@ In aoycocr_x10s_common:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
-  use_address: ${ipaddress}
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: ${friendly_name}_AP
-    password: !secret fallbackpass
 
 captive_portal:
 
@@ -379,7 +378,7 @@ sensor:
     change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
     update_interval: 10s #20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -483,7 +482,7 @@ light:
             if (state == 2)
               state = 0;
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the red light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the red light for other things as well.
 interval:
   - interval: 500ms
     then:

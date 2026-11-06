@@ -29,23 +29,33 @@ The device comes with Tasmota installed, but can be reflashed to ESPHome.
 | GPIO14 | Relay1     |
 | GPIO15 | None       |
 | GPIO16 | Button1    |
-|  FLAG  | None       |
+| FLAG   | None       |
 
 ## Basic Configuration
 
 ```yaml
-
-captive_portal:
-
 substitutions:
   friendly_name: "A5T"
   devicename: "nous-a5t"
-  upper_devicename: "Nous A5T"
+  device_description: "nous a5t"
+  project_name: "Nous.A5T"
+  project_version: "1.0"
+  relay_restore_mode: RESTORE_DEFAULT_OFF
 
 esphome:
   name: $devicename
-  platform: ESP8266
+  friendly_name: "${friendly_name}"
+  name_add_mac_suffix: false
+  project:
+    name: "${project_name}"
+    version: "${project_version}"
+
+esp8266:
   board: esp8285
+  restore_from_flash: true
+
+preferences:
+  flash_write_interval: 1min
 
 logger:
   baud_rate: 0
@@ -67,26 +77,20 @@ wifi:
     ssid: "${friendly_name} Fallback Hotspot"
     password: !secret wifi_ap_password
 
+captive_portal:
+
 ota:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Enable Web server
-web_server:
-  port: 80
-
-text_sensor:
-  - platform: version
-    name: "${friendly_name} - Version"
-    icon: mdi:cube-outline
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} - IP Address"
-    mac_address:
-      name: "${friendly_name} - Mac Address"
+globals:
+  - id: total_energy
+    type: float
+    restore_value: yes
+    initial_value: "0.0"
 
 binary_sensor:
   - platform: status
@@ -98,30 +102,16 @@ binary_sensor:
       number: GPIO16
       # mode: INPUT_PULLUP
       inverted: True
-    id: "${friendly_name}_button_state0"
+    id: "button_state0"
     on_press:
-      - switch.toggle: button_switch1
-      - switch.toggle: button_switch2
-      - switch.toggle: button_switch3
+      - switch.turn_off: relay1
+      - switch.turn_off: relay2
+      - switch.turn_off: relay3
+      - switch.turn_off: relay4
 
 sensor:
-  - platform: wifi_signal
-    name: "${friendly_name} - Wifi Signal"
-    update_interval: 60s
-    icon: mdi:wifi
-
   - platform: uptime
-    name: "${friendly_name} - Uptime"
-    update_interval: 60s
-    icon: mdi:clock-outline
-
-  - platform: total_daily_energy
-    name: "${friendly_name} - Energie"
-    power_id: "power_wattage"
-    filters:
-      - multiply: 0.001
-    unit_of_measurement: kWh
-    icon: mdi:calendar-clock
+    name: "${friendly_name} Uptime Sensor"
 
   # Small buttons over ADC - see https://templates.blakadder.com/nous_A5T.html
   - platform: adc
@@ -129,147 +119,106 @@ sensor:
     id: a0_vcc
     update_interval: 1s
     internal: true
+    filters:
+      - clamp:
+          min_value: 0
+          max_value: 4
+          ignore_out_of_range: true
+      - timeout:
+          timeout: 1s
+          value: 4
     on_value_range:
-      - below: 4
+      - below: 1.5
         then:
-          - lambda: !lambda |-
-              if (id(a0_vcc).state > 3) {
-                id(relay1).toggle();
-              } else if (id(a0_vcc).state <= 3 && id(a0_vcc).state > 2) {
-                id(relay2).toggle();
-              } else {
-                id(relay3).toggle();
-              }
+          - switch.toggle: relay3
+      - above: 1.5
+        below: 2.5
+        then:
+          - switch.toggle: relay2
+      - above: 2.5
+        below: 3.5
+        then:
+          - switch.toggle: relay1
 
   - platform: cse7766
     current:
-      name: "${friendly_name} - Ampere"
-      unit_of_measurement: A
-      accuracy_decimals: 3
-      icon: mdi:current-ac
+      name: "${friendly_name} Current"
       filters:
-        # Map from sensor -> measured value
-        - calibrate_linear:
-            - 0.0 -> 0.013
-            - 0.061 -> 0.065
-            - 0.153 -> 0.1565
-            - 5.072 -> 3.1869
-            - 6.573 -> 6.7608
-        # Make everything below 0.01A appear as just 0A.
-        # Furthermore it corrects 0.013A for the power usage of the plug.
-        - lambda: if (x < (0.01 - 0.013)) return 0; else return (x - 0.013);
+        - throttle: 10s
+
     voltage:
-      name: "${friendly_name} - Volt"
-      unit_of_measurement: V
-      accuracy_decimals: 1
-      icon: mdi:flash-outline
+      name: "${friendly_name} Voltage"
       filters:
-        # Map from sensor -> measured value
-        - calibrate_linear:
-            - 0.0 -> 0.0
-            - 95.5 -> 230.0
+        - multiply: 2.4
+        - throttle: 10s
+
     power:
-      name: "${friendly_name} - Watt"
-      unit_of_measurement: W
-      id: "power_wattage"
-      icon: mdi:gauge
+      name: "${friendly_name} Power"
+      id: power_sensor
       filters:
-        # Map from sensor -> measured value
-        - calibrate_linear:
-            - 0.0 -> 2.2
-            - 3.0 -> 15
-            - 11.6 -> 36
-            - 87 -> 284
-            - 274.3 -> 733
-            - 569.5 -> 1555
-        # Make everything below 2W appear as just 0W.
-        # Furthermore it corrects 1.14W for the power usage of the plug.
-        - lambda: if (x < (2 + 2.2)) return 0; else return (x - 2.2);
+        - multiply: 2.4
+        - throttle: 1s
 
     energy:
-      name: "${friendly_name} - Energie"
-      unit_of_measurement: Wh
-      icon: mdi:calendar-clock
+      name: "${friendly_name} Energy"
+      id: energy
+      unit_of_measurement: kWh
+      filters:
+        # Multiplication factor from W to kW is 0.001
+        # and multiple by 2.4 because of the voltage factor
+        - multiply: 0.0024
+        - throttle: 1s
+      on_value:
+        then:
+          - lambda: |-
+              static float previous_energy_value = 0.0;
+              float current_energy_value = id(energy).state;
+              id(total_energy) += current_energy_value - previous_energy_value;
+              previous_energy_value = current_energy_value;
 
-status_led:
-  pin:
-    number: GPIO02
-    inverted: True
-  id: led_blue
+  - platform: template
+    name: "${friendly_name} Total Energy"
+    unit_of_measurement: kWh
+    device_class: "energy"
+    state_class: "total_increasing"
+    icon: "mdi:lightning-bolt"
+    accuracy_decimals: 3
+    lambda: |-
+      return id(total_energy);
+    update_interval: 60s
+
+light:
+  - platform: status_led
+    name: "${friendly_name} Status LED"
+    id: blue_led
+    disabled_by_default: true
+    pin:
+      inverted: true
+      number: GPIO2
 
 switch:
-  - platform: template
-    name: "${friendly_name} - Switch 1"
-    icon: mdi:power
-    lambda: |-
-      if (id(relay1).state) {
-        return true;
-      } else {
-        return false;
-      }
-    id: button_switch1
-    turn_on_action:
-      - switch.turn_on: relay1
-    turn_off_action:
-      - switch.turn_off: relay1
-  - platform: template
-    name: "${friendly_name} - Switch 2"
-    icon: mdi:power
-    lambda: |-
-      if (id(relay2).state) {
-        return true;
-      } else {
-        return false;
-      }
-    id: button_switch2
-    turn_on_action:
-      - switch.turn_on: relay2
-    turn_off_action:
-      - switch.turn_off: relay2
-  - platform: template
-    name: "${friendly_name} - Switch 3"
-    icon: mdi:power
-    lambda: |-
-      if (id(relay3).state) {
-        return true;
-      } else {
-        return false;
-      }
-    id: button_switch3
-    turn_on_action:
-      - switch.turn_on: relay3
-    turn_off_action:
-      - switch.turn_off: relay3
-  - platform: template
-    name: "${friendly_name} - Switch USB"
-    icon: mdi:power
-    lambda: |-
-      if (id(relay4).state) {
-        return true;
-      } else {
-        return false;
-      }
-    id: button_switch4
-    turn_on_action:
-      - switch.turn_on: relay4
-    turn_off_action:
-      - switch.turn_off: relay4
   - platform: gpio
+    name: "${friendly_name} - Switch 1"
     pin: GPIO14
     id: relay1
-    restore_mode: ALWAYS_ON
+    restore_mode: ${relay_restore_mode}
+
   - platform: gpio
+    name: "${friendly_name} - Switch 2"
     pin: GPIO12
     id: relay2
-    restore_mode: ALWAYS_ON
+    restore_mode: ${relay_restore_mode}
+
   - platform: gpio
+    name: "${friendly_name} - Switch 3"
     pin: GPIO13
     id: relay3
-    restore_mode: ALWAYS_ON
+    restore_mode: ${relay_restore_mode}
+
   - platform: gpio
+    name: "${friendly_name} - USB Switch"
     pin: GPIO5
     inverted: True
     id: relay4
-    restore_mode: ALWAYS_ON
-
+    restore_mode: ${relay_restore_mode}
 ```

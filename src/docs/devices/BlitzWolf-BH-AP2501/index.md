@@ -9,8 +9,8 @@ made-for-esphome: False
 difficulty: 5
 ---
 
-  ![alt text](/product.jpg "Product Image")
-  ![alt text](/ESP12F.jpg "ESP MCU Image")
+![alt text](./product.jpg "Product Image")
+![alt text](./ESP12F.jpg "ESP MCU Image")
 
 ## General Notes
 
@@ -35,7 +35,6 @@ substitutions:
   device_description: "Clean air good."
   time_timezone: "Europe/Amsterdam"
 
-
 esphome:
   name: $device_name
   friendly_name: $device_friendly_name
@@ -47,9 +46,9 @@ esp8266:
 
 # Enable status LED
 status_led:
-    pin:
-      number: GPIO2
-      inverted: true
+  pin:
+    number: GPIO2
+    inverted: true
 
 # Enable logging
 logger:
@@ -69,11 +68,8 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: $device_friendly_name
-    password: !secret wifi_fallback_password
+
 captive_portal:
 
 # Initialize the UART that connects to the Tuya MCU
@@ -84,7 +80,6 @@ uart:
 
 # Register the Tuya MCU connection
 tuya:
-
 
 # Fan control
 output:
@@ -129,7 +124,6 @@ output:
                         - fan.turn_on:
                             id: tuya_fan
                             speed: 2
-
 
 fan:
   - platform: speed

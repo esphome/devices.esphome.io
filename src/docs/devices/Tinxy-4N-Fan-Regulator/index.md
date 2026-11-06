@@ -12,15 +12,35 @@ Tinxy 4 Node Retrofit Module with Fan Regulator
 
 ## Preparing the device for flashing
 
-Start by carefully removing the heat shrink sleeve. Next, desolder the W2 and W3 bridges located on the backside of the Tinxy board, as shown in the provided image. Connect wires from the Tinxy board's RXD, TXD, 3.3V, and GND pads to a USB TTL adapter, making sure to swap the connections for RXD and TXD.
+Start by carefully removing the heat shrink sleeve. Next, desolder the W2 and W3 bridges located on the backside of the
+Tinxy board, as shown in the provided image. Connect wires from the Tinxy board's RXD, TXD, 3.3V, and GND pads to a USB
+TTL adapter, making sure to swap the connections for RXD and TXD.
 
-Press and hold the Tinxy reset button while connecting the TTL adapter to your computer. Flash the firmware as soon as the esp8266 is detected, as the soldered on esp8266 tends to reboot if it didnt detect pwm signal from the MCU on GPIO14.
+Press and hold the Tinxy reset button while connecting the TTL adapter to your computer. Flash the firmware as soon as
+the ESP8266 is detected, as the soldered on ESP8266 tends to reboot if it didn't detect PWM signal from the MCU on
+GPIO14.
 
-Once the flashing is complete, resolder the W2 and W3 bridges as before, remove the TTL wires, and reapply the heat shrink sleeve to complete the modification.
+Once the flashing is complete, resolder the W2 and W3 bridges as before, remove the TTL wires, and reapply the heat
+shrink sleeve to complete the modification.
 
-**Note**: Unlike other devices, Tinxy Esp8266 communicates with the MCU using serial data to activate the relay. So its neccessry to disconnect the W2 and W3 serial bridge between Esp and MCU to ensure no intereference while flashing and reconnecting it is crucial to esnsure proper functioning.
+**Note**: Unlike other devices, Tinxy ESP8266 communicates with the MCU using serial data to activate the relay. So it's
+necessary to disconnect the W2 and W3 serial bridge between ESP and MCU to ensure no interference while flashing and
+reconnecting it is crucial to ensure proper functioning.
 ![Tinxy](tinxy3.jpg "W2 and W3 Bridge")
-Knowledge Credit: [Tinxy Forum](https://forum.tinxy.in/t/flashing-custom-firmware-like-tasmota-or-esphome-and-then-restoring-back-to-original/32)
+Knowledge Credit:
+[Tinxy Forum](https://forum.tinxy.in/t/flashing-custom-firmware-like-tasmota-or-esphome-and-then-restoring-back-to-original/32)
+
+As of 10/2024, Tinxy 4N with fan regulator devices failed flashing with the ESPHome web flasher because it uses a baud
+rate of 115200.
+If flashing doesn't work, try flashing via [esptool.py](https://github.com/espressif/esptool) where the baud rate can be
+set.
+The baud rate was identified to be 460800.  If this fails in the future try other baud rates.
+
+## esptool.py Code
+
+```bash
+python3 -m esptool --port /dev/ttyUSB0 --baud 460800 --before no_reset --after hard_reset write_flash -fm dio 0x00000 firmware.bin
+```
 
 ## Esp Code
 
@@ -206,11 +226,11 @@ number:
             return uartBytes;
 ```
 
-## Uart reading library
+## UART reading library
 
 Place the uart_read_line_sensor.h library under esphome directory
 
-```Library
+```cpp
 #include "esphome.h"
 class UartReadLineSensor : public Component, public UARTDevice, public TextSensor {
  public:

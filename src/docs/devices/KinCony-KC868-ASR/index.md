@@ -6,11 +6,10 @@ standard: global
 board: esp32
 ---
 
-
 ## GPIO Pinout
 
 | Pin    | Function            |
-| ------ | ------------------  |
+| ------ | ------------------- |
 | GPIO19 | Relay1              |
 | GPIO5  | Relay2              |
 | GPIO23 | LED1                |
@@ -33,7 +32,7 @@ esphome:
   name: KC868-ASR
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -65,7 +64,6 @@ i2c:
   scan: true
   id: bus_a
 
-
 switch:
   - platform: gpio
     pin: GPIO19
@@ -74,14 +72,14 @@ switch:
   - platform: gpio
     pin: GPIO5
     name: "asr-relay2"
-  
+
   - platform: gpio
     pin: GPIO23
-    name: "asr-led1"  
-  
+    name: "asr-led1"
+
   - platform: gpio
     pin: GPIO22
-    name: "asr-led2"  
+    name: "asr-led2"
 
   - platform: gpio
     pin: GPIO18
@@ -94,12 +92,12 @@ binary_sensor:
       inverted: true
     name: "asr-button"
 
-dallas:
+one_wire:
   - pin: 32
     update_interval: 5s
 
 sensor:
-  - platform: dallas
+  - platform: dallas_temp
     address: 0x7b062162cfe98128
     name: "asr-t2"
 ```

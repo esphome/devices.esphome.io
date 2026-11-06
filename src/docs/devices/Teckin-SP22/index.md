@@ -33,7 +33,7 @@ esphome:
 
 esp8266:
   board: esp01_1m
-  
+
 # Enable logging
 logger:
 
@@ -48,8 +48,8 @@ ota:
   password: !secret esp_ota_pass
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   ap:
     ssid: SP22_AP
@@ -115,5 +115,4 @@ sensor:
       name: "HLW8012 Energy"
     update_interval: 10s
     change_mode_every: 3
-
 ```

@@ -35,7 +35,7 @@ esphome:
   name: KC868-M16
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -71,28 +71,28 @@ sensor:
     pin: 35
     id: adc35
     update_interval: never
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     name: "m16--AI-1"
     pin: 36
     id: adc36
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     pin: 34
     name: "m16--AI-2"
     id: adc34
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     pin: 39
     name: "m16--AI-3"
     id: adc39
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: cd74hc4067
     id: ai1

@@ -12,7 +12,8 @@ Model reference: BW-SHP9
 
 The powerstrip has four controllable relays, one for each socket, and one for the dual 2.4A usb power.
 
-Manufacturer: [BlitzWolf](https://www.blitzwolf.com/BlitzWolf-BW-SHP9-15A-3300W-Smart-Power-Strip---3-Outlets-EU-with-Dual-USB-2.4A-Output,-Remote-Control,-Timing-Function,-Voice-Control,-Safety-Protection-and-Indicator-Light-p-417.html)
+Manufacturer:
+[BlitzWolf](https://www.blitzwolf.com/BlitzWolf-BW-SHP9-15A-3300W-Smart-Power-Strip---3-Outlets-EU-with-Dual-USB-2.4A-Output,-Remote-Control,-Timing-Function,-Voice-Control,-Safety-Protection-and-Indicator-Light-p-417.html)
 
 ## How to flash
 
@@ -47,7 +48,8 @@ Manufacturer: [BlitzWolf](https://www.blitzwolf.com/BlitzWolf-BW-SHP9-15A-3300W-
 ## Basic Config
 
 The configuration has some default sensors for wifi reporting etc.
-There are LED's showing the state of each socked, but they are not settable through GPIO's, they just reflect the state of the socket directly.
+There are LED's showing the state of each socked, but they are not settable through GPIO's, they just reflect the state
+of the socket directly.
 
 ```yaml
 substitutions:
@@ -61,12 +63,14 @@ substitutions:
 
 esphome:
   name: '${device_name}'
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipw
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
   baud_rate: 0
@@ -135,7 +139,8 @@ In the esphome section, you can perform actions when the device boots:
       - switch.turn_on: relay4
 ```
 
-Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect) and create a backup AP
+Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect)
+and create a backup AP
 
 ```yaml
 wifi:

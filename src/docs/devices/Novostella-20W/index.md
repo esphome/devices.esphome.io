@@ -6,7 +6,9 @@ standard: us
 board: esp8266
 ---
 
-5-channel PWM RGBWW smart flood light, 2700k-6500k tunable white with RGB colors, 20W, 2000LM, 120V AC, IP66 Waterproof, natively Tuya/Smart Life, works with Tuya-convert to flash to ESPHome. FCC-ID is [2AI5T-SFGD-002](https://fccid.io/2AI5T-SFGD-002/Internal-Photos/Internal-photos-4401574).
+5-channel PWM RGBWW smart flood light, 2700k-6500k tunable white with RGB colors, 20W, 2000LM, 120V AC, IP66 Waterproof,
+natively Tuya/Smart Life, works with Tuya-convert to flash to ESPHome. FCC-ID is
+[2AI5T-SFGD-002](https://fccid.io/2AI5T-SFGD-002/Internal-Photos/Internal-photos-4401574).
 
 This template has been updated with "comment:" and "captive_portal:" feautures added in ESPHome v. 1.14
 
@@ -23,7 +25,7 @@ This template has been updated with "comment:" and "captive_portal:" feautures a
 ## Basic Configuration
 
 ```yaml
-#Novostella 20W Flood Light, https://amzn.to/3d6NVEY
+#Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
 #https://blakadder.github.io/templates/novostella_20W_flood.html
 substitutions:
@@ -34,16 +36,17 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: on #we only have one WiFi AP so just use the first one that matches
   ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
     ssid: ${friendly_name}_AP
-    password: !secret wifipass
+    password: !secret wifi_password
 
 captive_portal:
 
@@ -164,30 +167,32 @@ interval:
 
 ## Split Configuration
 
-If you have several of these bulbs, you may prefer to keep the shared code in one file and only put the device-specific code in the files for each bulb.
+If you have several of these bulbs, you may prefer to keep the shared code in one file and only put the device-specific
+code in the files for each bulb.
 
 In novoflood_common.yaml:
 
 ```yaml
 # Common code for Novostella 20W Flood Lights
 
-#Novostella 20W Flood Light, https://amzn.to/3d6NVEY
+#Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
 #https://blakadder.github.io/templates/novostella_20W_flood.html
 
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: on #we only have one WiFi AP so just use the first one that matches
   ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
     ssid: ${friendly_name}_AP
-    password: !secret wifipass
+    password: !secret wifi_password
 
 captive_portal:
 

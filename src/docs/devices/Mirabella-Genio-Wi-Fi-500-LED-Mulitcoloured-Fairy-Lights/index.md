@@ -26,12 +26,13 @@ This is for [Mirabella Genio Wi-Fi 500 LED Mulitcoloured Fairy Lights](https://w
 ```yaml
 esphome:
   name: fairy_lights
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
-  ssid: "ssid"
-  password: "wifi_password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:

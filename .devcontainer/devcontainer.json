@@ -1,0 +1,10 @@
+{
+  "name": "ESPHome Devices",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [8000],
+  "postCreateCommand": "npm install",
+  "postAttachCommand": "npm run start -- --host 0.0.0.0"
+}

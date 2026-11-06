@@ -1,17 +1,40 @@
 ---
 title: DETA Grid Connect Smart Dimmer Switch 6910HA
-date-published: 2022-06-23
+date-published: 2024-09-18
 type: dimmer
 standard: au
-board: esp8266
+board: bk72xx
 ---
 
 ## General Notes
 
-The DETA [Smart Dimmer Switch 6910HA](https://www.bunnings.com.au/deta-white-grid-connect-smart-touch-single-dimmer_p0237206) uses the UART on GPIO 1 and 3. This switch comes with a WB3S chip and requires replacement in order to be used with ESPHome.
-It is still possible to convert these switches to ESPHome by replacing the WB3S chip with a ESP-12F chip and adding a 10k pull-down resister on GPIO15 as WB3S does not require it and omits it from the board.
+The DETA
+[Smart Dimmer Switch 6910HA](https://www.bunnings.com.au/deta-white-grid-connect-smart-touch-single-dimmer_p0237206)
+This device comes with a Tuya WB3S chip and there are now two methods to make this device compatible with ESPHome:
 
-## GPIO Pinout
+1. **Use [Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to flash the device.**
+2. **Swap out the chip with a compatible one.**
+
+### Using Cloudcutter
+
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the process of
+flashing Tuya-based devices. It allows you to bypass the need for physically opening the device and swapping out chips.
+By leveraging the cloud APIs, Cloudcutter enables you to flash the firmware remotely, making it a convenient and less
+intrusive option. Follow the instructions on the
+[Cloudcutter GitHub repository](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to use this method for flashing
+your 6910HA device.  
+Use profile 1.1.9 bk7231s_common_iot_config_ty
+
+### Swap chip
+
+replacing the WB3S chip with a ESP-12F chip and adding a 10k pull-down resister on GPIO15 as WB3S does not require it
+and omits it from the board.
+There's a useful guide to disassemble and serial flash these switches [on Mike McGuire's blog][1]. After that, you can
+use ESPHome's OTA functionality to make any further changes.
+
+[1]: https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/
+
+### ESP-Based Pinout
 
 | Pin    | Function      |
 | ------ | ------------- |
@@ -21,36 +44,50 @@ It is still possible to convert these switches to ESPHome by replacing the WB3S 
 | RES    | 10k pull-up   |
 | GPIO15 | 10k pull-down |
 
-## Getting it up and running
+### BK72XX-Based Pinout
 
-These switches are Tuya devices, however as the main W3BS chip needs to be replaced with a ESP12F it is best to serial flash the unit. There's useful guide to disassemble and serial flash these switches [here.](https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/) After that, you can use ESPHome's OTA functionality to make any further changes.
+| Pin | Function |
+| --- | -------- |
+| RX1 | Tuya Rx  |
+| TX1 | Tuya Tx  |
 
 ## Dimmer Configuration
+
+The dimmer requires the Tuya MCU and will expose 4 datapoints
+
+1. = Switch
+2. = Dimmer setting 0-1000 This is the light setting
+3. = Min Dimmer setting 0 - 1000 When pressing the button this is the lowest the dimmer will go to
+4. = Countdown timer in seconds to turn off the light ie 600 = 10Min
 
 ```yaml
 substitutions:
   device_name: detadimmerwitch
   friendly_name: "Dimmer Switch"
-  device_ip: 192.168.0.x
 
 #################################
 
 esphome:
-  platform: ESP8266
-  board: esp01_1m
   name: ${device_name}
-  esp8266_restore_from_flash: true
+  friendly_name: ${friendly_name}
+
+# ESP-Based Board
+#board: esp01_1m
+#esp8266_restore_from_flash: true
+
+bk72xx:
+  board: wb3s
+
+# disable logging over UART
+logger:
+  baud_rate: 0
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  manual_ip:
-    static_ip: ${device_ip}
-    gateway: 192.168.0.1
-    subnet: 255.255.255.0
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "ESPHOME"
+    ssid: "${device_name} Fallback"
     password: "12345678"
 
 api:
@@ -58,11 +95,26 @@ api:
     key: !secret api_encryption_key
 
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    password: !secret ota_password
 
 # The web_server & sensor components can be removed without affecting core functionaility.
 web_server:
   port: 80
+
+#################################
+captive_portal:
+
+# espsetup
+#uart:
+#  rx_pin: GPIO3
+#  tx_pin: GPIO1
+#  baud_rate: 9600
+
+uart:
+  rx_pin: P10
+  tx_pin: P11
+  baud_rate: 9600
 
 sensor:
   - platform: wifi_signal
@@ -70,17 +122,6 @@ sensor:
     update_interval: 60s
   - platform: uptime
     name: ${device_name} Uptime
-
-#################################
-# disable logging over UART
-logger:
-  baud_rate: 0
-
-# setup UART for Tuya mcu
-uart:
-  rx_pin: GPIO3
-  tx_pin: GPIO1
-  baud_rate: 9600
 
 # Register the Tuya MCU connection
 tuya:
@@ -93,6 +134,7 @@ light:
     dimmer_datapoint: 2
     # dimmer on/off
     switch_datapoint: 1
+    min_value_datapoint: 3
     min_value: 0
     max_value: 1000
 

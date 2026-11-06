@@ -33,9 +33,10 @@ substitutions:
 esphome:
   name: $device_name
   comment: $device_description
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true
+  restore_from_flash: true
 
 logger:
 api:
@@ -45,11 +46,10 @@ api:
 ota:
   password: "password"
 wifi:
-  ssid: "wifi_ssid"
-  password: "wifi_password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: $friendly_name
-    password: "password"
+
 captive_portal:
 
 output:

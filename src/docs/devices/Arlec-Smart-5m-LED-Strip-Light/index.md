@@ -12,7 +12,7 @@ This configuration is for the [Arlec Smart 2m LED Strip Light](https://www.bunni
 and [Arlec Smart 5m LED Strip Light](https://www.bunnings.com.au/arlec-smart-5m-colour-changing-plus-white-led-strip-light-with-grid-connect_p0099708)
 which comes as a colour changing LED strip with controller and transformer.
 
-![Arlec Smart 5m LED Strip Light](/Arlec-Smart-5m-LED-Strip-Light.jpg "Arlec Smart 5m LED Strip Light")
+![Arlec Smart 5m LED Strip Light](./Arlec-Smart-5m-LED-Strip-Light.jpg "Arlec Smart 5m LED Strip Light")
 
 ## GPIO Pinout
 
@@ -28,12 +28,14 @@ which comes as a colour changing LED strip with controller and transformer.
 ```yaml
 esphome:
   name: led_strip
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: "ssid"
-  password: "password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
 

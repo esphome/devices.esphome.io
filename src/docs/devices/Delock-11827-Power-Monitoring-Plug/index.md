@@ -51,13 +51,13 @@ substitutions:
 
 esphome:
   name: ${plug_name}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipw
-
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "${plug_name} Fallback Hotspot"

@@ -16,22 +16,18 @@ board: esp8266
 ```yaml
 esphome:
   name: p1_01
-  platform: ESP8266
+
+esp8266:
   board: esp8285
-  esp8266_restore_from_flash: true
+  restore_from_flash: true
 
 substitutions:
   plug_name: p1_01
 
 wifi:
-  ssid: "ssid"
-  password: !secret wifi_key
-  domain: !secret domain
-  #use_address: 192.168.6.6
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: "${plug_name} Fallback Hotspot"
-    password: !secret Fallback_Hotspot
 
 captive_portal:
 

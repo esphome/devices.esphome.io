@@ -28,7 +28,8 @@ For newer devices, use a USB to serial adapter, and solder wires onto the pads m
 ```yaml
 esphome:
   name: gosundsw5
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 # Enable logging
@@ -40,13 +41,9 @@ api:
 ota:
 
 wifi:
-  ssid: "ssid"
-  password: "PASSWORD"
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: "Gosund Fallback Hotspot"
-    password: "ul57sDUAqbcl"
 
 captive_portal:
 

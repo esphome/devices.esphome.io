@@ -10,6 +10,10 @@ board: esp8266
 
 ![alt text](diffuser.png)
 
+### Updated for ESPHOME 2025.2.0 and later (2025-03-04)
+
+[https://esphome.io/guides/contributing#a-note-about-custom-components](https://esphome.io/guides/contributing#a-note-about-custom-components)
+
 ### Working
 
 - All essential oil diffuser related controls (ON/OFF; LOW/HIGH; Timer 1H/3H/6H).
@@ -36,10 +40,19 @@ You can use the ESPHome add-on from Home Assistant Community Add-ons
 ## Basic Configuration
 
 ```yaml
-# Basic Config
+external_components:
+  - source: github://antibill51/Alfawise_SJ-7_HASSIO/esphome
+
 substitutions:
   name: alfawise
   friendly_name: "alfawise SJ-7"
+
+# ! (START) VALUES TO CHANGE !
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+  ap_password: "xxx"
+  ota_password: xxx
+# ! (END) VALUES TO CHANGE !
 
   #commands
   receive_timer1h: "55:AA:03:1F:09:01:2B"
@@ -59,9 +72,6 @@ substitutions:
 
 esphome:
   name: ${name}
-  includes:
-    - uart_read_line_sensor.h
-    - fake_fan_output.h
 
   on_boot:
     priority: -100.0
@@ -76,14 +86,14 @@ esphome:
 esp8266:
   board: esp01_1m
 debug:
-# Enable logging
 logger:
   baud_rate: 0
   level: debug
   esp8266_store_log_strings_in_flash: False
 
 ota:
-  password: "xxx"
+  - platform: esphome  
+    password: ${ota_password}
 
 uart:
   id: uart_bus
@@ -91,23 +101,23 @@ uart:
   rx_pin: GPIO3
   baud_rate: 9600
   stop_bits: 1
-#  debug:
-#    direction: BOTH
-#    dummy_receiver: false
-#    after:
-#      delimiter: "\n"
-#      bytes: 256
-#    sequence:
-#      - lambda: UARTDebug::log_hex(direction, bytes, ':');
+  # debug:
+  #   direction: BOTH
+  #   dummy_receiver: false
+  #   after:
+  #     delimiter: "\n"
+  #     bytes: 256
+  #   sequence:
+  #     - lambda: UARTDebug::log_hex(direction, bytes, ':');
 
 wifi:
-  ssid: "xxx"
-  password: "xxx"
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "${friendly_name} Fallback Hotspot"
-    password: "xxx"
+    password: ${ap_password}
 api:
 web_server:
   port: 80
@@ -175,15 +185,10 @@ time:
 
 # Text sensors with UART received information.
 text_sensor:
-  - platform: custom
-    lambda: |-
-      auto uart_readline = new UartReadLineSensor(id(uart_bus));
-      App.register_component(uart_readline);
-      return {uart_readline};
-    text_sensors:
-      id: "uart_readline"
-      name: ${name} serial
-
+  - platform: uart_readline_custom
+    id: uart_readline
+    name: ${name} serial
+    uart_id: uart_bus
   - platform: wifi_info
     ip_address:
       name: ${name} ip
@@ -198,7 +203,7 @@ sensor:
   # Uptime sensor
   - platform: uptime
     name: ${name} uptime
-    unit_of_measurement: days
+    unit_of_measurement: d
     update_interval: 300s
     accuracy_decimals: 1
     filters:
@@ -208,6 +213,10 @@ sensor:
     name: ${name} signal
     update_interval: 60s
     accuracy_decimals: 0
+
+output:
+  - platform: fake_fan_output
+    id: fanoutput
 
 switch:
   - platform: template
@@ -247,7 +256,9 @@ switch:
         - uart.write: [0x55, 0xAA, 0x03, 0x09, 0x01, 0x00, 0x0c]
         - delay: 1h
         - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
-
+    turn_off_action:
+      then:
+        - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
   - platform: template
     id: timer3h
     name: ${name} Timer 3H
@@ -287,13 +298,7 @@ switch:
         - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
     turn_off_action:
       then:
-        - if:
-            condition:
-              and:
-                - fan.is_on: ${name}_fan
-            then:
-              - uart.write: [0x55, 0xAA, 0x03, 0x09, 0x01, 0x00, 0x0c]
-
+        - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
   - platform: template
     id: timer6h
     name: ${name} Timer 6H
@@ -331,16 +336,9 @@ switch:
         - uart.write: [0x55, 0xAA, 0x03, 0x09, 0x03, 0x00, 0x0e]
         - delay: 6h
         - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
-
     turn_off_action:
       then:
-        - if:
-            condition:
-              and:
-                - fan.is_on: ${name}_fan
-            then:
-              - uart.write: [0x55, 0xAA, 0x03, 0x09, 0x01, 0x00, 0x0c]
-
+        - uart.write: [0x55, 0xaa, 0x03, 0x0e, 0x00, 0x00, 0x10]
   - platform: template
     id: power_high
     icon: mdi:fan
@@ -365,7 +363,6 @@ switch:
       - uart.write: [0x55, 0xAA, 0x03, 0x07, 0x02, 0x00, 0x0B]
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x07, 0x00, 0x00, 0x09]
-
     on_turn_on:
       - switch.template.publish:
           id: power_low
@@ -395,10 +392,8 @@ switch:
       }
     turn_on_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x07, 0x01, 0x00, 0x0A]
-
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x07, 0x00, 0x00, 0x09]
-
     on_turn_on:
       - switch.template.publish:
           id: power_high
@@ -418,7 +413,6 @@ switch:
       - uart.write: [0x55, 0xaa, 0x03, 0x03, 0x03, 0x00, 0x08]
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x03, 0x01, 0x00, 0x06]
-
   - platform: template
     name: ${name} Lava Lamp
     id: lava_lamp
@@ -440,7 +434,6 @@ switch:
         return {};
       }
     turn_on_action:
-      - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
       - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x01, 0x01, 0x06]
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
@@ -478,12 +471,9 @@ switch:
         return {};
       }
     turn_on_action:
-      - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
       - uart.write: [0x55, 0xaa, 0x03, 0x0c, 0x01, 0x00, 0x0f]
-
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
-
     on_turn_on:
       - switch.template.publish:
           id: rainbow_fast
@@ -518,12 +508,9 @@ switch:
         return {};
       }
     turn_on_action:
-      - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
       - uart.write: [0x55, 0xaa, 0x03, 0x0c, 0x03, 0x00, 0x11]
-
     turn_off_action:
       - uart.write: [0x55, 0xaa, 0x03, 0x02, 0x00, 0x01, 0x05]
-
     on_turn_on:
       - switch.template.publish:
           id: lava_lamp
@@ -575,21 +562,12 @@ switch:
                               speed: 2
         - switch.turn_off: update_fan_speed
 
-output:
-  - platform: custom
-    type: float
-    outputs:
-      id: fanoutput
-    lambda: |-
-      auto ${name}_fan = new FakeFanOutput();
-      App.register_component(${name}_fan);
-      return {${name}_fan};
-
 fan:
   - platform: speed
     output: fanoutput
     id: ${name}_fan
     name: "${friendly_name} Fan"
+
     speed_count: 2
     on_turn_on:
       then:
@@ -601,8 +579,6 @@ fan:
                   id: ${name}_fan
                   speed: 1
               - switch.turn_on: power_low
-              - delay: 500ms
-              - switch.turn_on: timer1h
             else:
               - if:
                   condition:
@@ -664,162 +640,7 @@ fan:
                   then:
                     - delay: 500ms
                     - switch.turn_on: timer1h
-
 captive_portal:
-```
-
-## fake_fan_output.h
-
-```c
-
-#include "esphome.h"
-using namespace esphome;
-
-class FakeFanOutput : public Component, public FloatOutput {
-  public:
-    void write_state(float state) override {
-      if (state < 0.1) {
-        // OFF
-
-      } else if (state < 0.5) {
-        // low speed
-
-      } else {
-        // high speed
-
-      }
-    }
-};
-
-```
-
-## uart_read_line_sensor.h
-
-```c
-
-#include "esphome.h"
-
-
-
-static int pos = 0;
-char outputBuffer[3];
-const int max_line_length = 80;
-static char buffer[max_line_length];
-int j = 0;
-int startMarker = 0x55;
-int secondMarker = 0xAA;
-int timeOut = 50;
-bool receiveUntilTimeout;
-bool valuesending = false;
-int timeReceived;
-
-class UartReadLineSensor : public Component, public UARTDevice, public TextSensor {
- public:
-  UartReadLineSensor(UARTComponent *parent) : UARTDevice(parent) {}
-
-
-// Helper function for converting byte value to 2-digit hex string
-  void byte2HexStr(byte val, char* outputBuffer){
-
-    const char HEX_DIGITS[17] = "0123456789ABCDEF";
-
-    byte upper_nibble_index = (val & 0xf0) >> 4;
-    byte lower_nibble_index = val & 0xf;
-
-    outputBuffer[0] = HEX_DIGITS[upper_nibble_index];
-    outputBuffer[1] = HEX_DIGITS[lower_nibble_index];
-    outputBuffer[2] = '\0';
-  }
-
-
-  void setup() override {
-    // nothing to do here
-  }
-
-  int sendvalue(char* buffer, bool valuesending)
-  {
-    valuesending = true;
-    std::string myStrObject;
-    myStrObject = "";
-    // buffer size
-    for(int i = max_line_length; i > 0; i--) {
-      if (j == 0) {
-        if (buffer[i] > 0 ) {
-          j = i + 1;
-          break;
-        }
-      }
-    }
-    // convert to hex
-    for(int i = 0; i < j; i++) {
-      byte2HexStr(buffer[i], outputBuffer);
-      myStrObject += outputBuffer;
-      // add separator except for the last element
-      if(i < j - 1) {
-        myStrObject += ":";
-      }
-    }
-    // publish result
-    publish_state(myStrObject.c_str());
-    // reset var
-    j = 0;
-    pos = 0;
-    for( int i = 0; i < max_line_length + 1;  ++i )
-    buffer[i] = (char)0;
-    valuesending = false;
-    return 1;
-  }
-
-  // Store values
-  int storevalue(char* buffer, int readch, bool UntilTimeout, bool valuesending)
-  {
-    while (valuesending == true) {
-      delay(200);
-    }
-    buffer[pos++] = readch;
-    buffer[pos] = 0;
-    if (UntilTimeout) {
-      receiveUntilTimeout = true;
-    }
-    timeReceived = millis();
-    return 1;
-  }
-
-  void loop() override {
-    int readch;
-    if (available() >= 1 && !receiveUntilTimeout) {
-      readch = Serial.read();
-      if (readch == startMarker) {
-        storevalue(buffer, readch, true, valuesending);
-      }
-    }
-    if (receiveUntilTimeout) {
-      if (Serial.available() > 0)
-      {
-        readch = Serial.read();
-        if (readch == startMarker) {
-          sendvalue(buffer,valuesending);
-        }
-        if (readch == secondMarker) {
-          if (pos > 1 ) {
-            sendvalue(buffer,valuesending);
-            storevalue(buffer, 0x55, false, valuesending);
-          }
-        }
-        storevalue(buffer, readch, false, valuesending);
-      }
-      else //Serial.available == 0 and nothing to read
-      {
-        if (millis() - timeReceived >= timeOut)
-        {
-          receiveUntilTimeout = false;
-          sendvalue(buffer,valuesending);
-        }
-      }
-    }
-  }
-};
-
 ```
 
 ## Home Assistant integration
@@ -828,9 +649,9 @@ class UartReadLineSensor : public Component, public UARTDevice, public TextSenso
 
 For lovelace card, you need this HACS Addons :
 
-- custom:vertical-stack-in-card https://github.com/ofekashery/vertical-stack-in-card
-- custom:fan-percent-button-row https://github.com/finity69x2/fan-percent-button-row
-- custom:paper-buttons-row https://github.com/jcwillox/lovelace-paper-buttons-row
+- custom:vertical-stack-in-card [https://github.com/ofekashery/vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
+- custom:fan-percent-button-row [https://github.com/finity69x2/fan-percent-button-row](https://github.com/finity69x2/fan-percent-button-row)
+- custom:paper-buttons-row [https://github.com/jcwillox/lovelace-paper-buttons-row](https://github.com/jcwillox/lovelace-paper-buttons-row)
 
 File diffuser.png need to be in this path : config/www/
 
@@ -841,13 +662,17 @@ type: custom:vertical-stack-in-card
 cards:
   - type: picture-entity
     entity: switch.schedule_lave_linge
-    image: /local/diffuser.png
+    image: /local/ressources/diffuseur/diffuseur.png
     show_state: false
     show_name: false
     tap_action:
       action: none
     hold_action:
       action: none
+    style: |
+      ha-card {
+        border: none;
+      }
   - type: entities
     entities:
       - entity: fan.alfawise_sj_7_fan
@@ -917,6 +742,11 @@ cards:
             style:
               button:
                 width: 15%
+    style: |
+      ha-card {
+        border: none;
+        margin-top: -2%;
+      }
 ```
 
 ### Lovelace card screenshot
@@ -925,6 +755,7 @@ cards:
 
 ## Original firmware
 
-I have put a backup of the original firmware, and I also modified the AMA HOME APK but only for reconnect the original firmware to Wifi, ssg360 seems down.
+I have put a backup of the original firmware, and I also modified the AMA HOME APK but only for reconnect the original
+firmware to Wifi, ssg360 seems down.
 
-https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware
+[https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware](https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware)

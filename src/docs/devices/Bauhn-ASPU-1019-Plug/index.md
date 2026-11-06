@@ -24,9 +24,12 @@ They can be flashed without disassembly or soldering [using tuya-convert](#tuya-
 
 ### Tuya Convert
 
-These wall plugs are Tuya devices, and you can compile the below code in ESPHome, "manually install" to get the .bin file, then [use tuya-convert to initially get ESPHome onto the device](/guides/tuya-convert/). After that, you can use ESPHome's OTA functionality to make any further changes.
+These wall plugs are Tuya devices, and you can compile the below code in ESPHome, "manually install" to get the .bin
+file, then [use tuya-convert to initially get ESPHome onto the device](/devices/tuya-convert). After that, you can use
+ESPHome's OTA functionality to make any further changes.
 
-- Put the switch into "smartconfig" / "autoconfig" / pairing mode by holding the button for about 5 seconds until it clicks
+- Put the switch into "smartconfig" / "autoconfig" / pairing mode by holding the button for about 5 seconds until it
+  clicks
 - The status LED blinks rapidly to confirm that it has entered pairing mode.
 
 - Be patient with tuya-convert, and you may need to try a few times to get tuya-convert to connect to the device
@@ -47,8 +50,9 @@ esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: "ssid"
-  password: "password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
 

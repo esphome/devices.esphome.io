@@ -6,21 +6,24 @@ standard: eu
 board: esp8266
 ---
 
+## General Notes
+
+This device have two versions, with ESP or Bekken microcontroller.
+You are now looking at ESP configuration, Bekken version can be found [in the Gosund SP211 BK72XX documentation](../Gosund-SP211-BK72XX/).
+
+## Configuration
+
 ```yaml
 esphome:
   name: sp211
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # domain: !secret domain
-  # use_address: 192.168.6.52
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "${plug_name} Fallback Hotspot"
-    password: !secret fallback_password
 
 captive_portal:
 

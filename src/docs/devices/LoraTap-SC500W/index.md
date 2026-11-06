@@ -5,6 +5,7 @@ date-published: 2021-11-29
 type: relay
 standard: global
 board: esp8266
+difficulty: 4
 ---
 
 ![alt text](LoraTap-SC500W.png "Product Image")
@@ -31,22 +32,18 @@ The configuration below will simply set up the device as a 2-gang switch for lig
 substitutions:
   device_name: SC500W
   friendly_name: "SC500W"
-  device_ip: 192.168.x.x
   device_description: "SC500W"
 
 esphome:
   name: ${device_name}
   comment: "${device_description}"
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  manual_ip:
-    static_ip: ${device_ip}
-    gateway: 192.168.0.1
-    subnet: 255.255.255.0
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "ESPHOME"

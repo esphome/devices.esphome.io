@@ -2,7 +2,7 @@
 title: Gosund SP1
 Model: SP1
 date-published: 2021-12-27
-type: relay
+type: plug
 standard: eu
 board: esp8266
 ---
@@ -32,7 +32,8 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 # WiFi connection
@@ -40,14 +41,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: ${device_name}_fallback
-    password: !secret ap_password
-    ap_timeout: 1min
-  use_address: ${device_name}.local
-  manual_ip:
-    static_ip: 192.168.XXX.XX
-    gateway: 192.168.XXX.X
-    subnet: 255.255.255.0
 
 captive_portal:
 # Enable logging

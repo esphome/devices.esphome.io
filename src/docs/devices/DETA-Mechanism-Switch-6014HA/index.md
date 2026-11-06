@@ -117,9 +117,9 @@ light:
     output: relay1
     id: light1
     on_turn_on:
-     - light.turn_on: status1
+      - light.turn_on: status1
     on_turn_off:
-     - light.turn_off: status1
+      - light.turn_off: status1
   - platform: status_led
     id: status1
     pin:

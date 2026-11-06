@@ -1,14 +1,15 @@
 ---
 title: Sonoff POWR1
 date-published: 2019-11-11
-type: plug
+type: relay
 standard: global
 board: esp8266
+difficulty: 3
 ---
 
 ## Product Images
 
-![A picture of the PCB inside of the SONOFF POWR1](/inside.jpg "inside")
+![A picture of the PCB inside of the SONOFF POWR1](./inside.jpg "inside")
 
 ## GPIO Pinout
 
@@ -29,7 +30,8 @@ board: esp8266
 # Basic Config
 esphome:
   name: "SonOff POW r1"
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
   board_flash_mode: dout
 

@@ -18,7 +18,7 @@ There are two versions of this plug, a 10A version and a 15A version. The pinout
 
 ## GPIO Pinout
 
-| Pin    | Function (<2020)    | Function (>2020)    |
+| Pin    | Function (&lt;2020)    | Function (&gt;2020)    |
 | ------ | ------------------- | ------------------- |
 | GPIO0  | Red LED (inverted)  | Red LED (inverted)  |
 | GPIO2  | Blue LED (inverted) | Blue LED (inverted) |
@@ -31,7 +31,7 @@ There are two versions of this plug, a 10A version and a 15A version. The pinout
 
 ## HLW8012 Calibration Values
 
-| Value   | <2020   | >2020   |
+| Value   | &lt;2020   | &gt;2020   |
 | ------- | ------- | ------- |
 | Current | 0.00290 | 0.00117 |
 | Voltage | 940     | 755     |
@@ -58,16 +58,18 @@ substitutions:
 
 esphome:
   name: "${device_name}"
-  platform: ESP8266
-  board: esp8285
   on_boot:
     then:
       - switch.turn_on: relay
       - output.turn_on: led
 
+esp8266:
+  board: esp8285
+
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipw
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
   baud_rate: 0
@@ -156,7 +158,8 @@ sensor:
 
 ## Advanced config additions
 
-Starting with ESPHome v1.16.1 the `hlw8012` platform sensor now supports energy, so we can add the following to the `hlw8012` platform sensor and get rid of the `total_daily_energy` platform sensor and the `homeassistant` time sensor:
+Starting with ESPHome v1.16.1 the `hlw8012` platform sensor now supports energy, so we can add the following to the
+`hlw8012` platform sensor and get rid of the `total_daily_energy` platform sensor and the `homeassistant` time sensor:
 
 ```yaml
 sensor:
@@ -167,7 +170,8 @@ sensor:
       icon: mdi:flash-outline
 ```
 
-Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect) and create a backup AP
+Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect)
+and create a backup AP
 
 ```yaml
 wifi:

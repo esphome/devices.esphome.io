@@ -1,10 +1,35 @@
 ---
 title: Geeni Outdoor Duo
-date-published: 2019-12-27
+date-published: 2024-01-24
 type: plug
 standard: us
 board: esp8266
 ---
+
+[Amazon Link](https://www.amazon.com/dp/B07SQB5PKQ)
+
+[Manufacturer Link](https://mygeeni.com/products/outdoor-duo-dual-outlet-smart-wi-fi-plug-grey)
+
+## Product Image
+
+![Geeni Outdoor Duo](image.jpg)
+
+## Description
+
+This device has two plugs, a green LED, a blue LED, and a button. The LEDs and button sit directly under a translucent
+rubber cap.
+
+The plug is based on the Tuya WB3S module which is pin compatable with the ESP12 series of ESP8266 modules.
+The factory WB3S can be converted using [tuya convert](https://devices.esphome.io/devices/tuya-convert) (untested on this
+model), but it is equally possible to replace the WB3S with an ESP12 with some basic hot air rework.
+
+The control board is completely seperate from the relay board and can be removed easily for soldering.
+
+If the module is going to be replaced with an ESP12 it is recommended to program the module using a USB board burning
+fixture, however it is still fairly straightforward to program the board using the using any 3.3v USB to Serial cable.
+
+There are no pin headers broken out onto the board. First time programming connections will have to be made by soldering
+or spring pins.
 
 ## GPIO Pinout
 
@@ -22,23 +47,31 @@ board: esp8266
 # Basic Config
 esphome:
   name: geeni_outdoor
-  platform: ESP8266
+  friendly_name:
+    geeni
+    # Change board to 'esp12e' if the original Tuya WB3S has been desoldered and replaced with an ESP12
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: "ssid"
-  password: "wifi_password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 logger:
 
 api:
   encryption:
-    key: !secret encryption_key
+    key:
+      !secret encryption_key
+      # Or copy the encription key from the "Add Device" menu of ESPHome
 
 ota:
-  password: "OTA_password"
+  password: !secret ota_password
 
-web_server:
+#web_server:
+#  port: 80
+# Running the web server may cause issues on lower memory modules
 
 binary_sensor:
   - platform: gpio
@@ -47,6 +80,20 @@ binary_sensor:
       mode: INPUT_PULLUP
       inverted: True
     name: "Button"
+    on_multi_click:
+      # Support a single or double click to switch on each relay
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.5s
+        then:
+          - switch.toggle: relay_left
+      - timing:
+          - ON for at most 1s
+          - OFF for at most 1s
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - switch.toggle: relay_right
 
 switch:
   - platform: gpio

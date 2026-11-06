@@ -14,9 +14,9 @@ made-for-esphome: false
 
 ## GPIO Pinout
 
-| Pin    | Function             |
-| ------ | -------------------- |
-| GPIO04 | Brightness           |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO04 | Brightness |
 
 ## Basic Configuration
 

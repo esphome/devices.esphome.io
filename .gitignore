@@ -54,10 +54,6 @@ typings/
 # dotenv environment variable files
 .env*
 
-# gatsby files
-.cache/
-public
-
 # Mac files
 .DS_Store
 
@@ -67,3 +63,12 @@ yarn-error.log
 .pnp.js
 # Yarn Integrity file
 .yarn-integrity
+
+# Astro build output
+dist/
+.astro/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

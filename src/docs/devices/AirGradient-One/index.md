@@ -32,7 +32,7 @@ esphome:
   name: "${devicename}"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
 
 # Disable logging
 # https://esphome.io/components/logger.html
@@ -52,7 +52,7 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
+  ap:
 
 web_server:
   port: 9926

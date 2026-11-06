@@ -5,7 +5,14 @@ type: misc
 standard: global
 board: esp8266
 ---
-![Product Image](/AVATTO-S06-WiFi-IR-Universal-Remote-Controller.jpg "Product Image")
+
+![Product Image](./AVATTO-S06-WiFi-IR-Universal-Remote-Controller.jpg "Product Image")
+
+## General Notes
+
+There's two hardware iterations of this particular IR blaster: the older version documented here that uses an ESP01
+module, and [a newer one that uses a CB3S module](/devices/AVATTO-S06-IR-Remote-no-temp-no-humidity-new-version) (a
+Beken BK7231N module in the same form factor as the older ESP01). Outwardly, both appear identical.
 
 ## GPIO Pinout
 
@@ -23,7 +30,7 @@ a mobile charger during the flashing procedure, as the used serial cable sets to
 Which is 3.3V in this case.
 
 | Serial | ESP         |
-| ---    | ----        |
+| ------ | ----------- |
 | RX     | TX          |
 | TX     | RX          |
 | RTS    | RESET       |
@@ -54,21 +61,17 @@ between the GPIO13 and the RESET pin of the ESP8266 MCU.
 ```yaml
 # Basic Config
 ---
-
-# https://esphome.io/devices/esp8266.html
+# https://esphome.io/components/esp8266/
 esphome:
   name: ir_remote
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret ssid
-  password: !secret wlan_password
-  fast_connect: true
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: IR Remote Fallback Hotspot
-    password: !secret ap_password
 
 captive_portal:
 
@@ -84,11 +87,11 @@ api:
 ota:
   password: !secret ota_password
 
-# https://esphome.io/components/status_led.html
+# https://esphome.io/components/status_led/
 status_led:
   pin: 4
 
-# https://esphome.io/components/remote_receiver.html
+# https://esphome.io/components/remote_receiver/
 remote_receiver:
   id: rcvr
   pin:
@@ -96,13 +99,13 @@ remote_receiver:
     mode: INPUT_PULLUP
     inverted: True
 
-# https://www.esphome.io/components/remote_transmitter.html
+# https://www.esphome.io/components/remote_transmitter/
 remote_transmitter:
   id: tamtr
   pin: 14
   carrier_duty_percent: 50%
 
-# https://esphome.io/components/climate/ir_climate.html
+# https://esphome.io/components/climate/climate_ir/
 climate:
   - platform: toshiba
     id: ac
@@ -112,7 +115,7 @@ climate:
 
 switch:
   - platform: template
-    name: 'AC Preset'
+    name: "AC Preset"
     id: ac_preset
     icon: mdi:cached
     turn_on_action:
@@ -123,7 +126,7 @@ switch:
           fan_mode: AUTO
           swing_mode: VERTICAL
 
-    # https://esphome.io/components/switch/shutdown.html
+    # https://esphome.io/components/switch/shutdown/
   - platform: shutdown
     name: "IR Remote Shutdown"
     id: ir_remote_shutdown

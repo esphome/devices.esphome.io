@@ -32,20 +32,16 @@ substitutions:
 
 esphome:
   name: ${unique_id}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true
+  restore_from_flash: true
 
 # WiFi connection
 wifi:
-  ssid: !secret iot_wifi_ssid
-  password: !secret iot_wifi_password
-  power_save_mode: none
-  fast_connect: true
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: "${displayname}"
-    password: !secret ap_mode_password
 
 captive_portal:
 

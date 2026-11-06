@@ -8,7 +8,7 @@ board: esp8266
 
 ## General Notes
 
-This plug use tuya so you can [use tuya-convert to flash ESPHome](/guides/tuya-convert/).
+This plug use tuya so you can [use tuya-convert to flash ESPHome](/devices/tuya-convert).
 The UART ports is connected to GPIO1 and GPIO3.
 The on/off switch is on datapoint 20 and the dimmer is on datapoint 22.
 
@@ -24,7 +24,8 @@ The on/off switch is on datapoint 20 and the dimmer is on datapoint 22.
 ```yaml
 esphome:
   name: dimmable_light
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 ota:
@@ -36,8 +37,8 @@ api:
     key: !secret api_encryption_key
 
 wifi:
-  ssid: WIFI_SSID
-  password: "WIFI_PASSWORD"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 #  use_address: X.X.X.X
 
 mqtt:

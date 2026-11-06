@@ -9,11 +9,11 @@ board: esp8266
 Arlec Grid Connect products are a Tuya-based smart devices
 sold by Bunnings and Kmart respectively in Australia.
 
-![image](/brilliant-mirabella-genio-smart-plugs.jpg)
+![image](./brilliant-mirabella-genio-smart-plugs.jpg)
 
 ## Basic Configuration
 
-``` yaml
+```yaml
 substitutions:
   name: arlec_pc389ha_001
   friendly_name: Arlec Smart Plug
@@ -27,9 +27,7 @@ esp8266:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap: {}
+  ap:
 
 captive_portal:
 

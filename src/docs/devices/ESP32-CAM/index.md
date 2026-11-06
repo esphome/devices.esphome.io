@@ -34,12 +34,14 @@ board: esp32
 # https://www.banggood.com/Geekcreit-ESP32-CAM-WiFi-bluetooth-Camera-Module-Development-Board-ESP32-With-Camera-Module-OV2640-p-1394679.html
 esphome:
   name: esp_cam02
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
 wifi:
-  ssid: "ssid"
-  password: "ssid_password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
   #level: INFO

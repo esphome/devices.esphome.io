@@ -26,12 +26,14 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: "ssid"
-  password: "password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
 

@@ -6,11 +6,14 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3r3bpTx)
+[Amazon Link](https://www.amazon.com/dp/B07D8RKCYC)
 
 ## General Notes
 
-This switch uses tuya so you can [use tuya-convert to flash ESPHome](/guides/tuya-convert/).
+This switch uses tuya so you can [use tuya-convert to flash ESPHome](/devices/tuya-convert).
+
+**Note**: Newer versions (2025+) of this switch seem to use a locked CB3S module and might not be flashable; replacement
+with an ESP8266 module may be required.
 
 ## GPIO Pinout
 
@@ -27,7 +30,7 @@ This switch uses tuya so you can [use tuya-convert to flash ESPHome](/guides/tuy
 # Basic Config
 ---
 substitutions:
-  #   # https://esphome.io/guides/configuration-types.html#substitutions
+  #   # https://esphome.io/guides/configuration-types/
   device_name: martin_jerry_mj_s01 # hostname & entity_id
   friendly_name: Martin Jerry MJ-S01 # Displayed in HA frontend
   ip_address: !secret martin_jerry_mj_s01_ip # use /config/esphome/secrets.yaml
@@ -41,9 +44,9 @@ esp8266:
   restore_from_flash: true
 
 wifi:
-  # https://esphome.io/components/wifi
-  ssid: !secret wifissid
-  password: !secret wifipass
+  # https://esphome.io/components/wifi/
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   manual_ip:
     static_ip: ${ip_address}
     gateway: !secret wifigateway
@@ -51,7 +54,7 @@ wifi:
     dns1: !secret wifidns
   ap:
     ssid: ${friendly_name}_AP
-    password: !secret wifipass
+    password: !secret wifi_password
     channel: 1
     manual_ip:
       static_ip: 192.168.1.1
@@ -60,19 +63,19 @@ wifi:
 
 web_server:
   port: 80
-  # https://esphome.io/components/web_server.html
+  # https://esphome.io/components/web_server/
 
 logger:
-  # https://esphome.io/components/logger
+  # https://esphome.io/components/logger/
 
 api:
   encryption:
     key: !secret encryption_key
-  # https://esphome.io/components/api
+  # https://esphome.io/components/api/
 
 ota:
   password: !secret esphome_ota_password
-  # https://esphome.io/components/ota
+  # https://esphome.io/components/ota/
 
 switch:
   # relay output
@@ -90,14 +93,14 @@ switch:
       - switch.turn_on: red_led
 
   - platform: gpio
-    # https://esphome.io/components/switch/gpio.html
+    # https://esphome.io/components/switch/gpio/
     pin: GPIO04
     id: red_led
     name: $friendly_name Red LED
     inverted: true
 
   - platform: gpio
-    # https://esphome.io/components/switch/gpio.html
+    # https://esphome.io/components/switch/gpio/
     pin: GPIO05
     id: blue_led
     name: $friendly_name Blue LED
@@ -105,7 +108,7 @@ switch:
 
 binary_sensor:
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     pin:
       number: GPIO13
       mode: INPUT_PULLUP
@@ -139,3 +142,19 @@ sensor:
   - platform: wifi_signal
     name: $friendly_name wifi signal
 ```
+
+## Fully-featured package ("SS01")
+
+[@joshuaboniface](https://github.com/joshuaboniface) has created a fully-featured, packaged configuration for this
+device,
+which permits quick flashing with a pre-compiled binary as well as automatic adoption, deployment, and updates. This
+requires
+either an ESP8266-based version of the switch, or swapping out the CB3S module for an ESP8266 module (2025 purchase
+version).
+
+**Note**: The relay seems to have changed in the recent revisions of this switch (2025 purchase) and these do not seem
+to
+invert the relay pin any longer in my tests. If you use an older revision, you may need to tweak the configuration below
+to account for this, though the author only has recent versions to test with.
+
+[Github Project Link](https://github.com/joshuaboniface/martinjerry-esphome)

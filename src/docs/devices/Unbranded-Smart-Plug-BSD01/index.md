@@ -6,11 +6,16 @@ standard: global, us
 board: esp8266
 ---
 
-This device did not have a serial number, brand name or FCC ID. Bought from AliExpress. The plugs I received did not respond to tuya-convert so a hard flash was necessary.
+This device did not have a serial number, brand name or FCC ID. Bought from AliExpress. The plugs I received did not
+respond to tuya-convert so a hard flash was necessary.
 
-The plug uses a wifi module with ID ajw-02_8285. Not much online but enough to figure out the pin pads for a hard flash. A couple of users have gone before me and desoldered the module from the main board but I chose to solder DuPont cables to the pin pads and then use a pik tool to trigger flash mode via GPIO0. If I can figure out how to upload images here I'll do that later.
+The plug uses a wifi module with ID ajw-02_8285. Not much online but enough to figure out the pin pads for a hard flash.
+A couple of users have gone before me and desoldered the module from the main board but I chose to solder DuPont cables
+to the pin pads and then use a pik tool to trigger flash mode via GPIO0. If I can figure out how to upload images here
+I'll do that later.
 
-The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/BSD01.html) documentation and adapted through trial and error.
+The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder.com/BSD01.html) documentation and
+adapted through trial and error.
 
 ## GPIO Pinout
 
@@ -27,7 +32,8 @@ The GPIO pinout was learned from [Blakadder Tasmota](https://templates.blakadder
 # Type BSD01 plug (AliExpress x 5)
 esphome:
   name: ${lower_devicename}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 logger:

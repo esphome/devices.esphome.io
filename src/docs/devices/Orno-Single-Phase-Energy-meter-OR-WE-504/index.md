@@ -1,6 +1,6 @@
 ---
 title: Orno Single Phase Energy meter OR-WE-504
-date-published: 2023-06-13
+date-published: 2024-01-27
 type: misc
 standard: eu
 board: esp32
@@ -8,194 +8,180 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function  |
-| ------ | --------- |
-| GPIO03 | modbus RX |
-| GPIO01 | modbus TX |
+| Pin    | Function         |
+| ------ | ---------------- |
+| GPIO03 | RS485 adapter TX |
+| GPIO01 | RS485 adapter RX |
+
+Note: you may need to reverse the RX/TX cabling depending on your platform.
 
 ## Connection
 
-Use RS485 adapter like this one: https://esphome.io/_images/rs485.jpg
-This one works with 3.3V and does direction switching automatically
+Use a RS485 adapter (RS485 to TTL) like [this one](https://esphome.io/images/rs485.jpg).
+
+## ESPHome configuration
+
+Available memory registries can be found [in the Tasmota discussions](https://github.com/arendst/Tasmota/discussions/15541#discussion-4053434).
 
 ```yaml
 esphome:
   name: energy_meter
-  platform: ESP8266
-  board: esp12e
 
-# Configure logging
-# turn off logging because RX/TX pins used for modbus
-logger:
-  level: DEBUG
-  baud_rate: 0 #off
+esp32:
+  variant: esp32
 
-# Enable Home Assistant API
 api:
 
 ota:
-  password: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  password: "CHANGE_ME"
 
 wifi:
   ssid: "your ssid"
-  password: "your-wlan-password"
+  password: "your password"
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Fallback Hotspot"
-    password: "xxxxxxxxxxxx"
-
-captive_portal:
+# Turn off logging because RX/TX pins used for modbus
+logger:
+  level: DEBUG
+  baud_rate: 0 # off
 
 uart:
   id: mod_bus
   rx_pin: GPIO03
   tx_pin: GPIO01
-  # required for this meter type
   baud_rate: 9600
   parity: EVEN
   stop_bits: 1
 
 modbus:
   id: modbus1
-  # flow_control_pin: 5
-  # not needed for my RS485 converter, but likely useful for ones with DE / RE pins
 
 modbus_controller:
-  - id: orno_we_514 # most likely similar devices will work as well
-    # the Modbus device addr
+  - id: orno_we_504
     address: 0x1
     modbus_id: modbus1
     setup_priority: -10
+    update_interval: 20s
 
 sensor:
+  # Voltage
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Modbus ID"
-    id: orno_we_514_modbus_id
-    register_type: holding
-    address: 0x0110
-    unit_of_measurement: ""
-    value_type: U_WORD
-  - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Modbus Baudrate"
-    id: orno_we_514_modbus_baudrate
-    register_type: holding
-    address: 0x0111
-    unit_of_measurement: ""
-    value_type: U_WORD
-  - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "LCD Dislay state"
-    id: orno_we_514_modbus_lcd_display_state
-    register_type: holding
-    address: 0x112
-    unit_of_measurement: ""
-    value_type: U_WORD
-  #LCD activation code:
-  #bit0:active energy
-  #bit1：reactive energy
-  #bit2：voltage
-  #Bit3：current
-  #bit4：active power bit5：reactivepower
-  #bit6：Apparent power
-  #Bit7：power factor；measure mode
-  - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Grid Frequency"
-    id: orno_we_514_modbus_grid_frequency
-    register_type: holding
-    address: 0x0130
-    unit_of_measurement: "hz"
-    value_type: U_WORD
-    accuracy_decimals: 2
-    filters:
-      - multiply: 0.01
-  - platform: modbus_controller
-    modbus_controller_id: orno_we_514
+    modbus_controller_id: orno_we_504
     name: "Voltage"
-    id: orno_we_514_modbus_voltage
+    id: orno_we_504_modbus_voltage
     register_type: holding
-    address: 0x0131
+    address: 0
+    device_class: VOLTAGE
     unit_of_measurement: "V"
     value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Current
+  - platform: modbus_controller
+    modbus_controller_id: orno_we_504
+    name: "Current"
+    id: orno_we_504_modbus_current
+    register_type: holding
+    address: 1
+    device_class: CURRENT
+    unit_of_measurement: "A"
+    value_type: U_WORD
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # Grid frequency
+  - platform: modbus_controller
+    modbus_controller_id: orno_we_504
+    name: "Grid frequency"
+    id: orno_we_504_modbus_grid_frequency
+    register_type: holding
+    address: 2
+    device_class: FREQUENCY
+    unit_of_measurement: "Hz"
+    value_type: U_WORD
     accuracy_decimals: 2
     filters:
-      - multiply: 0.01
+      - multiply: 0.1
+
+  # Active power
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Current"
-    id: orno_we_514_modbus_current
+    modbus_controller_id: orno_we_504
+    name: "Active power"
+    id: orno_we_504_active_power
     register_type: holding
-    address: 0x0139
-    unit_of_measurement: "A"
-    value_type: U_DWORD
-    accuracy_decimals: 3
-    filters:
-      - multiply: 0.001
+    address: 3
+    device_class: POWER
+    unit_of_measurement: "W"
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Reactive power
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Active Power"
-    id: orno_we_514_active_power
+    modbus_controller_id: orno_we_504
+    name: "Reactive power"
+    id: orno_we_504_reactive_power
     register_type: holding
-    address: 0x0140
-    unit_of_measurement: "kW"
-    value_type: U_DWORD
-    accuracy_decimals: 3
-    filters:
-      - multiply: 0.001
+    address: 4
+    device_class: REACTIVE_POWER
+    unit_of_measurement: "var"
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Apparent power
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Reactive Power"
-    id: orno_we_514_reactive_power
+    modbus_controller_id: orno_we_504
+    name: "Apparent power"
+    id: orno_we_504_apparent_power
     register_type: holding
-    address: 0x0148
-    unit_of_measurement: "kvarh"
-    value_type: U_DWORD
-    accuracy_decimals: 3
-    filters:
-      - multiply: 0.001
+    address: 5
+    device_class: APPARENT_POWER
+    unit_of_measurement: "VA"
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Power factor
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Apparent Power"
-    id: orno_we_514_apparent_power
+    modbus_controller_id: orno_we_504
+    name: "Power factor"
+    id: orno_we_504_power_factor
     register_type: holding
-    address: 0x0150
-    unit_of_measurement: "kva"
-    value_type: U_DWORD
-    accuracy_decimals: 3
-    filters:
-      - multiply: 0.001
-  - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Power Factor"
-    id: orno_we_514_power_factor
-    register_type: holding
-    address: 0x0158
+    address: 6
+    device_class: POWER_FACTOR
     unit_of_measurement: ""
     value_type: U_WORD
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+
+  # Active energy
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Active Energy"
-    id: orno_we_514_power_active_energy
+    modbus_controller_id: orno_we_504
+    name: "Active energy"
+    id: orno_we_504_power_active_energy
     register_type: holding
-    address: 0xA000
+    address: 7
+    device_class: ENERGY
+    state_class: total
     unit_of_measurement: "kWh"
     value_type: U_DWORD
     accuracy_decimals: 2
     filters:
-      - multiply: 0.01
+      - multiply: 0.001
+
+  # Reactive energy
   - platform: modbus_controller
-    modbus_controller_id: orno_we_514
-    name: "Reactive Energy"
-    id: orno_we_514_power_reactive_energy
+    modbus_controller_id: orno_we_504
+    name: "Reactive energy"
+    id: orno_we_504_power_reactive_energy
     register_type: holding
-    address: 0xA01E
+    address: 9
+    device_class: ENERGY
+    state_class: total
     unit_of_measurement: "kvarh"
     value_type: U_DWORD
     accuracy_decimals: 2
     filters:
-      - multiply: 0.01
-  # see file:///E:/Users/archi/Downloads/OR-WE-514_MODBUS_Registers_List.pdf for more registers
+      - multiply: 0.001
 ```

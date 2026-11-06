@@ -6,7 +6,7 @@ standard: uk, us, eu
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/2ZcvAmy)
+[Amazon Link](https://www.amazon.com/dp/B0965C6W58)
 
 ![Product Image](Shelly-RGBW2.png "Shelly RGBW")
 
@@ -27,7 +27,8 @@ board: esp8266
 ```yaml
 esphome:
   name: shelly_rgbw2
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -81,7 +82,8 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 logger:
@@ -229,8 +231,6 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
-  board: esp01_1m
   on_boot:
     then:
       # Enable both strips at 60% Brightness, Warm Color on startup
@@ -243,12 +243,15 @@ esphome:
           brightness: 60%
           color_temperature: 3500 K
 
+esp8266:
+  board: esp01_1m
+
 logger:
 api:
 
 wifi:
   ssid: !secret wifi_ssid
-  password: !secret wifi_pass
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -263,7 +266,7 @@ captive_portal:
 
 status_led:
   pin: GPIO2
-  
+
 light:
   - platform: cwww
     restore_mode: ALWAYS_OFF

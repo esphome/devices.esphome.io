@@ -26,7 +26,7 @@ esphome:
 
 rtl87xx:
   board: generic-rtl8710bn-2mb-788k
-  
+
 # Enable logging
 logger:
 
@@ -39,7 +39,7 @@ ota:
 
 wifi:
   ssid: !secret wifi_ssid
-  password: !secret wifi_pass
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -93,5 +93,4 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay
-
 ```

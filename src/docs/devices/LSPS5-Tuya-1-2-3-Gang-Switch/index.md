@@ -73,6 +73,7 @@ logger:
 api:
 
 ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -97,7 +98,7 @@ switch:
   - platform: gpio
     name: $devicename Switch 1
     pin: GPIO8
-    id: relay_2
+    id: relay_1
 
 binary_sensor:
   - platform: status
@@ -141,6 +142,7 @@ logger:
 api:
 
 ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -223,6 +225,7 @@ logger:
 api:
 
 ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -355,6 +358,7 @@ logger:
 api:
 
 ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid

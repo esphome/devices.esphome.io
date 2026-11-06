@@ -16,11 +16,15 @@ For newer devices, use a USB to serial adapter, and solder wires onto the pads m
 
 ## Notes
 
-This configuration does not use the state LED at all, as it was never synchronized with the state of the light. This is an area for further work.
+This configuration does not use the state LED at all, as it was never synchronized with the state of the light. This is
+an area for further work.
 
-In order for the switch to work correctly, it should be placed as the first switch from the mains power, with the 'dumb' 3-way switch placed on the load side. For proper sensing, the load needs to be more than a few watts, so it should be put in place with an actual light for testing.
+In order for the switch to work correctly, it should be placed as the first switch from the mains power, with the 'dumb'
+3-way switch placed on the load side. For proper sensing, the load needs to be more than a few watts, so it should be
+put in place with an actual light for testing.
 
-This configuration is based directly on information from this post: https://www.reddit.com/r/Esphome/comments/kn51r0/configuration_for_gosund_sw6/
+This configuration is based directly on information from this post:
+[https://www.reddit.com/r/Esphome/comments/kn51r0/configuration_for_gosund_sw6/](https://www.reddit.com/r/Esphome/comments/kn51r0/configuration_for_gosund_sw6/)
 
 ## GPIO Pinout
 
@@ -38,7 +42,8 @@ This configuration is based directly on information from this post: https://www.
 ```yaml
 esphome:
   name: gosundsw5
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 substitutions:
@@ -52,15 +57,10 @@ logger:
 api:
 
 ota:
-
 wifi:
-  ssid: "ssid"
-  password: "PASSWORD"
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: "Gosund Fallback Hotspot"
-    password: "ul57sDUAqbcl"
 
 captive_portal:
 

@@ -5,8 +5,8 @@ type: plug
 standard: eu
 board: esp8266
 ---
-  ![alt text](/BlitzWolf-BW-SHP2-Power-Monitoring-Plug.jpg "Product Image")
-  ![alt text](/BlitzWolf-BW-SHP2-Power-Monitoring-Plug-Back.jpg "Product Back Image")
+  ![alt text](./BlitzWolf-BW-SHP2-Power-Monitoring-Plug.jpg "Product Image")
+  ![alt text](./BlitzWolf-BW-SHP2-Power-Monitoring-Plug-Back.jpg "Product Back Image")
 
 Model reference: BW-SHP2
 
@@ -55,22 +55,14 @@ substitutions:
 esphome:
   name: ${devicename}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: ${friendly_name}
-    password: !secret AP_Password
-
-  manual_ip:
-      static_ip: 192.168.x.xx
-      gateway: 192.168.x.x
-      subnet: 255.255.255.0
 
 captive_portal:
 
@@ -132,7 +124,7 @@ sensor:
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     icon: mdi:circle-slice-3
@@ -204,7 +196,7 @@ light:
   output: ${devicename}_blue_output
   id: ${devicename}_blue_led
 
-# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the blue light for other things as well.
+# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the blue light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms
@@ -247,22 +239,14 @@ substitutions:
 esphome:
   name: ${devicename}
   comment: ${device_description}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: ${friendly_name}
-    password: !secret AP_Password
-
-  manual_ip:
-      static_ip: 192.168.x.xx
-      gateway: 192.168.x.x
-      subnet: 255.255.255.0
 
 captive_portal:
 
@@ -324,7 +308,7 @@ sensor:
     current_resistor: ${current_res}
     voltage_divider: ${voltage_div}
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     icon: mdi:circle-slice-3
@@ -396,7 +380,7 @@ light:
   output: ${devicename}_blue_output
   id: ${devicename}_blue_led
 
-# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the blue light for other things as well.
+# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the blue light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms

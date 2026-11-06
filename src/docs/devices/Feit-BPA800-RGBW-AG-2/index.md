@@ -26,7 +26,7 @@ substitutions:
 
  wifi:
    ssid: !secret wifi_ssid
-   password: !secret wifi_pass
+   password: !secret wifi_password
 
    # Define SSID for hotspot (captive portal) in case wifi connection fails
    ap:

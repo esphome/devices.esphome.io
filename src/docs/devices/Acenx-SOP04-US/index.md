@@ -10,15 +10,17 @@ board: esp8266
 
 ## GPIO Pinout
 
-| Pin    | Function             |
-| ------ | -------------------- |
-| GPIO04 | Led1i (Blue)         |
-| GPIO05 | Led2i (Green)        |
-| GPIO12 | Relay1               |
-| GPIO13 | Button1              |
-| GPIO14 | Relay2               |
+| Pin    | Function      |
+| ------ | ------------- |
+| GPIO04 | Led1i (Blue)  |
+| GPIO05 | Led2i (Green) |
+| GPIO12 | Relay1        |
+| GPIO13 | Button1       |
+| GPIO14 | Relay2        |
 
-The physcal button operates both relays.  Toggle `relay1` using a short press and `relay2` using a long press.  Timing can be adjusted in configuration.  The blue LED is for status and green will be on if either or both relays are on.  The green LED will be off if both relays are off.
+The physcal button operates both relays. Toggle `relay1` using a short press and `relay2` using a long press. Timing can
+be adjusted in configuration. The blue LED is for status and green will be on if either or both relays are on. The green
+LED will be off if both relays are off.
 
 ## Basic Configuration
 
@@ -29,17 +31,14 @@ substitutions:
 
 esphome:
   name: "${device_name}"
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "${device_name} Fallback Hotspot"
-    password: !secret wifi_fallback_pw
 
 # Enable logging
 logger:

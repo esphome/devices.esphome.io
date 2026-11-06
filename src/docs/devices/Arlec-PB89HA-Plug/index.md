@@ -6,7 +6,8 @@ standard: au
 board: esp8266
 ---
 
-The Arlec PB89HA power board is part of the [Grid Connect ecosystem](https://grid-connect.com.au/) and is sold at Bunnings in Australia and New Zealand.
+The Arlec PB89HA power board is part of the [Grid Connect ecosystem](https://grid-connect.com.au/) and is sold at
+Bunnings in Australia and New Zealand.
 
 It has five sockets: four individually controllable, plus one which is permanently powered (marked "ALWAYS ON").
 
@@ -25,7 +26,9 @@ It has five sockets: four individually controllable, plus one which is permanent
 
 ### Tuya Convert
 
-This power strip is a Tuya device, so if you don't want to open it up and flash it directly, you can [use tuya-convert to initially get ESPHome onto it](/guides/tuya-convert/). After that, you can use ESPHome's OTA functionality to make any further changes.
+This power strip is a Tuya device, so if you don't want to open it up and flash it directly, you can
+[use tuya-convert to initially get ESPHome onto it](/devices/tuya-convert). After that, you can use ESPHome's OTA
+functionality to make any further changes.
 
 - Put the power strip into "smartconfig" / "autoconfig" / pairing mode by holding the button for about 5 seconds.
 - The status LED (in the button) blinks rapidly to confirm that it has entered pairing mode.
@@ -41,12 +44,14 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: "ssid"
-  password: "password"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 logger:
   # Important! The status LED and button are on the Pins used by UART0,
@@ -112,11 +117,14 @@ switch:
 
 ## Advanced config: on-device button automations
 
-To use one of these sample on-device automations, replace the whole `binary_sensor:` section from the basic configuration (above) with one from below. Note that if you want to also expose the button to Home Assistant, you can remove the `internal: True` line.
+To use one of these sample on-device automations, replace the whole `binary_sensor:` section from the basic
+configuration (above) with one from below. Note that if you want to also expose the button to Home Assistant, you can
+remove the `internal: True` line.
 
 ### Toggle all sockets
 
-If any socket is turned on, pressing the button will turn all sockets off. Otherwise, pressing the button will turn all sockets on.
+If any socket is turned on, pressing the button will turn all sockets off. Otherwise, pressing the button will turn all
+sockets on.
 
 ```yaml
 binary_sensor:
