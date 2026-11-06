@@ -1,17 +1,3 @@
-font:
-  - file: "gfonts://Roboto"
-    id: roboto_20
-    size: 20
-    bpp: 4
-  - file: "gfonts://Roboto"
-    id: roboto_28
-    size: 28
-    bpp: 4
-  - file: "gfonts://Roboto"
-    id: roboto_48
-    size: 48
-    bpp: 4
-
 lvgl:
   displays:
     - my_display
@@ -31,13 +17,13 @@ lvgl:
             align: TOP_MID
             y: 30
             text: "PAGE 1"
-            text_font: roboto_48
+            text_font: montserrat_48
             text_color: 0xFFFFFF
         - label:
             align: CENTER
             y: -40
             text: "Swipe Left for Page 2"
-            text_font: roboto_20
+            text_font: montserrat_20
             text_color: 0xAAAAAA
         - button:
             align: CENTER
@@ -49,7 +35,7 @@ lvgl:
               - label:
                   align: CENTER
                   text: "Next Page >>"
-                  text_font: roboto_28
+                  text_font: montserrat_28
                   text_color: 0xFFFFFF
             on_click:
               then:
@@ -67,13 +53,13 @@ lvgl:
             align: TOP_MID
             y: 30
             text: "PAGE 2"
-            text_font: roboto_48
+            text_font: montserrat_48
             text_color: 0xFFFFFF
         - label:
             align: CENTER
             y: -40
             text: "Swipe Right for Page 1"
-            text_font: roboto_20
+            text_font: montserrat_20
             text_color: 0xAAAAAA
         - button:
             align: CENTER
@@ -85,7 +71,7 @@ lvgl:
               - label:
                   align: CENTER
                   text: "<< Previous Page"
-                  text_font: roboto_28
+                  text_font: montserrat_28
                   text_color: 0xFFFFFF
             on_click:
               then:

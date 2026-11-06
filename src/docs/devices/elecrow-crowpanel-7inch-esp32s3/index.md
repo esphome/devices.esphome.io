@@ -20,7 +20,7 @@ difficulty: 2
 | PSRAM | 8MB (Octal) |
 | I/O Expander | PCA9557 at I2C 0x18 |
 | Backlight | PWM on GPIO 2 |
-| USB | USB-C (USB-OTG on GPIO 19/20 shared with I2C -- see notes) |
+| USB | USB-C via a CH340 USB-serial chip on UART0 (flashing and logs) |
 | Power | 5V via USB-C or JST connector |
 
 Product page:
@@ -31,8 +31,8 @@ Product page:
 ### I2C Fix Required for GPIO 19/20 (USB_SERIAL_JTAG Pins)
 
 GPIO19 and GPIO20 are shared with the ESP32-S3 USB_SERIAL_JTAG peripheral. The USB PHY pad holds these pins even after
-the I2C driver tries to release them, causing continuous `I2C software timeout` errors. This affects ESPHome 2026.3.0+
-(ESP-IDF 5.5.3+).
+the I2C driver tries to release them, causing continuous `I2C software timeout` errors. This affects ESPHome 2026.3.0
+and later (ESP-IDF 5.5.3 and later). As of November 2026, the upstream issue is still open.
 
 The fix requires a C header file (`usb_disable.h`) that disables the USB PHY pad before the I2C driver initializes.
 Create this file in your ESPHome config directory alongside your YAML:
@@ -77,12 +77,16 @@ The ESP32-S3-WROOM-1-**N4**R8 has 4MB flash. The "N4" = 4MB flash, "R8" = 8MB PS
 `rst:0x3` boot loop with no log output. This is easy to get wrong because many online examples and even some Elecrow
 documentation reference 16MB.
 
+With 4 MB of flash, each of the two OTA slots holds about 1.75 MB. A full LVGL interface with several large fonts used
+roughly 91-95 % of that in our builds, so it is worth keeping the number and size of fonts modest.
+
 ### Do NOT Touch the PCA9557
 
-The CrowPanel V3.0 has a PCA9557 I/O expander (I2C 0x18) that controls the GT911 RST line (pin 0) and INT line (pin 1).
+The CrowPanel V3.0 has a PCA9557 I/O expander (I2C 0x18) that is connected to the GT911 reset and interrupt lines.
 Many people try to use it to reset the GT911 during boot. **This breaks touch every time.**
 
 Here's why it works without PCA9557 manipulation:
+
 1. PCA9557 powers up with all pins as inputs (high-impedance)
 2. A pull-up resistor on the GT911 RST line brings it HIGH automatically
 3. GT911 exits reset and boots on its own before ESPHome firmware starts
@@ -91,11 +95,16 @@ Here's why it works without PCA9557 manipulation:
 ### GT911 Address Varies Between Units
 
 The GT911 I2C address is set by the state of GPIO38 during power-on:
+
 - **GPIO38 LOW** -> address **0x5D** (most common)
 - **GPIO38 HIGH** -> address **0x14**
 
 This varies between individual units due to internal pull-up/pull-down differences. If touch doesn't work, try the other
 address.
+
+On at least one reported unit, the GT911 came up at 0x14 and still failed with `Calibration error`. Because the address
+is latched at power-on, no configuration change can override it. A hardware pull-down on GPIO38 may be needed, but this
+has not been confirmed.
 
 ### I2C Scan Breaks GT911
 
@@ -122,7 +131,6 @@ Setting `scan: true` on the I2C bus can interfere with GT911 communication. Alwa
 | Mistake | Symptom | Fix |
 |---------|---------|-----|
 | `flash_size: 16MB` | Boot loop, no logging | Change to `4MB` |
-| `buffer_size: 25%` | Out-of-memory crash | Use `10%` |
 | `i2c: scan: true` | GT911 fails | Set `scan: false` |
 | Missing `invert_colors: true` | Wrong colors | Add it |
 | Missing `pclk_inverted: true` | Garbled display | Add it |
@@ -130,6 +138,7 @@ Setting `scan: true` on the I2C bus can interfere with GT911 communication. Alwa
 | Adding `interrupt_pin: 38` | Touch intermittent | Remove it, use polling |
 | Adding `calibration:` to touchscreen | "Communication failed" | Remove it |
 | Missing `usb_disable.h` | `I2C software timeout` | Add the header file (see notes above) |
+| Logger not on UART0 | No logs over the USB-C port | Add `logger: hardware_uart: UART0` |
 
 ## Basic Configuration
 
