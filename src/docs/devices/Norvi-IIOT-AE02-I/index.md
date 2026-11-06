@@ -9,7 +9,9 @@ difficulty: 2
 
 ## Overview
 
-This is a DIN mounted PLC-style ESP32 unit with 24V supply, OLED display, RS485, up to 8x 24V digital inputs, up to 6x 4-20mA analogue inputs, up to 6x 0-10V analogue inputs, up to 8x open collector outputs, or up to 6x 5A relay outputs (depending on the model).
+This is a DIN mounted PLC-style ESP32 unit with 24V supply, OLED display, RS485, up to 8x 24V digital inputs, up to 6x
+4-20mA analogue inputs, up to 6x 0-10V analogue inputs, up to 8x open collector outputs, or up to 6x 5A relay outputs
+(depending on the model).
 There are expansion modules that operate via i2c to provide more inputs or outputs.
 
 The example below is for the 4-20mA current input version, with an attached 8x relay output module.
@@ -22,7 +24,8 @@ The example below is for the 4-20mA current input version, with an attached 8x r
 
 ![Schematic Front View](https://github.com/user-attachments/assets/edc0435c-f4db-41a7-91b8-dca2c112c675)
 
-More details at the product website [here](https://norvi.lk/norvi-iiot-industrial-esp32-for-iiot-applications) or a very similar version [here](https://sensoper.com/shop/sc-se-i8-am6-to2/)
+More details at [the Norvi product website](https://norvi.lk/norvi-iiot-industrial-esp32-for-iiot-applications) or
+[a very similar version on Sensoper](https://sensoper.com/shop/sc-se-i8-am6-to2/)
 
 [Data Sheet](https://norvi.lk/docs/norvi-iiot-ae02-i-datasheet/)
 
@@ -35,7 +38,7 @@ esphome:
   friendly_name: Norvi IIOT AE02-I Demo
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

@@ -39,7 +39,7 @@ esphome:
   name: shelly-plus-rgbw-pm
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -73,7 +73,7 @@ output:
     pin: GPIO25
     id: pwm_r
     frequency: 19531
-  
+
   - platform: ledc
     pin: GPIO26
     id: pwm_g
@@ -88,6 +88,157 @@ output:
     pin: GPIO4
     id: pwm_w
     frequency: 19531
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO36
+      inverted: True
+    name: ${device_name} Input 1
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO37
+      inverted: True
+    name: ${device_name} Input 2
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO38
+      inverted: True
+    name: ${device_name} Input 3
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO39
+      inverted: True
+    name: ${device_name} Input 4
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO22
+    name: ${device_name} Onboard Button
+    filters:
+      - delayed_on_off: 10ms
+
+sensor:
+  - platform: adc
+    pin: GPIO33
+    id: temp_analog_reading
+    attenuation: 12db
+
+  - platform: resistance
+    sensor: temp_analog_reading
+    id: temp_resistance_reading
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: ${device_name} Temperature
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+
+  - platform: adc
+    pin: GPIO34
+    attenuation: 12db
+    name: ${device_name} Voltage
+    accuracy_decimals: 1
+    filters:
+      - multiply: 10.85
+
+  - platform: adc
+    pin: GPIO35
+    attenuation: 12db
+    name: ${device_name} Current
+    accuracy_decimals: 2
+    filters:
+      - offset: -0.794
+      - multiply: 16.13
+    unit_of_measurement: A
+```
+
+## Configuration for 4 monochromatic channel
+
+```yaml
+esphome:
+  name: shelly-plus-rgbw-pm-monochrome
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+captive_portal:
+
+logger:
+
+api:
+
+ota:
+  platform: esphome
+
+web_server:
+  port: 80
+
+light:
+  - platform: monochromatic
+    name: "White Channel R"
+    output: out_r
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0.5s
+    id: ${device_name}_chr
+
+  - platform: monochromatic
+    name: "White Channel G"
+    output: out_g
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0.5s
+    id: ${device_name}_chg
+
+  - platform: monochromatic
+    name: "White Channel B"
+    output: out_b
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0.5s
+    id: ${device_name}_chb
+  - platform: monochromatic
+    name: "White Channel W"
+    output: out_w
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0.5s
+    id: ${device_name}_chw
+
+status_led:
+  pin: GPIO14
+
+output:
+  - platform: ledc
+    id: out_r
+    pin: GPIO25
+  - platform: ledc
+    id: out_g
+    pin: GPIO27
+  - platform: ledc
+    id: out_b
+    pin: GPIO26
+  - platform: ledc
+    id: out_w
+    pin: GPIO4
 
 binary_sensor:
   - platform: gpio

@@ -7,6 +7,7 @@ board: bk72xx
 pcb: WB3S
 difficulty: 2
 ---
+
 ![Product Image](./ultrapro-wfd4001-light-switch-v1.1.14.jpg "Device front")
 
 ## GPIO Pinout
@@ -26,7 +27,7 @@ The board is easily flashed without disassembly using
 
 ## Basic Configuration
 
-On and off will activate the relay.  Holding the reset button for more
+On and off will activate the relay. Holding the reset button for more
 than 5 seconds will reset the wifi password and revert the device to
 the captive portal.
 

@@ -8,18 +8,21 @@ made-for-esphome: false
 difficulty: 2
 ---
 
-
 Smart desk lamp with a sleek design, it has RGB and warm/cold white LEDs.
 it uses pwm to control each channel.
 You can flash it, you can use tuya cloud-cutter, or you can swap out the chip.
 
-I attempted to flash the chip multiple times, but my FTDI adapter couldn’t provide enough current for a successful process. In the end, I followed Digiblur’s Tuya Cloudcutter guide, which is referenced in the ESPHome documentation for BK72xx, and that did the trick.
+I attempted to flash the chip multiple times, but my FTDI adapter couldn’t provide enough current for a successful
+process. In the end, I followed Digiblur’s Tuya Cloudcutter guide, which is referenced in the ESPHome documentation for
+BK72xx, and that did the trick.
 
 ## Device Details
 
 - **Model**: SHOME-LAM
 - **Board**: BK7231 (WB3L variant)
-- **Link**: [Lámpara LED Wi-Fi\* RGB+W multicolor de 12 W](https://www.steren.com.mx/lampara-led-wi-fi-multicolor-para-escritorio-de-12-w.html)
+- **Link**:
+
+  [Lámpara LED Wi-Fi\* RGB+W multicolor de 12 W](https://www.steren.com.mx/lampara-led-wi-fi-multicolor-para-escritorio-de-12-w.html)
 
 ## Images
 
@@ -46,7 +49,8 @@ _Internal circuit board showcasing the chipset._
 
 ## Note
 
-The lamp is enclosed in metal, which may affect Wi-Fi signal strength. Ensure it is close to the router or use a repeater if needed.
+The lamp is enclosed in metal, which may affect Wi-Fi signal strength. Ensure it is close to the router or use a
+repeater if needed.
 
 ### YAML Configuration
 

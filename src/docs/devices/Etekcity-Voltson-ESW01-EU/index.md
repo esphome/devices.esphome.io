@@ -8,11 +8,13 @@ board: esp8266
 
 ## Flashing
 
-To reach the ESP pins, you need to open the device by unscrewing two (really) small Torx on the front and get the board out with four Philipps screws.
+To reach the ESP pins, you need to open the device by unscrewing two (really) small Torx on the front and get the board
+out with four Philipps screws.
 Then, all necessary pads for flashing are accessible. Attach 5V and GND at the bottom, preferably with test hooks.
-![PCB Bottom](/Etekcity-Voltson-ESW01-EU-PCB-Bottom.jpg "PCB Bottom")
-For flashing, T12 is TX and T13 is RX. During boot, T11 and T16 pads need to be connected to GND. Easiest is to connect these pads with pogo pins.
-![PCB Top](/Etekcity-Voltson-ESW01-EU-PCB-Top.jpg "PCB Top")
+![PCB Bottom](./Etekcity-Voltson-ESW01-EU-PCB-Bottom.jpg "PCB Bottom")
+For flashing, T12 is TX and T13 is RX. During boot, T11 and T16 pads need to be connected to GND. Easiest is to connect
+these pads with pogo pins.
+![PCB Top](./Etekcity-Voltson-ESW01-EU-PCB-Top.jpg "PCB Top")
 
 ## GPIO Pinout
 
@@ -25,14 +27,16 @@ For flashing, T12 is TX and T13 is RX. During boot, T11 and T16 pads need to be 
 | GPIO14 | Button         |
 | GPIO16 | LED yellow     |
 
-The HLW8012 SEL pin is permanently pulled high, so you can only read power and voltage. With a small calculation trick you can get current values though (see `current_calculated` below).
+The HLW8012 SEL pin is permanently pulled high, so you can only read power and voltage. With a small calculation trick
+you can get current values though (see `current_calculated` below).
 
 ## Basic Configuration
 
 ```yaml
 esphome:
-  platform: ESP8266
   arduino_version: 2.5.1
+
+esp8266:
   board: esp01_1m
 
 wifi:

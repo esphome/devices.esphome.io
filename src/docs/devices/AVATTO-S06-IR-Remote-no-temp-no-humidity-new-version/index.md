@@ -6,11 +6,15 @@ standard: global
 board: bk72xx
 difficulty: 2
 ---
-![Product Image](/AVATTO-S06-WiFi-IR-Universal-Remote-Controller.jpg "Product Image")
+
+![Product Image](./AVATTO-S06-WiFi-IR-Universal-Remote-Controller.jpg "Product Image")
 
 ## General Notes
 
-There's two hardware iterations of this particular IR blaster: [an older version that uses an ESP01 module](/devices/AVATTO-S06-IR-Remote-no-temp-no-humidity), and this newer one that uses a CB3S module (a Beken BK7231N module in the same form factor as the older ESP01). Outwardly, both appear identical.
+There's two hardware iterations of this particular IR blaster:
+[an older version that uses an ESP01 module](/devices/AVATTO-S06-IR-Remote-no-temp-no-humidity), and this newer one that
+uses a CB3S module (a Beken BK7231N module in the same form factor as the older ESP01). Outwardly, both appear
+identical.
 
 ## GPIO Pinout
 
@@ -23,13 +27,17 @@ There's two hardware iterations of this particular IR blaster: [an older version
 
 ## Flashing
 
-The device is vulnerable to `tuya-cloudcutter`, and likely `tuya-convert` as well. I flashed mine with ESPHome Kickstart using Cloudcutter, then uploaded an ESPHome UF2 binary from there.
+The device is vulnerable to `tuya-cloudcutter`, and likely `tuya-convert` as well. I flashed mine with ESPHome Kickstart
+using Cloudcutter, then uploaded an ESPHome UF2 binary from there.
 
-[According to documentation on Elektroda](https://www.elektroda.com/rtvforum/topic3961676.html), you can also use tools such as `ltchiptool` to flash this via serial. There are UART pads labeled on the board and easily accessible. The chip operates at 3.3v.
+[According to documentation on Elektroda](https://www.elektroda.com/rtvforum/topic3961676.html), you can also use tools
+such as `ltchiptool` to flash this via serial. There are UART pads labeled on the board and easily accessible. The chip
+operates at 3.3v.
 
 ## Configuration
 
-Some sections containing default ESPHome configuration have been removed from here. Make sure they're filled out in your config.
+Some sections containing default ESPHome configuration have been removed from here. Make sure they're filled out in your
+config.
 
 ```yaml
 esphome:
@@ -67,7 +75,7 @@ binary_sensor:
 remote_transmitter:
   pin: GPIO26
   carrier_duty_percent: 50%
-  
+
 remote_receiver:
   pin:
     number: GPIO7
@@ -77,7 +85,10 @@ remote_receiver:
       pullup: true
 ```
 
-If you're attempting to use this with raw IR commands with an integration such as SmartIR, make sure that you set the carrier frequency accordingly. Not setting this may result in otherwise valid codes not working with your device as anticipated or at all. Valid frequencies typically range betweeen 33-40 kHz or 50-60 kHz, with the most common protocol, the NEC protocol, using a frequency of 38 kHz.
+If you're attempting to use this with raw IR commands with an integration such as SmartIR, make sure that you set the
+carrier frequency accordingly. Not setting this may result in otherwise valid codes not working with your device as
+anticipated or at all. Valid frequencies typically range betweeen 33-40 kHz or 50-60 kHz, with the most common protocol,
+the NEC protocol, using a frequency of 38 kHz.
 
 ```yaml
 api:
@@ -93,7 +104,9 @@ api:
             carrier_frequency: !lambda "return 38000.0;"
 ```
 
-If you don't know the carrier frequency, and the NEC default of 38 kHz doesn't work, you can find out what your device's frequency is by dumping a code from your existing remote. First, modify the `remote_receiver` definition in the ESPHome configuration to dump the codes in Pronto form. These include the carrier frequency embedded in them.
+If you don't know the carrier frequency, and the NEC default of 38 kHz doesn't work, you can find out what your device's
+frequency is by dumping a code from your existing remote. First, modify the `remote_receiver` definition in the ESPHome
+configuration to dump the codes in Pronto form. These include the carrier frequency embedded in them.
 
 ```yaml
 remote_receiver:
@@ -106,8 +119,16 @@ remote_receiver:
   dump: pronto
 ```
 
-Once you flash the firmware, keep the device logs open within ESPHome Device Builder. Take the remote for your device, point it at the IR blaster, and press any button to send a command. You should see a code printed out in the device logs. This may be spread across multiple lines depending on length; combine all lines into one.
+Once you flash the firmware, keep the device logs open within ESPHome Device Builder. Take the remote for your device,
+point it at the IR blaster, and press any button to send a command. You should see a code printed out in the device
+logs. This may be spread across multiple lines depending on length; combine all lines into one.
 
-Next, [open up an IR code converter such as the Sensus IR/RF Code Converter](https://pasthev.github.io/sensus/). Paste the Pronto code into the box labeled "Pronto data" and hit Convert; this may take a few moments to analyze. Once done, the Hz box on the left should be filled with a number. This is your carrier frequency.
+Next, [open up an IR code converter such as the Sensus IR/RF Code Converter](https://pasthev.github.io/sensus/). Paste
+the Pronto code into the box labeled "Pronto data" and hit Convert; this may take a few moments to analyze. Once done,
+the Hz box on the left should be filled with a number. This is your carrier frequency.
 
-Go back to the ESPHome device configuration, remove the `dump: pronto` line, and under the `transmit_raw` services section replace `38000.0` with the value you retrieved. If you are controlling multiple devices that require different carrier frequencies, as might be the case within SmartIR, duplicate the `send_raw_command` service in its entirety, rename it to indicate it's not the 38 kHz frequency command, and replace the carrier frequency in the lambda appropriately.
+Go back to the ESPHome device configuration, remove the `dump: pronto` line, and under the `transmit_raw` services
+section replace `38000.0` with the value you retrieved. If you are controlling multiple devices that require different
+carrier frequencies, as might be the case within SmartIR, duplicate the `send_raw_command` service in its entirety,
+rename it to indicate it's not the 38 kHz frequency command, and replace the carrier frequency in the lambda
+appropriately.

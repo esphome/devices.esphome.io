@@ -13,14 +13,15 @@ Generation 3 of Shelly Plus i4.
 
 ## GPIO Pinout
 
-| Pin    | Function |
-| ------ | -------- |
-| ?      | LED      |
-| GPI03  | NTC      |
-| GPIO10 | Switch 1 |
-| GPIO7  | Switch 2 |
-| GPIO6  | Switch 3 |
-| GPIO5  | Switch 4 |
+| Pin    | Function       |
+| ------ | -------------- |
+| GPIO9  | LED (inverted) |
+| GPI03  | NTC            |
+| GPIO10 | Switch 1       |
+| GPIO7  | Switch 2       |
+| GPIO6  | Switch 3       |
+| GPIO5  | Switch 4       |
+| GPIO4  | Reset Button   |
 
 ## Programming Interface
 
@@ -36,7 +37,7 @@ esphome:
   friendly_name: "Shelly i4 Gen3"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   flash_size: 8MB
   framework:
     type: esp-idf
@@ -65,6 +66,8 @@ sensor:
     unit_of_measurement: "°C"
     accuracy_decimals: 1
     icon: "mdi:thermometer"
+    device_class: temperature
+    entity_category: diagnostic
     calibration:
       b_constant: 3350
       reference_resistance: 10kOhm
@@ -128,9 +131,19 @@ binary_sensor:
         - logger.log: "Switch 4 released"
     filters:
       - delayed_on_off: 50ms
+  - platform: gpio
+    name: "Reset Button"
+    id: reset_button
+    pin:
+      number: 4
+      inverted: yes
+      mode:
+        input: true
+        pullup: true
 
 status_led:
   pin:
-    number: ?
+    number: 9
     inverted: true
+    ignore_strapping_warning: true
 ```

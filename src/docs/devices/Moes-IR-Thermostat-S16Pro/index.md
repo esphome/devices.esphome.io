@@ -11,13 +11,16 @@ difficulty: 2
 
 ## Product Description
 
-This is a Thermostat that works as a Universal IR Controller but specific for AC Units. Once configured with the correct IR library it can control most of AC Units from different brands, using the touch panel on the device. It can also listen to IR commands from the original remote and sync the display accordingly.
+This is a Thermostat that works as a Universal IR Controller but specific for AC Units. Once configured with the correct
+IR library it can control most of AC Units from different brands, using the touch panel on the device. It can also
+listen to IR commands from the original remote and sync the display accordingly.
 
 ## Flashing
 
 No need to open the device, you can use [cloud cutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter/).
 
-Important: To make sure that the touchscreen is enabled you need to activate the device first using the Tuya app, and configure any AC unit there. After that you can use cloud cutter to install the custom firmware.
+Important: To make sure that the touchscreen is enabled you need to activate the device first using the Tuya app, and
+configure any AC unit there. After that you can use cloud cutter to install the custom firmware.
 
 ## Configuration example
 

@@ -8,7 +8,7 @@ board: esp32
 
 Information about the pinout and internals of the Shelly Pro 2.
 
-It's the same board as the [Shelly Pro 1](Shelly-Pro-1). The only
+It's the same board as the [Shelly Pro 1](../Shelly-Pro-1/). The only
 difference is the addition of a second relay.
 
 ![Shelly Pro 2](shelly-pro-2.jpg)
@@ -84,7 +84,7 @@ esphome:
   name: shelly-pro-2
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

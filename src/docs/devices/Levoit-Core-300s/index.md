@@ -10,7 +10,10 @@ difficulty: 4
 
 ## General Notes
 
-A smart air purifier with 3-stage filtration. The ESP32 talks to the Tuya MCU using standard 8N1 115200-baud UART. Code and configuration were obtained from [acvigue's 'esphome-levoit-air-purifier' repo](https://github.com/acvigue/esphome-levoit-air-purifier). It seems to be supporting the rest of the line-up, but the 300s is the only one tested by the author.
+A smart air purifier with 3-stage filtration. The ESP32 talks to the Tuya MCU using standard 8N1 115200-baud UART. Code
+and configuration were obtained from
+[acvigue's 'esphome-levoit-air-purifier' repo](https://github.com/acvigue/esphome-levoit-air-purifier). It seems to be
+supporting the rest of the line-up, but the 300s is the only one tested by the author.
 
 Manufacturer: [Levoit](http://www.levoit.com)
 
@@ -18,30 +21,31 @@ Manufacturer: [Levoit](http://www.levoit.com)
 
 ## GPIO Pinout
 
-| Pin    | Function                                 |
-| ------ | ---------------------------------------- |
-| GPIO16 | TX Pin                                   |
-| GPIO17 | RX Pin                                   |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO16 | TX Pin   |
+| GPIO17 | RX Pin   |
 
 ## Flashing
 
-Based on the procedure shared by [acvigue](https://github.com/acvigue/esphome-levoit-air-purifier) and [Aiden Vigue](https://vigue.me/posts/levoit-air-purifier-esphome-conversion)
+Based on the procedure shared by [acvigue](https://github.com/acvigue/esphome-levoit-air-purifier) and
+[Aiden Vigue](https://vigue.me/posts/levoit-air-purifier-esphome-conversion)
 
 ### Disassembly
 
-* Place upside down and remove base cover and filter to expose 8 screws (4 have washers)
-* Remove all 8 screws. *Be careful, as these are made out of a soft metal*
-* Using a pry tool slide in between tabs
-* Separate base and top sleeve
-* Unplug logic board
+- Place upside down and remove base cover and filter to expose 8 screws (4 have washers)
+- Remove all 8 screws. _Be careful, as these are made out of a soft metal_
+- Using a pry tool slide in between tabs
+- Separate base and top sleeve
+- Unplug logic board
 
 ### Flash
 
-* Solder a header or wires to the module’s pins (3.3 V, GND, TX, RX, and GPIO0)
-![ESP Board](./levoit-core-300s-flashing.jpeg "ESP32 module ready for flashing")
-* Connect TX→RX, RX→TX, GND→GND, and 3.3 V→3.3 V (do **not** use 5 V)
-* Hold **GPIO0** to GND while applying power to enter the ESP32 bootloader
-* Use your preferred flasher (e.g., `esptool.py`) to write the ESPHome firmware
+- Solder a header or wires to the module’s pins (3.3 V, GND, TX, RX, and GPIO0)
+  ![ESP Board](./levoit-core-300s-flashing.jpeg "ESP32 module ready for flashing")
+- Connect TX→RX, RX→TX, GND→GND, and 3.3 V→3.3 V (do **not** use 5 V)
+- Hold **GPIO0** to GND while applying power to enter the ESP32 bootloader
+- Use your preferred flasher (e.g., `esptool.py`) to write the ESPHome firmware
 
 ## ESPHome Configuration
 
@@ -51,7 +55,7 @@ esphome:
   friendly_name: Levoit Air Purifier Core 300s
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:

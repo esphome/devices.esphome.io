@@ -8,7 +8,12 @@ board: esp32
 
 ## GREC1 Device Info
 
-The GREC1 is a multi purpose interfacing device specifically designed for collecting data on energy meters. Impulse interfaces are provided for glow and wire impulse meters. RS485 and RS232 are also included for meters that send serial data such as MODBUS. The serial interfaces can also be used for other use cases where the distance proximity is around 5-8 meters. Longer distances are not recommended for the design. The device is available in two configurations which are directly AC powered with NEMA 5-15 plug or USB powered. We make a USB Mini version which includes a cable or a USB-C version without a cable.
+The GREC1 is a multi purpose interfacing device specifically designed for collecting data on energy meters. Impulse
+interfaces are provided for glow and wire impulse meters. RS485 and RS232 are also included for meters that send serial
+data such as MODBUS. The serial interfaces can also be used for other use cases where the distance proximity is around
+5-8 meters. Longer distances are not recommended for the design. The device is available in two configurations which are
+directly AC powered with NEMA 5-15 plug or USB powered. We make a USB Mini version which includes a cable or a USB-C
+version without a cable.
 
 Available from [https://www.gelidus.ca/](https://www.gelidus.ca/)
 
@@ -40,13 +45,12 @@ Inside the enclosure.
 ## GREC1 YAML Example
 
 ```yaml
-
 esphome:
   name: grec1
   friendly_name: "GREC1"
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -79,16 +83,16 @@ substitutions:
   #   | ----------------- |
   #     -----------------
 
-  photo_pulse_pin: GPIO22   # J2 Pin 1 - Shielded wire to a Photo diode GND = Cathode, Impluse = Anode
-  wired_pulse_pin: GPIO27   # J2 Pin 3 - Input is zener clamped to 3.3v, max +50VDC, can also be configued for pullup with active low
-  digi_pot_pin: GPIO25      # DAC voltage output, this GPIO allows you to digitally control photo diode sensitivity
-  rs485_rx_pin: GPIO14      # J2 Pin 7 - RS485 B Input (JP2 2-3) Default
-  rs485_tx_pin: GPIO16      # J2 Pin 8 - RS485 A Output (JP1 2-3) Default
-  flow_control_pin: GPIO15  # RS485 Transmit/Recieve control
-  rs232_rx_pin: GPIO19      # J2 Pin 5 - RS232 Recieve
-  rs232_tx_pin: GPIO17      # J2 Pin 6 - RS232 Transmit
-  rs232_in_pin: GPIO18      # J2 Pin 7 - Optional RS232 pin config when RS485 is not required (JP2 1-2)
-  rs232_out_pin: GPIO20     # J2 Pin 8 - Optional RS232 pin config when RS485 is not required (JP1 1-2)
+  photo_pulse_pin: GPIO22 # J2 Pin 1 - Shielded wire to a Photo diode GND = Cathode, Impluse = Anode
+  wired_pulse_pin: GPIO27 # J2 Pin 3 - Input is zener clamped to 3.3v, max +50VDC, can also be configued for pullup with active low
+  digi_pot_pin: GPIO25 # DAC voltage output, this GPIO allows you to digitally control photo diode sensitivity
+  rs485_rx_pin: GPIO14 # J2 Pin 7 - RS485 B Input (JP2 2-3) Default
+  rs485_tx_pin: GPIO16 # J2 Pin 8 - RS485 A Output (JP1 2-3) Default
+  flow_control_pin: GPIO15 # RS485 Transmit/Recieve control
+  rs232_rx_pin: GPIO19 # J2 Pin 5 - RS232 Recieve
+  rs232_tx_pin: GPIO17 # J2 Pin 6 - RS232 Transmit
+  rs232_in_pin: GPIO18 # J2 Pin 7 - Optional RS232 pin config when RS485 is not required (JP2 1-2)
+  rs232_out_pin: GPIO20 # J2 Pin 8 - Optional RS232 pin config when RS485 is not required (JP1 1-2)
 
 wifi:
   ssid: <YOUR_SSID> # or !secret wifi_ssid
@@ -129,14 +133,14 @@ modbus:
 modbus_controller:
   id: modbus_grec1
   modbus_id: modbus_client
-  address: 0x02  # Address of the Modbus Device
+  address: 0x02 # Address of the Modbus Device
   update_interval: 15s
 
 number:
   # Set the pulse rate of the LED on your meter
   - platform: template
     id: select_pulse_rate
-    name: 'Pulse rate - imp/kWh'
+    name: "Pulse rate - imp/kWh"
     optimistic: true
     mode: box
     min_value: 100
@@ -148,7 +152,7 @@ number:
   # Reset total energy to given value
   - platform: template
     id: select_reset_total
-    name: 'Reset Value - Total Energy kWh'
+    name: "Reset Value - Total Energy kWh"
     entity_category: config
     optimistic: true
     mode: box
@@ -199,7 +203,7 @@ sensor:
   # Not setting at the midpoint will cause significant false counts do to reading noise near the comparator threshhold.
   - platform: pulse_meter
     id: sensor_energy_pulse_meter
-    name: '${friendly_name} - Power Consumption'
+    name: "${friendly_name} - Power Consumption"
     unit_of_measurement: W
     state_class: measurement
     device_class: power
@@ -212,13 +216,13 @@ sensor:
         input: true
         pullup: true
 
-# Wired Example Active low
-#    pin:
-#      number: ${wired_pulse_pin}
-#      inverted: true
-#      mode:
-#        input: true
-#        pullup: true
+    # Wired Example Active low
+    #    pin:
+    #      number: ${wired_pulse_pin}
+    #      inverted: true
+    #      mode:
+    #        input: true
+    #        pullup: true
 
     filters:
       # multiply value = (60 / imp value) * 1000
@@ -227,7 +231,7 @@ sensor:
 
     total:
       id: sensor_total_energy
-      name: '${friendly_name} - Total Energy'
+      name: "${friendly_name} - Total Energy"
       unit_of_measurement: kWh
       icon: mdi:circle-slice-3
       state_class: total_increasing
@@ -241,7 +245,7 @@ sensor:
   # Total day usage
   - platform: total_daily_energy
     id: sensor_total_daily_energy
-    name: '${friendly_name} - Daily Energy'
+    name: "${friendly_name} - Daily Energy"
     power_id: sensor_energy_pulse_meter
     unit_of_measurement: kWh
     icon: mdi:circle-slice-3
@@ -282,15 +286,23 @@ J2 Pinouts
 ![Connections](grec1.j2.connection.pins.jpg)
 
 - Pin 1 - Impulse Photo Diode +
-  This connection should be provisioned using a single wire core cable with a stranded shield, the photo diode anode should be soldered to the core wire and cathode grounded with the shield. This signal feeds into the integrated LM393 comparator.
+  This connection should be provisioned using a single wire core cable with a stranded shield, the photo diode anode
+should be soldered to the core wire and cathode grounded with the shield. This signal feeds into the integrated LM393
+comparator.
 - Pin 3 - Impulse Wired +
-  This is a digital logic input, it is zener clamped to limiting it at +3.3v intermally, the signal should be wired along with a ground for reference.
+  This is a digital logic input, it is zener clamped to limiting it at +3.3v intermally, the signal should be wired
+along with a ground for reference.
 - Pin 5 & 6 - RS232-TX/RX
-  These connections are Standard EIA signal levels and should have a ground reference when used. See the DB Connector Reference for commonly used pins.
+  These connections are Standard EIA signal levels and should have a ground reference when used. See the DB Connector
+Reference for commonly used pins.
 - Pin 7 & 8 - RS485-A/B (Optionally RS232 with JP1 and JP2)
-  These pins are also standard EIA levels but do not have components supporting the maximum RS485 1200M distances. Keep these to short distances 5-10 meters. It’s recommended to use twisted pair lines. Since these connections are typically used on serial busses it should have softweare flow control enabled for ESPHome components. Specifically TX control must be enabled and this is configured in a components YAML definition.
+  These pins are also standard EIA levels but do not have components supporting the maximum RS485 1200M distances. Keep
+these to short distances 5-10 meters. It’s recommended to use twisted pair lines. Since these connections are typically
+used on serial busses it should have softweare flow control enabled for ESPHome components. Specifically TX control must
+be enabled and this is configured in a components YAML definition.
 - Pin 7 & 8 - RS232 enable JP1 and JP2 position 1-2 soldered.
-  These are optionally setable as RS232 when RS485 is not required. This provisons addition flow control capability e.g. EIA level input and output DSR/RTS etc.
+  These are optionally setable as RS232 when RS485 is not required. This provisons addition flow control capability e.g.
+EIA level input and output DSR/RTS etc.
 
 | Name                | Abbreviation | Direction | DB-25 pin | DE-9 pin |
 | ------------------- | ------------ | --------- | --------- | -------- |
@@ -303,4 +315,4 @@ J2 Pinouts
 | Data Carrier Detect | DCD          | In        | 8         | 1        |
 | Signal Ground       | G            | Common    | 7         | 5        |
 
-More to see @ https://www.gelidus.ca
+More to see @ [https://www.gelidus.ca](https://www.gelidus.ca)

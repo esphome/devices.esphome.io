@@ -8,7 +8,7 @@ standard: global
 This example shows how to use a cheap BLE keyring tag to trigger
 arbitrary events. An ESP32 is used, which provides a BLE peripheral.
 
-![image](/esp32_ble_itag.png)
+![image](./esp32_ble_itag.png)
 
 These tags can be had for a couple of dollars each and run for several
 months on a coin cell. Using the BLE features of ESPHome, you can use
