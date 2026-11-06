@@ -8,7 +8,7 @@ substitutions:
 esphome:
   name: ${devicename}
   friendly_name: ${friendlyName}
-  
+
 esp32:
   variant: esp32c3
   flash_size: 8MB
