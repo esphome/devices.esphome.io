@@ -40,7 +40,9 @@ I bought it from: [https://www.ebay.co.uk/itm/198658928427](https://www.ebay.co.
 
 Footnote * - Pin TBC
 
-All pins are inverted. It also exposes GPIOs 5, 21, 22, 23 labelled appropriately on the board.
+The GPIO switches and binary sensors are inverted; the RS485 UART pins are not.
+
+The board also exposes GPIOs 5, 21, 22, 23 labelled appropriately on the board.
 
 ## Basic Config
 
