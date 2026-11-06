@@ -13,7 +13,9 @@ socket (ESP32-C3, 8 MB flash).
 Product page: <https://www.shelly.com/de/products/shelly-multicolor-bulb-e27-gen3>.
 
 Its LED driver is a **KP18068** (5-channel constant-current driver, 2-wire bus), which ESPHome does not support itself.
-The configuration uses an external component for it.
+The configuration uses the external component
+[`kp18058`](https://github.com/oxynatOr/esphome-kp18058) for it; the KP18068 is protocol-compatible with the KP18058
+that the component is named after.
 
 ![Shelly Multicolor Bulb Gen3](Shelly-Multicolor-Bulb-Gen3.png "Shelly Multicolor Bulb Gen3")
 
