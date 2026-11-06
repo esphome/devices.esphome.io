@@ -15,33 +15,45 @@ const REPO = { owner: "esphome", repo: "devices.esphome.io" };
 
 const OLD = "2020-01-01T00:00:00Z";
 const LATER = "2020-01-01T00:05:00Z";
-const copilotRequest = (actorType: string, createdAt: string) => ({
+const copilotRequest = (id: number, actorType: string, createdAt = LATER) => ({
+  id,
   event: "review_requested",
   actor: { login: actorType === "Bot" ? "esphome[bot]" : "someone", type: actorType },
   requested_reviewer: { login: "Copilot" },
   created_at: createdAt,
 });
-const copilotReview = (submittedAt: string) => ({
+const copilotReview = (id: number, submittedAt: string) => ({
+  id,
   event: "reviewed",
   user: { login: "Copilot" },
   submitted_at: submittedAt,
 });
 
-// `events` is the timeline read back after the request; a function lets a
-// test build it at call time. `timelineError` makes that read throw.
+// `before` and `after` are the timeline reads around the request;
+// `timelineError` makes that read throw.
 function makeGithub(
-  opts: { fail?: boolean; events?: () => unknown[]; timelineError?: boolean } = {}
+  opts: {
+    fail?: boolean;
+    before?: unknown[];
+    after?: unknown[];
+    timelineError?: "before" | "after";
+  } = {}
 ) {
   const calls: Record<string, unknown>[] = [];
-  const events = opts.events ?? (() => [copilotRequest("Bot", new Date().toISOString())]);
+  const reads = [
+    { name: "before", events: opts.before ?? [] },
+    { name: "after", events: opts.after ?? [copilotRequest(1, "Bot")] },
+  ];
   const listEventsForTimeline = () => {};
   return {
     calls,
     github: {
       paginate: async (fn: unknown) => {
         assert.equal(fn, listEventsForTimeline);
-        if (opts.timelineError) throw new Error("secondary rate limit");
-        return events();
+        const read = reads.shift();
+        assert.ok(read, "the timeline is read at most twice");
+        if (opts.timelineError === read.name) throw new Error("secondary rate limit");
+        return read.events;
       },
       rest: {
         issues: { listEventsForTimeline },
@@ -95,41 +107,52 @@ test("a failed request warns instead of failing", async () => {
 });
 
 test("an accepted request GitHub never recorded warns", async () => {
-  const { github } = makeGithub({ events: () => [{ event: "labeled" }] });
+  const { github } = makeGithub({ after: [{ id: 1, event: "labeled" }] });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
-test("a fresh ruleset request filed under a user does not confirm ours", async () => {
-  const now = new Date().toISOString();
-  const { github } = makeGithub({ events: () => [copilotRequest("User", now), copilotReview(now)] });
+test("a ruleset request filed under a user does not confirm ours", async () => {
+  const after = [copilotRequest(1, "User"), copilotReview(2, LATER)];
+  const { github } = makeGithub({ after });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
-test("an older bot request that was reviewed does not confirm this one", async () => {
-  const { github } = makeGithub({ events: () => [copilotRequest("Bot", OLD), copilotReview(LATER)] });
+test("a bot request already on the timeline does not confirm this one", async () => {
+  const earlier = [copilotRequest(1, "Bot", OLD), copilotReview(2, LATER)];
+  const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
 test("a Copilot review still pending is logged, not warned", async () => {
-  const { github } = makeGithub({ events: () => [copilotReview(OLD), copilotRequest("User", LATER)] });
+  const earlier = [copilotReview(1, OLD), copilotRequest(2, "User")];
+  const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, infos, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.deepEqual(warnings, []);
   assert.match(infos[0], /requested by someone is still pending on #9/);
 });
 
-test("a failed timeline read warns instead of failing", async () => {
-  const { github, calls } = makeGithub({ timelineError: true });
+test("a failed timeline read after the request warns instead of failing", async () => {
+  const { github, calls } = makeGithub({ timelineError: "after" });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.equal(calls.length, 1);
   assert.match(warnings[0], /could not confirm it: secondary rate limit/);
+});
+
+test("a failed baseline read still requests the review, unconfirmed", async () => {
+  const { github, calls } = makeGithub({ timelineError: "before" });
+  const { core, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 1);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /goes unconfirmed: secondary rate limit/);
 });
 
 test("the exported helper takes a PR number", async () => {
