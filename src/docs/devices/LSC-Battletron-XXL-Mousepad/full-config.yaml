@@ -23,7 +23,7 @@ ota:
 wifi:
   power_save_mode: NONE
   ap:
-    ssid: Mousepad Fallback Hotspot
+    ssid: "Mousepad Fallback Hotspot"
     password:
 captive_portal:
 e131:
