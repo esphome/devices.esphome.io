@@ -278,6 +278,14 @@ Additional yaml files (e.g. `voice-assistant.yaml`, `battery-percentage.yaml`) c
 automations, or anything else specific to one feature — they just have to be valid YAML and follow the
 no-passwords / no-`!secret` rules.
 
+### ESPHome and Device Builder checks
+
+`npm run validate-esphome` runs on every device folder a pull request touches. Each yaml referenced with `file=`
+must pass `esphome config`: `config.yaml` (and any file with its own `esphome: name:`) on its own, and other files
+merged onto `config.yaml`. Each is checked with the `logger:`, `api:`, `ota:` and Wi-Fi a user's config adds,
+where the files (or the local packages they include) don't already have them. The page must also import into the
+[ESPHome Device Builder](https://github.com/esphome/device-builder); the check prints why not.
+
 If you have inline yaml in an existing markdown page, extract it to files with `npm run extract-yaml -- <path>`.
 The script is idempotent — it leaves already-migrated fences alone and writes the first fence on each page as
 `config.yaml`. Quotes around the file attribute are optional (`file=config.yaml` and `file="config.yaml"` both
