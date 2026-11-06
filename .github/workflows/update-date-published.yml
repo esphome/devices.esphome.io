@@ -6,157 +6,21 @@ on:
 
 permissions: {}
 
+# This workflow runs in the (untrusted) fork-PR context and therefore has no
+# access to secrets or variables. It only marks the approval:
+# commit-date-published.yml runs after it, in the trusted workflow_run context,
+# and re-derives the pull request, the approval and the new pages itself.
 jobs:
-  pre-check:
-    name: Find newly added device pages
+  approve:
+    name: Mark maintainer approval
     runs-on: ubuntu-latest
     if: >-
       github.event.review.state == 'approved' &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association)
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      pages: ${{ steps.find.outputs.pages }}
-    steps:
-      - name: Find newly added device pages
-        id: find
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
-        with:
-          script: |
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            const pattern = /^src\/docs\/devices\/[^/]+\/index\.md$/;
-            const added = files
-              .filter(f => f.status === 'added' && pattern.test(f.filename))
-              .map(f => f.filename);
-            core.info(
-              `Found ${added.length} newly added device page(s): ` +
-              `${added.join(', ') || '(none)'}`
-            );
-            core.setOutput('pages', added.join('\n'));
-
-  update-date:
-    name: Update date-published and push
-    needs: pre-check
-    if: needs.pre-check.outputs.pages != ''
-    runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Generate a token
-        id: generate-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
-        with:
-          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
-
-      - name: Checkout PR branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          # Pin to the immutable approved SHA, not the mutable branch ref.
-          # If a contributor pushes between approval and this workflow
-          # running, the createCommitOnBranch expectedHeadOid check below
-          # will see the branch has moved past head.sha and fail loudly —
-          # the safe behavior, rather than silently rewriting whatever the
-          # branch tip now happens to be.
-          ref: ${{ github.event.pull_request.head.sha }}
-          token: ${{ steps.generate-token.outputs.token }}
-
-      # Domain-specific: rewrite the date-published frontmatter line in each
-      # newly added device page, and emit the list of files actually changed
-      # so the commit step below can be kept generic.
-      - name: Update date-published
-        id: update
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+      - name: Mark the approval
         env:
-          PAGES: ${{ needs.pre-check.outputs.pages }}
-        with:
-          script: |
-            const fs = require('fs');
-            const pages = (process.env.PAGES || '')
-              .split('\n')
-              .filter(Boolean);
-            const today = new Date().toISOString().slice(0, 10);
-            const changed = [];
-            for (const path of pages) {
-              if (!fs.existsSync(path)) {
-                core.warning(`Skipping ${path} — not present in checkout`);
-                continue;
-              }
-              const text = fs.readFileSync(path, 'utf8');
-              const match = text.match(/^(date-published:[ \t]*)(\S+)/m);
-              if (!match) {
-                core.warning(`No date-published field in ${path}`);
-                continue;
-              }
-              if (match[2] === today) {
-                core.info(`${path} already on ${today}`);
-                continue;
-              }
-              const updated = text.replace(
-                /^(date-published:[ \t]*).*$/m,
-                `$1${today}`,
-              );
-              fs.writeFileSync(path, updated);
-              core.info(`Updated ${path}: ${match[2]} -> ${today}`);
-              changed.push(path);
-            }
-            core.setOutput('paths', changed.join('\n'));
-
-      - name: Commit changes via createCommitOnBranch
-        if: steps.update.outputs.paths != ''
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
-        env:
-          PATHS: ${{ steps.update.outputs.paths }}
-          MESSAGE: Update date-published to date of approval
-          REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          BRANCH: ${{ github.event.pull_request.head.ref }}
-        with:
-          github-token: ${{ steps.generate-token.outputs.token }}
-          script: |
-            const fs = require('fs');
-            const repository = process.env.REPOSITORY;
-            const branchName = process.env.BRANCH;
-            const message = process.env.MESSAGE;
-            const paths = (process.env.PATHS || '')
-              .split('\n')
-              .filter(Boolean);
-
-            // Use the SHA we actually checked out as the optimistic-lock
-            // value — if anyone pushed between checkout and now, the
-            // mutation fails rather than silently overwriting their commit.
-            const { stdout } = await exec.getExecOutput(
-              'git', ['rev-parse', 'HEAD'],
-            );
-            const expectedHeadOid = stdout.trim();
-
-            const additions = paths.map((p) => ({
-              path: p,
-              contents: fs.readFileSync(p).toString('base64'),
-            }));
-
-            const result = await github.graphql(
-              `mutation($input: CreateCommitOnBranchInput!) {
-                createCommitOnBranch(input: $input) {
-                  commit { url oid }
-                }
-              }`,
-              {
-                input: {
-                  branch: {
-                    repositoryNameWithOwner: repository,
-                    branchName,
-                  },
-                  message: { headline: message },
-                  expectedHeadOid,
-                  fileChanges: { additions },
-                },
-              },
-            );
-            const commit = result.createCommitOnBranch.commit;
-            core.info(`Created verified commit ${commit.oid}: ${commit.url}`);
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Maintainer approved PR #$PR_NUMBER"
