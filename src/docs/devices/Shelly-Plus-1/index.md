@@ -25,9 +25,11 @@ board: esp32
 The Shelly Plus 1 is based on the ESP32-U4WDH (Single core, 160MHz, 4MB embedded flash)
 
 > **Note:**
->Espressif has made a change, i.e. newer chips (line 5=DHxxxxxxx) have been updated to Dual-Core with 240 MHz. See details: [ PCN ESP-07-2-007-03 ](https://documentation.espressif.com/PCN-2021-021%20ESP32-U4WDH%20%e5%8d%87%e7%ba%a7%e4%b8%ba%e5%8f%8c%e6%a0%b8%e5%a4%84%e7%90%86%e5%99%a8%e4%ba%a7%e5%93%81.pdf)
+>Espressif has made a change, i.e. newer chips (line 5=DHxxxxxxx) have been updated to Dual-Core with 240 MHz.
+>See details: Product-Change-Notice (PCN) [ESP-07-2-007-03][pcn]
 >
->For the newer chips `cpu_frequency` and `sdkconfig_options` can be commented out in the YAML, if full performance of the EPS32 is required.
+>For the newer chips `cpu_frequency` and `sdkconfig_options` can be commented out in the YAML, if full
+>performance >of the ESP32 is required.
 
 Please calibrate the NTC, the value below is just a rough estimate!
 
@@ -39,3 +41,5 @@ Credit and thanks to
 
 ```yaml file=config.yaml
 ```
+
+[pcn]: https://documentation.espressif.com/PCN-2021-021%20ESP32-U4WDH%20%e5%8d%87%e7%ba%a7%e4%b8%ba%e5%8f%8c%e6%a0%b8%e5%a4%84%e7%90%86%e5%99%a8%e4%ba%a7%e5%93%81.pdf
