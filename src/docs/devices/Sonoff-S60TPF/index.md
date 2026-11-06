@@ -21,14 +21,13 @@ difficulty: 2
 
 ## Notes
 
-Can be flashed wirelessly without disassembly using [Sonoff-OTA](https://github.com/adamsthws/Sonoff-OTA) to Tasmota
-then to ESPHome [Migrating from Tasmota](https://esphome.io/guides/migrate_sonoff_tasmota/)
+Can be flashed wirelessly without disassembly using [Firmware Liberator](https://github.com/adamsthws/firmware-liberator)
 
 ## Links
 
 - [Product Page](https://itead.cc/product/sonoff-iplug-wi-fi-smart-plug-s60/)
 - [Sonoff S60 version Europe : tasmotized](https://github.com/arendst/Tasmota/discussions/21255)
-- [Sonoff-OTA](https://github.com/adamsthws/Sonoff-OTA)
+- [Firmware Liberator](https://github.com/adamsthws/firmware-liberator)
 
 ## Basic Configuration
 
