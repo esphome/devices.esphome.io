@@ -1,0 +1,12 @@
+output:
+  - platform: ledc
+    pin: GPIO5
+    id: backlight_led
+    frequency: 5kHz
+
+light:
+  - platform: monochromatic
+    output: backlight_led
+    name: Backlight
+    id: backlight
+    restore_mode: ALWAYS_ON
