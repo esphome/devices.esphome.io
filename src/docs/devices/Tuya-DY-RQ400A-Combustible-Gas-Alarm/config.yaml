@@ -1,0 +1,110 @@
+esphome:
+  # DY-RQ400A
+  name: tuya-gas-alarm-wb2s
+
+bk72xx:
+  # https://docs.libretiny.eu/boards/wb2s/
+  board: wb2s
+
+logger:
+
+mdns:
+
+wifi:
+  ap: {}
+
+uart:
+  rx_pin: RX1
+  tx_pin: TX1
+  baud_rate: 9600
+
+# The device contains an RJM8L151F6P6 MCU with which the Tuya WB2S
+# module interacts over UART1. The MCU handles the alarm-related
+# logic leaving some control capabilities to the Wi-Fi chip.
+# Datasheet (Chinese): https://cdn.myxypt.com/4412af49/22/06/ae01795334fbb272e3dcdc0f6464371691535dc2.pdf
+tuya:
+
+text_sensor:
+  - platform: libretiny
+    version:
+      name: LibreTiny Version
+  - platform: "tuya"
+    name: "Self-test Result"
+    sensor_datapoint: 1
+    filters:
+      # The Tuya DP is an enum which is converted to human-readable strings.
+      - map:
+          - 0 -> Checking
+          - 1 -> Success
+          - 2 -> Failure
+          - 3 -> Other
+
+sensor:
+  - platform: "tuya"
+    name: "Gas Threshold Level"
+    sensor_datapoint: 5
+    # 7% LEL +- 3% (CH4) is the threshold for detection level per
+    # the printed manual that comes with the device.
+    # The DP value of 100 = 7% LEL (Lower Explosive Limit) - after
+    # reaching that the MCU will trigger the alarm.
+    unit_of_measurement: "%"
+    state_class: "measurement"
+
+binary_sensor:
+  - platform: "tuya"
+    name: "Gas Alarm"
+    sensor_datapoint: 2
+    # Whether a gas alarm is raised or not. Inverted since the value
+    # of "1" means "normal state". The DP is an enum with only 2 values.
+    filters:
+      - invert:
+  - platform: "tuya"
+    # Indicates whether the gas sensor preheat is in progress or not.
+    # It is done automatically when the device is powered on and the
+    # led flashes with different colors during that process. The DP is
+    # a switch but it cannot be controlled (read-only).
+    name: "Sensor Preheat"
+    sensor_datapoint: 10
+switch:
+  - platform: "tuya"
+    # Trigger a self-test as if a gas level was over the threshold can
+    # be controlled by the physical button (highlighted by the LED) on
+    # the device as well.
+    name: "Alarm Self-test"
+    switch_datapoint: 9
+    # The current value is fetched from the MCU upon initialization.
+    restore_mode: DISABLED
+  - platform: "tuya"
+    # Enable or disable the buzzer when an alarm gets triggered.
+    name: "Alarm Sound"
+    switch_datapoint: 12
+    # The current value is fetched from the MCU upon initialization.
+    restore_mode: DISABLED
+  - platform: "tuya"
+    # Silence the alarm once if it is active.
+    name: "Silence the Alarm"
+    switch_datapoint: 14
+    # The current value is fetched from the MCU upon initialization.
+    restore_mode: DISABLED
+
+number:
+  - platform: "tuya"
+    name: "Alarm Period"
+    number_datapoint: 3
+    # How much time will the alarm continue to be active
+    # after detecting a gas level above the threshold.
+    min_value: 0
+    max_value: 180
+    step: 1
+
+select:
+  - platform: "tuya"
+    name: "Alarm Melody"
+    enum_datapoint: 8
+    optimistic: true
+    options:
+      0: Melody 1
+      1: Melody 2
+      2: Melody 3
+      3: Melody 4
+      4: Melody 5

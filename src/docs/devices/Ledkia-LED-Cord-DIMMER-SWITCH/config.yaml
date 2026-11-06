@@ -1,0 +1,28 @@
+esphome:
+  name: ledkia-led-cord-dimmer
+  friendly_name: Ledkia LED Cord DIMMER Switch
+
+rtl87xx:
+  board: wr3
+
+# Enable logging
+logger:
+
+uart:
+  rx_pin: RX0
+  tx_pin: TX0
+  baud_rate: 9600
+
+tuya:
+
+# Create a light using the dimmer
+light:
+  - platform: "tuya"
+    name: "Dimmer"
+    dimmer_datapoint: 2
+    min_value_datapoint: 0
+    switch_datapoint: 1
+    max_value: 1000
+
+wifi:
+  ap: {}

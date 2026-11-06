@@ -1,0 +1,31 @@
+esphome:
+  name: ledkia-led-cord-dimmer
+  friendly_name: Ledkia LED Cord DIMMER Switch
+
+esp32:
+  board: esp32-c6-devkitc-1
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: GPIO17
+  tx_pin: GPIO16
+  baud_rate: 9600
+
+tuya:
+
+# Create a light using the dimmer
+light:
+  - platform: "tuya"
+    name: "Luz"
+    dimmer_datapoint: 2
+    switch_datapoint: 1
+    max_value: 1000
+    icon: mdi:lamp
+
+wifi:
+  ap: {}

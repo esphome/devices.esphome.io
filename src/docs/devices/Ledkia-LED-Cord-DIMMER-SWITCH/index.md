@@ -4,7 +4,7 @@ date-published: 2025-12-07
 type: dimmer
 standard: uk, eu
 board: rtl87xx
-made-for-esphome: False
+made-for-esphome: false
 difficulty: 4
 ---
 
@@ -16,7 +16,7 @@ Possibiliity of wireless voice control via Alexa or Google home."
 
 Also known as C152547 WIFI LED Cord Dimmer is a dimmer based on Tuya, with 2 microcontrollers.
 The dimmer side is controlled by stm microcontroller (Tuya MCU), and the Wi-Fi functionality
-by a [**Tuya WR3**](https://developer.tuya.com/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
+by a [**Tuya WR3**](https://developer.tuya.com/en/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
 
 ### Specs
 
@@ -64,7 +64,7 @@ by a [**Tuya WR3**](https://developer.tuya.com/docs/iot/wr3-module-datasheet?id=
     Refer to the image above for the pinout layout.
 
 - If you haven’t already, download [**ltchiptool**](https://github.com/libretiny-eu/ltchiptool), a command-line utility
-  for flashing and dumping firmware.  
+  for flashing and dumping firmware.
   **Note**: The standard ESP flasher is not compatible with this device.
 
 ## Flashing
@@ -109,53 +109,9 @@ ltchiptool flash write realtek-ambz firmware.uf2
 
 ## Basic configuration
 
-```yaml
+The example contains the device hardware settings. Add your Wi-Fi, API and OTA configuration separately.
 
-esphome:
-  name: Ledkia-LED-Cord-DIMMER
-  friendly_name: Ledkia LED Cord DIMMER Switch
-
-rtl87xx:
-  board: wr3
-
-# Enable logging
-logger:
-
-uart:
-  rx_pin: RX0
-  tx_pin: TX0
-  baud_rate: 9600
-
-tuya:
-
-# Create a light using the dimmer
-light:
-  - platform: "tuya"
-    name: "Dimmer"
-    dimmer_datapoint: 2
-    min_value_datapoint: 0
-    switch_datapoint: 1
-    max_value: 1000
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret api_key
-
-ota:
-  - platform: esphome
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Dimmer Fallback Hotspot"
-    password: !secret fallback_wifi_password
-
-captive_portal:
-    
+```yaml file=config.yaml
 ```
 
 ## ESP32 migration
@@ -168,53 +124,5 @@ Be aware of the thermal fuse in the board, it is 130C rated and will trigger pre
 It is very important to disable uart logging (baud_rate: 0), as the pins used by the
 tuya MCU are the same as the default UART port of ESP12F WT0132C6-S5.
 
-```yaml
-
-esphome:
-  name: Ledkia-LED-Cord-DIMMER
-  friendly_name: Ledkia LED Cord DIMMER Switch
-
-esp32:
-  board: esp32-c6-devkitc-1
-  framework:
-    type: esp-idf
-
-# Enable logging
-logger:
-  baud_rate: 0
-
-uart:
-  rx_pin: GPIO17
-  tx_pin: GPIO16
-  baud_rate: 9600
-
-tuya:
-
-# Create a light using the dimmer
-light:
-  - platform: "tuya"
-    name: "Luz"
-    dimmer_datapoint: 2
-    switch_datapoint: 1
-    max_value: 1000
-    icon: mdi:lamp
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret api_key
-ota:
-  - platform: esphome
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Dimmer-C6 Fallback Hotspot"
-    password: !secret wifi_password
-
-captive_portal:
-
+```yaml file=esp32-migration.yaml
 ```
