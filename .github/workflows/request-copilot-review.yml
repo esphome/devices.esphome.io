@@ -1,0 +1,40 @@
+name: Request Copilot review
+
+# Requests a Copilot code review when a draft pull request is marked ready
+# for review. The ruleset only reviews on open, and the review drafter usually
+# drafts a PR (after its device checks fail) before that first review starts.
+# Drafts the Made for ESPHome promotion marks ready use GITHUB_TOKEN, whose
+# events trigger no workflow, so mfe-promote.cjs requests the review itself.
+# Logic lives in .github/scripts/request-copilot-review.cjs.
+
+on:
+  pull_request_target:
+    types:
+      - ready_for_review
+
+permissions: {}
+
+jobs:
+  request:
+    name: Request Copilot review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # to check out the script below
+      pull-requests: write  # request a reviewer
+    steps:
+      # Checks out the base repo (trusted) only to load the script below,
+      # never the PR's code - this job runs with a writable token.
+      - name: Checkout scripts
+        uses: actions/checkout@v7.0.1
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Request Copilot review
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const script = require('./.github/scripts/request-copilot-review.cjs');
+            await script({ github, context, core });
