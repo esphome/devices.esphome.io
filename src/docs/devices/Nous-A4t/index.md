@@ -34,7 +34,7 @@ board: esp8266
 ```yaml
 substitutions:
   devicename: nousa4tplug
-  # See calculator at bottom of https://esphome.io/components/sensor/hlw8012.html to calibrate these values
+  # See calculator at bottom of https://esphome.io/components/sensor/hlw8012/ to calibrate these values
   voltage_div: "1541"
   current_res: "0.0010829518310527565"
   current_multiply: "0.8476903844535357"

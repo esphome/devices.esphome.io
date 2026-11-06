@@ -54,7 +54,7 @@ light:
 Here is the c code for the header file. The code is not mine. I just made some modifications for this bulb. This file
 should be named `better_rgbw_output.h` and be saved in the esphome directory
 
-```C#
+```cpp
 /*  A Better RGBW(W) Output
 
     Based on/inspired by user *envy* at https://github.com/esphome/feature-requests/issues/212#issuecomment-498036079
