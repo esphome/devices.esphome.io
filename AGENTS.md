@@ -139,8 +139,8 @@ Automations, Home Assistant integration and extra components go in separate, des
 
 Every changed device folder with `file=` configs must pass `esphome config` (`config.yaml` and files with their own
 `esphome: name:` on their own, other files merged onto `config.yaml`, each with the `logger:`, `api:`, `ota:` and
-Wi-Fi a user's config adds where the files lack them), and the page must import into the ESPHome
-Device Builder; the check prints why not. Locally it needs `esphome` on PATH, and for the import check
+Wi-Fi a user's config adds where neither the files nor their local packages have them), and the page must import
+into the ESPHome Device Builder; the check prints why not. Locally it needs `esphome` on PATH, and for the import check
 `DEVICE_BUILDER_DIR` pointing at an esphome/device-builder checkout with `DEVICE_BUILDER_PYTHON` set to a Python
 that has it installed (`pip install "<checkout>[esphome]"`); without them that check is skipped. Pass device folder
 names to check specific pages.

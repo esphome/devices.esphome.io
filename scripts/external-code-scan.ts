@@ -178,3 +178,40 @@ function walk(node: unknown, visit: (node: unknown) => void): void {
   else if (Array.isArray(node)) node.forEach((n) => walk(n, visit));
   else if (isMapping(node)) Object.values(node).forEach((n) => walk(n, visit));
 }
+
+/**
+ * Top-level component names *file* gives a config, counting what its local
+ * `packages:` bring in (followed recursively). Run after the scan, which
+ * makes sure every package is a local `!include`; unreadable files add nothing.
+ */
+export function componentsOf(deviceDir: string, file: string): Set<string> {
+  const names = new Set<string>();
+  const seen = new Set<string>();
+  const load = (abs: string): unknown => {
+    if (seen.has(abs) || !inside(deviceDir, abs)) return undefined;
+    seen.add(abs);
+    try {
+      return yaml.load(fs.readFileSync(abs, "utf8"), { schema: SCAN_SCHEMA });
+    } catch {
+      return undefined;
+    }
+  };
+  // An `!include` node loads its target, resolved against the including file.
+  const deref = (node: unknown, from: string): [unknown, string] => {
+    if (!(node instanceof Tagged) || node.tag !== "!include") return [node, from];
+    const target = includeTarget(node);
+    if (target === null) return [undefined, from];
+    const abs = path.resolve(path.dirname(from), target);
+    return [load(abs), abs];
+  };
+  const addConfig = (tree: unknown, from: string): void => {
+    if (!isMapping(tree)) return;
+    for (const key of Object.keys(tree)) if (key !== "packages" && key !== "<<") names.add(key);
+    const [packages, packagesFrom] = deref(tree.packages, from);
+    const entries = Array.isArray(packages) ? packages : isMapping(packages) ? Object.values(packages) : [];
+    for (const entry of entries) addConfig(...deref(entry, packagesFrom));
+  };
+  const abs = path.resolve(deviceDir, file);
+  addConfig(load(abs), abs);
+  return names;
+}

@@ -26,7 +26,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import * as yaml from "js-yaml";
 import { changedPaths } from "./changed-paths.ts";
-import { scanExternalCode } from "./external-code-scan.ts";
+import { componentsOf, scanExternalCode } from "./external-code-scan.ts";
 import { stripAnsi } from "./review-made-for-esphome.ts";
 import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
 import { findYamlFences, type Issue } from "./validate-yaml-configs.ts";
@@ -43,7 +43,6 @@ export interface Finding extends Issue {
 export interface Target {
   file: string; // yaml file in the device folder
   mergeOnto: string | null; // base file for an add-on fragment
-  parsed: unknown;
 }
 
 export interface Page {
@@ -118,11 +117,11 @@ export function loadPage(deviceDir: string, repoRoot: string): Page | null {
   }
   for (const [file, tree] of parsed) {
     if (file === "config.yaml") {
-      page.targets.unshift({ file, mergeOnto: null, parsed: tree });
+      page.targets.unshift({ file, mergeOnto: null });
     } else if (isStandalone(tree)) {
-      page.targets.push({ file, mergeOnto: null, parsed: tree });
+      page.targets.push({ file, mergeOnto: null });
     } else if (parsed.has("config.yaml")) {
-      page.targets.push({ file, mergeOnto: "config.yaml", parsed: tree });
+      page.targets.push({ file, mergeOnto: "config.yaml" });
     } else {
       page.findings.push({
         check: "esphome",
@@ -135,15 +134,20 @@ export function loadPage(deviceDir: string, repoRoot: string): Page | null {
   return page;
 }
 
-/** The `logger:`, `api:`, `ota:` and Wi-Fi a user's config adds, minus what the files have; "" if nothing. */
-export function userScaffold(base: unknown, fragment: unknown): string {
-  const has = (key: string): boolean => [base, fragment].some((t) => isMapping(t) && key in t);
+/** The `logger:`, `api:`, `ota:` and Wi-Fi a user's config adds, minus what *components* has; "" if nothing. */
+export function userScaffold(components: ReadonlySet<string>): string {
   const lines: string[] = [];
-  if (!has("logger")) lines.push("logger:");
-  if (!has("api")) lines.push("api:");
-  if (!has("ota")) lines.push("ota:", "  - platform: esphome");
-  if (!NETWORK_COMPONENTS.some(has)) lines.push("wifi:", "  ap: {}");
+  if (!components.has("logger")) lines.push("logger:");
+  if (!components.has("api")) lines.push("api:");
+  if (!components.has("ota")) lines.push("ota:", "  - platform: esphome");
+  if (!NETWORK_COMPONENTS.some((c) => components.has(c))) lines.push("wifi:", "  ap: {}");
   return lines.length > 0 ? lines.join("\n") + "\n" : "";
+}
+
+/** How a failure message names the scaffold's top-level components: "`logger:`, `api:` and `wifi:`". */
+export function scaffoldParts(scaffold: string): string {
+  const keys = (scaffold.match(/^\w+(?=:)/gm) ?? []).map((k) => `\`${k}:\``);
+  return keys.length <= 1 ? keys.join("") : `${keys.slice(0, -1).join(", ")} and ${keys[keys.length - 1]}`;
 }
 
 /** The `Failed config` block of `esphome config` output, else its error lines, uncapped. */
@@ -285,9 +289,10 @@ type TargetResult = "ok" | "error" | "inconclusive";
 async function checkTarget(page: Page, work: string, target: Target, runner: Runner): Promise<TargetResult> {
   // Every target runs with what a user's config adds, as a hardware-only
   // config.yaml needs a network for components like the status sensor.
-  const base =
-    target.mergeOnto === null ? undefined : page.targets.find((t) => t.file === target.mergeOnto)?.parsed;
-  const scaffold = userScaffold(base, target.parsed);
+  // Count what local packages bring in, so an included `ethernet:` gets no Wi-Fi.
+  const components = componentsOf(page.dir, target.file);
+  if (target.mergeOnto !== null) for (const c of componentsOf(page.dir, target.mergeOnto)) components.add(c);
+  const scaffold = userScaffold(components);
   let entry = target.file;
   if (target.mergeOnto !== null || scaffold !== "") {
     entry = `__merged-${target.file}`;
@@ -302,7 +307,7 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
   const result = await esphomeConfig(runner, work, entry);
   if (result.ok) return "ok";
   const file = path.join(path.dirname(page.rel), target.file);
-  const added = scaffold === "" ? "" : " (plus the `logger:`, `api:`, `ota:` and Wi-Fi a user's config would add)";
+  const added = scaffold === "" ? "" : ` (plus the ${scaffoldParts(scaffold)} a user's config would add)`;
   const how =
     target.mergeOnto === null
       ? `\`esphome config\` fails${added}`

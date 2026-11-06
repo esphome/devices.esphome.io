@@ -18,8 +18,10 @@ import {
   loadPage,
   sourceLine,
   trimEsphomeError,
+  scaffoldParts,
   userScaffold,
 } from "./validate-esphome-configs.ts";
+import { componentsOf } from "./external-code-scan.ts";
 import { parseNameStatus } from "./changed-paths.ts";
 
 const fence = (attrs: string): string => `\`\`\`yaml ${attrs}\n\`\`\`\n`;
@@ -120,24 +122,96 @@ test("isStandalone needs esphome: name", () => {
   assert.equal(isStandalone(undefined), false);
 });
 
-const scaffoldCases: [string, unknown, unknown, boolean][] = [
-  ["no network anywhere adds Wi-Fi", { esp8266: {} }, { sensor: [] }, true],
-  ["config.yaml with Wi-Fi", { wifi: { ap: {} } }, {}, false],
-  ["config.yaml with ethernet", { ethernet: {} }, {}, false],
-  ["an ethernet fragment", { esp32: {} }, { ethernet: { type: "W5500" } }, false],
-  ["a standalone config.yaml", { esp8266: {}, binary_sensor: [] }, undefined, true],
+const scaffoldCases: [string, string[], boolean][] = [
+  ["no network anywhere adds Wi-Fi", ["esp8266", "sensor"], true],
+  ["config.yaml with Wi-Fi", ["wifi"], false],
+  ["config.yaml with ethernet", ["ethernet"], false],
+  ["an ethernet fragment", ["esp32", "ethernet"], false],
+  ["a standalone config.yaml", ["esp8266", "binary_sensor"], true],
 ];
-for (const [name, base, fragment, wifi] of scaffoldCases) {
+for (const [name, components, wifi] of scaffoldCases) {
   test(`scaffold: ${name}`, () => {
-    const out = userScaffold(base, fragment);
+    const out = userScaffold(new Set(components));
     assert.match(out, /^logger:\napi:\nota:\n {2}- platform: esphome\n/);
     assert.equal(out.includes("wifi:"), wifi);
   });
 }
 
 test("scaffold: a full example adds only what it lacks", () => {
-  assert.equal(userScaffold({ logger: {}, api: {}, wifi: {} }, undefined), "ota:\n  - platform: esphome\n");
-  assert.equal(userScaffold({ logger: {}, api: {}, ota: [], ethernet: {} }, undefined), "");
+  assert.equal(userScaffold(new Set(["logger", "api", "wifi"])), "ota:\n  - platform: esphome\n");
+  assert.equal(userScaffold(new Set(["logger", "api", "ota", "ethernet"])), "");
+});
+
+test("scaffold: the failure message names only what was added", () => {
+  assert.equal(scaffoldParts(userScaffold(new Set(["logger", "api", "wifi"]))), "`ota:`");
+  assert.equal(scaffoldParts(userScaffold(new Set(["ethernet"]))), "`logger:`, `api:` and `ota:`");
+  assert.equal(scaffoldParts(userScaffold(new Set())), "`logger:`, `api:`, `ota:` and `wifi:`");
+});
+
+const componentCases: [string, Record<string, string>, string[]][] = [
+  ["a plain config", { "config.yaml": CONFIG }, ["esp8266", "esphome"]],
+  [
+    "a named local package",
+    { "config.yaml": CONFIG + "packages:\n  eth: !include eth.yaml\n", "eth.yaml": "ethernet:\n  type: W5500\n" },
+    ["esp8266", "esphome", "ethernet"],
+  ],
+  [
+    "a listed package with vars, nested packages",
+    {
+      "config.yaml": CONFIG + "packages:\n  - !include {file: common.yaml, vars: {x: 1}}\n",
+      "common.yaml": "api:\npackages:\n  net: !include net/eth.yaml\n",
+      "net/eth.yaml": "ethernet: {}\n",
+    },
+    ["api", "esp8266", "esphome", "ethernet"],
+  ],
+  [
+    "packages: included whole",
+    { "config.yaml": CONFIG + "packages: !include pkgs.yaml\n", "pkgs.yaml": "eth: !include eth.yaml\n", "eth.yaml": "ethernet: {}\n" },
+    ["esp8266", "esphome", "ethernet"],
+  ],
+  [
+    "an include cycle and a missing file add nothing",
+    { "config.yaml": CONFIG + "packages:\n  a: !include a.yaml\n  b: !include missing.yaml\n", "a.yaml": "logger:\npackages:\n  c: !include config.yaml\n" },
+    ["esp8266", "esphome", "logger"],
+  ],
+];
+for (const [name, files, expected] of componentCases) {
+  test(`components: ${name}`, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "components-test-"));
+    try {
+      for (const [f, content] of Object.entries(files)) {
+        fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+        fs.writeFileSync(path.join(dir, f), content);
+      }
+      assert.deepEqual([...componentsOf(dir, "config.yaml")].sort(), expected);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
+
+test("a standalone config with ethernet from a local package gets no Wi-Fi", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "validate-esphome-test-"));
+  const dir = path.join(root, "Plug");
+  fs.mkdirSync(dir);
+  fs.writeFileSync(path.join(dir, "index.md"), fence("file=config.yaml"));
+  fs.writeFileSync(path.join(dir, "config.yaml"), CONFIG + "packages:\n  eth: !include eth.yaml\n");
+  fs.writeFileSync(path.join(dir, "eth.yaml"), "ethernet:\n  type: W5500\n");
+  // Stand-in esphome that fails if the scaffold it was handed has wifi:.
+  const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-bin-"));
+  const bin = path.join(binDir, "fake");
+  fs.writeFileSync(bin, "#!/bin/sh\nif grep -q '^wifi:' __user-config.yaml; then echo 'Failed config'; exit 1; fi\nexit 0\n", {
+    mode: 0o755,
+  });
+  try {
+    const page = loadPage(dir, root);
+    assert.ok(page);
+    await checkEsphome(page, { bin, timeoutMs: 10_000, limit: (fn) => fn() });
+    assert.deepEqual(page.findings, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(binDir, { recursive: true, force: true });
+  }
 });
 
 test("device dirs include subfolder and deleted paths, not top-level docs", () => {
