@@ -1,35 +1,35 @@
 ---
-title: Ledvance E27 RGBW Light 806lm
+title: LEDVANCE E27 RGBW Light 806lm
 date-published: 2024-08-07
 type: light
 standard: eu
-board: bk27xx
+board: bk72xx
 ---
 
 Product ID: AC33911
 
-Can be flashed with esphome kickstart via tuya-cloudcutter!!
+Can be flashed with esphome kickstart via [tuya-cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter)!
 
 ## Product Images
 
-![Ledvance E27 RGBW Light](ledvance-e27-rgbw.jpg "Ledvance E27 RGBW Light")
+![LEDVANCE E27 RGBW Light](ledvance-e27-rgbw.jpg "LEDVANCE E27 RGBW Light")
 
 ## GPIO Pinout
 
-| Function   | GPIO-Pin |
-| ---------- | -------- |
-| PWM_red    | P7       |
-| PWM_green  | P8       |
-| PWM_blue   | P9       |
-| PWM_white  | P24      |
+| Function  | GPIO-Pin |
+| --------- | -------- |
+| PWM_red   | P7       |
+| PWM_green | P8       |
+| PWM_blue  | P9       |
+| PWM_white | P24      |
 
 ## Basic Configuration
 
 ```yaml
 esphome:
   name: ledvance-e27-rgbw
-  comment: Ledvance E27 RGBW Bulb
-  friendly_name: Ledvance E27 RGBW Bulb
+  comment: LEDVANCE E27 RGBW Bulb
+  friendly_name: LEDVANCE E27 RGBW Bulb
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
@@ -37,7 +37,7 @@ bk72xx:
 # Make sure logging is not using the serial port
 logger:
   baud_rate: 0
-  
+
 # Enable Home Assistant API
 api:
 

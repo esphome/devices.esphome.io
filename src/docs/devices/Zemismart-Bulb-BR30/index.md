@@ -6,11 +6,12 @@ standard: eu
 board: esp8266
 ---
 
-RGBW smart light bulb, BR30 shape, E27 base, 420-480lm, RGB colors + cold white, 100-240V AC 50/60Hz, natively Tuya/Smart Life, works with Tuya-convert to flash to ESPHome.
+RGBW smart light bulb, BR30 shape, E27 base, 420-480lm, RGB colors + cold white, 100-240V AC 50/60Hz, natively
+Tuya/Smart Life, works with Tuya-convert to flash to ESPHome.
 
 ## Product Images
 
-![alt text](/inside.jpg "inside")
+![alt text](./inside.jpg "inside")
 
 ## GPIO Pinout
 
@@ -28,7 +29,8 @@ substitutions:
 
 esphome:
   name: ${dev_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

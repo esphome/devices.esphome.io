@@ -14,14 +14,14 @@ Works with RF Remote
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| GPIO03 | LED (inverted)             |
-| GPIO04 | S1 (external open switch input)/Open switch from remote |
+| Pin    | Function                                                 |
+| ------ | -------------------------------------------------------- |
+| GPIO03 | LED (inverted)                                           |
+| GPIO04 | S1 (external open switch input)/Open switch from remote  |
 | GPIO05 | S2 (external close switch input)/Open switch from remote |
-| GPIO12 | Open Relay L1                   |
-| GPIO13 | Stop switch from remote                     |
-| GPIO14 | close Relay L2                   |
+| GPIO12 | Open Relay L1                                            |
+| GPIO13 | Stop switch from remote                                  |
+| GPIO14 | close Relay L2                                           |
 
 ## Basic Config
 
@@ -51,12 +51,12 @@ esphome:
 #  platform: ESP8266
 
 esp8266:
-  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome.html#esp8266-restore-from-flash
+  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
   board: esp01_1m
 
 # Enable logging
 logger:
-  esp8266_store_log_strings_in_flash: False # recommanded for ESP8266 https://esphome.io/components/sensor/custom.html
+  esp8266_store_log_strings_in_flash: False # recommanded for ESP8266
   #  baud_rate : 115200
   baud_rate: 0
 
@@ -97,14 +97,14 @@ sensor:
 #######################################
 
 binary_sensor:
-#  - platform: gpio
-#    pin: ${reset_button}
-#    id: reset_switch
-#    internal: true
-#    on_press:
-#      then:
-#        - switch.toggle: reset
-#
+  #  - platform: gpio
+  #    pin: ${reset_button}
+  #    id: reset_switch
+  #    internal: true
+  #    on_press:
+  #      then:
+  #        - switch.toggle: reset
+  #
   - platform: gpio
     name: ${friendly_name} S1 switch input
     pin: ${open_switch}
@@ -123,7 +123,7 @@ binary_sensor:
               // Cover is opening/closing. Stop it.
               id(cover1).make_call().set_command_stop().perform();
             }
-#
+  #
   - platform: gpio
     name: ${friendly_name} S2 switch input
     pin: ${close_switch}
@@ -142,7 +142,7 @@ binary_sensor:
               // Cover is opening/closing. Stop it.
               id(cover1).make_call().set_command_stop().perform();
             }
-#
+  #
   - platform: gpio
     name: ${friendly_name} remote stop switch
     pin: ${stop_switch}
@@ -158,9 +158,9 @@ binary_sensor:
 
 #
 switch:
-#  - platform: restart
-#    id: reset
-#    name: "${friendly_name} Restart"
+  #  - platform: restart
+  #    id: reset
+  #    name: "${friendly_name} Restart"
 
   - platform: gpio
     pin: ${open_relay}

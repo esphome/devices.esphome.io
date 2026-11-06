@@ -21,7 +21,8 @@ board: esp8266
 # Basic Config
 esphome:
   name: orvibo_b25
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

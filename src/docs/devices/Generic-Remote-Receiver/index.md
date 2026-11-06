@@ -13,16 +13,18 @@ standard: global
 
 ## Basic Configuration
 
-I use this with a cheap IR decoder in a three pin package which happens to plug in to GPIO15,VCC,and GND on adjacent pins of
-the esp32dev board. You can get 5 receivers for $5 from [amazon.com](https://amzn.to/2NZaH9a).
+I use this with a cheap IR decoder in a three pin package which happens to plug in to GPIO15,VCC,and GND on adjacent
+pins of
+the esp32dev board. You can get 5 receivers for $5 from [amazon.com](https://www.amazon.com/dp/B07TLBJR5J).
 
 ```yaml
 # Basic Config for esp32
 # https://www.espressif.com/en/products/hardware/esp32/overview
 esphome:
   name: irl00
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
 wifi:
   ssid: !secret wifi_ssid
@@ -53,7 +55,8 @@ can handle it pretty well with generic GPIO.
 ```yaml
 esphome:
   name: irl01
-  platform: ESP8266
+
+esp8266:
   board: d1_mini
 
 wifi:
@@ -84,7 +87,7 @@ I keep the IR code definitions in separate files which can be included in the sk
 
 ### Car MP3 Remote
 
-As included in [an Elegoo bundle](https://amzn.to/3stqQCC).
+As included in [an Elegoo bundle](https://www.amazon.com/dp/B01CZTLHGE).
 
 ```yaml
 # Codes for the cheap "car mp3" remote

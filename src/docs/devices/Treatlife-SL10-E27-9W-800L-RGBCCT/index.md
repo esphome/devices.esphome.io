@@ -10,10 +10,10 @@ Treatlife SL10 PCB differs from the previous ESP based SL10 that now has BK7231T
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO8  | SM2135 Data Pin  |
-| GPIO7  | SM2135 Clock Pin          |
+| Pin   | Function         |
+| ----- | ---------------- |
+| GPIO8 | SM2135 Data Pin  |
+| GPIO7 | SM2135 Clock Pin |
 
 ## Basic Configuration
 
@@ -40,8 +40,8 @@ ota:
 
 wifi:
   networks:
-  - ssid: !secret wifi_ssid
-    password: !secret wifi_password
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
   # Enable fallback hotspot in case wifi connection fails
   ap:
     password: !secret ap_password
@@ -87,5 +87,4 @@ output:
   - platform: sm2135
     id: output_coldwhite
     channel: 3
-
 ```

@@ -20,8 +20,9 @@ Here is an example YAML configuration for the KinCony-KC868-M1 board with custom
 ```yaml
 esphome:
   name: m1
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 uart:
   - id: uart_bus
     tx_pin: GPIO13

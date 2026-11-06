@@ -31,6 +31,11 @@ The Apollo Automation MSR-1 is a mmWave CO2 multisensor with the following featu
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/MSR-1/blob/main/Integrations/ESPHome/MSR-1.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/multisensor-mk1)

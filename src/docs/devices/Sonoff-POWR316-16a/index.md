@@ -19,7 +19,9 @@ difficulty: 3
 
 ## Initial Setup
 
-Remove the 4 screws at the back of the device and expose the board. The board is mounted to the front panel and can be un screwed also to install a permanent 4 pin header to attach jumper cables. Hold down the button while powering on the device to put it into bootloader mode.
+Remove the 4 screws at the back of the device and expose the board. The board is mounted to the front panel and can be
+un screwed also to install a permanent 4 pin header to attach jumper cables. Hold down the button while powering on the
+device to put it into bootloader mode.
 
 ## Product Images
 
@@ -41,9 +43,11 @@ esphome:
   on_boot:
     then:
       - switch.turn_on: relay
-  
+
 esp32:
-  board: nodemcu-32s
+  variant: esp32
+  framework:
+    type: esp-idf
 
 wifi:
   ssid: !secret wifi_ssid
@@ -65,7 +69,7 @@ logger:
 api:
 
 ota:
-  password: !secret ota_pwd
+  - platform: esphome
 
 #optional
 web_server:
@@ -75,7 +79,7 @@ uart:
   rx_pin: GPIO16
   baud_rate: 4800
   parity: EVEN
-  
+
 sensor:
   - platform: cse7766
     current:
@@ -99,13 +103,9 @@ sensor:
       filters:
         - throttle_average: 30s
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
     id: esp32_temp
-    lambda: return temperatureRead();
-    update_interval: 600s
 
   - platform: wifi_signal
     name: "WiFi Signal"

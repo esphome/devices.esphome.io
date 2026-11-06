@@ -6,7 +6,7 @@ type: plug
 standard: au
 board: esp8266
 ---
-  ![alt text](/kogan-smarterhome-smart-plug-energy-meter.jpg "Product Image")
+  ![alt text](./kogan-smarterhome-smart-plug-energy-meter.jpg "Product Image")
   
 [https://www.kogan.com/au/buy/kogan-smarterhome-smart-plug-energy-meter/](https://www.kogan.com/au/buy/kogan-smarterhome-smart-plug-energy-meter/)
 
@@ -26,7 +26,8 @@ board: esp8266
 ```yaml
 esphome:
   name: kogan_plug_1
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 wifi:

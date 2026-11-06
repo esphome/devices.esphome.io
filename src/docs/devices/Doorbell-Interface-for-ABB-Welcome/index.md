@@ -12,7 +12,9 @@ difficulty: 2
 
 ## Description
 
-This device allows you to integrate your ABB-Welcome or Busch-Welcome 2-wire doorbell intercom system into Home Assistant. Features include doorbell notifications and remotely opening your door. You can find more info about how to order, flash and customize the device on the [project page](https://github.com/Mat931/esp32-doorbell-bus-interface).
+This device allows you to integrate your ABB-Welcome or Busch-Welcome 2-wire doorbell intercom system into Home
+Assistant. Features include doorbell notifications and remotely opening your door. You can find more info about how to
+order, flash and customize the device on the [project page](https://github.com/Mat931/esp32-doorbell-bus-interface).
 
 ## GPIO Pinout
 
@@ -26,7 +28,7 @@ This device allows you to integrate your ABB-Welcome or Busch-Welcome 2-wire doo
 
 ```yaml
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -48,21 +50,23 @@ esphome:
 
 wifi:
   networks:
-  - ssid: !secret wifi_ssid
-    password: !secret wifi_password
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
 
 logger:
 
 api:
   encryption:
-    key: !secret api_encryption_key
+    key: "" # Add your API encryption key here
 
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    password: "" # Add your OTA password here
 
 remote_transmitter:
   pin: GPIO26
   carrier_duty_percent: 100%
+  non_blocking: true
 
 remote_receiver:
   pin:
@@ -76,16 +80,16 @@ remote_receiver:
     value: 26us
   idle: 1500us
   buffer_size: 15kB
-  memory_blocks: 5
-  clock_divider: 160
+  rmt_symbols: 320
+  clock_resolution: 500000
   on_abbwelcome:
     then:
-      - lambda: 'id(doorbell_intercom).publish_state(x.to_string().c_str());'
+      - lambda: "char buf[192]; x.format_to(buf, 192); id(doorbell_intercom).publish_state(buf);"
       - if:
           condition:
             and:
-              - lambda: 'return (x.get_message_type() == 0x8d);' # unlock door response
-              - lambda: 'return (x.get_source_address() == 0x4001);' # door address
+              - lambda: "return (x.get_message_type() == 0x8d);" # unlock door response
+              - lambda: "return (x.get_source_address() == 0x4001);" # door address
           then:
             - lock.template.publish:
                 id: front_door
@@ -97,8 +101,8 @@ remote_receiver:
       - if:
           condition:
             and:
-              - lambda: 'return (x.get_message_type() == 0x11);' # doorbell indoor
-              - lambda: 'return (x.get_source_address() == 0x1001);' # your indoor station address
+              - lambda: "return (x.get_message_type() == 0x11);" # doorbell indoor
+              - lambda: "return (x.get_source_address() == 0x1001);" # your indoor station address
           then:
             - binary_sensor.template.publish:
                 id: doorbell_indoor
@@ -109,9 +113,9 @@ remote_receiver:
       - if:
           condition:
             and:
-              - lambda: 'return (x.get_message_type() == 0x01);' # doorbell outdoor
-              - lambda: 'return (x.get_source_address() == 0x2001);' # outdoor station address
-              - lambda: 'return (x.get_destination_address() == 0x1001);' # your indoor station address
+              - lambda: "return (x.get_message_type() == 0x01);" # doorbell outdoor
+              - lambda: "return (x.get_source_address() == 0x2001);" # outdoor station address
+              - lambda: "return (x.get_destination_address() == 0x1001);" # your indoor station address
           then:
             - binary_sensor.template.publish:
                 id: doorbell_outdoor
@@ -166,7 +170,7 @@ lock:
               destination_address: 0x4001 # door address
               three_byte_address: false # address length of your system
               message_type: 0x0d # unlock door
-              data: [0xab, 0xcd, 0xef]  # door opener secret code, see receiver dump
+              data: [0xab, 0xcd, 0xef] # door opener secret code, see receiver dump
 
 button:
   - platform: restart
@@ -184,5 +188,7 @@ button:
           data: [0x00]
 
 status_led:
-  pin: GPIO2
+  pin:
+    number: GPIO2
+    ignore_strapping_warning: true
 ```

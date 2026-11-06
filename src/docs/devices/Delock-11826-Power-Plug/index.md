@@ -13,7 +13,8 @@ Model reference: 11826
 Manufacturer: [Delock](https://www.delock.de/produkte/G_11826/merkmale.html)
 
 The device comes **pre-flashed with Tasmota**.
-Flashing ESPHome is easily possible by uploading an ESPHome .bin file using the device's web interface. In case of issues GZIP your .bin file!
+Flashing ESPHome is easily possible by uploading an ESPHome .bin file using the device's web interface. In case of
+issues GZIP your .bin file!
 
 ![Product](./Delock-11826-Power-Smart-Plug.jpg "Product Image")
 
@@ -35,7 +36,8 @@ substitutions:
 
 esphome:
   name: ${plug_name}
-  platform: ESP8266
+
+esp8266:
   board: esp8285
 
 # Enable Home Assistant API

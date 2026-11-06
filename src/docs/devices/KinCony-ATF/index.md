@@ -23,7 +23,7 @@ esphome:
   friendly_name: atf
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

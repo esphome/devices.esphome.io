@@ -26,16 +26,17 @@ The board has headers for every GPIO pin on the ESP32. They are labeled on the r
 
 ### Pin Functions
 
-| Pin    | Comment              |
-| ------ | -------------------- |
-| GPIO0  | Onboard button       |
-| GPIO16 | Relay 1 (Outermost)  |
-| GPIO17 | Relay 2              |
-| GPIO23 | LED                  |
+| Pin    | Comment             |
+| ------ | ------------------- |
+| GPIO0  | Onboard button      |
+| GPIO16 | Relay 1 (Outermost) |
+| GPIO17 | Relay 2             |
+| GPIO23 | LED                 |
 
 ## Programming
 
-Programming was done with a CP2102N USB-to-serial converter via the 6 pin header. The header is not a FTDI compatible pinout. ESPHome Web tools was able to flash the board after using the onboard buttons to enter programming mode.
+Programming was done with a CP2102N USB-to-serial converter via the 6 pin header. The header is not a FTDI compatible
+pinout. ESPHome Web tools was able to flash the board after using the onboard buttons to enter programming mode.
 
 ## Basic Config
 
@@ -44,7 +45,7 @@ esphome:
   name: esp32-relay-x2
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # LED exposed as binary light
 output:

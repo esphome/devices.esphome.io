@@ -21,8 +21,9 @@ Here is an example YAML configuration for the KinCony-MB board.
 ```yaml
 esphome:
   name: mb
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
  # Example configuration entry
 i2c:

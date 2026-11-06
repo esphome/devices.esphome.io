@@ -21,10 +21,15 @@ board: esp8266
 
 ## Configuration as relay with overpower and overtemperature protection
 
-When integration with home assistant exists, it will appear as a switch, 4 sensors (power, temperature, wifi strenght and total daily energy)
-When the `max_power` is exceeded, the relay will be switched off and a persistent notification will be created in home-assistant
-When the `max_temp` is exceeded, the relay will be switched off and a persistent notification will be created in home-assistant
-Thanks to [Tasmota](https://templates.blakadder.com/blitzwolf_SHP6.html) and [Tijmen](https://community.home-assistant.io/u/tijmen/summary) from [this](https://community.home-assistant.io/t/esphome-blitzwolf-bw-shp6-configuration/113938) topic
+When integration with home assistant exists, it will appear as a switch, 4 sensors (power, temperature, wifi strenght
+and total daily energy)
+When the `max_power` is exceeded, the relay will be switched off and a persistent notification will be created in
+home-assistant
+When the `max_temp` is exceeded, the relay will be switched off and a persistent notification will be created in
+home-assistant
+Thanks to [Tasmota](https://templates.blakadder.com/blitzwolf_SHP6.html) and
+[Tijmen](https://community.home-assistant.io/u/tijmen/summary) from
+[this](https://community.home-assistant.io/t/esphome-blitzwolf-bw-shp6-configuration/113938) topic
 Config tested by [gieljnssns](https://github.com/gieljnssns)
 
 ```yaml
@@ -195,8 +200,8 @@ sensor:
       unit_of_measurement: "W"
       filters:
         - calibrate_linear:
-          - 0.0 -> 0.0
-          - ${power_cal_meas} -> ${power_cal_real}
+            - 0.0 -> 0.0
+            - ${power_cal_meas} -> ${power_cal_real}
       icon: mdi:flash-outline
       on_value_range:
         - above: ${max_power}

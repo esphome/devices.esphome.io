@@ -15,8 +15,8 @@ board: esp8266
 
 | Pin   | Function |
 | ----- | -------- |
-| GPIO3 | RX      |
-| GPIO1 | TX      |
+| GPIO3 | RX       |
+| GPIO1 | TX       |
 
 ## Basic Config
 
@@ -26,7 +26,8 @@ substitutions:
 
 esphome:
   name: "${name}"
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -44,9 +45,9 @@ api:
 ota:
 
 uart:
-    rx_pin: GPIO3
-    tx_pin: GPIO1
-    baud_rate: 9600
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
 
 tuya:
 
