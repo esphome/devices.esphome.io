@@ -1,0 +1,406 @@
+# Guition ESP32-P4-M3-Dev - Home Assistant playback + Alarmo announcement satellite
+#
+# Audio out via the onboard speaker header, networking over the onboard 100M
+# Ethernet (IP101 PHY). BLE comes from the onboard ESP32-C6 via esp32_hosted.
+#
+# This board's mic input (ES7210) does not respond on the tested revision - see
+# Build notes below - so no local wake-word/Assist capture is included here.
+# This is a playback-only satellite: it announces Alarmo state changes and
+# plays Home Assistant media through the onboard speaker. Trigger Assist/TTS
+# from another satellite or automation targeting this device's media_player.
+#
+# Add your own api:, ota: and wifi:/ethernet: credentials after adopting.
+# Set ha_media_player below to the media_player entity Home Assistant
+# creates for THIS device, or the announce/TTS relay will not fire.
+
+substitutions:
+  name: guition-p4-voice
+  friendly_name: "Guition P4 Voice"
+  alarm_entity: alarm_control_panel.alarmo
+  tts_entity: tts.piper
+  # MUST match your HA entity id for this ESPHome media_player
+  ha_media_player: media_player.guition_p4_voice_guition_p4_voice
+  exit_delay_seconds: "30"
+  entry_delay_seconds: "30"
+  triggered_repeat_seconds: "10"
+  default_volume: "0.70"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  comment: "JC-ESP32P4-M3-DEV: Alarmo announcements + Ethernet"
+  on_boot:
+    priority: 600
+    then:
+      - media_player.volume_set:
+          id: board_player
+          volume: ${default_volume}
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  # Default 400MHz caused cold-boot bricking after a full power cycle on the
+  # tested board - see Build notes below. 360MHz was stable.
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+  level: DEBUG
+
+# Required dependency for HTTP-mode C6 firmware update
+http_request:
+
+# =========================
+# C6 Coprocessor Firmware Update
+# =========================
+update:
+  - platform: esp32_hosted
+    name: "C6 Coprocessor Firmware"
+    type: http
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
+    update_interval: 6h
+
+# ============================================================
+# ESP32-P4 has no native BLE — onboard ESP32-C6 via SDIO
+# ============================================================
+esp32_hosted:
+  variant: ESP32C6
+  reset_pin: GPIO54
+  cmd_pin: GPIO19
+  clk_pin: GPIO18
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  active_high: true
+
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 320ms
+    window: 100ms
+    active: true
+
+bluetooth_proxy:
+  active: true
+  connection_slots: 4
+
+# ============================================================
+# Ethernet
+# ============================================================
+ethernet:
+  type: IP101
+  mdc_pin: GPIO31
+  mdio_pin: GPIO52
+  clk:
+    pin: GPIO50
+    mode: CLK_EXT_IN
+  phy_addr: 1
+  power_pin: GPIO51
+
+psram:
+  mode: hex
+  speed: 100MHz
+
+i2c:
+  sda: GPIO7
+  scl: GPIO8
+  scan: true
+  frequency: 400kHz
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO10
+    i2s_bclk_pin: GPIO12
+    i2s_mclk_pin: GPIO13
+
+# ES8311 playback only - the ES7210 mic ADC never answered on I2C on the
+# tested board, so the microphone input is not wired up here.
+audio_dac:
+  - platform: es8311
+    id: codec
+    address: 0x18
+    bits_per_sample: 16bit
+    sample_rate: 48000
+    use_mclk: true
+    use_microphone: false
+
+# --- Speakers (mixer so HA media + announcements both work) ---
+speaker:
+  - platform: i2s_audio
+    id: spk_hw
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO9
+    dac_type: external
+    audio_dac: codec
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    channel: stereo
+    buffer_duration: 300ms
+    timeout: 100ms
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk_hw
+    task_stack_in_psram: true
+    source_speakers:
+      - id: spk_announcement
+        buffer_duration: 300ms
+        timeout: 100ms
+      - id: spk_media
+        buffer_duration: 300ms
+        timeout: 100ms
+
+media_player:
+  - platform: speaker
+    id: board_player
+    name: "${friendly_name}"
+    announcement_pipeline:
+      speaker: spk_announcement
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+    media_pipeline:
+      speaker: spk_media
+      format: FLAC
+      num_channels: 2
+      sample_rate: 48000
+
+number:
+  - platform: template
+    id: hp_volume
+    name: "Headphone Volume"
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 70
+    optimistic: true
+    on_value:
+      then:
+        - media_player.volume_set:
+            id: board_player
+            volume: !lambda "return x / 100.0f;"
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    entity_category: diagnostic
+    unit_of_measurement: "s"
+    accuracy_decimals: 0
+    update_interval: 60s
+  - platform: internal_temperature
+    name: "CPU Temperature"
+    update_interval: 60s
+
+text_sensor:
+  - platform: ethernet_info
+    ip_address:
+      name: "IP Address"
+      id: eth_ip_address
+      entity_category: diagnostic
+  - platform: version
+    name: "ESPHome Version"
+    entity_category: diagnostic
+  - platform: homeassistant
+    id: alarmo_state
+    entity_id: ${alarm_entity}
+    on_value:
+      then:
+        - logger.log:
+            format: "Alarmo state update: %s"
+            args: ['x.c_str()']
+        - lambda: |-
+            if (!id(alarmo_ready)) {
+              id(alarmo_ready) = true;
+              id(alarmo_last_state) = x;
+              id(alarmo_should_announce) = false;
+              return;
+            }
+            if (x == id(alarmo_last_state)) {
+              id(alarmo_should_announce) = false;
+              return;
+            }
+            id(alarmo_last_state) = x;
+            id(alarmo_should_announce) = true;
+        - if:
+            condition:
+              lambda: return id(alarmo_should_announce);
+            then:
+              - if:
+                  condition:
+                    lambda: return x != "triggered";
+                  then:
+                    - script.stop: triggered_repeat
+              - if:
+                  condition:
+                    lambda: return x == "disarmed";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Alarm disarmed."
+              - if:
+                  condition:
+                    lambda: return x == "arming";
+                  then:
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Arming. Exit delay started."
+                    - script.execute: exit_countdown
+              - if:
+                  condition:
+                    lambda: return x.rfind("armed_", 0) == 0;
+                  then:
+                    - script.stop: exit_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: !lambda |-
+                          std::string pretty = x;
+                          for (auto &c : pretty) if (c == '_') c = ' ';
+                          return std::string("Alarm ") + pretty + ".";
+              - if:
+                  condition:
+                    lambda: return x == "pending";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Entry delay. Disarm now."
+                    - script.execute: entry_countdown
+              - if:
+                  condition:
+                    lambda: return x == "triggered";
+                  then:
+                    - script.stop: exit_countdown
+                    - script.stop: entry_countdown
+                    - script.execute:
+                        id: say_tts
+                        msg: "Alarm activated."
+                    - script.execute: triggered_repeat
+
+button:
+  - platform: template
+    name: "Alarmo Debug Speak State"
+    on_press:
+      then:
+        - script.execute:
+            id: say_tts
+            msg: !lambda |-
+              return std::string("Alarm state is ") + id(alarmo_state).state + ".";
+  - platform: restart
+    name: "Restart"
+    entity_category: config
+  - platform: safe_mode
+    name: "Safe Mode"
+    entity_category: config
+  - platform: factory_reset
+    name: "Factory Reset"
+    entity_category: config
+    disabled_by_default: true
+
+script:
+  - id: say_tts
+    mode: restart
+    parameters:
+      msg: string
+    then:
+      - media_player.volume_set:
+          id: board_player
+          volume: !lambda "return id(hp_volume).state / 100.0f;"
+      - media_player.stop:
+          id: board_player
+      - homeassistant.service:
+          service: media_player.stop
+          data:
+            entity_id: ${ha_media_player}
+      - delay: 200ms
+      - homeassistant.service:
+          service: tts.speak
+          data:
+            entity_id: ${tts_entity}
+            media_player_entity_id: ${ha_media_player}
+            message: !lambda "return msg;"
+            cache: "true"
+
+  - id: exit_countdown
+    mode: restart
+    then:
+      - lambda: id(exit_remaining) = atoi("${exit_delay_seconds}");
+      - while:
+          condition:
+            lambda: return id(alarmo_state).state == "arming" && id(exit_remaining) > 0;
+          then:
+            - if:
+                condition:
+                  lambda: |-
+                    int s = id(exit_remaining);
+                    return (s==30 || s==20 || s==10 || s==5 || s==3 || s==2 || s==1);
+                then:
+                  - script.execute:
+                      id: say_tts
+                      msg: !lambda |-
+                        char buf[64];
+                        snprintf(buf, sizeof(buf), "Arming in %d seconds.", id(exit_remaining));
+                        return std::string(buf);
+            - delay: 1s
+            - lambda: id(exit_remaining)--;
+
+  - id: entry_countdown
+    mode: restart
+    then:
+      - lambda: id(entry_remaining) = atoi("${entry_delay_seconds}");
+      - while:
+          condition:
+            lambda: return id(alarmo_state).state == "pending" && id(entry_remaining) > 0;
+          then:
+            - if:
+                condition:
+                  lambda: |-
+                    int s = id(entry_remaining);
+                    return (s==30 || s==20 || s==10 || s==5 || s==3 || s==2 || s==1);
+                then:
+                  - script.execute:
+                      id: say_tts
+                      msg: !lambda |-
+                        char buf[64];
+                        snprintf(buf, sizeof(buf), "Disarm in %d seconds.", id(entry_remaining));
+                        return std::string(buf);
+            - delay: 1s
+            - lambda: id(entry_remaining)--;
+
+  - id: triggered_repeat
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: return id(alarmo_state).state == "triggered";
+          then:
+            - script.execute:
+                id: say_tts
+                msg: "Alarm activated."
+            - delay: !lambda |-
+                return (uint32_t) (atoi("${triggered_repeat_seconds}") * 1000);
+
+globals:
+  - id: exit_remaining
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: entry_remaining
+    type: int
+    restore_value: no
+    initial_value: "0"
+  - id: alarmo_ready
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: alarmo_should_announce
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: alarmo_last_state
+    type: std::string
+    restore_value: no
+    initial_value: '"__unset__"'
