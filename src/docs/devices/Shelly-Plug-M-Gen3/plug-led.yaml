@@ -12,12 +12,10 @@
 # ---------------------------------------------------------------------------
 
 substitutions:
+  # max_current, max_power and max_temp come from plug-protection.yaml
   warn_ratio: "0.8"  # pre-warning at this fraction of a limit
   power_bar_min: "2"  # W, bottom of the logarithmic power scale
   night_brightness: "0.05"  # LED brightness factor in night mode
-  max_current: "10"  # A, same value as in plug-protection.yaml
-  max_power: "2300"  # W
-  max_temp: "70"  # °C
 
 globals:
   # OTA update running (the Wi-Fi / API state is read live in led_render)

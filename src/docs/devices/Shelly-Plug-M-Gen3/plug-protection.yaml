@@ -75,8 +75,6 @@ globals:
     restore_value: false
     initial_value: "0"  # 0=none, 1=became bad, 2=recovered
 
-  # Pre-warning is held for 1.5 s after the last sample above the warn level
-
   - id: relay_saved
     type: int
     restore_value: true
@@ -166,8 +164,8 @@ script:
             - lambda: |-
                 id(fault_reason) = reason;
             - switch.turn_on: fault_lock
-            - homeassistant.service:
-                service: persistent_notification.create
+            - homeassistant.action:
+                action: persistent_notification.create
                 data:
                   title: "Message from ${name}"
                   message: !lambda |-
@@ -212,8 +210,8 @@ script:
                       id: trip
                       reason: 4
                 else:
-                  - homeassistant.service:
-                      service: persistent_notification.create
+                  - homeassistant.action:
+                      action: persistent_notification.create
                       data:
                         title: "Message from ${name}"
                         message: >-
