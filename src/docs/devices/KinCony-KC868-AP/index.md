@@ -10,18 +10,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO34 | Digital-Input-17    |
-| GPIO35 | Digital-Input-18    |
-| GPIO13 | Realy1              |
-| GPIO2  | Relay2              |
-| GPIO4  | IIC_SDA             |
-| GPIO16 | IIC_SCL             |
-| GPIO33 | RS485_RXD           |
-| GPIO14 | RS485_TXD           |
-| GPIO5  | Extend_Serial_RXD   |
-| GPIO32 | Extend_Serial_TXD   |
+| Pin    | Function          |
+| ------ | ----------------- |
+| GPIO34 | Digital-Input-17  |
+| GPIO35 | Digital-Input-18  |
+| GPIO13 | Realy1            |
+| GPIO2  | Relay2            |
+| GPIO4  | IIC_SDA           |
+| GPIO16 | IIC_SCL           |
+| GPIO33 | RS485_RXD         |
+| GPIO14 | RS485_TXD         |
+| GPIO5  | Extend_Serial_RXD |
+| GPIO32 | Extend_Serial_TXD |
 
 [Additional pinout/design details](https://www.kincony.com/esp32-pwm-dimmer.html)
 
@@ -33,7 +33,7 @@ esphome:
   name: KC868-AP
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -61,10 +61,10 @@ i2c:
   id: bus_a
 
 pcf8574:
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8    maybe 0x22  /  0x3A
+  - id: "pcf8574_hub_in_1" # for input channel 1-8    maybe 0x22  /  0x3A
     address: 0x3A
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     address: 0x21
 
 binary_sensor:
@@ -209,87 +209,87 @@ binary_sensor:
       inverted: true
 
 pca9685:
-    id: 'pca9685_hub'
-    frequency: 500
+  id: "pca9685_hub"
+  frequency: 500
 
 output:
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM0"
     channel: 0
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM1"
     channel: 1
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM2"
     channel: 2
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM3"
     channel: 3
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM4"
     channel: 4
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM5"
     channel: 5
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM6"
     channel: 6
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM7"
     channel: 7
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM8"
     channel: 8
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM9"
     channel: 9
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM10"
     channel: 10
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM11"
     channel: 11
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM12"
     channel: 12
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM13"
     channel: 13
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM14"
     channel: 14
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM15"
     channel: 15
 

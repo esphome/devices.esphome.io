@@ -1,7 +1,7 @@
 ---
 title: OpenSpool Mini
 date-published: 2024-11-21
-type: Miscellaneous Devices
+type: misc
 standard: global
 board: esp32
 project-url: https://github.com/spuder/OpenSpool
@@ -26,6 +26,11 @@ It synchronizes the type/color with bambu 3d printers.
 ![Wiring Diagram](./OpenSpoolMiniWiringDiagram.png "Wiring Diagram")  
 
 ![PCB](./PCB.png "PCB")
+
+## Configuration
+
+```yaml url=https://github.com/spuder/OpenSpool/blob/main/firmware/openspool-mini.yaml
+```
 
 ## Resources
 

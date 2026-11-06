@@ -9,7 +9,9 @@ board: esp8266
 ![Shelly 3EM](shelly-3em.webp "Shelly 3EM")
 
 NOTE: In order to power up device it's enough to connect `VA` and `N` terminal.
-NOTE: In order to retrieve proper data all live (`VA`/`VB`/`VC`) terminals needs to be connected to live wire, in other case this integration will report invalid voltage (like `0.12130 V`). Check single phase connection diagram in the official device manual for more details.
+NOTE: In order to retrieve proper data all live (`VA`/`VB`/`VC`) terminals needs to be connected to live wire, in other
+case this integration will report invalid voltage (like `0.12130 V`). Check single phase connection diagram in the
+official device manual for more details.
 
 ## GPIO Pinout
 
@@ -39,10 +41,10 @@ you'll have the calibration data and can skip steps 1-2 of the
 instructions below.
 
 1. Ensure that you are able to access the device's web interface
-   (http://ip.address.of.device).
+   ([http://ip.address.of.device](http://ip.address.of.device)).
 
 1. Download the calibration data file from
-   http://ip.address.of.device/calib.dat. The file will look similar
+   [http://ip.address.of.device/calib.dat](http://ip.address.of.device/calib.dat). The file will look similar
    to this:
 
 ```json
@@ -185,9 +187,13 @@ sensor:
       name: Phase A
       voltage: Voltage
       current: Current
-      active_power: Active Power
+      active_power
+        id: phase_a_active_power
+        name: Active Power
       power_factor: Power Factor
-      forward_active_energy: Forward Active Energy
+      forward_active_energy
+        id: phase_a_forward_active_energy
+        name: Forward Active Energy
       reverse_active_energy: Reverse Active Energy
       calibration:
         current_gain: 3116628
@@ -198,9 +204,13 @@ sensor:
       name: Phase B
       voltage: Voltage
       current: Current
-      active_power: Active Power
+      active_power:
+        name: Active Power
+        id: phase_b_active_power
       power_factor: Power Factor
-      forward_active_energy: Forward Active Energy
+      forward_active_energy:
+        name: Forward Active Energy
+        id: phase_b_forward_active_energy
       reverse_active_energy: Reverse Active Energy
       calibration:
         current_gain: 3133655
@@ -211,9 +221,13 @@ sensor:
       name: Phase C
       voltage: Voltage
       current: Current
-      active_power: Active Power
+      active_power:
+        name: Active Power
+        id: phase_c_active_power
       power_factor: Power Factor
-      forward_active_energy: Forward Active Energy
+      forward_active_energy:
+        name: Forward Active Energy
+        id: phase_c_forward_active_energy
       reverse_active_energy: Reverse Active Energy
       calibration:
         current_gain: 3111158
@@ -225,4 +239,30 @@ sensor:
       current: Current
       calibration:
         current_gain: 311123
+  - platform: combination
+    type: sum
+    name: "Sum Active Power"
+    id: sum_active_power
+    sources:
+      - source: phase_a_active_power
+      - source: phase_b_active_power
+      - source: phase_c_active_power
+  - platform: combination
+    type: sum
+    name: "Sum Forward Active Energy"
+    state_class: total_increasing
+    sources:
+      - source: phase_a_forward_active_energy
+      - source: phase_b_forward_active_energy
+      - source: phase_c_forward_active_energy
+  - platform: total_daily_energy
+    name: 'Total Daily Energy'
+    power_id: sum_active_power
+    unit_of_measurement: 'kWh'
+    state_class: total_increasing
+    device_class: energy
+    accuracy_decimals: 3
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
 ```

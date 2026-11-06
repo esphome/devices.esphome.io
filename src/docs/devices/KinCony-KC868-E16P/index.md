@@ -10,20 +10,20 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO35 | ANALOG_A2           |
-| GPIO34 | ANALOG_A3           |
-| GPIO39 | ANALOG_A4           |
-| GPIO16 | IIC_SDA             |
-| GPIO15 | IIC_SCL             |
-| GPIO4  | 433MHz Receiver     |
-| GPIO13 | RS485_RXD           |
-| GPIO32 | RS485_TXD           |
-| GPIO23 | Ethernet MDC        |
-| GPIO18 | Ethernet MDIO       |
-| GPIO17 | Ethernet Clock      |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO36 | ANALOG_A1       |
+| GPIO35 | ANALOG_A2       |
+| GPIO34 | ANALOG_A3       |
+| GPIO39 | ANALOG_A4       |
+| GPIO16 | IIC_SDA         |
+| GPIO15 | IIC_SCL         |
+| GPIO4  | 433MHz Receiver |
+| GPIO13 | RS485_RXD       |
+| GPIO32 | RS485_TXD       |
+| GPIO23 | Ethernet MDC    |
+| GPIO18 | Ethernet MDIO   |
+| GPIO17 | Ethernet Clock  |
 
 ## Basic Configuration
 
@@ -31,11 +31,9 @@ board: esp32
 # ESP32 Board config
 esphome:
   name: kc868-e16p
-  #platform: ESP32
-  #board: esp32dev
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -60,22 +58,21 @@ ethernet:
 
 # PCF8574 I2C IO Expanders configuration
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x21
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 9-16
+  - id: "pcf8574_hub_out_2" # for output channel 9-16
     address: 0x25
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     address: 0x24
 
 # Config of 433MHz Receiver
 remote_receiver:
-
-  # see https://esphome.io/components/remote_transmitter.html#setting-up-rf-devices
+  # see https://esphome.io/guides/setting_up_rmt_devices/#remote-setting-up-rf
   # for details on discovering the correct codes for your devices
   - id: receiver_rf
     pin:
@@ -106,7 +103,6 @@ remote_receiver:
 #    modbus_id: modbus1
 #    setup_priority: -10
 #    update_interval: 5s
-
 
 # Individual outputs
 switch:

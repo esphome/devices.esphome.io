@@ -6,14 +6,15 @@ standard: global
 board: esp8266
 ---
 
-Standard RGB warm and cold white bulb. Flashable via tuya-convert. [Purchased from Amazon, pack of 2.](https://amzn.to/3lVKCEp)
+Standard RGB warm and cold white bulb. Flashable via tuya-convert.
+[Purchased from Amazon, pack of 2.](https://www.amazon.com/dp/B07RSRX1YR)
 
 Generally don't power on both a white channel and the color channel at full brightness - this can overheat the bulb.
 
 ## Pictures
 
-![alt text](/sinvitron-outside.jpg "Outside of bulb")
-![alt text](/sinvitron-inside.jpg "Inside view")
+![alt text](./sinvitron-outside.jpg "Outside of bulb")
+![alt text](./sinvitron-inside.jpg "Inside view")
 
 ## GPIO Pinout
 
@@ -34,7 +35,8 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
@@ -140,14 +142,16 @@ light:
 
 ## Split Configuration
 
-If you have multiple of these bulbs (likely since they come in packs), you may want to keep the shared code in one file and only put device specific information in files for each relay.
+If you have multiple of these bulbs (likely since they come in packs), you may want to keep the shared code in one file
+and only put device specific information in files for each relay.
 
 sinvitron-common.yaml:
 
 ```yaml
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

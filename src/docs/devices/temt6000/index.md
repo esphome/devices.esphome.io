@@ -12,7 +12,7 @@ these chips on often have a small constant value resistor and three
 pins: `GND`, `VCC` and `SIG`. Connect `VCC` to `3.3V`, `GND` to `GND`
 and `SIG` to any available analog pin.
 
-![image](/temt6000-header.jpg)
+![image](./temt6000-header.jpg)
 
 To get the brightness the sensor measures, we then simply have to
 measure the voltage on the `SIG` (also called `OUT`) pin using `adc` and convert those
@@ -30,7 +30,7 @@ sensor:
           return (x / 10000.0) * 2000000.0;
 ```
 
-![image](/temt6000-pins.jpg)
+![image](./temt6000-pins.jpg)
 
 Pins on the TEMT6000. Connect `OUT` to an ADC
 pin, `GND` to `GND`, and `VCC` to `3.3V`.

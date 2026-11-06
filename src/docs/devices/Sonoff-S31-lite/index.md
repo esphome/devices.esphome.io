@@ -10,7 +10,8 @@ board: esp8266
 
 This device cannot be converted to ESPHome using tuya-convert.
 
-You must [remove the cover and use the serial header](https://www.adventurousway.com/blog/sonoff-s31) for first upload. Hold down the button while powering on the device to put it into bootloader mode.
+You must [remove the cover and use the serial header](https://www.adventurousway.com/blog/sonoff-s31) for first upload.
+Hold down the button while powering on the device to put it into bootloader mode.
 
 ## GPIO Pinout
 

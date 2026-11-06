@@ -3,14 +3,14 @@ title: Dingtian DT-R016
 date-published: 2024-10-31
 type: relay
 standard: global
-board: esp32dev
+board: esp32
 ---
 
 ## Product description
 
 This is a 16-relay board with an ESP32.
 
-I bought it from: https://it.aliexpress.com/item/1005007002132841.html?spm=a2g0o.order_list.order_list_main.17.450b3696cHQW0O&gatewayAdapt=glo2ita
+I bought it from: [https://it.aliexpress.com/item/1005007002132841.html?spm=a2g0o.order_list.order_list_main.17.450b3696cHQW0O&gatewayAdapt=glo2ita](https://it.aliexpress.com/item/1005007002132841.html?spm=a2g0o.order_list.order_list_main.17.450b3696cHQW0O&gatewayAdapt=glo2ita)
 
 When ordering this board ask for relay board with test firmware, otherwise the ESP32 will be locked.
 Use a USB-TTL adapter to flash EspHome the first time.
@@ -46,7 +46,7 @@ esphome:
   friendly_name: Sprinkler
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

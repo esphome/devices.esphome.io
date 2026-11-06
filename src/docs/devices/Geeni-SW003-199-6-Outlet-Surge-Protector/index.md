@@ -34,15 +34,19 @@ difficulty: 4
 
 This device has 6 outlets, and a combined blue led button. The button toggles all pins when pressed.
 
-The device is based on the [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076). The device couldn't be converted with tuya-cloudcutter and required serial flashing.
+The device is based on the [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076). The device
+couldn't be converted with tuya-cloudcutter and required serial flashing.
 
-The CB3S is soldered onto the main board, but is easily accessible and pins are exposed. The device can easily be be opened by unscrewing the screws at the back.
+The CB3S is soldered onto the main board, but is easily accessible and pins are exposed. The device can easily be be
+opened by unscrewing the screws at the back.
 
-Warning: The `SW003-199-199S` variant has a different chip and pinout configuration. Be sure to verify the module being used before flashing.
+Warning: The `SW003-199-199S` variant has a different chip and pinout configuration. Be sure to verify the module being
+used before flashing.
 
 ## Serial flashing
 
-The official [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a diagram with the position of each pin on the module. The module has multiple UARTs, UART1 is the one used for flashing.
+The official [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a
+diagram with the position of each pin on the module. The module has multiple UARTs, UART1 is the one used for flashing.
 
 | Pin | Function |
 | --- | -------- |
@@ -52,7 +56,8 @@ The official [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=K
 | 15  | RXD1     |
 | 16  | TXD1     |
 
-Esphome can directly flash the device over serial. When asked, power cycle the device while holding RST/CEN low, then disconnect RST/CEN to let the chip boot into the flashing program.
+Esphome can directly flash the device over serial. When asked, power cycle the device while holding RST/CEN low, then
+disconnect RST/CEN to let the chip boot into the flashing program.
 
 ## GPIO Pinout
 

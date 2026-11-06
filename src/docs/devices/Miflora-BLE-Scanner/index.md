@@ -19,8 +19,9 @@ board: esp32
 # https://www.espressif.com/en/products/hardware/esp32/overview
 esphome:
   name: esp32_2
-  platform: ESP32
-  board: esp32dev
+
+esp32:
+  variant: esp32
 
 wifi:
   ssid: "ssid"

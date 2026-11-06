@@ -10,18 +10,18 @@ difficulty: 1
 
 ![alt text](athom-plug-au-v2.webp "Athom Smart Plug AU V2 - PG05V2-AU10A")
 
-Maker: https://www.athom.tech/
+Maker: [https://www.athom.tech/](https://www.athom.tech/)
 
 Also on Aliexpress, available pre-flashed with ESPHome or Tasmota.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | CSE7766 Rx          |
-| GPIO5  | Button              |
-| GPIO12 | Relay               |
-| GPIO13 | LedLink             |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | CSE7766 Rx |
+| GPIO5  | Button     |
+| GPIO12 | Relay      |
+| GPIO13 | LedLink    |
 
 ## Basic Configuration
 
@@ -46,7 +46,7 @@ esp8266:
 
 preferences:
   flash_write_interval: 1min
-  
+
 api:
 
 ota:
@@ -78,7 +78,7 @@ globals:
   - id: total_energy
     type: float
     restore_value: yes
-    initial_value: '0.0'
+    initial_value: "0.0"
 
 binary_sensor:
   - platform: status
@@ -111,8 +111,7 @@ sensor:
     current:
       name: "${friendly_name} Current"
       filters:
-          - lambda: if (x < 0.060) return 0.0; else return x;   #For the chip will report less than 3w power when no load is connected
-
+        - lambda: if (x < 0.060) return 0.0; else return x; #For the chip will report less than 3w power when no load is connected
 
     voltage:
       name: "${friendly_name} Voltage"
@@ -120,8 +119,7 @@ sensor:
       name: "${friendly_name} Power"
       id: power_sensor
       filters:
-          - lambda: if (x < 3.0) return 0.0; else return x;    #For the chip will report less than 3w power when no load is connected
-
+        - lambda: if (x < 3.0) return 0.0; else return x; #For the chip will report less than 3w power when no load is connected
 
     energy:
       name: "${friendly_name} Energy"
@@ -156,7 +154,6 @@ sensor:
     accuracy_decimals: 3
     filters:
       - multiply: 0.001
-
 
 button:
   - platform: factory_reset
