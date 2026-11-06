@@ -33,15 +33,15 @@ and more ESPHome configurations: [IoThome](https://github.com/makethingshappy/Io
 ## Supported carriers
 
 | MOSFET2 version | Carrier | ESPHome configuration |
-|---|---|---|
-| 3.02 | IoTsmart ESP32-S3 2.01 | [iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/IoThome/blob/main/ESPHome_Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml) |
+| --- | --- | --- |
+| 3.02 | IoTsmart ESP32-S3 2.01 | [iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/IoThome/blob/5c41ef4b86a88cfdfb0b9f767003b3095cd71423/ESPHome_Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml) |
 
 ## GPIO
 
 HOST connector lines AP0..AP7 drive channels DO1..DO8. GPIO numbers are for IoTsmart ESP32-S3 2.01:
 
 | Channel | HOST line | GPIO | Channel | HOST line | GPIO |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | DO1 | AP0 | GPIO8 | DO5 | AP4 | GPIO4 |
 | DO2 | AP1 | GPIO9 | DO6 | AP5 | GPIO5 |
 | DO3 | AP2 | GPIO10 | DO7 | AP6 | GPIO6 |
@@ -53,12 +53,14 @@ The outputs are active-low (logical 0 turns the MOSFET on), so every pin is decl
 
 ## Configuration
 
-Ready-to-use ESPHome configuration for IoTsmart ESP32-S3, maintained by Make Things Happy
-([open on GitHub](https://github.com/makethingshappy/IoThome/blob/main/ESPHome_Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml)).
-Create `secrets.yaml` next to it with your `wifi_ssid` and `wifi_password`.
+Hardware part of the ESPHome configuration for IoTsmart ESP32-S3 2.01, maintained by Make Things Happy: board, I2C and
+the channel pins. Add your own `wifi`, `api` and `ota` settings.
 
-```yaml url=https://github.com/makethingshappy/IoThome/blob/main/ESPHome_Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+```yaml file=config.yaml
 ```
+
+The full ready-to-flash configuration (Wi-Fi, API, OTA, web server) is [on
+GitHub](https://github.com/makethingshappy/IoThome/blob/5c41ef4b86a88cfdfb0b9f767003b3095cd71423/ESPHome_Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml).
 
 ![IoTextra MOSFET2, bottom view](iotextra-mosfet2-bottom.png "IoTextra MOSFET2, bottom view")
 
