@@ -24,7 +24,6 @@ wifi:
   power_save_mode: NONE
   ap:
     ssid: "Mousepad Fallback Hotspot"
-    password:
 captive_portal:
 e131:
   method: UNICAST
