@@ -217,8 +217,8 @@ fan:
                 id(waiting_for_off_response) = false;
                 id(off_retries) = 0;
             - script.stop: off_watchdog
-            - fan.turn_on:
-                id: duux_fan
+            - lambda: |-
+                id(tuya_component).force_set_boolean_datapoint_value(1, true);
 
     # Turning the fan OFF from HA/ESPHome.
     #
