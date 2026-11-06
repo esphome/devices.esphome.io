@@ -1,0 +1,94 @@
+font:
+  - file: "gfonts://Roboto"
+    id: roboto_20
+    size: 20
+    bpp: 4
+  - file: "gfonts://Roboto"
+    id: roboto_28
+    size: 28
+    bpp: 4
+  - file: "gfonts://Roboto"
+    id: roboto_48
+    size: 48
+    bpp: 4
+
+lvgl:
+  displays:
+    - my_display
+  touchscreens:
+    - my_touchscreen
+  buffer_size: 10%
+  log_level: WARN
+  page_wrap: false
+  pages:
+    - id: page_one
+      on_swipe_left:
+        - lvgl.page.next:
+            animation: MOVE_LEFT
+            time: 300ms
+      widgets:
+        - label:
+            align: TOP_MID
+            y: 30
+            text: "PAGE 1"
+            text_font: roboto_48
+            text_color: 0xFFFFFF
+        - label:
+            align: CENTER
+            y: -40
+            text: "Swipe Left for Page 2"
+            text_font: roboto_20
+            text_color: 0xAAAAAA
+        - button:
+            align: CENTER
+            y: 60
+            width: 300
+            height: 80
+            bg_color: 0x2196F3
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Next Page >>"
+                  text_font: roboto_28
+                  text_color: 0xFFFFFF
+            on_click:
+              then:
+                - lvgl.page.next:
+                    animation: MOVE_LEFT
+                    time: 300ms
+
+    - id: page_two
+      on_swipe_right:
+        - lvgl.page.previous:
+            animation: MOVE_RIGHT
+            time: 300ms
+      widgets:
+        - label:
+            align: TOP_MID
+            y: 30
+            text: "PAGE 2"
+            text_font: roboto_48
+            text_color: 0xFFFFFF
+        - label:
+            align: CENTER
+            y: -40
+            text: "Swipe Right for Page 1"
+            text_font: roboto_20
+            text_color: 0xAAAAAA
+        - button:
+            align: CENTER
+            y: 60
+            width: 300
+            height: 80
+            bg_color: 0x4CAF50
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "<< Previous Page"
+                  text_font: roboto_28
+                  text_color: 0xFFFFFF
+            on_click:
+              then:
+                - lvgl.page.previous:
+                    animation: MOVE_RIGHT
+                    time: 300ms
