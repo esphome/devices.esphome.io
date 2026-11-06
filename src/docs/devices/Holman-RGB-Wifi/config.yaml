@@ -1,0 +1,128 @@
+substitutions:
+  name: "rgb-01"
+  friendly_name: "RGB 01"
+  project_name: "holman.CLXRGB60"
+  project_version: "1.0"
+  device_description: "RGB Light"
+
+esphome:
+  name: "${name}"
+  comment: "${device_description}"
+  project:
+    name: "${project_name}"
+    version: "${project_version}"
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+
+logger:
+
+wifi:
+  ap: {}
+
+sensor:
+  - platform: wifi_signal
+    name: "${friendly_name} wifi signal"
+    update_interval: 600s
+  - platform: uptime
+    name: Uptime Sensor
+    id: uptime_sensor
+    update_interval: 60s
+    disabled_by_default: true
+
+binary_sensor:
+  # Front Panel On/Off
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "${friendly_name} Panel Button"
+    id: panelButton
+    on_click:
+      min_length: 50ms
+      max_length: 350ms
+      then:
+        - light.toggle: rgbLight
+
+light:
+  - platform: rgb
+    id: rgbLight
+    name: "RGB Lights"
+    red: output_component_red
+    green: output_component_green
+    blue: output_component_blue
+    effects:
+      # Use default parameters:
+      - random:
+      # Customize parameters
+      - random:
+          name: "Slow Random Effect"
+          transition_length: 30s
+          update_interval: 30s
+      - random:
+          name: "Fast Random Effect"
+          transition_length: 4s
+          update_interval: 5s
+      - pulse:
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.5s
+          update_interval: 0.5s
+      - pulse:
+          name: "Slow Pulse"
+          # transition_length: 1s  # defaults to 1s
+          update_interval: 2s
+      - strobe:
+      - strobe:
+          name: Strobe Effect With Custom Values
+          colors:
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 90%
+              blue: 0%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+      - flicker:
+      - flicker:
+          name: Flicker Effect With Custom Values
+          alpha: 95%
+          intensity: 1.5%
+
+output:
+  - platform: esp8266_pwm
+    id: output_component_red
+    pin: GPIO13
+  - platform: esp8266_pwm
+    id: output_component_green
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: output_component_blue
+    pin: GPIO14
+
+button:
+  - platform: restart
+    id: restart_button
+    name: "${friendly_name} Restart"
+    disabled_by_default: true
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+      disabled_by_default: true
+    bssid:
+      name: "${friendly_name} BSSID"
+      disabled_by_default: true
