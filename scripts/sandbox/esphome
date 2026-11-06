@@ -1,0 +1,3 @@
+#!/bin/sh
+# `esphome` for validate-esphome-configs.ts: the work copy is the only mount.
+SANDBOX_DOCKER_ARGS="-v $PWD:$PWD -w $PWD" exec "$(dirname "$0")/run.sh" 170 esphome "$@"
