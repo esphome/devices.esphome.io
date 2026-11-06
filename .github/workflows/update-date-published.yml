@@ -11,33 +11,16 @@ permissions: {}
 # commit-date-published.yml runs after it, in the trusted workflow_run context,
 # and re-derives the pull request, the approval and the new pages itself.
 jobs:
-  collect:
-    name: Collect newly added device pages
+  approve:
+    name: Mark maintainer approval
     runs-on: ubuntu-latest
     if: >-
       github.event.review.state == 'approved' &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association)
-    permissions:
-      contents: read
-      pull-requests: read
+    permissions: {}
     steps:
-      - name: Find newly added device pages
-        id: find
-        uses: actions/github-script@v9.0.0
-        with:
-          script: |
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            const pattern = /^src\/docs\/devices\/[^/]+\/index\.md$/;
-            const pages = files
-              .filter(f => f.status === 'added' && pattern.test(f.filename))
-              .map(f => f.filename);
-            core.info(
-              `Found ${pages.length} newly added device page(s): ` +
-              `${pages.join(', ') || '(none)'}`
-            );
-            core.setOutput('pages', pages.join('\n'));
+      - name: Mark the approval
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Maintainer approved PR #$PR_NUMBER"
