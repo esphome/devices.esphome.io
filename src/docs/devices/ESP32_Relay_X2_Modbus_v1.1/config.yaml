@@ -9,19 +9,6 @@ esp32:
   framework:
     type: esp-idf
 
-logger:
-  baud_rate: 0
-
-sensor:
-  - platform: uptime
-    name: Uptime
-
-button:
-  - platform: restart
-    name: Reboot
-  - platform: safe_mode
-    name: Reboot in safe mode
-
 # ==========================
 # RELAYS (OUTPUTS)
 # ==========================

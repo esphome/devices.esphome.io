@@ -12,9 +12,9 @@ difficulty: 2
 
 ## Product description
 
-This is a 2-relay board, having 2 binary inputs and an RS485 interface based on ESP32. The inputs are optoisolated (mine
+This is a 2-relay board, having 2 binary inputs and an RS485 interface based on ESP32. The inputs are opto-isolated (mine
 came with TLP785GB with 4.7k resistors on inputs, making it safe to operate them around max 24V), with a common ground,
-independent from the board's main gound. The RS485 transceiver is a SP3485E. Connectors are detacheable.
+independent from the board's main ground. The RS485 transceiver is a SP3485E. Connectors are detachable.
 
 This appears to be a close relative to the ESP32_Relay_X4_Modbus_V1.3
 
@@ -31,7 +31,6 @@ I bought it from: [https://www.ebay.co.uk/itm/198658928427](https://www.ebay.co.
 | GPIO19 | RS485 TX  |
 | GPIO18 | RS485 RX  |
 | GPIO32 | RS485 DE* |
-| GPIO15 | LED       |
 | GPIO16 | Pad RX2   |
 | GPIO17 | Pad TX2   |
 | GPIO5  | Pad G5    |
