@@ -61,13 +61,7 @@ static __attribute__((constructor(101))) void disable_usb_serial_jtag_phy() {
 }
 ```
 
-Then include it in your YAML under `esphome:`:
-
-```yaml inline
-esphome:
-  includes:
-    - usb_disable.h
-```
+Then list it under `esphome:` `includes:` in your YAML, as the basic configuration below does.
 
 See [#15356](https://github.com/esphome/esphome/issues/15356) for details.
 
@@ -78,7 +72,7 @@ The ESP32-S3-WROOM-1-**N4**R8 has 4MB flash. The "N4" = 4MB flash, "R8" = 8MB PS
 documentation reference 16MB.
 
 With 4 MB of flash, each of the two OTA slots holds about 1.75 MB. A full LVGL interface with several large fonts used
-roughly 91-95 % of that in our builds, so it is worth keeping the number and size of fonts modest.
+roughly 91-95 % of that in my builds, so it is worth keeping the number and size of fonts modest.
 
 ### Do NOT Touch the PCA9557
 
