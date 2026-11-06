@@ -163,6 +163,9 @@ micro_wake_word:
   models:
     - okay_nabu
   on_wake_word_detected:
+    # Cancel a fallback still pending from the previous request, or it could
+    # restart wake word mid-request and preempt the shared I2S bus.
+    - script.stop: restart_mww_fallback
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
 
