@@ -17,6 +17,7 @@ wifi:
   ap:
 
 logger:
+  hardware_uart: UART0
 
 # Both white channels are plain PWM outputs: GPIO4 is warm white (module pad MTMS), GPIO5 is cold white (MTDI).
 output:

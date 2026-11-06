@@ -43,16 +43,17 @@ adapter; the colour is the marker in the picture. Take the bulb out of the socke
 TXD and RXD are named from the chip's point of view: connect TXD to RX and RXD to TX of the adapter. To enter download
 mode, connect BOOT to GND while powering on and release it after the chip has started.
 
-As always, first take a dump!
+As always, first take a dump! Replace `<PORT>` with the serial port of your adapter (e.g. `COM3` on Windows or
+`/dev/ttyUSB0` on Linux).
 
 ```bash
-esptool --chip esp32c3 --port COM11 --baud 460800 read_flash 0x0 0x800000 shelly_duo_bulb_gen3.bin
+esptool --chip esp32c3 --port <PORT> --baud 460800 read_flash 0x0 0x800000 shelly_duo_bulb_gen3.bin
 ```
 
 Then flash the `firmware.factory.bin` of your build to `0x0`:
 
 ```bash
-esptool --chip esp32c3 --port COM11 --baud 460800 write_flash 0x0 firmware.factory.bin
+esptool --chip esp32c3 --port <PORT> --baud 460800 write_flash 0x0 firmware.factory.bin
 ```
 
 ## GPIO Pinout
@@ -62,8 +63,8 @@ esptool --chip esp32c3 --port COM11 --baud 460800 write_flash 0x0 firmware.facto
 | GPIO4  | Warm white (LEDC PWM, module pad `MTMS`)  |
 | GPIO5  | Cold white (LEDC PWM, module pad `MTDI`)  |
 | GPIO9  | BOOT (download mode, low-active)          |
-| GPIO20 | UART RX (console, logger)                 |
-| GPIO21 | UART TX (console, logger)                 |
+| GPIO20 | UART RX (console, logger via UART0)       |
+| GPIO21 | UART TX (console, logger via UART0)       |
 
 ## Configuration
 
