@@ -16,7 +16,7 @@ To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
 | Pin   | Function  |
 | ----- | --------- |
-| GPIO3 | NTC       |
+| GPIO1 | NTC       |
 | GPIO5 | BL0942 TX |
 | GPIO4 | BL0942 RX |
 | GPIO19 | Blue LED |
