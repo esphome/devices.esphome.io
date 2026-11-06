@@ -29,7 +29,7 @@ The Shelly Plus 1 is based on the ESP32-U4WDH (Single core, 160MHz, 4MB embedded
 >See details: Product-Change-Notice (PCN) [ESP-07-2-007-03][pcn]
 >
 >For the newer chips `cpu_frequency` and `sdkconfig_options` can be commented out in the YAML, if full
->performance >of the ESP32 is required.
+>performance of the ESP32 is required.
 
 Please calibrate the NTC, the value below is just a rough estimate!
 
