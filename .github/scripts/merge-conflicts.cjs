@@ -195,9 +195,14 @@ module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r)
       const conflict = pull.mergeable === "CONFLICTING";
       if (changed && (repromote || conflict) && hasLabel(pull, MFE_LABEL)) {
         await pace();
-        if (await promote({ github, core, owner, repo, prNumber: pull.number })) {
-          markedReady.push(pull.number);
-        }
+        await promote({
+          github,
+          core,
+          owner,
+          repo,
+          prNumber: pull.number,
+          onMarkedReady: (number) => markedReady.push(number),
+        });
       }
     }
   } finally {

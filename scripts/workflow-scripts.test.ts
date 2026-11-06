@@ -790,6 +790,7 @@ function makePromoteGithub(
     events?: unknown[];
     removeError?: number;
     graphqlError?: string;
+    addLabelsError?: string;
   } = {}
 ) {
   const calls: Call[] = [];
@@ -824,6 +825,7 @@ function makePromoteGithub(
         listEvents,
         addLabels: async (args: unknown) => {
           calls.push({ method: "addLabels", args });
+          if (opts.addLabelsError) throw new Error(opts.addLabelsError);
           return { data: {} };
         },
         removeLabel: async (args: unknown) => {
@@ -908,6 +910,19 @@ test("promote: a green draft the bot created is marked ready for review", async 
   // Its ready_for_review event triggers no workflow, so the job asks Copilot.
   assert.deepEqual(core._outputs, { "marked-ready": "42" });
   assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
+});
+
+test("promote: a label write failing after the PR is marked ready keeps its Copilot handoff", async () => {
+  withPrNumber("42");
+  const { github } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+    addLabelsError: "HTTP 502",
+  });
+  const core = freshCore();
+  await assert.rejects(promoteScript({ github, context, core }), /HTTP 502/);
+  assert.deepEqual(core._outputs, { "marked-ready": "42" });
 });
 
 test("promote: a bot-authored draft is marked ready without a Copilot handoff", async () => {

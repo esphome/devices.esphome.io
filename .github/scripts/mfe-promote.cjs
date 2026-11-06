@@ -56,16 +56,23 @@ module.exports = async ({ github, context, core }) => {
   const prNumber = runPr.number;
 
   const { owner, repo } = context.repo;
-  if (await promote({ github, core, owner, repo, prNumber, headSha: runPr.head.sha })) {
-    core.setOutput("marked-ready", String(prNumber));
-  }
+  await promote({
+    github,
+    core,
+    owner,
+    repo,
+    prNumber,
+    headSha: runPr.head.sha,
+    onMarkedReady: (number) => core.setOutput("marked-ready", String(number)),
+  });
 };
 
 // Promotes or demotes one PR from its current head check runs. With `headSha`,
-// a PR whose head has moved past that commit is left alone. Resolves true
-// when the PR was marked ready and wants a Copilot review: GITHUB_TOKEN's
-// ready_for_review event starts no workflow, so the caller requests it.
-async function promote({ github, core, owner, repo, prNumber, headSha }) {
+// a PR whose head has moved past that commit is left alone. `onMarkedReady`
+// gets the number of a PR just marked ready that wants a Copilot review,
+// before anything later can fail: GITHUB_TOKEN's ready_for_review event starts
+// no workflow, so the caller requests it.
+async function promote({ github, core, owner, repo, prNumber, headSha, onMarkedReady }) {
   const { data: pr } = await github.rest.pulls.get({
     owner,
     repo,
@@ -133,7 +140,6 @@ async function promote({ github, core, owner, repo, prNumber, headSha }) {
     return;
   }
 
-  let markedReady = false;
   if (pr.draft) {
     if (await botConvertedToDraft({ github, owner, repo, prNumber })) {
       try {
@@ -147,7 +153,7 @@ async function promote({ github, core, owner, repo, prNumber, headSha }) {
           { id: pr.node_id }
         );
         core.info(`All ${relevant.length} check(s) pass, marked PR #${prNumber} ready for review.`);
-        markedReady = pr.user?.type !== "Bot";
+        if (pr.user?.type !== "Bot") onMarkedReady?.(prNumber);
       } catch (error) {
         // Both promotion jobs can reach this within seconds of each other when
         // CI and the review finish together, and the loser's mutation fails
@@ -167,10 +173,9 @@ async function promote({ github, core, owner, repo, prNumber, headSha }) {
       labels: [PENDING_LABEL],
     });
     core.info(`Added \`${PENDING_LABEL}\` to PR #${prNumber}.`);
-    return markedReady;
+    return;
   }
   core.info(`\`${PENDING_LABEL}\` already set on PR #${prNumber}.`);
-  return markedReady;
 }
 
 module.exports.promote = promote;

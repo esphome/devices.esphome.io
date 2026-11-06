@@ -145,8 +145,9 @@ jobs:
 
       # The promotion's ready_for_review event starts no workflow, so ask
       # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      # This also runs when the promotion failed after marking the PR ready.
       - name: Request Copilot review
-        if: steps.promote.outputs.marked-ready
+        if: ${{ always() && steps.promote.outputs.marked-ready }}
         uses: actions/github-script@v9.0.0
         env:
           PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
@@ -209,7 +210,7 @@ jobs:
             await script({ github, context, core });
 
       - name: Generate a token
-        if: steps.promote.outputs.marked-ready
+        if: ${{ always() && steps.promote.outputs.marked-ready }}
         id: generate-token
         uses: actions/create-github-app-token@v3.3.0
         with:
@@ -218,8 +219,9 @@ jobs:
 
       # The promotion's ready_for_review event starts no workflow, so ask
       # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      # This also runs when the promotion failed after marking the PR ready.
       - name: Request Copilot review
-        if: steps.promote.outputs.marked-ready
+        if: ${{ always() && steps.promote.outputs.marked-ready }}
         uses: actions/github-script@v9.0.0
         env:
           PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
