@@ -12,15 +12,24 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
+import * as yaml from "js-yaml";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 import {
-  parseGitHubYamlUrl,
+  archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
   collectBakedPasswords,
   collectManualIps,
-  collectStraySecrets,
+  collectSecretRefs,
+  placeholderSecretsYaml,
   runChecklist,
+  improvBleCheck,
+  IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY_ALLOWED,
   pageBlocks,
   buildReport,
   stripAnsi,
@@ -34,51 +43,47 @@ import {
   validateManifest,
   updateSources,
   checkOneManifest,
+  parseImportShorthand,
+  importRawUrl,
+  findCaseInsensitivePath,
+  checkDashboardImport,
+  reviewPage,
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
-test("parseGitHubYamlUrl accepts the canonical shapes", () => {
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://github.com/Owner/Repo/blob/main/path/to/main.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "main", filePath: "path/to/main.yaml" }
+test("archiveUrl builds the codeload/Codeberg/GitLab archive URL per host", () => {
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/main"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl("https://github.com/Owner/Repo/raw/v1.2.3/cfg.yml"),
-    { owner: "Owner", repo: "Repo", ref: "v1.2.3", filePath: "cfg.yml" }
+  assert.equal(
+    archiveUrl({ host: "codeberg.org", scheme: "codeberg", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://codeberg.org/Owner/Repo/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/main/a/b.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "main", filePath: "a/b.yaml" }
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "Owner", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://gitlab.com/Owner/Repo/-/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://github.com/Owner/Repo/blob/refs/heads/dev/c.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "dev", filePath: "c.yaml" }
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "main", filePath: "x.yaml" }),
+    "https://gitlab.com/group/sub/Repo/-/archive/main.tar.gz"
   );
-  assert.deepEqual(
-    parseGitHubYamlUrl(
-      "https://raw.githubusercontent.com/Owner/Repo/refs/tags/v9/d.yaml"
-    ),
-    { owner: "Owner", repo: "Repo", ref: "v9", filePath: "d.yaml" }
+  // A ref containing `/` (e.g. a branch named `feature/foo`) keeps its slash
+  // in the archive URL rather than being escaped to `%2F`.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "feature/foo", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/feature/foo"
   );
-});
-
-test("parseGitHubYamlUrl rejects non-canonical URLs", () => {
-  for (const bad of [
-    "https://github.com/Owner/Repo", // repo root
-    "https://github.com/Owner/Repo/tree/main/dir", // directory, not blob
-    "https://github.com/Owner/Repo/blob/main/README.md", // not yaml
-    "https://gitlab.com/Owner/Repo/blob/main/x.yaml", // wrong host
-    "http://github.com/Owner/Repo/blob/main/x.yaml", // not https
-    "not a url",
-  ]) {
-    assert.equal(parseGitHubYamlUrl(bad), null, bad);
-  }
+  // A ref with a space is percent-encoded.
+  assert.equal(
+    archiveUrl({ host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "v 1", filePath: "x.yaml" }),
+    "https://codeload.github.com/Owner/Repo/tar.gz/v%201"
+  );
+  // A nested GitLab owner keeps its slash.
+  assert.equal(
+    archiveUrl({ host: "gitlab.com", scheme: "gitlab", owner: "group/sub", repo: "Repo", ref: "v1", filePath: "x.yaml" }),
+    "https://gitlab.com/group/sub/Repo/-/archive/v1.tar.gz"
+  );
 });
 
 test("nameViolatesEsphomeRule allows a trailing 'for ESPHome' only", () => {
@@ -125,29 +130,45 @@ test("collectMissingIds requires id on every component, incl. buses/hubs", () =>
   assert.equal(uptime.name, "Uptime");
 });
 
-test("collectBakedPasswords distinguishes secrets, empties and literals", () => {
+test("collectBakedPasswords flags every non-empty password, secrets included", () => {
   const cfg = {
     ota: [
       { platform: "esphome", password: "" }, // empty -> fine
-      { platform: "http_request", password: "!secret ota_pw" }, // non-wifi secret on a password key -> flag
+      { platform: "http_request", password: "!secret ota_pw" }, // secret ref -> flag
     ],
     wifi: {
-      ap: { password: "!secret wifi_password" }, // allowed wifi secret -> fine
-      password: "!secret wifi_password", // allowed wifi secret -> fine
+      // The Wi-Fi pair is NOT exempt: a shipped config must carry no
+      // credentials at all, so both of these are flagged.
+      ap: { password: "!secret wifi_password" },
+      password: "!secret wifi_password",
     },
     // `key:` is not a password/psk key, so this is NOT a collectBakedPasswords
-    // concern — a non-wifi secret here is caught by collectStraySecrets and by
-    // `esphome config` failing to resolve it.
+    // concern: a secret here is caught by collectSecretRefs instead.
     api: { encryption: { key: "!secret api_key" } },
     mqtt: { password: "hunter2" }, // literal -> flag
     some: { psk: "0011aabb" }, // psk literal -> flag
   };
   const out: string[] = [];
   collectBakedPasswords(cfg, [], out);
-  assert.equal(out.length, 3, out.join(" | "));
+  assert.equal(out.length, 5, out.join(" | "));
   assert.ok(out.some((s) => s.includes("ota.1.password") && s.includes("ota_pw")));
+  assert.ok(
+    out.some(
+      (s) => s.includes("wifi.password") && s.includes("!secret wifi_password")
+    )
+  );
+  assert.ok(
+    out.some(
+      (s) =>
+        s.includes("wifi.ap.password") && s.includes("!secret wifi_password")
+    )
+  );
   assert.ok(out.some((s) => s.includes("mqtt.password")));
   assert.ok(out.some((s) => s.includes("some.psk")));
+  // A password key that is only whitespace still counts as empty.
+  const blank: string[] = [];
+  collectBakedPasswords({ ota: [{ password: "  " }] }, [], blank);
+  assert.deepEqual(blank, []);
 });
 
 test("collectManualIps finds static IPs under wifi/ethernet only", () => {
@@ -161,13 +182,47 @@ test("collectManualIps finds static IPs under wifi/ethernet only", () => {
   assert.deepEqual(collectManualIps({ wifi: {} }), []);
 });
 
-test("collectStraySecrets ignores the wifi pair, catches others", () => {
-  assert.equal(
-    collectStraySecrets("a: !secret wifi_ssid\nb: !secret 'wifi_password'").size,
-    0
+test("collectSecretRefs catches every secret, wifi pair included", () => {
+  assert.deepEqual(
+    [
+      ...collectSecretRefs("a: !secret wifi_ssid\nb: !secret 'wifi_password'"),
+    ].sort(),
+    ["wifi_password", "wifi_ssid"]
   );
-  const stray = collectStraySecrets("k: !secret api_key\nj: !secret ota_pw");
-  assert.deepEqual([...stray].sort(), ["api_key", "ota_pw"]);
+  const refs = collectSecretRefs("k: !secret api_key\nj: !secret ota_pw");
+  assert.deepEqual([...refs].sort(), ["api_key", "ota_pw"]);
+  assert.equal(collectSecretRefs("wifi:\n  ap: {}\n").size, 0);
+});
+
+// Secret names are arbitrary YAML keys. A name-character class of
+// `[A-Za-z0-9_]` truncated hyphenated names (merging `ha-key` and `ha-token`
+// into one `ha`) and matched no double-quoted name at all, which made the
+// check silently pass on `!secret "wifi_ssid"`.
+test("collectSecretRefs handles quoted, hyphenated and flow-style names", () => {
+  assert.deepEqual([...collectSecretRefs('a: !secret "wifi_ssid"')], [
+    "wifi_ssid",
+  ]);
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret ha-key\nb: !secret ha-token")].sort(),
+    ["ha-key", "ha-token"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret 'ha-key'")], ["ha-key"]);
+  // Flow sequences and trailing comments must not swallow the terminator.
+  assert.deepEqual(
+    [...collectSecretRefs("a: [!secret one, !secret two]")].sort(),
+    ["one", "two"]
+  );
+  assert.deepEqual([...collectSecretRefs("a: !secret three # comment")], [
+    "three",
+  ]);
+  // The same name in different quoting styles is one secret.
+  assert.deepEqual(
+    [...collectSecretRefs("a: !secret k\nb: !secret 'k'\nc: !secret \"k\"")],
+    ["k"]
+  );
+  // The regex is module-level; a previous call must not leave lastIndex set.
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
+  assert.equal(collectSecretRefs("a: !secret k").size, 1);
 });
 
 test("stripAnsi removes literal and real escape sequences", () => {
@@ -211,12 +266,12 @@ const GOOD_CFG = {
     project: { name: "Acme.Widget" },
   },
   esp32: { board: "esp32dev", variant: "ESP32" },
+  // A compliant shipped config provisions Wi-Fi over Improv and carries no
+  // credentials at all: no `ssid:`/`password:`, no `!secret` references.
   wifi: {
-    ssid: "!secret wifi_ssid",
-    password: "!secret wifi_password",
     ap: { password: "" },
   },
-  esp32_improv: {},
+  improv_ble: {},
   improv_serial: {},
   dashboard_import: { package_import_url: "github://acme/widget/widget.yaml" },
   ota: [{ platform: "esphome", password: "" }],
@@ -226,12 +281,7 @@ const GOOD_CFG = {
 };
 
 test("runChecklist passes a compliant config", () => {
-  const checks = runChecklist(
-    GOOD_CFG,
-    "wifi:\n  password: !secret wifi_password",
-    "Widget",
-    "PASS"
-  );
+  const checks = runChecklist(GOOD_CFG, "wifi:\n  ap: {}\n", "Widget", "PASS");
   const bad = checks.filter(
     (c) => c.status === "MISSING" || c.status === "FAIL"
   );
@@ -256,7 +306,7 @@ test("runChecklist flags a non-compliant config", () => {
     esphome: { name: "esphome-thing" }, // name violation
     esp8266: {}, // wrong platform
     wifi: { manual_ip: { static_ip: "10.0.0.5" } }, // static IP + wifi present
-    // no esp32_improv, no dashboard_import, no ota, no update
+    // no improv_ble, no dashboard_import, no ota, no update
     switch: [{ platform: "gpio", name: "Relay" }], // missing id
     api: { password: "hunter2" }, // baked password
   };
@@ -264,22 +314,162 @@ test("runChecklist flags a non-compliant config", () => {
   const byItem = new Map(checks.map((c) => [c.item, c.status]));
   assert.equal(byItem.get("ESP32 or supported variant"), "FAIL");
   assert.equal(byItem.get('Project name free of "ESPHome"'), "FAIL");
-  assert.equal(byItem.get("esp32_improv (Wi-Fi provisioning)"), "MISSING");
+  assert.equal(byItem.get("improv_ble (Wi-Fi provisioning)"), "MISSING");
   assert.equal(byItem.get("dashboard_import"), "MISSING");
   assert.equal(byItem.get("ota: `- platform: esphome`"), "MISSING");
   assert.equal(byItem.get("update: `- platform: http_request`"), "MISSING");
   assert.equal(byItem.get("No passwords in the configuration"), "FAIL");
-  assert.equal(byItem.get("No references to non-standard secrets"), "FAIL");
+  assert.equal(byItem.get("No references to secrets in the configuration"), "FAIL");
   assert.equal(byItem.get("No static IP addresses"), "FAIL");
   assert.equal(byItem.get("Every entity/component has an `id:`"), "MISSING");
   assert.equal(byItem.get("Compiles without user changes"), "FAIL");
 });
 
-test("esp32_improv is N/A when there is no wifi", () => {
+// The rule the programme actually enforces: a manufacturer's shipped config
+// must contain NO secrets, the `wifi_ssid`/`wifi_password` pair included.
+// Users provision their own Wi-Fi credentials, so baking the pair in only
+// leaves dummy values in device storage; secrets belong in the config the user
+// ends up with after taking control.
+test("runChecklist fails a shipped config that references the Wi-Fi secrets", () => {
+  const cfg = {
+    ...GOOD_CFG,
+    wifi: {
+      ssid: "!secret wifi_ssid",
+      password: "!secret wifi_password",
+      ap: { password: "" },
+    },
+  };
+  const expanded = [
+    "wifi:",
+    "  ssid: !secret wifi_ssid",
+    "  password: !secret wifi_password",
+    "",
+  ].join("\n");
+  const checks = runChecklist(cfg, expanded, "Widget", "PASS");
+  const byItem = new Map(checks.map((c) => [c.item, c]));
+
+  const passwords = byItem.get("No passwords in the configuration")!;
+  assert.equal(passwords.status, "FAIL");
+  assert.ok(passwords.detail.includes("wifi.password"));
+  assert.ok(passwords.detail.includes("!secret wifi_password"));
+
+  const secrets = byItem.get("No references to secrets in the configuration")!;
+  assert.equal(secrets.status, "FAIL");
+  assert.ok(secrets.detail.includes("!secret wifi_ssid"));
+  assert.ok(secrets.detail.includes("!secret wifi_password"));
+
+  // Everything else about the config is fine; these two are the only
+  // failures, and they are enough to block the page.
+  assert.deepEqual(
+    checks
+      .filter((c) => c.status === "FAIL" || c.status === "MISSING")
+      .map((c) => c.item),
+    [
+      "No passwords in the configuration",
+      "No references to secrets in the configuration",
+    ]
+  );
+  const result: PageResult = {
+    page: "p",
+    url: "u",
+    fenceMissing: false,
+    fatalError: null,
+    configOk: true,
+    configInconclusive: false,
+    configError: null,
+    compile: "PASS",
+    compileLog: null,
+    checks,
+  };
+  assert.equal(pageBlocks(result), true);
+});
+
+// The placeholder secrets are the review tool's own, written so that a config
+// referencing the Wi-Fi pair still expands and compiles; they must never
+// double as an allowlist for the checks above.
+test("placeholderSecretsYaml keeps the compile step working", () => {
+  const body = placeholderSecretsYaml();
+  assert.equal(
+    body,
+    'wifi_ssid: "placeholder_ssid"\nwifi_password: "placeholder_password"\n'
+  );
+  const parsed = yaml.load(body) as Record<string, string>;
+  assert.deepEqual(Object.keys(parsed).sort(), ["wifi_password", "wifi_ssid"]);
+  // Exactly the names the checklist now flags: supplying them lets
+  // `esphome config`/`compile` run, while the config is still reported as
+  // non-compliant.
+  const flagged = collectSecretRefs(
+    "a: !secret wifi_ssid\nb: !secret wifi_password"
+  );
+  assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
+});
+
+test("improv_ble is N/A when there is no wifi", () => {
   const cfg = { esphome: { name: "x" }, esp32: { board: "b" } };
   const checks = runChecklist(cfg, "", "x", "SKIPPED");
-  const improv = checks.find((c) => c.item.startsWith("esp32_improv"));
+  const improv = checks.find((c) => c.item.startsWith(IMPROV_BLE_KEY));
   assert.equal(improv?.status, "N/A");
+  assert.match(improv!.detail, /not applicable/);
+});
+
+// Two-phase `esp32_improv` -> `improv_ble` rename (ESPHome 2026.10.0, alias
+// removed in 2027.4.0). Phase 1 accepts both keys; flipping
+// LEGACY_IMPROV_BLE_KEY_ALLOWED to false starts failing the legacy one.
+test("improv_ble: the current key passes", () => {
+  const check = improvBleCheck({ [IMPROV_BLE_KEY]: {} }, true);
+  assert.equal(check.status, "OK");
+  assert.match(check.detail, /`improv_ble:` present/);
+  // The current key is unaffected by the migration switch.
+  assert.equal(improvBleCheck({ [IMPROV_BLE_KEY]: {} }, true, false).status, "OK");
+});
+
+test("improv_ble: the legacy key passes with a deprecation nudge while allowed", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true, true);
+  assert.equal(check.status, "OK");
+  assert.match(check.detail, /deprecated/);
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+  assert.match(check.detail, /2027\.4\.0/);
+});
+
+test("improv_ble: the legacy key fails once the switch is flipped off", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true, false);
+  assert.equal(check.status, "FAIL");
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+});
+
+test("improv_ble: neither key is MISSING", () => {
+  const check = improvBleCheck({}, true);
+  assert.equal(check.status, "MISSING");
+  assert.match(check.detail, /no `improv_ble:` block/);
+});
+
+// The two tests above pin both phases explicitly. These last two follow
+// whatever LEGACY_IMPROV_BLE_KEY_ALLOWED currently says, so flipping that one
+// constant stays the whole of phase 2 - no test needs editing with it.
+test("improv_ble: the legacy key follows the module-level switch by default", () => {
+  const check = improvBleCheck({ [LEGACY_IMPROV_BLE_KEY]: {} }, true);
+  assert.equal(check.status, LEGACY_IMPROV_BLE_KEY_ALLOWED ? "OK" : "FAIL");
+  assert.match(check.detail, /rename it to `improv_ble:`/);
+});
+
+test("runChecklist routes the legacy improv key through the switch", () => {
+  const cfg: Record<string, unknown> = {
+    ...GOOD_CFG,
+    [LEGACY_IMPROV_BLE_KEY]: {},
+  };
+  delete cfg[IMPROV_BLE_KEY];
+  const checks = runChecklist(cfg, "wifi:\n  ap: {}\n", "Widget", "PASS");
+  const improv = checks.find((c) => c.item.startsWith(IMPROV_BLE_KEY))!;
+  assert.equal(improv.status, LEGACY_IMPROV_BLE_KEY_ALLOWED ? "OK" : "FAIL");
+  assert.match(improv.detail, /rename it to `improv_ble:`/);
+  // Nothing else about an otherwise-compliant config changes: the legacy key
+  // is the only item the switch can turn red.
+  assert.deepEqual(
+    checks
+      .filter((c) => c.status === "MISSING" || c.status === "FAIL")
+      .map((c) => c.item),
+    LEGACY_IMPROV_BLE_KEY_ALLOWED ? [] : [improv.item]
+  );
 });
 
 test("pageBlocks: fence/fatal/config/compile gate correctly", () => {
@@ -479,6 +669,196 @@ LIVE("live: bogus manifest URL is MUST-FIX", async () => {
   assert.ok(rows.some((r) => r.status === "FAIL"), JSON.stringify(rows));
 });
 
+// ---------------------------------------------------------------------------
+// dashboard_import URL resolution
+// ---------------------------------------------------------------------------
+
+test("parseImportShorthand handles each host, ref and query", () => {
+  assert.deepEqual(parseImportShorthand("github://o/r/dir/c.yaml@main"), {
+    host: "github.com", owner: "o", repo: "r", filename: "dir/c.yaml", ref: "main", query: null,
+  });
+  assert.deepEqual(parseImportShorthand("codeberg://o/r.x_y/c.yaml"), {
+    host: "codeberg.org", owner: "o", repo: "r.x_y", filename: "c.yaml", ref: null, query: null,
+  });
+  assert.deepEqual(parseImportShorthand("gitlab://o/r/c.yaml@v1.0/rc?next"), {
+    host: "gitlab.com", owner: "o", repo: "r", filename: "c.yaml", ref: "v1.0/rc", query: "next",
+  });
+  assert.equal(parseImportShorthand("bitbucket://o/r/c.yaml"), null);
+  assert.equal(parseImportShorthand("not a url"), null);
+  assert.equal(parseImportShorthand("github://o/r"), null);
+  assert.equal(parseImportShorthand("github://o/r/c.yaml@main junk"), null);
+});
+
+test("importRawUrl builds the raw URL per host and falls back to HEAD", () => {
+  const base = { owner: "o", repo: "r", filename: "d/c.yaml", query: null };
+  assert.equal(
+    importRawUrl({ ...base, host: "github.com", ref: "main" }),
+    "https://raw.githubusercontent.com/o/r/main/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "codeberg.org", ref: "v1" }),
+    "https://codeberg.org/o/r/raw/commit/v1/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "gitlab.com", ref: null }),
+    "https://gitlab.com/o/r/-/raw/HEAD/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "github.com", ref: null }),
+    "https://raw.githubusercontent.com/o/r/HEAD/d/c.yaml"
+  );
+});
+
+function makeTree(files: string[]): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ci-"));
+  for (const f of files) {
+    const abs = path.join(root, f);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, "x");
+  }
+  return root;
+}
+
+test("findCaseInsensitivePath resolves case-differing paths", () => {
+  const root = makeTree(["Mini/config.yaml", "Mini/Sub/File.YAML", "Other/a.yaml", "other/b.yaml"]);
+  assert.equal(findCaseInsensitivePath(root, "Mini/config.yaml"), "Mini/config.yaml");
+  assert.equal(findCaseInsensitivePath(root, "mini/CONFIG.yaml"), "Mini/config.yaml");
+  assert.equal(findCaseInsensitivePath(root, "mini/sub/file.yaml"), "Mini/Sub/File.YAML");
+  // Exact match wins when both `Other` and `other` exist.
+  assert.equal(findCaseInsensitivePath(root, "other/b.yaml"), "other/b.yaml");
+  assert.equal(findCaseInsensitivePath(root, "Other/a.yaml"), "Other/a.yaml");
+  // Not found, directory rather than file, empty path, file used as a dir.
+  assert.equal(findCaseInsensitivePath(root, "Mini/nope.yaml"), null);
+  assert.equal(findCaseInsensitivePath(root, "mini"), null);
+  assert.equal(findCaseInsensitivePath(root, ""), null);
+  assert.equal(findCaseInsensitivePath(root, "Mini/config.yaml/deeper.yaml"), null);
+  assert.equal(findCaseInsensitivePath(root, "../x.yaml"), null);
+});
+
+const UP = {
+  host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "main", filePath: "Mini/config.yaml",
+} as const;
+const cfgWith = (url: unknown): Record<string, unknown> => ({ dashboard_import: { package_import_url: url } });
+const respond = (status: number) => async (): Promise<Response> => new Response(null, { status });
+
+test("checkDashboardImport returns null when there is no URL to check", async () => {
+  assert.equal(await checkDashboardImport({}, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport({ dashboard_import: "x" }, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport({ dashboard_import: {} }, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport(cfgWith(5), UP, "/nonexistent", respond(200)), null);
+});
+
+test("checkDashboardImport fails an unparsable shorthand", async () => {
+  const r = await checkDashboardImport(cfgWith("https://example.com/x.yaml"), UP, "/nonexistent", respond(200));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(r?.detail.includes("github://owner/repo/path/file.yaml@ref"));
+});
+
+test("checkDashboardImport OK on 200 and requests the raw URL", async () => {
+  const seen: string[] = [];
+  const r = await checkDashboardImport(cfgWith("github://Owner/Repo/Mini/config.yaml@main"), UP, "/nonexistent", async (u) => {
+    seen.push(u);
+    return new Response("body", { status: 200 });
+  });
+  assert.equal(r?.item, "dashboard_import URL resolves");
+  assert.equal(r?.status, "OK");
+  assert.deepEqual(seen, ["https://raw.githubusercontent.com/Owner/Repo/main/Mini/config.yaml"]);
+  assert.ok(r?.detail.includes(seen[0]));
+});
+
+test("checkDashboardImport 404 adds a case hint for the reviewed repo", async () => {
+  const root = makeTree(["Mini/config.yaml"]);
+  const r = await checkDashboardImport(cfgWith("github://owner/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(r?.detail.includes("cannot import the config"));
+  assert.ok(r?.detail.includes("`Mini/config.yaml` exists in the reviewed tree"));
+  assert.ok(r?.detail.includes("case-sensitive"));
+});
+
+test("checkDashboardImport 404 gives no hint for other repos or no match", async () => {
+  const root = makeTree(["Mini/config.yaml"]);
+  // Different repo.
+  let r = await checkDashboardImport(cfgWith("github://owner/other/mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Different owner.
+  r = await checkDashboardImport(cfgWith("github://someone/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Different host.
+  r = await checkDashboardImport(cfgWith("gitlab://owner/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Same repo but no such file at all.
+  r = await checkDashboardImport(cfgWith("github://owner/repo/missing.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Same repo, exact path present in the tree (remote still 404s).
+  r = await checkDashboardImport(cfgWith("github://owner/repo/Mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+});
+
+test("checkDashboardImport is inconclusive on other statuses and network errors", async () => {
+  const url = "github://owner/repo/Mini/config.yaml@main";
+  let r = await checkDashboardImport(cfgWith(url), UP, "/nonexistent", respond(500));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("HTTP 500"));
+  r = await checkDashboardImport(cfgWith(url), UP, "/nonexistent", async () => {
+    throw new Error("boom");
+  });
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("boom"));
+});
+
+test("a FAIL dashboard_import row blocks the page", () => {
+  const page: PageResult = {
+    page: "p", url: null, fenceMissing: false, fatalError: null, configOk: true,
+    configInconclusive: false, configError: null, compile: "PASS", compileLog: null,
+    checks: [{ item: "dashboard_import URL resolves", status: "FAIL", detail: "d" }],
+  };
+  assert.equal(pageBlocks(page), true);
+});
+
+LIVE("live: real fetcher resolves a correct-case import URL and rejects a wrong-case one", async () => {
+  const up = { host: "github.com", scheme: "github", owner: "zuidwijk", repo: "slimmelezer", ref: "main", filePath: "Mini/config.yaml" } as const;
+  const ok = await checkDashboardImport(cfgWith("github://zuidwijk/slimmelezer/Mini/config.yaml@main"), up, "/nonexistent");
+  assert.equal(ok?.status, "OK", JSON.stringify(ok));
+  const bad = await checkDashboardImport(cfgWith("github://zuidwijk/slimmelezer/mini/config.yaml@main"), up, "/nonexistent");
+  assert.equal(bad?.status, "FAIL", JSON.stringify(bad));
+});
+
+LIVE("live: reviewPage flags a wrong-case package_import_url end to end", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-"));
+  const bin = path.join(dir, "fake-esphome");
+  const canned = yaml.dump({
+    esphome: { name: "x" },
+    dashboard_import: { package_import_url: "github://zuidwijk/slimmelezer/mini/config.yaml@main" },
+  });
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'EOF_YAML'\n${canned}EOF_YAML\n`, { mode: 0o755 });
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/zuidwijk/SlimmeLezer/blob/main/Mini/config.yaml\n```\n"
+  );
+  const saved = { ota: process.env.MFE_OTA_MANIFEST, di: process.env.MFE_DASHBOARD_IMPORT_CHECK };
+  process.env.MFE_OTA_MANIFEST = "0";
+  delete process.env.MFE_DASHBOARD_IMPORT_CHECK;
+  try {
+    const r = await reviewPage(page, dir, bin, false);
+    const row = r.checks.find((c) => c.item === "dashboard_import URL resolves");
+    assert.equal(row?.status, "FAIL", JSON.stringify(r));
+    assert.ok(row?.detail.includes("`Mini/config.yaml` exists in the reviewed tree"), row?.detail);
+    assert.equal(pageBlocks(r), true);
+
+    // Disabled via the env switch: no row.
+    process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+    const off = await reviewPage(page, dir, bin, false);
+    assert.ok(!off.checks.some((c) => c.item === "dashboard_import URL resolves"));
+  } finally {
+    if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
+    if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
+});
+
 test("buildMultiDeviceReport lists the pages and states the one-device rule", () => {
   const report = buildMultiDeviceReport([
     "src/docs/devices/Foo/index.md",
@@ -506,6 +886,26 @@ test("buildReport neutralizes @mentions from fork-controlled text", () => {
     },
   ]);
   assert.ok(!/@evil/.test(report), "raw @mention must be neutralized");
+});
+
+test("buildReport uses a green header when nothing blocks", () => {
+  const report = buildReport([
+    {
+      page: "src/docs/devices/Foo/index.md",
+      url: "https://github.com/o/r/blob/main/x.yaml",
+      fenceMissing: false,
+      fatalError: null,
+      configOk: true,
+      configInconclusive: false,
+      configError: null,
+      compile: "PASS",
+      compileLog: null,
+      checks: [{ item: "ESP32", status: "OK", detail: "ok" }],
+    },
+  ]);
+  assert.ok(report.includes("## ✅ Made for ESPHome review"));
+  assert.ok(report.includes("All automated Made for ESPHome checks pass"));
+  assert.ok(!report.includes("❌"));
 });
 
 test("buildReport escapes pipes/backslashes/newlines in checklist detail", () => {
