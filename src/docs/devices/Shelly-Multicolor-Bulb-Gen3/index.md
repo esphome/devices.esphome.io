@@ -10,10 +10,12 @@ difficulty: 2
 The Shelly Multicolor Bulb E27 Gen3 (`S3BL-C010007AEU`, board marking `RGBCCTBulbG3`) is a Wi-Fi LED bulb with an E27
 socket (ESP32-C3, 8 MB flash).
 
+Product page: <https://www.shelly.com/de/products/shelly-multicolor-bulb-e27-gen3>.
+
 Its LED driver is a **KP18068** (5-channel constant-current driver, 2-wire bus), which ESPHome does not support itself.
 The configuration uses an external component for it.
 
-![Shelly Multicolor Bulb Gen3](../Shelly-Multicolor-Bulb-Gen3/Shelly-Multicolor-Bulb-Gen3.png "Shelly Multicolor Bulb Gen3")
+![Shelly Multicolor Bulb Gen3](Shelly-Multicolor-Bulb-Gen3.png "Shelly Multicolor Bulb Gen3")
 
 The bulb has red, green and blue LEDs and **one fixed warm white**, so it is an `rgbw` light; cool whites are mixed
 from the RGB LEDs.
@@ -35,7 +37,7 @@ needs are on the tool's
 Open the bulb and connect a 3.3 V USB-to-serial adapter to the pads on the edge of the module. The colour is the marker
 in the picture. Take the bulb out of the socket and power it only from the adapter.
 
-![Pinout](../Shelly-Multicolor-Bulb-Gen3/bulb_gen3_uart.png "UART pinout")
+![Pinout](bulb_gen3_uart.png "UART pinout")
 
 | Function        | Colour |
 | --------------- | ------ |
@@ -49,27 +51,28 @@ in the picture. Take the bulb out of the socket and power it only from the adapt
 TXD and RXD are named from the chip's point of view: connect TXD to RX and RXD to TX of the adapter. To enter download
 mode, connect BOOT to GND while powering on and release it after the chip has started.
 
-As always, first take a dump!
+As always, first take a dump! Replace `<PORT>` with the serial port of your adapter (e.g. `COM3` on Windows or
+`/dev/ttyUSB0` on Linux).
 
 ```bash
-esptool --chip esp32c3 --port COM11 --baud 460800 read_flash 0x0 0x800000 shelly_multicolor_bulb_gen3.bin
+esptool --chip esp32c3 --port <PORT> --baud 460800 read_flash 0x0 0x800000 shelly_multicolor_bulb_gen3.bin
 ```
 
 Then flash the `firmware.factory.bin` of your build to `0x0`:
 
 ```bash
-esptool --chip esp32c3 --port COM11 --baud 460800 write_flash 0x0 firmware.factory.bin
+esptool --chip esp32c3 --port <PORT> --baud 460800 write_flash 0x0 firmware.factory.bin
 ```
 
 ## GPIO Pinout
 
-| Pin    | Function                         |
-| ------ | -------------------------------- |
-| GPIO4  | LED driver data (SDA)            |
-| GPIO5  | LED driver clock (SCL)           |
-| GPIO9  | BOOT (download mode, low-active) |
-| GPIO20 | UART RX (console, logger)        |
-| GPIO21 | UART TX (console, logger)        |
+| Pin    | Function                            |
+| ------ | ----------------------------------- |
+| GPIO4  | LED driver data (SDA)               |
+| GPIO5  | LED driver clock (SCL)              |
+| GPIO9  | BOOT (download mode, low-active)    |
+| GPIO20 | UART RX (console, logger via UART0) |
+| GPIO21 | UART TX (console, logger via UART0) |
 
 | LED driver output | LED                        |
 | ----------------- | -------------------------- |

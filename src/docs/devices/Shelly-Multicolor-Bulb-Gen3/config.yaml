@@ -17,6 +17,7 @@ wifi:
   ap:
 
 logger:
+  hardware_uart: UART0
 
 # The LED driver is not part of ESPHome. This external component bit-bangs the two pins, so there is no i2c: block
 # (GPIO4 and GPIO5 belong to the driver).
