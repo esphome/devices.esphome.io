@@ -115,7 +115,9 @@ script:
     then:
       - lambda: |-
           id(syncing_from_mcu) = true;
-          id(ha_fan).state = id(duux_fan).state;
+          if (!id(waiting_for_off_response)) {
+            id(ha_fan).state = id(duux_fan).state;
+          }
           id(ha_fan).speed = id(duux_fan).speed;
           id(ha_fan).oscillating = id(duux_fan).oscillating;
           id(ha_fan).publish_state();
