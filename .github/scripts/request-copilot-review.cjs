@@ -24,25 +24,49 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
     core.warning(`Could not request a Copilot review on #${prNumber}: ${err.message}`);
     return;
   }
-  const events = await github.paginate(github.rest.issues.listEventsForTimeline, {
-    owner,
-    repo,
-    issue_number: prNumber,
-    per_page: 100,
-  });
-  const recorded = events.some(
-    (event) =>
-      event.event === "review_requested" &&
-      event.requested_reviewer?.login === COPILOT_LOGIN &&
-      Date.parse(event.created_at) >= requestedAt - RECORDED_SLACK_MS
+  let events;
+  try {
+    events = await github.paginate(github.rest.issues.listEventsForTimeline, {
+      owner,
+      repo,
+      issue_number: prNumber,
+      per_page: 100,
+    });
+  } catch (err) {
+    core.warning(`Requested a Copilot review on #${prNumber} but could not confirm it: ${err.message}`);
+    return;
+  }
+  const copilotRequests = events.filter(
+    (event) => event.event === "review_requested" && event.requested_reviewer?.login === COPILOT_LOGIN
   );
-  if (recorded) {
+  // The ruleset files its requests under a user, so only a bot-filed one is ours.
+  const ours = copilotRequests.some(
+    (event) =>
+      event.actor?.type === "Bot" && Date.parse(event.created_at) >= requestedAt - RECORDED_SLACK_MS
+  );
+  if (ours) {
     core.info(`Requested a Copilot review on #${prNumber}.`);
+    return;
+  }
+  const pending = copilotRequests.at(-1);
+  if (pending && !reviewedSince(events, pending.created_at)) {
+    core.info(
+      `A Copilot review requested by ${pending.actor?.login} is still pending on #${prNumber}.`
+    );
     return;
   }
   core.warning(
     `GitHub accepted the Copilot review request on #${prNumber} but recorded none; ` +
       "the requesting token likely has no Copilot code review access."
+  );
+}
+
+function reviewedSince(events, since) {
+  return events.some(
+    (event) =>
+      event.event === "reviewed" &&
+      event.user?.login === COPILOT_LOGIN &&
+      Date.parse(event.submitted_at) >= Date.parse(since)
   );
 }
 

@@ -13,25 +13,35 @@ const copilot = require("../.github/scripts/request-copilot-review.cjs");
 
 const REPO = { owner: "esphome", repo: "devices.esphome.io" };
 
-type Recorded = "now" | "stale" | "none";
+const OLD = "2020-01-01T00:00:00Z";
+const LATER = "2020-01-01T00:05:00Z";
+const copilotRequest = (actorType: string, createdAt: string) => ({
+  event: "review_requested",
+  actor: { login: actorType === "Bot" ? "esphome[bot]" : "someone", type: actorType },
+  requested_reviewer: { login: "Copilot" },
+  created_at: createdAt,
+});
+const copilotReview = (submittedAt: string) => ({
+  event: "reviewed",
+  user: { login: "Copilot" },
+  submitted_at: submittedAt,
+});
 
-// `recorded` controls the timeline read back after the request: a fresh
-// Copilot review_requested event, an old one, or nothing.
-function makeGithub(opts: { fail?: boolean; recorded?: Recorded } = {}) {
+// `events` is the timeline read back after the request; a function lets a
+// test build it at call time. `timelineError` makes that read throw.
+function makeGithub(
+  opts: { fail?: boolean; events?: () => unknown[]; timelineError?: boolean } = {}
+) {
   const calls: Record<string, unknown>[] = [];
-  const recorded = opts.recorded ?? "now";
-  const createdAt = recorded === "stale" ? "2020-01-01T00:00:00Z" : new Date().toISOString();
+  const events = opts.events ?? (() => [copilotRequest("Bot", new Date().toISOString())]);
   const listEventsForTimeline = () => {};
   return {
     calls,
     github: {
       paginate: async (fn: unknown) => {
         assert.equal(fn, listEventsForTimeline);
-        if (recorded === "none") return [{ event: "labeled" }];
-        return [
-          { event: "review_requested", requested_reviewer: { login: "esphbot" }, created_at: createdAt },
-          { event: "review_requested", requested_reviewer: { login: "Copilot" }, created_at: createdAt },
-        ];
+        if (opts.timelineError) throw new Error("secondary rate limit");
+        return events();
       },
       rest: {
         issues: { listEventsForTimeline },
@@ -85,17 +95,41 @@ test("a failed request warns instead of failing", async () => {
 });
 
 test("an accepted request GitHub never recorded warns", async () => {
-  const { github } = makeGithub({ recorded: "none" });
+  const { github } = makeGithub({ events: () => [{ event: "labeled" }] });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
-test("only a Copilot request from this run counts as recorded", async () => {
-  const { github } = makeGithub({ recorded: "stale" });
+test("a fresh ruleset request filed under a user does not confirm ours", async () => {
+  const now = new Date().toISOString();
+  const { github } = makeGithub({ events: () => [copilotRequest("User", now), copilotReview(now)] });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
+});
+
+test("an older bot request that was reviewed does not confirm this one", async () => {
+  const { github } = makeGithub({ events: () => [copilotRequest("Bot", OLD), copilotReview(LATER)] });
+  const { core, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.match(warnings[0], /recorded none/);
+});
+
+test("a Copilot review still pending is logged, not warned", async () => {
+  const { github } = makeGithub({ events: () => [copilotReview(OLD), copilotRequest("User", LATER)] });
+  const { core, infos, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.deepEqual(warnings, []);
+  assert.match(infos[0], /requested by someone is still pending on #9/);
+});
+
+test("a failed timeline read warns instead of failing", async () => {
+  const { github, calls } = makeGithub({ timelineError: true });
+  const { core, warnings } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 1);
+  assert.match(warnings[0], /could not confirm it: secondary rate limit/);
 });
 
 test("the exported helper takes a PR number", async () => {
