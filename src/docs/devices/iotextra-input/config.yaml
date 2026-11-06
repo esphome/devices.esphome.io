@@ -1,0 +1,40 @@
+# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server): https://github.com/makethingshappy/MTH-for-ESPHome/blob/a38f23c006aa3ed14a521c8e01b3ec0af9aadacd/Configs/IoTsmart_ESP32-S3/iotextra-input-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+# IoTextra Input 3.02 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
+# Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/Input/v.3.02/host-map.yaml
+# Inputs IN1..IN8: active-low on the HOST line (input active = 0)
+esphome:
+  name: input-iotsmart-s3
+  project:
+    name: makethingshappy.iotextra-input-v3-02-iotsmart-esp32s3-v2-01-gpio
+    version: "1.01"
+
+esp32:
+  variant: esp32s3
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+# Waveshare ESP32-S3-Tiny on IoTsmart ESP32-S3: 4MB flash, 2MB PSRAM
+psram:
+  mode: quad
+
+logger:
+wifi:
+  ap: {}
+
+# HOST I2C: IoTsmart ESP32-S3 2.01 SDA=GPIO16, SCL=GPIO15 (onboard EEPROM 0x54-0x57 on the same bus)
+i2c:
+  id: host_i2c
+  sda: GPIO16
+  scl: GPIO15
+  scan: true
+
+binary_sensor:
+  - {platform: gpio, id: in1, name: "IN1", pin: {number: GPIO8, inverted: true}}   # AP0
+  - {platform: gpio, id: in2, name: "IN2", pin: {number: GPIO9, inverted: true}}   # AP1
+  - {platform: gpio, id: in3, name: "IN3", pin: {number: GPIO10, inverted: true}}   # AP2
+  - {platform: gpio, id: in4, name: "IN4", pin: {number: GPIO11, inverted: true}}   # AP3
+  - {platform: gpio, id: in5, name: "IN5", pin: {number: GPIO4, inverted: true}}   # AP4
+  - {platform: gpio, id: in6, name: "IN6", pin: {number: GPIO5, inverted: true}}   # AP5
+  - {platform: gpio, id: in7, name: "IN7", pin: {number: GPIO6, inverted: true}}   # AP6
+  - {platform: gpio, id: in8, name: "IN8", pin: {number: GPIO7, inverted: true}}   # AP7
