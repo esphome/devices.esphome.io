@@ -23,15 +23,15 @@ logger:
 
 api:
   encryption:
-    key: !secret device_name__encryption_key
+    key:
 
 ota:
   - platform: esphome
     encryption:
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  ssid:
+  password:
   ap: {}
 
 uart:
