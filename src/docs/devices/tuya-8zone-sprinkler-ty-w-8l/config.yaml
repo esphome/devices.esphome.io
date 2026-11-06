@@ -1,0 +1,170 @@
+esphome:
+  name: tuya-sprinkler-8z
+  friendly_name: Tuya Sprinkler 8Z
+  on_boot:
+    priority: 800
+    then:
+      - delay: 500ms
+      - output.turn_off: led_1
+      - output.turn_off: led_2
+      - output.turn_off: led_3
+      - output.turn_off: led_4
+      - output.turn_off: led_5
+      - output.turn_off: led_6
+      - output.turn_off: led_7
+      - output.turn_off: led_8
+      - switch.turn_off: valve_1
+      - switch.turn_off: valve_2
+      - switch.turn_off: valve_3
+      - switch.turn_off: valve_4
+      - switch.turn_off: valve_5
+      - switch.turn_off: valve_6
+      - switch.turn_off: valve_7
+      - switch.turn_off: valve_8
+
+bk72xx:
+  board: cbu
+
+logger:
+  level: DEBUG
+
+wifi:
+  ap:
+
+status_led:
+  pin:
+    number: P28
+    inverted: false
+
+sn74hc595:
+  - id: led_sn74hc595
+    data_pin: P9
+    clock_pin: P15
+    latch_pin: P17
+  - id: valve_sn74hc595
+    data_pin: P16
+    clock_pin: P22
+    latch_pin: P20
+
+# The LED shift register drives the anodes through inverting buffers, so its
+# outputs are inverted: a low output lights the LED.
+output:
+  - platform: gpio
+    id: buzzer
+    pin:
+      number: P14
+      inverted: false
+  - platform: gpio
+    id: led_1
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 0
+      inverted: true
+  - platform: gpio
+    id: led_2
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 1
+      inverted: true
+  - platform: gpio
+    id: led_3
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 2
+      inverted: true
+  - platform: gpio
+    id: led_4
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 3
+      inverted: true
+  - platform: gpio
+    id: led_5
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 4
+      inverted: true
+  - platform: gpio
+    id: led_6
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 5
+      inverted: true
+  - platform: gpio
+    id: led_7
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 6
+      inverted: true
+  - platform: gpio
+    id: led_8
+    pin:
+      sn74hc595: led_sn74hc595
+      number: 7
+      inverted: true
+
+switch:
+  - platform: gpio
+    id: valve_1
+    name: "Valve 1"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 0
+      inverted: false
+  - platform: gpio
+    id: valve_2
+    name: "Valve 2"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 1
+      inverted: false
+  - platform: gpio
+    id: valve_3
+    name: "Valve 3"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 2
+      inverted: false
+  - platform: gpio
+    id: valve_4
+    name: "Valve 4"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 3
+      inverted: false
+  - platform: gpio
+    id: valve_5
+    name: "Valve 5"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 4
+      inverted: false
+  - platform: gpio
+    id: valve_6
+    name: "Valve 6"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 5
+      inverted: false
+  - platform: gpio
+    id: valve_7
+    name: "Valve 7"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 6
+      inverted: false
+  - platform: gpio
+    id: valve_8
+    name: "Valve 8"
+    internal: true
+    pin:
+      sn74hc595: valve_sn74hc595
+      number: 7
+      inverted: false
