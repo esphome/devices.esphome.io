@@ -12,6 +12,7 @@ export const VALID_BOARDS = new Set([
   "bk72xx",
   "esp32",
   "esp8266",
+  "ln882x",
   "rp2040",
   "rtl87xx",
 ]);
