@@ -12,7 +12,10 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 import {
   archiveUrl,
@@ -40,6 +43,11 @@ import {
   validateManifest,
   updateSources,
   checkOneManifest,
+  parseImportShorthand,
+  importRawUrl,
+  findCaseInsensitivePath,
+  checkDashboardImport,
+  reviewPage,
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
@@ -659,6 +667,196 @@ LIVE("live: NeatoFx manifests all pass (motor, target-ir, audio50)", async () =>
 LIVE("live: bogus manifest URL is MUST-FIX", async () => {
   const rows = await checkOneManifest(`${RAW}/does-not-exist/manifest.json`, "ESP32");
   assert.ok(rows.some((r) => r.status === "FAIL"), JSON.stringify(rows));
+});
+
+// ---------------------------------------------------------------------------
+// dashboard_import URL resolution
+// ---------------------------------------------------------------------------
+
+test("parseImportShorthand handles each host, ref and query", () => {
+  assert.deepEqual(parseImportShorthand("github://o/r/dir/c.yaml@main"), {
+    host: "github.com", owner: "o", repo: "r", filename: "dir/c.yaml", ref: "main", query: null,
+  });
+  assert.deepEqual(parseImportShorthand("codeberg://o/r.x_y/c.yaml"), {
+    host: "codeberg.org", owner: "o", repo: "r.x_y", filename: "c.yaml", ref: null, query: null,
+  });
+  assert.deepEqual(parseImportShorthand("gitlab://o/r/c.yaml@v1.0/rc?next"), {
+    host: "gitlab.com", owner: "o", repo: "r", filename: "c.yaml", ref: "v1.0/rc", query: "next",
+  });
+  assert.equal(parseImportShorthand("bitbucket://o/r/c.yaml"), null);
+  assert.equal(parseImportShorthand("not a url"), null);
+  assert.equal(parseImportShorthand("github://o/r"), null);
+  assert.equal(parseImportShorthand("github://o/r/c.yaml@main junk"), null);
+});
+
+test("importRawUrl builds the raw URL per host and falls back to HEAD", () => {
+  const base = { owner: "o", repo: "r", filename: "d/c.yaml", query: null };
+  assert.equal(
+    importRawUrl({ ...base, host: "github.com", ref: "main" }),
+    "https://raw.githubusercontent.com/o/r/main/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "codeberg.org", ref: "v1" }),
+    "https://codeberg.org/o/r/raw/commit/v1/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "gitlab.com", ref: null }),
+    "https://gitlab.com/o/r/-/raw/HEAD/d/c.yaml"
+  );
+  assert.equal(
+    importRawUrl({ ...base, host: "github.com", ref: null }),
+    "https://raw.githubusercontent.com/o/r/HEAD/d/c.yaml"
+  );
+});
+
+function makeTree(files: string[]): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ci-"));
+  for (const f of files) {
+    const abs = path.join(root, f);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, "x");
+  }
+  return root;
+}
+
+test("findCaseInsensitivePath resolves case-differing paths", () => {
+  const root = makeTree(["Mini/config.yaml", "Mini/Sub/File.YAML", "Other/a.yaml", "other/b.yaml"]);
+  assert.equal(findCaseInsensitivePath(root, "Mini/config.yaml"), "Mini/config.yaml");
+  assert.equal(findCaseInsensitivePath(root, "mini/CONFIG.yaml"), "Mini/config.yaml");
+  assert.equal(findCaseInsensitivePath(root, "mini/sub/file.yaml"), "Mini/Sub/File.YAML");
+  // Exact match wins when both `Other` and `other` exist.
+  assert.equal(findCaseInsensitivePath(root, "other/b.yaml"), "other/b.yaml");
+  assert.equal(findCaseInsensitivePath(root, "Other/a.yaml"), "Other/a.yaml");
+  // Not found, directory rather than file, empty path, file used as a dir.
+  assert.equal(findCaseInsensitivePath(root, "Mini/nope.yaml"), null);
+  assert.equal(findCaseInsensitivePath(root, "mini"), null);
+  assert.equal(findCaseInsensitivePath(root, ""), null);
+  assert.equal(findCaseInsensitivePath(root, "Mini/config.yaml/deeper.yaml"), null);
+  assert.equal(findCaseInsensitivePath(root, "../x.yaml"), null);
+});
+
+const UP = {
+  host: "github.com", scheme: "github", owner: "Owner", repo: "Repo", ref: "main", filePath: "Mini/config.yaml",
+} as const;
+const cfgWith = (url: unknown): Record<string, unknown> => ({ dashboard_import: { package_import_url: url } });
+const respond = (status: number) => async (): Promise<Response> => new Response(null, { status });
+
+test("checkDashboardImport returns null when there is no URL to check", async () => {
+  assert.equal(await checkDashboardImport({}, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport({ dashboard_import: "x" }, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport({ dashboard_import: {} }, UP, "/nonexistent", respond(200)), null);
+  assert.equal(await checkDashboardImport(cfgWith(5), UP, "/nonexistent", respond(200)), null);
+});
+
+test("checkDashboardImport fails an unparsable shorthand", async () => {
+  const r = await checkDashboardImport(cfgWith("https://example.com/x.yaml"), UP, "/nonexistent", respond(200));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(r?.detail.includes("github://owner/repo/path/file.yaml@ref"));
+});
+
+test("checkDashboardImport OK on 200 and requests the raw URL", async () => {
+  const seen: string[] = [];
+  const r = await checkDashboardImport(cfgWith("github://Owner/Repo/Mini/config.yaml@main"), UP, "/nonexistent", async (u) => {
+    seen.push(u);
+    return new Response("body", { status: 200 });
+  });
+  assert.equal(r?.item, "dashboard_import URL resolves");
+  assert.equal(r?.status, "OK");
+  assert.deepEqual(seen, ["https://raw.githubusercontent.com/Owner/Repo/main/Mini/config.yaml"]);
+  assert.ok(r?.detail.includes(seen[0]));
+});
+
+test("checkDashboardImport 404 adds a case hint for the reviewed repo", async () => {
+  const root = makeTree(["Mini/config.yaml"]);
+  const r = await checkDashboardImport(cfgWith("github://owner/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(r?.detail.includes("cannot import the config"));
+  assert.ok(r?.detail.includes("`Mini/config.yaml` exists in the reviewed tree"));
+  assert.ok(r?.detail.includes("case-sensitive"));
+});
+
+test("checkDashboardImport 404 gives no hint for other repos or no match", async () => {
+  const root = makeTree(["Mini/config.yaml"]);
+  // Different repo.
+  let r = await checkDashboardImport(cfgWith("github://owner/other/mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Different owner.
+  r = await checkDashboardImport(cfgWith("github://someone/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Different host.
+  r = await checkDashboardImport(cfgWith("gitlab://owner/repo/mini/config.yaml@main"), UP, root, respond(404));
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Same repo but no such file at all.
+  r = await checkDashboardImport(cfgWith("github://owner/repo/missing.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+  // Same repo, exact path present in the tree (remote still 404s).
+  r = await checkDashboardImport(cfgWith("github://owner/repo/Mini/config.yaml@main"), UP, root, respond(404));
+  assert.equal(r?.status, "FAIL");
+  assert.ok(!r?.detail.includes("exists in the reviewed tree"));
+});
+
+test("checkDashboardImport is inconclusive on other statuses and network errors", async () => {
+  const url = "github://owner/repo/Mini/config.yaml@main";
+  let r = await checkDashboardImport(cfgWith(url), UP, "/nonexistent", respond(500));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("HTTP 500"));
+  r = await checkDashboardImport(cfgWith(url), UP, "/nonexistent", async () => {
+    throw new Error("boom");
+  });
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("boom"));
+});
+
+test("a FAIL dashboard_import row blocks the page", () => {
+  const page: PageResult = {
+    page: "p", url: null, fenceMissing: false, fatalError: null, configOk: true,
+    configInconclusive: false, configError: null, compile: "PASS", compileLog: null,
+    checks: [{ item: "dashboard_import URL resolves", status: "FAIL", detail: "d" }],
+  };
+  assert.equal(pageBlocks(page), true);
+});
+
+LIVE("live: real fetcher resolves a correct-case import URL and rejects a wrong-case one", async () => {
+  const up = { host: "github.com", scheme: "github", owner: "zuidwijk", repo: "slimmelezer", ref: "main", filePath: "Mini/config.yaml" } as const;
+  const ok = await checkDashboardImport(cfgWith("github://zuidwijk/slimmelezer/Mini/config.yaml@main"), up, "/nonexistent");
+  assert.equal(ok?.status, "OK", JSON.stringify(ok));
+  const bad = await checkDashboardImport(cfgWith("github://zuidwijk/slimmelezer/mini/config.yaml@main"), up, "/nonexistent");
+  assert.equal(bad?.status, "FAIL", JSON.stringify(bad));
+});
+
+LIVE("live: reviewPage flags a wrong-case package_import_url end to end", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-"));
+  const bin = path.join(dir, "fake-esphome");
+  const canned = yaml.dump({
+    esphome: { name: "x" },
+    dashboard_import: { package_import_url: "github://zuidwijk/slimmelezer/mini/config.yaml@main" },
+  });
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'EOF_YAML'\n${canned}EOF_YAML\n`, { mode: 0o755 });
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/zuidwijk/SlimmeLezer/blob/main/Mini/config.yaml\n```\n"
+  );
+  const saved = { ota: process.env.MFE_OTA_MANIFEST, di: process.env.MFE_DASHBOARD_IMPORT_CHECK };
+  process.env.MFE_OTA_MANIFEST = "0";
+  delete process.env.MFE_DASHBOARD_IMPORT_CHECK;
+  try {
+    const r = await reviewPage(page, dir, bin, false);
+    const row = r.checks.find((c) => c.item === "dashboard_import URL resolves");
+    assert.equal(row?.status, "FAIL", JSON.stringify(r));
+    assert.ok(row?.detail.includes("`Mini/config.yaml` exists in the reviewed tree"), row?.detail);
+    assert.equal(pageBlocks(r), true);
+
+    // Disabled via the env switch: no row.
+    process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+    const off = await reviewPage(page, dir, bin, false);
+    assert.ok(!off.checks.some((c) => c.item === "dashboard_import URL resolves"));
+  } finally {
+    if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
+    if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
 });
 
 test("buildMultiDeviceReport lists the pages and states the one-device rule", () => {
