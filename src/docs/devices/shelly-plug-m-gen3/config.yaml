@@ -1,7 +1,7 @@
 substitutions:
   devicename: shelly_plugm_gen3_01
   board: freenove_esp32_s3_wroom
-  friendlyName: Waschmaschine
+  friendlyName: Washing Machine
   max_power: "3000"
   max_temp: "70.0"
 
@@ -119,6 +119,7 @@ switch:
     pin: GPIO0
     name: "Relais"
     id: switch_relay
+    restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
       - output.turn_on: led_green
     on_turn_off:
