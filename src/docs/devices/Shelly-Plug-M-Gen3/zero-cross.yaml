@@ -1,6 +1,8 @@
 # Additional config: zero-cross switching of the relay (optional).
 # Replaces the plain `gpio` relay switch of config.yaml, so remove the `switch:` entry with `id: relay` there
 # (or use this file instead of it). Custom component: https://github.com/oxynatOr/esphome-zero_cross_switch
+# The component always starts with the relay OFF and does not restore the last state after a reboot.
+# To bring the state back, use plug-protection.yaml: its `boot_relay` script restores the relay (switch_restoremode).
 
 external_components:
   - source:
@@ -20,6 +22,6 @@ switch:
       number: GPIO3
       mode: INPUT_PULLUP
     zx_edge: ANY  # level flips at every zero crossing (~6000 edges/min at 50 Hz)
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF  # the component does not restore a saved state itself
     frequency:
       name: "Mains frequency (zero-cross)"

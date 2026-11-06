@@ -205,12 +205,12 @@ script:
                           "ref %.3f => %.3f",
                    channel.c_str(), shown, measured, dev, old_ref, new_ref);
 
-          // publish_state on the optimistic number triggers its on_value
-          // (the reference is applied immediately) and stores it in flash.
-          if (channel == "voltage")      id(cal_voltage_ref).publish_state(new_ref);
-          else if (channel == "current") id(cal_current_ref).publish_state(new_ref);
-          else if (channel == "power")   id(cal_power_ref).publish_state(new_ref);
-          else if (channel == "energy")  id(cal_energy_ref).publish_state(new_ref);
+          // Go through the number's control path (not publish_state): it runs on_value,
+          // which applies the reference, and stores the value in flash for restore_value.
+          if (channel == "voltage")      id(cal_voltage_ref).make_call().set_value(new_ref).perform();
+          else if (channel == "current") id(cal_current_ref).make_call().set_value(new_ref).perform();
+          else if (channel == "power")   id(cal_power_ref).make_call().set_value(new_ref).perform();
+          else if (channel == "energy")  id(cal_energy_ref).make_call().set_value(new_ref).perform();
 
   # Back to the values from the YAML
   - id: reset_references

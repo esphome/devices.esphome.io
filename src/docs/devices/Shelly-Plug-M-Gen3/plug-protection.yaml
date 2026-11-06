@@ -14,7 +14,7 @@
 # ---------------------------------------------------------------------------
 
 substitutions:
-  trip_delay: "500"  # ms a current/power limit must stay exceeded
+  trip_delay: "500"  # ms a current/power limit must stay exceeded (+ up to one sample interval)
   trip_delay_temp: "3000"  # ms the temperature limit must stay exceeded
   trip_instant_factor: "1.5"  # limit * factor trips immediately
   ntc_fault_trips: "false"  # true: a broken NTC also switches the relay off
@@ -26,6 +26,10 @@ substitutions:
   max_power: "2300"  # W, adjust to your plug
   max_temp: "70"  # °C
   rearm_temp: "60"  # °C, a temperature fault clears itself below this
+  # The limits are only checked when a new reading arrives, so the protection polls faster than config.yaml
+  # (BL0942 default 5 s, ADC default 60 s). Keep the BL0942 interval well below trip_delay.
+  update_interval_protect_bl0942: 250ms
+  update_interval_protect_adc: 1s
 
 globals:
   - id: fault_active
@@ -236,8 +240,14 @@ binary_sensor:
               then:
                 - if:
                     condition:
-                      lambda: "return !(id(ntc_temp).state >= ${max_temp});"
+                      # a failed sensor or a NaN reading must not let the lock be cleared
+                      lambda: |-
+                        return !id(ntc_bad) && id(ntc_temp).has_state() && std::isfinite(id(ntc_temp).state) &&
+                               id(ntc_temp).state < (float)(${max_temp});
                     then:
+                      # keep plug-gestures.yaml from also handling this press (LED on/off)
+                      - lambda: |-
+                          id(gesture_suppress_until) = millis() + 1000;
                       - switch.turn_off: fault_lock
                       - logger.log:
                           level: INFO
@@ -245,7 +255,7 @@ binary_sensor:
                     else:
                       - logger.log:
                           level: WARN
-                          format: "Cannot acknowledge: still too hot"
+                          format: "Cannot acknowledge: too hot or temperature sensor not healthy"
 
   # Visible in Home Assistant when the NTC is open, shorted or stalled
   - platform: template
@@ -323,35 +333,40 @@ sensor:
             }
           }
 
-  - id: !extend bcurrent
-    on_value:
-      # Latched trip with inrush tolerance: the limit must stay exceeded for
-      # trip_delay ms; a value above limit * trip_instant_factor trips at once.
-      # No automatic re-arm: the current drops to 0 A after the relay opens.
-      - lambda: |-
-          if (std::isnan(x)) return;
-          const uint32_t now = millis();
-          const float limit = (float)(${max_current});
-          if (x > limit) {
-            if (id(over_cur_since) == 0) id(over_cur_since) = now ? now : 1;
-            if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_cur_since)) >= ${trip_delay}) {
-              id(trip).execute(2);
-            }
-          } else {
-            id(over_cur_since) = 0;
-          }
+  - id: !extend temp_analog_reading
+    update_interval: ${update_interval_protect_adc}
 
-  - id: !extend bpower
-    on_value:
-      - lambda: |-
-          if (std::isnan(x)) return;
-          const uint32_t now = millis();
-          const float limit = (float)(${max_power});
-          if (x > limit) {
-            if (id(over_pwr_since) == 0) id(over_pwr_since) = now ? now : 1;
-            if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_pwr_since)) >= ${trip_delay}) {
-              id(trip).execute(3);
+  # bcurrent and bpower are children of bl0942_1, so they are extended through it
+  - id: !extend bl0942_1
+    update_interval: ${update_interval_protect_bl0942}
+    current:
+      on_value:
+        # Latched trip with inrush tolerance: the limit must stay exceeded for
+        # trip_delay ms; a value above limit * trip_instant_factor trips at once.
+        # No automatic re-arm: the current drops to 0 A after the relay opens.
+        - lambda: |-
+            if (std::isnan(x)) return;
+            const uint32_t now = millis();
+            const float limit = (float)(${max_current});
+            if (x > limit) {
+              if (id(over_cur_since) == 0) id(over_cur_since) = now ? now : 1;
+              if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_cur_since)) >= ${trip_delay}) {
+                id(trip).execute(2);
+              }
+            } else {
+              id(over_cur_since) = 0;
             }
-          } else {
-            id(over_pwr_since) = 0;
-          }
+    power:
+      on_value:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            const uint32_t now = millis();
+            const float limit = (float)(${max_power});
+            if (x > limit) {
+              if (id(over_pwr_since) == 0) id(over_pwr_since) = now ? now : 1;
+              if (x > limit * (float)(${trip_instant_factor}) || (now - id(over_pwr_since)) >= ${trip_delay}) {
+                id(trip).execute(3);
+              }
+            } else {
+              id(over_pwr_since) = 0;
+            }

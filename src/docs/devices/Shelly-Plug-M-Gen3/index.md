@@ -72,9 +72,9 @@ Otherwise the image installs, but the plug does not boot afterwards. The additio
 | Setting | Why |
 | ------- | --- |
 | `flash_size: 8MB` | The plug has 8 MB of flash. |
-| `partitions: PlugMG3-stock.csv` | Shelly's own partition layout, placed next to your YAML file. |
+| `partitions: PlugMG3-stock.csv` | Shelly's own partition layout, placed next to your YAML file. Get the file from the [Free-Shelly-OTA repository](https://github.com/oxynatOr/free-shelly-ota/blob/main/partitions/PlugMG3-stock.csv) (a copy is in this device's folder). |
 | `CONFIG_PARTITION_TABLE_OFFSET: "0x10000"` | The stock firmware keeps the partition table at `0x10000`, not at the ESP-IDF default `0x8000`. Without this the firmware cannot find its partitions at boot. |
-| `ota: platform: esphome` with `allow_partition_access: true` | Allows the OTA component to write to the partitions of the stock layout. |
+| `ota: platform: esphome` with `allow_partition_access: true` | Allows the OTA component to write to the partitions of the stock layout. The file extends your own `ota:` entry, which needs `id: ota_esphome`. |
 
 ```yaml file=ota-stock-layout.yaml
 ```
@@ -138,7 +138,7 @@ packages:
 | `ota-stock-layout.yaml` | `PlugMG3-stock.csv` | OTA from the stock firmware, see above |
 | `zero-cross.yaml` | the custom component | Zero-cross switching, see above |
 | `plug-protection.yaml` | `api` | Over-current / over-power / over-temperature protection, NTC watchdog, staggered restart |
-| `plug-led.yaml` | `plug-protection.yaml` | Status LED with the effects Live Current / Power / Temperature |
+| `plug-led.yaml` | `plug-protection.yaml`, an `ota:` entry with `id: ota_esphome` | Status LED with the effects Live Current / Power / Temperature |
 | `plug-gestures.yaml` | `plug-protection.yaml`, `plug-led.yaml` | Button gestures and child lock |
 | `plug-energy.yaml` | a `time:` platform | Energy Today / Energy Total sensors |
 | `plug-calibration.yaml` | `api` | BL0942 calibration at runtime, without reflashing |
@@ -162,8 +162,8 @@ adjust them to your plug.
 
 The single RGB LED shows the status. Pick the effect **Live Current**, **Live Power** or **Live Temperature** in Home
 Assistant. Red breathing = fault, magenta = temperature sensor fault, amber blink = close to a limit, red pulse = no
-Wi-Fi, amber pulse = no API client, blue blink = OTA update. If you also use the OTA settings above, both files share
-the entry `id: ota_esphome`, so they merge. If you have your own `ota:` entry with platform esphome, give it that id.
+Wi-Fi, amber pulse = no API client, blue blink = OTA update. Like the OTA settings above, the file extends your own
+`ota:` entry with platform esphome, which needs `id: ota_esphome`; both files can be used together.
 
 ```yaml file=plug-led.yaml
 ```

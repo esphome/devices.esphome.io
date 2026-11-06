@@ -1,6 +1,7 @@
 # Additional config: makes the firmware installable via OTA from the stock Shelly firmware
-# (Free-Shelly-OTA). Merge it into config.yaml, e.g. with `packages:`.
-# Needs PlugMG3-stock.csv (Shelly's stock partition layout) next to your YAML file.
+# (Free-Shelly-OTA). Merge it into your config with `packages:`.
+# Your config needs an `ota:` entry with `platform: esphome` and `id: ota_esphome`.
+# Needs PlugMG3-stock.csv (Shelly's stock partition layout, in this folder) next to your YAML file.
 
 esp32:
   flash_size: 8MB
@@ -13,6 +14,5 @@ esp32:
       CONFIG_PARTITION_TABLE_OFFSET: "0x10000"
 
 ota:
-  - platform: esphome
-    id: ota_esphome  # same id as in plug-core.yaml, so both entries merge
+  - id: !extend ota_esphome  # your own `ota: - platform: esphome` entry needs `id: ota_esphome`
     allow_partition_access: true

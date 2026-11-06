@@ -7,7 +7,8 @@
 #   red breathing = fault, magenta = temperature sensor fault, amber blink = close to a limit,
 #   red pulse = no Wi-Fi, amber pulse = no API client, blue blink = OTA update.
 #
-# If you already have an `ota:` entry with platform esphome, give it `id: ota_esphome`.
+# Needs: wifi, api and an `ota:` entry with `platform: esphome` and `id: ota_esphome`.
+# The Wi-Fi / API status is derived from their current connection state.
 # ---------------------------------------------------------------------------
 
 substitutions:
@@ -19,10 +20,11 @@ substitutions:
   max_temp: "70"  # °C
 
 globals:
-  - id: system_status
-    type: int
+  # OTA update running (the Wi-Fi / API state is read live in led_render)
+  - id: ota_running
+    type: bool
     restore_value: false
-    initial_value: "0"  # 0=OK, 1=no Wi-Fi, 2=no API client, 3=OTA update
+    initial_value: "false"
 
   # Pre-warning is held for 1.5 s after the last sample above the warn level
   - id: warn_hold_until
@@ -61,30 +63,12 @@ esphome:
             id: rgb_lights
             effect: "Live Current"
 
-wifi:
-  on_connect:
-    - lambda: |-
-        if (id(system_status) == 1) id(system_status) = 0;
-  on_disconnect:
-    - lambda: |-
-        id(system_status) = 1;
-
-api:
-  on_client_connected:
-    - lambda: |-
-        if (id(system_status) == 2) id(system_status) = 0;
-  on_client_disconnected:
-    - lambda: |-
-        // do not overwrite the Wi-Fi (1) and OTA (3) states
-        if (id(system_status) == 0) id(system_status) = 2;
-
 ota:
-  - platform: esphome
-    id: ota_esphome
+  - id: !extend ota_esphome  # your own `ota: - platform: esphome` entry needs `id: ota_esphome`
     on_state_change:
       - lambda: |-
-          if (state == esphome::ota::OTA_STARTED) id(system_status) = 3;
-          if (state == esphome::ota::OTA_COMPLETED || state == esphome::ota::OTA_ERROR) id(system_status) = 0;
+          if (state == esphome::ota::OTA_STARTED) id(ota_running) = true;
+          if (state == esphome::ota::OTA_COMPLETED || state == esphome::ota::OTA_ERROR) id(ota_running) = false;
 
 script:
   # Render the status colour on the single RGB LED.
@@ -108,6 +92,10 @@ script:
               tmp >= wr * (float)(${max_temp})) {
             id(warn_hold_until) = now + 1500;
           }
+
+          // Connection state, read live so reconnects and several API clients cannot confuse it
+          const bool wifi_ok = wifi::global_wifi_component->is_connected();
+          const bool api_ok = api::global_api_server->is_connected();
 
           const float nf = id(night_active) ? (float) (${night_brightness}) : 1.0f;
           bool dim = true;  // night-mode dimming applies unless a priority branch clears it
@@ -145,17 +133,17 @@ script:
             // PRIO 3: pre-warning - amber blink
             dim = false;
             if ((now / 250) % 2 == 0) { r = 1.0f; g = 0.47f; }
-          } else if (id(system_status) == 1) {
+          } else if (!wifi_ok) {
             // PRIO 4: no Wi-Fi - red pulse
             r = (sinf(now * 0.005f) + 1.0f) / 2.0f;
-          } else if (id(system_status) == 2) {
+          } else if (id(ota_running)) {
+            // PRIO 4: OTA update - blue blink (checked before the API: its clients leave during an OTA)
+            if ((now / 150) % 2 == 0) b = 1.0f; else b = 0.08f;
+          } else if (!api_ok) {
             // PRIO 4: no API client - amber pulse
             float pulse = (sinf(now * 0.003f) + 1.0f) / 2.0f;
             r = pulse * 0.9f;
             g = pulse * 0.24f;
-          } else if (id(system_status) == 3) {
-            // PRIO 4: OTA update - blue blink
-            if ((now / 150) % 2 == 0) b = 1.0f; else b = 0.08f;
           } else {
             // PRIO 5: the effect itself
             float frac = 0.0f;
