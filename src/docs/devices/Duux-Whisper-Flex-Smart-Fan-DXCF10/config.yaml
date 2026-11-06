@@ -32,7 +32,6 @@ uart:
   baud_rate: 9600
 
 tuya:
-  time_id: homeassistant_time
 
 fan:
   - platform: "tuya"
