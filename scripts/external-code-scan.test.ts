@@ -10,7 +10,13 @@ import { scanExternalCode } from "./external-code-scan.ts";
 
 const BASE = "esphome:\n  name: plug\nesp8266:\n  board: esp01_1m\n";
 
-const cases: { name: string; files: Record<string, string>; reasons: RegExp[] }[] = [
+const cases: {
+  name: string;
+  files: Record<string, string>;
+  reasons: RegExp[];
+  broken?: RegExp[];
+  symlink?: [string, string];
+}[] = [
   { name: "a plain hardware config is clean", files: { "config.yaml": BASE }, reasons: [] },
   {
     name: "a local package include inside the folder is clean",
@@ -81,6 +87,25 @@ const cases: { name: string; files: Record<string, string>; reasons: RegExp[] }[
     files: { "config.yaml": BASE, "helper.py": "" },
     reasons: [/Python file \(`helper.py`\)/],
   },
+  {
+    name: "a missing include target is broken, not external",
+    files: { "config.yaml": `${BASE}sensor: !include missing.yaml\n` },
+    reasons: [],
+    broken: [/`missing.yaml` is missing or isn't valid YAML/],
+  },
+  {
+    name: "an unparsable include is broken",
+    files: { "config.yaml": `${BASE}sensor: !include bad.yaml\n`, "bad.yaml": "a: [\n" },
+    reasons: [],
+    broken: [/`bad.yaml` is missing or isn't valid YAML/],
+  },
+  {
+    name: "a symlink in the folder is broken",
+    files: { "config.yaml": BASE },
+    symlink: ["link.yaml", "/etc/hosts"],
+    reasons: [],
+    broken: [/`link.yaml` is a symlink/],
+  },
 ];
 
 for (const c of cases) {
@@ -91,9 +116,13 @@ for (const c of cases) {
         fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true });
         fs.writeFileSync(path.join(dir, name), content);
       }
-      const reasons = scanExternalCode(dir, ["config.yaml"]);
+      if (c.symlink) fs.symlinkSync(c.symlink[1], path.join(dir, c.symlink[0]));
+      const { external: reasons, broken } = scanExternalCode(dir, ["config.yaml"]);
       assert.equal(reasons.length, c.reasons.length, reasons.join("\n"));
       for (const re of c.reasons) assert.ok(reasons.some((r) => re.test(r)), `${re} in ${reasons}`);
+      const wantBroken = c.broken ?? [];
+      assert.equal(broken.length, wantBroken.length, broken.join("\n"));
+      for (const re of wantBroken) assert.ok(broken.some((r) => re.test(r)), `${re} in ${broken}`);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

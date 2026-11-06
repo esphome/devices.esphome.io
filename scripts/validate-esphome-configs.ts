@@ -211,12 +211,18 @@ async function esphomeConfig(
     return { ok: true };
   } catch (err) {
     // `code` is the errno string for a spawn failure, else the exit status.
-    const e = err as { code?: string | number; stdout?: string; stderr?: string; killed?: boolean };
+    const e = err as { code?: string | number; signal?: string; stdout?: string; stderr?: string };
     if (e.code === "ENOENT") {
       throw new FatalError(`esphome not found (${runner.bin}); install it with \`pip install esphome\``);
     }
-    // The sandbox's own `timeout` exits 124 before Node's limit kills the process.
-    const timedOut = !!e.killed || e.code === 124;
+    if (e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+      return { ok: false, stdout: "", stderr: "`esphome config` printed more than 64 MiB of output", timedOut: false };
+    }
+    if (typeof e.code === "string") {
+      throw new FatalError(`esphome could not be run (${runner.bin}, ${e.code}): ${String(err)}`);
+    }
+    // 124 is the sandbox's own `timeout`; a signal with no exit status is Node's limit.
+    const timedOut = e.code === 124 || (e.code == null && !!e.signal);
     return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut };
   }
 }
@@ -366,7 +372,7 @@ export async function checkImport(pages: Page[], repoRoot: string): Promise<bool
       check: "import",
       level: "error",
       file: page.rel,
-      message: `the ESPHome Device Builder would not import this page: ${row.reason}`,
+      message: `the ESPHome Device Builder would not import this page: ${row.reason ?? "no reason given"}`,
     });
   }
   for (const [device, page] of byDevice) {
@@ -452,8 +458,12 @@ async function main(): Promise<number> {
   };
   const runnable: Page[] = [];
   for (const page of pages) {
-    const reasons = scanExternalCode(page.dir, page.files);
-    if (reasons.length === 0) {
+    const { external, broken } = scanExternalCode(page.dir, page.files);
+    for (const reason of broken) {
+      page.findings.push({ check: "scan", level: "error", file: page.rel, message: reason });
+    }
+    if (broken.length > 0) continue;
+    if (external.length === 0) {
       runnable.push(page);
       continue;
     }
@@ -463,7 +473,7 @@ async function main(): Promise<number> {
       file: page.rel,
       message:
         "not validated with ESPHome or the Device Builder: this page's config could pull in code " +
-        `from outside the device folder, which CI does not run (${reasons.join("; ")})`,
+        `from outside the device folder, which CI does not run (${external.join("; ")})`,
     });
   }
   await Promise.all([

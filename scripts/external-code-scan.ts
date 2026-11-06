@@ -47,29 +47,43 @@ function inside(root: string, target: string): boolean {
   return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
 }
 
-/** Why validating *files* of *deviceDir* could run outside code, or [] when it cannot. */
-export function scanExternalCode(deviceDir: string, files: string[]): string[] {
-  const reasons = new Set<string>();
+export interface ScanResult {
+  /** Why validating could run code from outside the device folder. */
+  external: string[];
+  /** Why the page can't be validated as written (unreadable yaml, missing include, symlink). */
+  broken: string[];
+}
+
+interface Reasons {
+  external: Set<string>;
+  broken: Set<string>;
+}
+
+/** Scan *files* of *deviceDir* (and what they include) before anything runs them. */
+export function scanExternalCode(deviceDir: string, files: string[]): ScanResult {
+  const reasons: Reasons = { external: new Set(), broken: new Set() };
   scanFolder(deviceDir, deviceDir, reasons);
   const seen = new Set<string>();
   for (const file of files) scanFile(deviceDir, path.join(deviceDir, file), reasons, seen);
-  return [...reasons].sort();
+  return { external: [...reasons.external].sort(), broken: [...reasons.broken].sort() };
 }
 
-function scanFolder(root: string, dir: string, reasons: Set<string>): void {
+function scanFolder(root: string, dir: string, reasons: Reasons): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
     const rel = path.relative(root, p);
-    if (entry.isDirectory()) {
-      if (CODE_DIRS.has(entry.name)) reasons.add(`the folder has a \`${rel}/\` directory`);
+    if (entry.isSymbolicLink()) {
+      reasons.broken.add(`\`${rel}\` is a symlink; device folders must hold plain files`);
+    } else if (entry.isDirectory()) {
+      if (CODE_DIRS.has(entry.name)) reasons.external.add(`the folder has a \`${rel}/\` directory`);
       else scanFolder(root, p, reasons);
     } else if (CODE_FILE_RE.test(entry.name)) {
-      reasons.add(`the folder has a Python file (\`${rel}\`)`);
+      reasons.external.add(`the folder has a Python file (\`${rel}\`)`);
     }
   }
 }
 
-function scanFile(root: string, file: string, reasons: Set<string>, seen: Set<string>): void {
+function scanFile(root: string, file: string, reasons: Reasons, seen: Set<string>): void {
   if (seen.has(file)) return;
   seen.add(file);
   const rel = path.relative(root, file);
@@ -77,11 +91,11 @@ function scanFile(root: string, file: string, reasons: Set<string>, seen: Set<st
   try {
     tree = yaml.load(fs.readFileSync(file, "utf8"), { schema: SCAN_SCHEMA });
   } catch {
-    reasons.add(`\`${rel}\` could not be read or parsed`);
+    reasons.broken.add(`\`${rel}\` is missing or isn't valid YAML`);
     return;
   }
   if (isMapping(tree)) {
-    if ("external_components" in tree) reasons.add(`\`${rel}\` uses \`external_components:\``);
+    if ("external_components" in tree) reasons.external.add(`\`${rel}\` uses \`external_components:\``);
     const packages = tree.packages;
     if (packages !== undefined) {
       const entries = Array.isArray(packages)
@@ -91,27 +105,27 @@ function scanFile(root: string, file: string, reasons: Set<string>, seen: Set<st
           : [packages];
       for (const entry of entries) {
         if (!(entry instanceof Tagged && entry.tag === "!include")) {
-          reasons.add(`\`${rel}\` has a \`packages:\` entry that is not a local \`!include\``);
+          reasons.external.add(`\`${rel}\` has a \`packages:\` entry that is not a local \`!include\``);
         }
       }
     }
   }
   walk(tree, (node) => {
     if (isMapping(node) && typeof node.url === "string" && ("files" in node || "ref" in node)) {
-      reasons.add(`\`${rel}\` has a remote package (\`url: ${node.url}\`)`);
+      reasons.external.add(`\`${rel}\` has a remote package (\`url: ${node.url}\`)`);
     }
     if (typeof node === "string" && GIT_SOURCE_RE.test(node.trim())) {
-      reasons.add(`\`${rel}\` references a git source (\`${node.trim()}\`)`);
+      reasons.external.add(`\`${rel}\` references a git source (\`${node.trim()}\`)`);
     }
     if (!(node instanceof Tagged) || !node.tag.startsWith("!include")) return;
     const target = includeTarget(node);
     if (target === null) {
-      reasons.add(`\`${rel}\` has an \`${node.tag}\` whose target cannot be read statically`);
+      reasons.external.add(`\`${rel}\` has an \`${node.tag}\` whose target cannot be read statically`);
       return;
     }
     const abs = path.resolve(path.dirname(file), target);
     if (target.includes("://") || !inside(root, abs)) {
-      reasons.add(`\`${rel}\` includes \`${target}\`, outside the device folder`);
+      reasons.external.add(`\`${rel}\` includes \`${target}\`, outside the device folder`);
       return;
     }
     if (node.tag === "!include") {
