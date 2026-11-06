@@ -25,7 +25,11 @@
  *      builds out of the box.
  *   6. Runs the m4e checklist as pure structural checks against the EXPANDED
  *      config (expansion is what resolves the real, as-compiled shape).
- *   7. Emits a structured markdown report (when there are blocking findings)
+ *   7. Verifies the http_request OTA manifest(s) and binaries are reachable
+ *      (MFE_OTA_MANIFEST=0 to skip).
+ *   8. Verifies `dashboard_import.package_import_url` resolves to a real file
+ *      (case-sensitive, as the ESPHome Builder fetches it).
+ *   9. Emits a structured markdown report (when there are blocking findings)
  *      for a follow-up `workflow_run` job to post as an esphome[bot] review.
  *
  * SECURITY: compiling a fork PR's linked YAML runs the ESPHome/PlatformIO
@@ -50,6 +54,8 @@
  *   MFE_REVIEW_REPORT    path to write the markdown report to (findings only)
  *   ESPHOME_BIN          esphome executable (default: "esphome")
  *   MFE_COMPILE          "0" to skip the compile step (config + checks only)
+ *   MFE_OTA_MANIFEST     "0" to skip the OTA manifest/binary checks
+ *   MFE_DASHBOARD_IMPORT_CHECK  "0" to skip the dashboard_import URL check
  *   MFE_WORK_DIR         base dir for downloads (default: a fresh mkdtemp)
  *   CONFIG_TIMEOUT_MS    per-page `esphome config` timeout (default 180000)
  *   COMPILE_TIMEOUT_MS   per-page `esphome compile` timeout (default 1500000)
@@ -62,8 +68,13 @@ import { execFileSync } from "child_process";
 import { createHash } from "crypto";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
-import yaml from "js-yaml";
-import { parseUpstreamUrl, type UpstreamRef } from "../src/lib/upstream-url.ts";
+import * as yaml from "js-yaml";
+import {
+  parseUpstreamUrl,
+  type UpstreamHost,
+  type UpstreamRef,
+} from "../src/lib/upstream-url.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
 
 // ---------------------------------------------------------------------------
 // Shared conventions (kept in step with scripts/validate-yaml-configs.ts and
@@ -95,6 +106,25 @@ function placeholderSecretsYaml(): string {
 
 const CHECKLIST_URL =
   "https://github.com/esphome/esphome-devices/blob/main/.github/made-for-esphome-checklist.md";
+
+// ---------------------------------------------------------------------------
+// Improv-over-BLE key migration (two-phase)
+// ---------------------------------------------------------------------------
+// The `esp32_improv` component was renamed to `improv_ble` in ESPHome
+// 2026.10.0 (esphome/esphome#19264). Nothing about the schema changed: the old
+// key is kept as an alias that ESPHome rewrites internally while warning, and
+// that alias is removed in 2027.4.0.
+//
+//   Phase 1 (now): both keys pass, the legacy one with a deprecation nudge.
+//   Phase 2 (when 2027.4.0 nears): set LEGACY_IMPROV_BLE_KEY_ALLOWED to false
+//     and a config that only has the legacy key FAILS, telling the
+//     manufacturer to rename it. That flag is the entire switch - no other
+//     line in this repo needs to change.
+const IMPROV_BLE_KEY: string = "improv_ble";
+const LEGACY_IMPROV_BLE_KEY: string = "esp32_improv";
+const LEGACY_IMPROV_BLE_KEY_ALLOWED: boolean = true;
+// ESPHome version that drops the legacy alias, quoted in the review detail.
+const LEGACY_IMPROV_BLE_REMOVAL_VERSION: string = "2027.4.0";
 
 // Made for ESPHome requires an `id:` on every component — not just named
 // entities, but buses and hubs too (uart, i2c, spi, canbus, modbus, …). We
@@ -180,24 +210,6 @@ function findYamlFences(md: string): YamlFence[] {
   }
   return fences;
 }
-
-// ---------------------------------------------------------------------------
-// Expanded-YAML parsing — tolerate ESPHome custom tags, re-stamping scalar
-// tags (so `!secret wifi_password` parses to the string "!secret wifi_password"
-// and the password check can recognise it as a non-literal reference).
-// ---------------------------------------------------------------------------
-
-const ESPHOME_SCHEMA = yaml.DEFAULT_SCHEMA.extend(
-  ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
-    (tag) =>
-      new yaml.Type(tag, {
-        kind: "scalar",
-        construct: (data) =>
-          data === null || data === undefined ? tag : `${tag} ${data}`,
-        represent: (data) => data as string,
-      })
-  )
-);
 
 // ---------------------------------------------------------------------------
 // Findings & per-page results
@@ -669,6 +681,51 @@ function collectManualIps(cfg: Record<string, unknown>): string[] {
   return found;
 }
 
+// Improv-over-BLE provisioning, honouring the two-phase key migration above.
+// `legacyAllowed` defaults to the module-level switch; tests pass it
+// explicitly to exercise the post-migration behaviour.
+function improvBleCheck(
+  cfg: Record<string, unknown>,
+  hasWifi: boolean,
+  legacyAllowed: boolean = LEGACY_IMPROV_BLE_KEY_ALLOWED
+): CheckResult {
+  const item = `${IMPROV_BLE_KEY} (Wi-Fi provisioning)`;
+  if (!hasWifi) {
+    return {
+      item,
+      status: "N/A",
+      detail: "no `wifi:` block - Improv-over-BLE not applicable",
+    };
+  }
+  if (cfg[IMPROV_BLE_KEY] !== undefined) {
+    return { item, status: "OK", detail: `\`${IMPROV_BLE_KEY}:\` present` };
+  }
+  if (cfg[LEGACY_IMPROV_BLE_KEY] !== undefined) {
+    const rename =
+      `rename it to \`${IMPROV_BLE_KEY}:\` (renamed in ESPHome 2026.10.0, ` +
+      `the \`${LEGACY_IMPROV_BLE_KEY}:\` alias is removed in ` +
+      `${LEGACY_IMPROV_BLE_REMOVAL_VERSION})`;
+    return legacyAllowed
+      ? {
+          item,
+          status: "OK",
+          detail: `\`${LEGACY_IMPROV_BLE_KEY}:\` present, but deprecated - ${rename}`,
+        }
+      : {
+          item,
+          status: "FAIL",
+          detail: `config still uses the deprecated \`${LEGACY_IMPROV_BLE_KEY}:\` key - ${rename}`,
+        };
+  }
+  return {
+    item,
+    status: "MISSING",
+    detail:
+      `device uses Wi-Fi but has no \`${IMPROV_BLE_KEY}:\` block - ` +
+      "users cannot provision Wi-Fi over BLE",
+  };
+}
+
 function runChecklist(
   cfg: Record<string, unknown>,
   expandedText: string,
@@ -734,23 +791,8 @@ function runChecklist(
       : "no disallowed use of “ESPHome” in the project-facing names",
   });
 
-  // 4. esp32_improv (when wifi present).
-  if (hasWifi) {
-    const present = cfg.esp32_improv !== undefined;
-    checks.push({
-      item: "esp32_improv (Wi-Fi provisioning)",
-      status: present ? "OK" : "MISSING",
-      detail: present
-        ? "`esp32_improv:` present"
-        : "device uses Wi-Fi but has no `esp32_improv:` block — users cannot provision Wi-Fi over BLE",
-    });
-  } else {
-    checks.push({
-      item: "esp32_improv (Wi-Fi provisioning)",
-      status: "N/A",
-      detail: "no `wifi:` block — Improv-over-BLE not applicable",
-    });
-  }
+  // 4. improv_ble (when wifi present).
+  checks.push(improvBleCheck(cfg, hasWifi));
 
   // 5. improv_serial (needs USB port to be meaningful).
   const improvSerial = cfg.improv_serial !== undefined;
@@ -1237,6 +1279,155 @@ async function checkUpdateManifests(
 }
 
 // ---------------------------------------------------------------------------
+// dashboard_import URL resolution
+// ---------------------------------------------------------------------------
+
+interface ImportShorthand {
+  host: UpstreamHost;
+  owner: string;
+  repo: string;
+  filename: string;
+  ref: string | null;
+  query: string | null;
+}
+
+// Same grammar as ESPHome's `GitFile.from_shorthand` (esphome/git.py), with a
+// trailing `$` so junk after the shorthand counts as invalid for our purposes.
+const IMPORT_SHORTHAND_RE =
+  /^(?<domain>[a-zA-Z0-9-]+):\/\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9\-._]+)\/(?<filename>[a-zA-Z0-9\-_./]+)(?:@(?<ref>[a-zA-Z0-9\-_./]+))?(?:\?(?<query>[a-zA-Z0-9\-_./]+))?$/;
+
+const IMPORT_DOMAINS: Record<string, UpstreamHost> = {
+  github: "github.com",
+  codeberg: "codeberg.org",
+  gitlab: "gitlab.com",
+};
+
+// Parse a `github://owner/repo/path/file.yaml@ref` style import shorthand.
+// Returns null when it does not match ESPHome's grammar or names an unknown
+// domain.
+function parseImportShorthand(value: string): ImportShorthand | null {
+  const m = IMPORT_SHORTHAND_RE.exec(value);
+  if (!m || !m.groups) return null;
+  const host = IMPORT_DOMAINS[m.groups.domain];
+  if (!host) return null;
+  return {
+    host,
+    owner: m.groups.owner,
+    repo: m.groups.repo,
+    filename: m.groups.filename,
+    ref: m.groups.ref ?? null,
+    query: m.groups.query ?? null,
+  };
+}
+
+// The raw-file URL ESPHome downloads for a shorthand. With no `@ref` ESPHome
+// clones the default branch, which `HEAD` addresses on all three hosts.
+function importRawUrl(s: ImportShorthand): string {
+  const ref = s.ref ?? "HEAD";
+  switch (s.host) {
+    case "codeberg.org":
+      return `https://codeberg.org/${s.owner}/${s.repo}/raw/commit/${ref}/${s.filename}`;
+    case "github.com":
+      return `https://raw.githubusercontent.com/${s.owner}/${s.repo}/${ref}/${s.filename}`;
+    case "gitlab.com":
+      return `https://gitlab.com/${s.owner}/${s.repo}/-/raw/${ref}/${s.filename}`;
+  }
+}
+
+// Resolve `relPath` under `root` matching each segment case-insensitively
+// (an exact match wins when several entries differ only by case). Returns the
+// real relative path with forward slashes when a file is found, else null.
+function findCaseInsensitivePath(root: string, relPath: string): string | null {
+  const segments = relPath.split("/").filter((s) => s !== "");
+  const found: string[] = [];
+  let cur = root;
+  for (const want of segments) {
+    let entries: string[];
+    try {
+      entries = fs.readdirSync(cur);
+    } catch {
+      return null;
+    }
+    const match =
+      entries.find((e) => e === want) ??
+      entries.find((e) => e.toLowerCase() === want.toLowerCase());
+    if (match === undefined) return null;
+    found.push(match);
+    cur = path.join(cur, match);
+  }
+  if (!fs.statSync(cur).isFile()) return null;
+  return found.join("/");
+}
+
+// Verify `dashboard_import.package_import_url` actually resolves. GitHub raw
+// paths are case-sensitive, so a wrong-case folder 404s and the ESPHome
+// Builder cannot import the config when the user takes control. Returns null
+// when there is no URL to check (runChecklist already reports that).
+async function checkDashboardImport(
+  cfg: Record<string, unknown>,
+  upstream: UpstreamRef,
+  repoRoot: string,
+  fetcher: (url: string) => Promise<Response> = (url) =>
+    fetchWithTimeout(url, Number(process.env.MANIFEST_TIMEOUT_MS ?? 30000))
+): Promise<CheckResult | null> {
+  const di = cfg.dashboard_import;
+  if (!isObject(di) || typeof di.package_import_url !== "string") return null;
+  const item = "dashboard_import URL resolves";
+  const value = di.package_import_url;
+
+  const parsed = parseImportShorthand(value);
+  if (!parsed) {
+    return {
+      item,
+      status: "FAIL",
+      detail:
+        `\`package_import_url: ${value}\` is not a valid import URL - expected ` +
+        "`github://owner/repo/path/file.yaml@ref`",
+    };
+  }
+
+  const url = importRawUrl(parsed);
+  let res: Response;
+  try {
+    res = await fetcher(url);
+  } catch (err) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `could not fetch ${url}: ${(err as Error).message}`,
+    };
+  }
+  // Only the status matters; don't buffer the body.
+  await res.body?.cancel().catch(() => {});
+
+  if (res.ok) return { item, status: "OK", detail: `resolves: ${url}` };
+  if (res.status !== 404) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `${url} returned HTTP ${res.status}`,
+    };
+  }
+
+  let detail =
+    `${url} returned HTTP 404 - the ESPHome Builder cannot import the config ` +
+    "when the user takes control";
+  if (
+    parsed.host === upstream.host &&
+    parsed.owner.toLowerCase() === upstream.owner.toLowerCase() &&
+    parsed.repo.toLowerCase() === upstream.repo.toLowerCase()
+  ) {
+    const actual = findCaseInsensitivePath(repoRoot, parsed.filename);
+    if (actual !== null && actual !== parsed.filename) {
+      detail +=
+        `. \`${actual}\` exists in the reviewed tree - file paths are ` +
+        "case-sensitive, so the import URL must match exactly";
+    }
+  }
+  return { item, status: "FAIL", detail };
+}
+
+// ---------------------------------------------------------------------------
 // Per-page review
 // ---------------------------------------------------------------------------
 
@@ -1374,6 +1565,13 @@ async function reviewPage(
   if (process.env.MFE_OTA_MANIFEST !== "0") {
     const otaRows = await checkUpdateManifests(cfg, chipFamilyFromConfig(cfg));
     result.checks.push(...otaRows);
+  }
+
+  // 8. dashboard_import URL resolves (unless disabled). The raw path is
+  // case-sensitive, so a wrong-case folder breaks "take control".
+  if (process.env.MFE_DASHBOARD_IMPORT_CHECK !== "0") {
+    const importRow = await checkDashboardImport(cfg, ghRef, repoRoot);
+    if (importRow) result.checks.push(importRow);
   }
   return result;
 }
@@ -1723,6 +1921,10 @@ export {
   collectSecretRefs,
   placeholderSecretsYaml,
   runChecklist,
+  improvBleCheck,
+  IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY,
+  LEGACY_IMPROV_BLE_KEY_ALLOWED,
   pageBlocks,
   buildReport,
   buildMultiDeviceReport,
@@ -1737,5 +1939,10 @@ export {
   updateSources,
   checkOneManifest,
   checkUpdateManifests,
+  parseImportShorthand,
+  importRawUrl,
+  findCaseInsensitivePath,
+  checkDashboardImport,
+  reviewPage,
 };
-export type { PageResult, CheckResult, CheckStatus, CompileOutcome };
+export type { ImportShorthand, PageResult, CheckResult, CheckStatus, CompileOutcome };
