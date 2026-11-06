@@ -7,15 +7,10 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  platformio_options:
-    custom_versions.beken-bdk: 3.0.78
 
 bk72xx:
   board: generic-bk7238-tuya
   family: BK7238
-  framework:
-    version: 0.0.0
-    source: https://github.com/libretiny-eu/libretiny#feature/bk7238
 
 logger:
   baud_rate: 0
