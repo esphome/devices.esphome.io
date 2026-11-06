@@ -12,7 +12,7 @@ and one cold white channel). It is built around an `ESP-Shelly-C38F` module (ESP
 
 Product page: <https://www.shelly.com/products/shelly-duo-bulb-e27-gen3>.
 
-![Shelly Duo Bulb E27 Gen3](../Shelly-Duo-Bulb-E27-Gen3/Shelly-Duo-Bulb-E27-Gen3.png "Shelly Duo Bulb E27 Gen3")
+![Shelly Duo Bulb E27 Gen3](Shelly-Duo-Bulb-E27-Gen3.png "Shelly Duo Bulb E27 Gen3")
 
 Both white channels are driven directly by PWM from two GPIOs, so ESPHome's `cwww` light works without an external
 component.
@@ -31,7 +31,7 @@ Remove the frosted cover and the LED board to reach the driver PCB with the modu
 are covered with sealant, which has to be removed carefully, and have to be soldered. Connect a 3.3 V USB-to-serial
 adapter; the colour is the marker in the picture. Take the bulb out of the socket and power it only from the adapter.
 
-![Pinout](../Shelly-Duo-Bulb-E27-Gen3/bulb_duo_gen3_uart.png "UART pinout")
+![Pinout](bulb_duo_gen3_uart.png "UART pinout")
 
 | Function        | Colour |
 | --------------- | ------ |
