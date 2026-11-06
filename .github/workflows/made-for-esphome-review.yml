@@ -65,7 +65,7 @@ jobs:
       # one-device-per-PR review and never compiles.
       - name: Setup Python
         if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
-        uses: actions/setup-python@v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
 
