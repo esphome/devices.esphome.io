@@ -6,7 +6,7 @@ standard: uk, us, eu
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/2ZcvAmy)
+[Amazon Link](https://www.amazon.com/dp/B0965C6W58)
 
 ![Product Image](Shelly-RGBW2.png "Shelly RGBW")
 
@@ -266,7 +266,7 @@ captive_portal:
 
 status_led:
   pin: GPIO2
-  
+
 light:
   - platform: cwww
     restore_mode: ALWAYS_OFF

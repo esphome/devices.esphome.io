@@ -12,13 +12,13 @@ board: esp8266
 
 ## GPIO Pinout
 
-| Pin    | Function                                      |
-| ------ | --------------------------------------------- |
-| GPIO2  | Status LED (active low)                       |
-| GPIO12 | Relay 1 (Switch)                              |
-| GPIO13 | Relay 2 (Switch)                              |
-| GPIO14 | Relay 3 (Switch)                              |
-| GPIO16 | Relay 4 (Switch)                              |
+| Pin    | Function                |
+| ------ | ----------------------- |
+| GPIO2  | Status LED (active low) |
+| GPIO12 | Relay 1 (Switch)        |
+| GPIO13 | Relay 2 (Switch)        |
+| GPIO14 | Relay 3 (Switch)        |
+| GPIO16 | Relay 4 (Switch)        |
 
 ## Basic Configuration
 

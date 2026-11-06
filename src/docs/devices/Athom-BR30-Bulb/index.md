@@ -19,11 +19,11 @@ Color Temperature: 3000-6000K
 Brightness: 1000 lumens
 Voltage: 110V~250V
 Power: 12W
-Base:  E27
+Base: E27
 
 ## Product Images
 
-![Athom BR30 Bulb](/Athom-BR30-Bulb.png "Athom BR30 Bulb")
+![Athom BR30 Bulb](./Athom-BR30-Bulb.png "Athom BR30 Bulb")
 
 ## GPIO Pinout
 

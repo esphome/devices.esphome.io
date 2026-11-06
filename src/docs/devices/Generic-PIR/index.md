@@ -5,14 +5,14 @@ type: sensor
 standard: global
 ---
 
-![header](/pir-header.jpg)
+![header](./pir-header.jpg)
 
 Passive Infrared Sensors (or PIR sensors for short) are completely
 supported by ESPHome. These sensors measure the infrared light emitted
 from objects in its field of view, and if it detects a sudden change
 between different parts of the sensing area, the signal is pulled high.
 
-![inside](/pir-inside.jpg)
+![inside](./pir-inside.jpg)
 
 Connecting the PIR sensor is also quite simple. You need to connect
 `GND` to a GND pin on your board and `VCC` to a `5V` or `12V` pin.
@@ -29,7 +29,7 @@ to change the sensor sensitivity and time the signal will stay active
 for once motion has been detected. Turning these clockwise will increase
 sensitivity/re-trigger time.
 
-![pins](/pir-pins.jpg)
+![pins](./pir-pins.jpg)
 
 To configure ESPHome for use with the PIR sensor, use a
 GPIO Binary Sensor. It can detect if a pin is pulled HIGH/LOW and reports those
@@ -44,7 +44,7 @@ binary_sensor:
     device_class: motion
 ```
 
-![ui](/pir-ui.png)
+![ui](./pir-ui.png)
 
 ## Note
 

@@ -6,7 +6,7 @@ standard: eu
 board: esp8266
 ---
 
-![Nous A4T](A4T_00.jpg  "Tasmota Version Plug")
+![Nous A4T](A4T_00.jpg "Tasmota Version Plug")
 
 ## GPIO Pinout
 
@@ -27,15 +27,14 @@ board: esp8266
 | GPIO14 | Button 1   |
 | GPIO15 | None       |
 | GPIO16 | None       |
-|  FLAG  | None       |
+| FLAG   | None       |
 
 ## Basic Configuration
 
 ```yaml
-
 substitutions:
   devicename: nousa4tplug
-  # See calculator at bottom of https://esphome.io/components/sensor/hlw8012.html to calibrate these values
+  # See calculator at bottom of https://esphome.io/components/sensor/hlw8012/ to calibrate these values
   voltage_div: "1541"
   current_res: "0.0010829518310527565"
   current_multiply: "0.8476903844535357"
@@ -71,26 +70,26 @@ binary_sensor:
     name: input
     on_multi_click:
       - timing:
-        - ON for at most 1s
-        - OFF for at least 0.5s
+          - ON for at most 1s
+          - OFF for at least 0.5s
         then:
           - switch.toggle: relay_1
       - timing:
-        - ON for at most 1s
-        - OFF for at most 0.5s
-        - ON for at most 1s
-        - OFF for at least 0.1s
+          - ON for at most 1s
+          - OFF for at most 0.5s
+          - ON for at most 1s
+          - OFF for at least 0.1s
         then:
           - switch.toggle: relay_2
 
 light:
- - platform: status_led
-   id: connection_status_led
-   name: status_led
-   internal: true
-   pin:
-     number: GPIO03
-     inverted: true
+  - platform: status_led
+    id: connection_status_led
+    name: status_led
+    internal: true
+    pin:
+      number: GPIO03
+      inverted: true
 
 switch:
   - platform: gpio
@@ -103,7 +102,6 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     id: relay_2
     name: switch_2
-
 
 sensor:
   - platform: hlw8012

@@ -12,7 +12,8 @@ board: esp32
 
 This is a 16-relay board with an ESP32-WROOM-E.
 
-Each relay has COM+NO+NC exposed and supports 10Amp max load. The relays are controlled by two Nexperia/NXP 8-bit 74HC595D shift registers with output latches.
+Each relay has COM+NO+NC exposed and supports 10Amp max load. The relays are controlled by two Nexperia/NXP 8-bit
+74HC595D shift registers with output latches.
 
 The board is powered by 12VDC.
 
@@ -42,7 +43,7 @@ esphome:
   name: relay-x16
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 sn74hc595:
   - id: sn74hc595_hub

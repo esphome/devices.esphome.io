@@ -48,12 +48,12 @@ Then opened - PCB can be easily detached from.
 
 ## ESP GPIO Pinout
 
-| Pin    | Function             | Note     |
-| ------ | -------------------- | -------- |
-| GPIO01 | Tuya MCU Rx          |          |
-| GPIO03 | Tuya MCU Tx          |          |
-| GPIO02 | Blue LED on ESP-12F  | inverted |
-| GPIO14 | Blue LED on device   | inverted |
+| Pin    | Function                 | Note     |
+| ------ | ------------------------ | -------- |
+| GPIO01 | Tuya MCU Rx              |          |
+| GPIO03 | Tuya MCU Tx              |          |
+| GPIO02 | Blue LED on ESP-12F      | inverted |
+| GPIO14 | Blue LED on device       | inverted |
 | GPIO16 | SET long press (>3 sec.) | inverted |
 
 ## Tuya Component Output
@@ -83,36 +83,36 @@ Tuya:
 
 ## Tuya DataPoints
 
-| DP  | Switch            | Notes |
-| --- | ----------------- | ----- |
-|  16 | To operate Relay  |       |
-|  11 | Relay on startup  | OFF - Restore, ON - Relay OFF |
+| DP  | Switch           | Notes                         |
+| --- | ---------------- | ----------------------------- |
+| 16  | To operate Relay |                               |
+| 11  | Relay on startup | OFF - Restore, ON - Relay OFF |
 
 Relay is driven by Tuya MCU. ESP restart will not affect state of Relay !
 
-| DP  | Sensor           | Multiply | Unit | Decimals |
-| --- | ---------------- | -------- | ---- | -------- |
-| 101 | Energy Total     | 0.001    | kWh  | 3        |
-|   1 | Energy from Grid | 0.001    | kWh  | 3        |
-| 102 | Energy to Grid   | 0.001    | kWh  | 3        |
-| 103 | Power Active     | 0.001    | kW   | 3        |
-| 110 | Power Reactive   | 0.001    | kVAr | 3        |
-| 111 | Power Factor     | 0.001    |      | 3        |
-| 105 | Frequency        | 0.01     | Hz   | 2        |
-| 108 | So far always reported 0                      |
-| 109 | Power Flow ? Reported 4 when flow is to Grid  |
+| DP  | Sensor                                       | Multiply | Unit | Decimals |
+| --- | -------------------------------------------- | -------- | ---- | -------- |
+| 101 | Energy Total                                 | 0.001    | kWh  | 3        |
+| 1   | Energy from Grid                             | 0.001    | kWh  | 3        |
+| 102 | Energy to Grid                               | 0.001    | kWh  | 3        |
+| 103 | Power Active                                 | 0.001    | kW   | 3        |
+| 110 | Power Reactive                               | 0.001    | kVAr | 3        |
+| 111 | Power Factor                                 | 0.001    |      | 3        |
+| 105 | Frequency                                    | 0.01     | Hz   | 2        |
+| 108 | So far always reported 0                     |          |      |          |
+| 109 | Power Flow - Reported 4 when flow is to Grid |          |      |          |
 
 Report negative "Power Active" when power flow is to Grid.
 
 ## Tuya DataPoint 6 (raw, 15 bytes)
 
-| Bytes | Sensor         | Multiply | Unit | Decimals | Parsed by MCU |
-| ----- | -------------- | -------- | ---- | -------- | ------------- |
-| 13,14 | Voltage        | 0.1      | V    | 1        |               |
-| 11,12 | Current        | 0.001    | A    | 3        |               |
-| 06,07 | Power Reactive | 0.001    | kVAr | 3        | as DP110      |
-| 02,03 | Power Active   | 0.001    | kW   | 3        | as DP103      |
-|    00 | Power Flow Direction: 00 - from Grid, 01 - to Grid          |
+| Bytes | Sensor                                             | Multiply | Unit | Decimals | Parsed by MCU |
+| ----- | -------------------------------------------------- | -------- | ---- | -------- | ------------- |
+| 13,14 | Voltage                                            | 0.1      | V    | 1        |               |
+| 11,12 | Current                                            | 0.001    | A    | 3        |               |
+| 06,07 | Power Reactive                                     | 0.001    | kVAr | 3        | as DP110      |
+| 02,03 | Power Active                                       | 0.001    | kW   | 3        | as DP103      |
+| 00    | Power Flow Direction: 00 - from Grid, 01 - to Grid |          |      |          |               |
 
 ## Basic Configuration
 
@@ -120,7 +120,7 @@ Report negative "Power Active" when power flow is to Grid.
 # Basic Config
 ---
 substitutions:
-  device_name:   "energy-meter"
+  device_name: "energy-meter"
   friendly_name: "Energy Meter"
 
 esphome:
@@ -135,7 +135,7 @@ wifi:
   password: !secret wifi_pass
 
   on_connect:
-    - output.turn_on:  tuya_led_wifi
+    - output.turn_on: tuya_led_wifi
   on_disconnect:
     - output.turn_off: tuya_led_wifi
 

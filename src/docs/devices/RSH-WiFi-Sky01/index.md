@@ -8,7 +8,7 @@ board: esp8266
 
 Manufacturer: [tuya](https://expo.tuya.com/smart/lighting/ambient-lighting/star-projector/CT9cn91vklm6mj-CT9cn98zo9cbv5-CTatr28ahrby2u)
 
-![Product Image](/Sky01.jpg "Product Image")
+![Product Image](./Sky01.jpg "Product Image")
 
 - Original hardware mod: [3ATIVE VFX Studio](https://www.youtube.com/watch?v=YwHWbcuztuY&ab_channel=3ATIVEVFXStudio)
   - [Github](https://github.com/3ative/nebula-Light)
@@ -21,16 +21,16 @@ Manufacturer: [tuya](https://expo.tuya.com/smart/lighting/ambient-lighting/star-
 
 ## GPIO Pinout
 
-| Pin    | Function             |
-| ------ | -------------------- |
-| GPIO0  | LED outside case #1  |
-| GPIO4  | Red Output           |
-| GPIO5  | Laser Output         |
-| GPIO12 | Green Output         |
-| GPIO13 | Motor Output         |
-| GPIO14 | Blue Output          |
-| GPIO15 | LED outside case #2  |
-| GPIO16 | Button               |
+| Pin    | Function            |
+| ------ | ------------------- |
+| GPIO0  | LED outside case #1 |
+| GPIO4  | Red Output          |
+| GPIO5  | Laser Output        |
+| GPIO12 | Green Output        |
+| GPIO13 | Motor Output        |
+| GPIO14 | Blue Output         |
+| GPIO15 | LED outside case #2 |
+| GPIO16 | Button              |
 
 ## Basic Configuration
 
@@ -38,8 +38,8 @@ Manufacturer: [tuya](https://expo.tuya.com/smart/lighting/ambient-lighting/star-
 # Basic Config
 
 substitutions:
-  device_description: 'RSH Tuya Smart Star Projector WiFi Laser Starry Projector Waving Led Colorful Home Atmosphere Light Wireless Control'
-  friendly_name: 'Galaxy'
+  device_description: "RSH Tuya Smart Star Projector WiFi Laser Starry Projector Waving Led Colorful Home Atmosphere Light Wireless Control"
+  friendly_name: "Galaxy"
   device_name: esp-galaxy
   node_name: esp_galaxy
 
@@ -47,8 +47,8 @@ esphome:
   name: $device_name
   comment: $device_description
   project:
-    name: 'tuya.galaxy'
-    version: 'RSH-WiFi-Sky01'
+    name: "tuya.galaxy"
+    version: "RSH-WiFi-Sky01"
 
 esp8266:
   board: esp12e
@@ -58,7 +58,7 @@ globals:
   - id: dim
     type: bool
     restore_value: no
-    initial_value: 'false'
+    initial_value: "false"
 
 api:
 
@@ -173,49 +173,49 @@ binary_sensor:
     name: ${friendly_name} Button
     id: ${node_name}_button
     on_multi_click:
-    # single click
-    - timing:
+      # single click
+      - timing:
           - ON for at most 1s
           - OFF for at least 0.350s
-      then:
-        - light.toggle: rgb_light
-    # double click
-    - timing:
+        then:
+          - light.toggle: rgb_light
+      # double click
+      - timing:
           - ON for at most 1s
           - OFF for at most 0.35s
           - ON for at most 1s
           - OFF for at least 0.35s
-      then:
-        - light.toggle: laser
+        then:
+          - light.toggle: laser
     # hold
     on_press:
       then:
-      - if:
-          condition:
+        - if:
+            condition:
               lambda: |-
                 return id(dim);
-          then:
-          - delay: 0.1s
-          - while:
-              condition:
-                binary_sensor.is_on: ${node_name}_button
-              then:
-                - light.dim_relative:
-                    id: rgb_light
-                    relative_brightness: 5%
-                - delay: 0.1s
-          - lambda: |-
-              id(dim) = (false);
-          else:
-          - delay: 0.1s
-          - while:
-              condition:
-                binary_sensor.is_on: ${node_name}_button
-              then:
-                - light.dim_relative:
-                    id: rgb_light
-                    relative_brightness: 5%
-                - delay: 0.1s
-          - lambda: |-
-              id(dim) = (true);
+            then:
+              - delay: 0.1s
+              - while:
+                  condition:
+                    binary_sensor.is_on: ${node_name}_button
+                  then:
+                    - light.dim_relative:
+                        id: rgb_light
+                        relative_brightness: 5%
+                    - delay: 0.1s
+              - lambda: |-
+                  id(dim) = (false);
+            else:
+              - delay: 0.1s
+              - while:
+                  condition:
+                    binary_sensor.is_on: ${node_name}_button
+                  then:
+                    - light.dim_relative:
+                        id: rgb_light
+                        relative_brightness: 5%
+                    - delay: 0.1s
+              - lambda: |-
+                  id(dim) = (true);
 ```

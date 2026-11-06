@@ -11,9 +11,11 @@ standard: us
 
 ## General Notes
 
-This 120V wall outlet comes with a customized Tasmota pre-installed, and has two independently switchable 120V outlets and a switchable USB outlet.
+This 120V wall outlet comes with a customized Tasmota pre-installed, and has two independently switchable 120V outlets
+and a switchable USB outlet.
 
-It is optimized for Home Assistant, Domoticz and OpenHab but you can easily flash an ESPHome binary using the Firmware Upgrade function in the built-in web interface.
+It is optimized for Home Assistant, Domoticz and OpenHab but you can easily flash an ESPHome binary using the Firmware
+Upgrade function in the built-in web interface.
 
 ## GPIO Pinout (Per top to bottom when installed)
 

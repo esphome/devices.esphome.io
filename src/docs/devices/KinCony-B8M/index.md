@@ -24,7 +24,7 @@ esphome:
   friendly_name: b8m
 
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: arduino
 

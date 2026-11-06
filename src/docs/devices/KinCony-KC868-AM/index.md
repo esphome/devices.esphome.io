@@ -6,11 +6,10 @@ standard: global
 board: esp32
 ---
 
-
 ## GPIO Pinout
 
 | Pin    | Function            |
-| ------ | ------------------  |
+| ------ | ------------------- |
 | GPIO15 | Relay               |
 | GPIO5  | 1-Wire GPIO         |
 | GPIO14 | 1-Wire GPIO         |
@@ -38,7 +37,7 @@ esphome:
   name: KC868-AM
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

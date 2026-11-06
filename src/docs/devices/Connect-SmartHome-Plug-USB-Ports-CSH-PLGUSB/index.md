@@ -9,14 +9,15 @@ made-for-esphome: False
 
 ## General Notes
 
-[Connect SmartHome Wi-Fi Plug with USB Ports
-](https://www.connectsmarthome.com.au/smart-power/connect-smart-wi-fi-plug-with-usb-ports-alexa-google-compatible/)
+[Connect SmartHome Wi-Fi Plug with USB Ports](https://www.connectsmarthome.com.au/smart-power/connect-smart-wi-fi-plug-with-usb-ports-alexa-google-compatible/)
 
 ![Connect SmartHome Wi-Fi Plug with USB Ports](CSH-PLGUSB.png 'Connect SmartHome Wi-Fi Plug with USB Ports')
 
-This contains a Tuya Beken Chip WB2S which can be flashed with [ESPHome](https://esphome.io/) and a USB to UART converter by soldering to the chip's RX, TX, VCC and GND pins.
+This contains a Tuya Beken Chip WB2S which can be flashed with [ESPHome](https://esphome.io/) and a USB to UART
+converter by soldering to the chip's RX, TX, VCC and GND pins.
 
-It might be possible to flash (especially older units) [OTA using tuya-convert](/guides/tuya-convert/). If you attempt to flash a current unit OTA, you should update this page specify if it's still possible or not.
+It might be possible to flash (especially older units) [OTA using tuya-convert](/devices/tuya-convert). If you attempt
+to flash a current unit OTA, you should update this page specify if it's still possible or not.
 
 ## Basic Configuration
 

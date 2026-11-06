@@ -12,7 +12,7 @@ critical events.
 
 ## Assembly
 
-![image](/radiationD-v1-1-cajoe_small.jpg)
+![image](./radiationD-v1-1-cajoe_small.jpg)
 
 The first step is to connect the sensor.
 

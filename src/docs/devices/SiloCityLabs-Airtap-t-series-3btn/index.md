@@ -4,14 +4,16 @@ date-published: 2025-03-02
 type: misc
 standard: global
 board: esp32
-project-url: https://github.com/SiloCityLabs/ac-infinity-esp32/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml
+project-url: https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml
 made-for-esphome: true
 difficulty: 1
 ---
 
 ## General Notes
 
-The Airtap T Series Custom PCB by SiloCityLabs is a custom PCB designed to replace the OEM PCB in the AC Infinity Airtap T Series. The PCB is designed to fit in the OEM enclosure and provide additional functionality. The PCB is designed to work with ESPHome and is compatible with the ESP32. This board supports the 3 button configuration.
+The Airtap T Series Custom PCB by SiloCityLabs is a custom PCB designed to replace the OEM PCB in the AC Infinity Airtap
+T Series. The PCB is designed to fit in the OEM enclosure and provide additional functionality. The PCB is designed to
+work with ESPHome and is compatible with the ESP32. This board supports the 3 button configuration.
 
 ## GPIO Pinout
 
@@ -25,9 +27,10 @@ The Airtap T Series Custom PCB by SiloCityLabs is a custom PCB designed to repla
 | GPIO9     | Button Down   | D9       |
 | GPIO10    | Button Toggle | D10      |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is available [here](https://github.com/SiloCityLabs/ac-infinity-esp32/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml).
+```yaml url=https://github.com/SiloCityLabs/esp32-airtap/blob/main/Airtap-Tx/Gen-1/esphome-3btn-rev2.yaml
+```
 
 ## Pictures
 

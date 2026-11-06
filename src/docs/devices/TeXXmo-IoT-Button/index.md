@@ -19,13 +19,13 @@ board: esp8266
 
 ## Flashing Pinout
 
-| Pin Hole Shape | Purpose |
-| ------ | ----------------------- |
-| [ ] | 3V3 Input (do not connect if powering off of battery) |
-| ( ) | Txd |
-| ( ) | Rxd |
-| ( ) | GPIO0 (must pull to ground before flashing) |
-| ( ) | Gnd |
+| Pin Hole Shape | Purpose                                               |
+| -------------- | ----------------------------------------------------- |
+| [ ]            | 3V3 Input (do not connect if powering off of battery) |
+| ( )            | Txd                                                   |
+| ( )            | Rxd                                                   |
+| ( )            | GPIO0 (must pull to ground before flashing)           |
+| ( )            | Gnd                                                   |
 
 ## Basic Configuration
 

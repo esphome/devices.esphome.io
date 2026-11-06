@@ -88,6 +88,6 @@ switch:
       - light.turn_off: led
 ```
 
-https://thibmaek.com/posts/flashing-esphome-to-lsc-smart-connect-action-switches-power-plugs
+[https://thibmaek.com/posts/flashing-esphome-to-lsc-smart-connect-action-switches-power-plugs](https://thibmaek.com/posts/flashing-esphome-to-lsc-smart-connect-action-switches-power-plugs)
 
 [Tasmota template LSC power plug](https://templates.blakadder.com/lsc_smart_connect_power_plug.html)

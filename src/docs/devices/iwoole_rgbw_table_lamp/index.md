@@ -11,7 +11,7 @@ Smart App. It is available from various retailers online or directly
 from
 [iwoole.com](https://www.iwoole.com/product/category/wifi-smart-table-lamp/).
 
-![image](/iwoole_rgbw_table_lamp.png)
+![image](./iwoole_rgbw_table_lamp.png)
 
 ## Device overview
 
@@ -37,11 +37,11 @@ The MOSFETs for the different color channels are connected as follows:
 
 ### Internal markings
 
-![image](/iwoole_rgbw_table_lamp_internal_1.jpg)
+![image](./iwoole_rgbw_table_lamp_internal_1.jpg)
 
-![image](/iwoole_rgbw_table_lamp_internal_2.jpg)
+![image](./iwoole_rgbw_table_lamp_internal_2.jpg)
 
-![image](/iwoole_rgbw_table_lamp_internal_3.jpg)
+![image](./iwoole_rgbw_table_lamp_internal_3.jpg)
 
 ## ESPHome configuration
 
@@ -93,7 +93,7 @@ output:
 The circuit inside will be exposed to mains voltage. Do not connect your
 device to the mains when flashing.
 
-![image](/iwoole_rgbw_table_lamp_connections_top.jpg)
+![image](./iwoole_rgbw_table_lamp_connections_top.jpg)
 
 There are pads available for 3V3 and GPIO0 on the back. I have tried to
 find easier solder points on the front, marked in the image above. Be
@@ -105,8 +105,8 @@ exposed pin for GPIO5 can be used, in addition to RX (GPIO3) and TX
 Ensure GPIO0 is connected to ground to get the device into programming mode,
 but also don\'t forget to disconnect this when you expect the device to start in normal mode.
 
-![image](/iwoole_rgbw_table_lamp_connections_bottom.jpg)
+![image](./iwoole_rgbw_table_lamp_connections_bottom.jpg)
 
-![image](/iwoole_rgbw_table_lamp_wires_top.jpg)
+![image](./iwoole_rgbw_table_lamp_wires_top.jpg)
 
-![image](/iwoole_rgbw_table_lamp_wires_bottom.jpg)
+![image](./iwoole_rgbw_table_lamp_wires_bottom.jpg)

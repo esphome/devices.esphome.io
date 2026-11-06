@@ -7,23 +7,24 @@ board: esp32
 difficulty: 2
 ---
 
-
 ![NOUS B3T](B3T_mockup.jpg "Nous B3T WiFi Tasmota Switch Module(2 channel with PM) / Curtain module(1 channel) (ESP32)")
 
-This device comes pre-installed with Tasmota. To flash it with ESPHome, refer to the [**Migrating from Tasmota**](https://esphome.io/guides/migrate_sonoff_tasmota.html)guide. Alternatively, you can disassemble the device and solder wires to the test pads ([see pinout](#pinout)) for manual flashing.
+This device comes pre-installed with Tasmota. To flash it with ESPHome, refer to the
+[**Migrating from Tasmota**](https://esphome.io/guides/migrate_sonoff_tasmota/)guide. Alternatively, you can
+disassemble the device and solder wires to the test pads ([see pinout](#pinout)) for manual flashing.
 
 ## GPIO Pinout
 
-| Pin    | Function   |
-| ------ | ---------- |
-| GPIO00 | LED        |
-| GPIO01 | TX         |
-| GPIO03 | BL0939 RX  |
-| GPIO04 | Button     |
-| GPIO05 | Switch     |
-| GPIO12 | Relay      |
-| GPIO13 | Relay      |
-| GPIO18 | Switch     |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO00 | LED       |
+| GPIO01 | TX        |
+| GPIO03 | BL0939 RX |
+| GPIO04 | Button    |
+| GPIO05 | Switch    |
+| GPIO12 | Relay     |
+| GPIO13 | Relay     |
+| GPIO18 | Switch    |
 
 ## Basic configuration
 
@@ -37,7 +38,7 @@ esphome:
     version: "2025.6.0"
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -160,12 +161,15 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay_2
-
 ```
 
 ## Configuration as light switch
 
-This example demonstrates how to configure the 2-gang relay for use with a double rocker light switch. The relay can operate in two modes: directly toggling the connected relays, or in decoupled mode, where switch events are exposed in an event entity that can be used in automations. The NOUS B3T can also be used to control blinds. Refer to the [**Cover Component**](https://esphome.io/components/cover/) and [**Current Based Cover**](https://esphome.io/components/cover/current_based) documentation for further instructions.
+This example demonstrates how to configure the 2-gang relay for use with a double rocker light switch. The relay can
+operate in two modes: directly toggling the connected relays, or in decoupled mode, where switch events are exposed in
+an event entity that can be used in automations. The NOUS B3T can also be used to control blinds. Refer to the
+[**Cover Component**](https://esphome.io/components/cover/) and
+[**Current Based Cover**](https://esphome.io/components/cover/current_based/) documentation for further instructions.
 
 ```yaml
 switch:
@@ -301,7 +305,6 @@ binary_sensor:
                           id: switch_event
                           event_type: switch_2
 
-
       - timing:
           - ON for at least 50ms
         then:
@@ -323,7 +326,6 @@ binary_sensor:
                           id: switch_event
                           event_type: switch_2
 
-
       - timing:
           - ON for 50ms to 350ms
           - OFF for 50ms to 350ms
@@ -343,11 +345,11 @@ binary_sensor:
           - event.trigger:
               id: switch_event
               event_type: failsafe
-
 ```
 
 ## Pinout
 
-Because the built-in button is connected to GPIO4, unlike on other devices, you also need to solder a wire to GPIO0 and pull it to GND to enter flash mode.
+Because the built-in button is connected to GPIO4, unlike on other devices, you also need to solder a wire to GPIO0 and
+pull it to GND to enter flash mode.
 
 ![NOUS B3T Pinout](pinout.png "Nous B3T Pinout")

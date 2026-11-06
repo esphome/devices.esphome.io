@@ -9,6 +9,10 @@ board: esp8266
 
 ![Product Image](xiaomi-philips-smart-2.jpg "Product Image")
 
+### Pinout
+
+![Pinout Xiaomi Philips Zhirui Downlight](pinout.png)
+
 ## Basic Configuration
 
 ```yaml
@@ -50,6 +54,7 @@ api:
 
 ota:
   password: !secret ota_password
+  platform: esphome
 
 output:
   - platform: esp8266_pwm

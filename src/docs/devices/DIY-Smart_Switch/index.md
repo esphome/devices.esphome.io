@@ -18,13 +18,13 @@ These devices are sold under many brands on Aliexpress.
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| P6     | Rocker switch INPUT_PULLUP |
-| P7     | Relay (H)                  |
-| P8     | RF input ?                 |
-| P23    | Button INPUT_PULLUP        |
-| P26    | Blue Status LED (H)        |
+| Pin | Function                   |
+| --- | -------------------------- |
+| P6  | Rocker switch INPUT_PULLUP |
+| P7  | Relay (H)                  |
+| P8  | RF input ?                 |
+| P23 | Button INPUT_PULLUP        |
+| P26 | Blue Status LED (H)        |
 
 ## Configuration
 
@@ -46,7 +46,7 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
 ## ---------------- ##
 ##    Status LED    ##
-## If there is an error in ESPhome, the diode blinks. If everything is fine, the indicator can be controlled from HA
+## If there is an error in ESPHome, the diode blinks. If everything is fine, the indicator can be controlled from HA
 ## ---------------- ##
 
 light:

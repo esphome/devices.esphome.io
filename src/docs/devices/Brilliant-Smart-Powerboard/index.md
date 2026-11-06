@@ -6,7 +6,9 @@ standard: au
 board: esp8266
 ---
 
-The Brilliant Smart Smart WiFi Powerboard 20691 is available in Australia and New Zealand. It has four individually switched AC outlets (each has a status LED that do not seem to be individually controllable. There are also four USB power/charge ports, all switchable but not individually. There is a button and blue and red controllable leds.
+The Brilliant Smart Smart WiFi Powerboard 20691 is available in Australia and New Zealand. It has four individually
+switched AC outlets (each has a status LED that do not seem to be individually controllable. There are also four USB
+power/charge ports, all switchable but not individually. There is a button and blue and red controllable leds.
 
 ## GPIO Pinout
 
@@ -30,13 +32,16 @@ The Brilliant Smart Smart WiFi Powerboard 20691 is available in Australia and Ne
 
 ## Getting up and running
 
-I flashed this device with tuya-convert, which worked straight off. I originally flashed with tasmota, then upgraded to esphome :)
+I flashed this device with tuya-convert, which worked straight off. I originally flashed with tasmota, then upgraded to
+esphome :)
 
 ## Code
 
-This yaml is borrowed from the author of the Arlec PB89HA Power Board page. The multi click stuff for the button is optional, but can be useful if you are at the powerboard.
+This yaml is borrowed from the author of the Arlec PB89HA Power Board page. The multi click stuff for the button is
+optional, but can be useful if you are at the powerboard.
 
-The blue led is used as a status led and flashes as the wifi is connecting. The red led is switchable and could be used for some sort of status indicator.
+The blue led is used as a status led and flashes as the wifi is connecting. The red led is switchable and could be used
+for some sort of status indicator.
 
 ```yaml
 esphome:

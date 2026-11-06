@@ -8,9 +8,9 @@ board: esp32
 
 Information about the pinout and internals of the Shelly Pro 2 PM.
 
-It's the same board as the [Shelly Pro 2](Shelly-Pro-2). The only
+It's the same board as the [Shelly Pro 2](../Shelly-Pro-2/). The only
 difference is the addition of two
-[ADE7953](https://esphome.io/components/sensor/ade7953.html) chips (one on each
+[ADE7953](https://esphome.io/components/sensor/ade7953/) chips (one on each
 relay board).
 
 ![Shelly Pro 2 PM](shelly-pro-2-pm.jpg)
@@ -138,7 +138,7 @@ esphome:
   name: shelly-pro-2-pm
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -386,7 +386,7 @@ esphome:
   name: garage-door
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 

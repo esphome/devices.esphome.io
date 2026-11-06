@@ -16,12 +16,12 @@ Can be flashed with esphome kickstart via [tuya-cloudcutter](https://github.com/
 
 ## GPIO Pinout
 
-| Function   | GPIO-Pin |
-| ---------- | -------- |
-| PWM_red    | P7       |
-| PWM_green  | P8       |
-| PWM_blue   | P9       |
-| PWM_white  | P24      |
+| Function  | GPIO-Pin |
+| --------- | -------- |
+| PWM_red   | P7       |
+| PWM_green | P8       |
+| PWM_blue  | P9       |
+| PWM_white | P24      |
 
 ## Basic Configuration
 

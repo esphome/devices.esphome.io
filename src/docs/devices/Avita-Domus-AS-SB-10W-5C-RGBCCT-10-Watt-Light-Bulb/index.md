@@ -32,8 +32,10 @@ SKU: ESSLD1IN007P
 3. Select the option `2) Flash 3rd Party Firmware`
 4. How do you want to choose the device? Select `► By firmware version and name`.
 5. Select the firmware version and name: Choose `► 2.9.16 - BK7231T / oem_bk7231s_light_ty`
-6. When prompted, Select your custom firmware file for the BK7231T chip: Choose `► ESPHome-Kickstart-v23.08.29_bk7231t_app.ota.ug.bin`
-7. Place your device in AP (slow blink) mode. This step is explained in the terminal prompt when you select your custom firmware file. In this case we are using the ESPHome-Kickstart firmware.
+6. When prompted, Select your custom firmware file for the BK7231T chip: Choose
+   `► ESPHome-Kickstart-v23.08.29_bk7231t_app.ota.ug.bin`
+7. Place your device in AP (slow blink) mode. This step is explained in the terminal prompt when you select your custom
+   firmware file. In this case we are using the ESPHome-Kickstart firmware.
 
 (double check your version in the Tuya Smart Life - Smart Living app!)
 
@@ -119,7 +121,9 @@ light:
 
 ## Doing it the hard way
 
-It's all fun and games when TuyaCloudCutter supports your stock firmware version. My device was manufactured in 04/2022, almost three years old and had firmware version 2.9.16. The Tuya exploit got patched after version 2.9.29. It's a good probablity that the newer batches may come with the patched firmware.
+It's all fun and games when TuyaCloudCutter supports your stock firmware version. My device was manufactured in 04/2022,
+almost three years old and had firmware version 2.9.16. The Tuya exploit got patched after version 2.9.29. It's a good
+probablity that the newer batches may come with the patched firmware.
 
 ## Disassembly
 
@@ -149,9 +153,12 @@ It's all fun and games when TuyaCloudCutter supports your stock firmware version
 
 ![wiring for the UART flashing and UART debug](programmin.jpg "[wiring for the UART flashing and UART debug")
 
-You don't need to hook up the debug UART for firmware flashing but in my case, I was getting my esphome firmware boot looping. After several hours of head scratching, it was found to be the power supply issue.
+You don't need to hook up the debug UART for firmware flashing but in my case, I was getting my esphome firmware boot
+looping. After several hours of head scratching, it was found to be the power supply issue.
 
-The ltchiptool guys recommand a good 3.3V power source for firmware read/write to work reliably. Their choice is the AMS1117 based power supply, which I have used here. This will do the job well, but for some reason, this particular LED bulb needs more current when running the firmware. Maybe some other IC is also consuming this 3.3V supply.
+The ltchiptool guys recommand a good 3.3V power source for firmware read/write to work reliably. Their choice is the
+AMS1117 based power supply, which I have used here. This will do the job well, but for some reason, this particular LED
+bulb needs more current when running the firmware. Maybe some other IC is also consuming this 3.3V supply.
 
 The esphome firmware runs just fine with the mains power supply.
 
