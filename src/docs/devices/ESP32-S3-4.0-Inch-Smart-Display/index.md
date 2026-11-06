@@ -40,5 +40,8 @@ The photo shows the original animation. This example uses the bundled three-fram
 [ESPHome's animation tests](https://github.com/esphome/esphome/blob/2026.10.2/tests/components/animation/anim.webp),
 under the [MIT license](https://github.com/esphome/esphome/blob/2026.10.2/LICENSE).
 
+Before compiling, download the linked `anim.webp` file and save it as `demo.webp` beside your main ESPHome
+configuration YAML file. Copying the YAML below does not download the animation.
+
 ```yaml file=advanced-configuration.yaml
 ```
