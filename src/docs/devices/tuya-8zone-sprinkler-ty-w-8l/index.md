@@ -27,8 +27,8 @@ LEDs and valves.
 ## Installation
 
 The BK7231N is flashed via UART with
-[ltchiptool](https://github.com/libretiny-eu/ltchiptool). No soldering required
-- dupont cables and a steady hand are enough.
+[ltchiptool](https://github.com/libretiny-eu/ltchiptool). No soldering required,
+dupont cables and a steady hand are enough.
 
 ### Connections (3.3V USB-TTL adapter)
 
