@@ -254,7 +254,10 @@ async function checkTarget(page: Page, work: string, target: Target, runner: Run
   }
   const blob = `${result.stderr}\n${result.stdout}`;
   const error = trimEsphomeError(result.stdout, result.stderr, work);
-  const network = NETWORK_FAILURE_RE.test(blob) || DOWNLOAD_FAILURE_RE.test(blob);
+  // A "Failed config" block is ESPHome's verdict; only it decides whether this
+  // was a download failure, so a logged fetch attempt can't hide a schema error.
+  const evidence = /Failed config/.test(blob) ? error : blob;
+  const network = NETWORK_FAILURE_RE.test(evidence) || DOWNLOAD_FAILURE_RE.test(evidence);
   page.findings.push({
     check: "esphome",
     level: network ? "warning" : "error",
@@ -314,7 +317,7 @@ interface ImportRow {
   reason: string | null;
 }
 
-async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
+export async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
   if (pages.length === 0) return false;
   const dbDir = process.env.DEVICE_BUILDER_DIR;
   const cmd = process.env.DEVICE_BUILDER_CMD;
@@ -349,9 +352,14 @@ async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
     }
     stdout = e.stdout;
   }
-  const rows = JSON.parse(stdout) as ImportRow[];
+  const rows: unknown = JSON.parse(stdout);
+  if (!Array.isArray(rows)) {
+    throw new FatalError(`Device Builder importer returned no result list:\n${stdout}`);
+  }
   const byDevice = new Map(pages.map((p) => [path.basename(p.dir), p]));
-  for (const row of rows) {
+  const answered = new Set<string>();
+  for (const row of rows as ImportRow[]) {
+    answered.add(row.device);
     const page = byDevice.get(row.device);
     if (!page || row.imported) continue;
     page.findings.push({
@@ -359,6 +367,15 @@ async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
       level: "error",
       file: page.rel,
       message: `the ESPHome Device Builder would not import this page: ${row.reason}`,
+    });
+  }
+  for (const [device, page] of byDevice) {
+    if (answered.has(device)) continue;
+    page.findings.push({
+      check: "import",
+      level: "error",
+      file: page.rel,
+      message: "the ESPHome Device Builder importer returned no result for this page",
     });
   }
   return true;

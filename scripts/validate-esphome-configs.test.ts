@@ -11,6 +11,7 @@ import * as path from "node:path";
 
 import {
   checkEsphome,
+  checkImport,
   deviceDirsOf,
   isStandalone,
   loadPage,
@@ -154,15 +155,15 @@ test("esphome output is trimmed to the Failed config block with temp paths remov
   assert.equal(sourceLine(trimmed, "other.yaml"), undefined);
 });
 
-// A stand-in `esphome` that exits with *status* for every call.
-function fakeEsphome(status: number): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-esphome-"));
-  const bin = path.join(dir, "esphome");
-  fs.writeFileSync(bin, `#!/bin/sh\necho "Failed config"\nexit ${status}\n`, { mode: 0o755 });
+// A stand-in executable that prints *output* and exits with *status*.
+function fakeBin(status: number, output = "Failed config"): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-bin-"));
+  const bin = path.join(dir, "fake");
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'OUT'\n${output}\nOUT\nexit ${status}\n`, { mode: 0o755 });
   return bin;
 }
 
-async function esphomeFindings(files: Record<string, string>, status: number) {
+async function esphomeFindings(files: Record<string, string>, status: number, output?: string) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "validate-esphome-test-"));
   const dir = path.join(root, "Plug");
   fs.mkdirSync(dir);
@@ -170,7 +171,7 @@ async function esphomeFindings(files: Record<string, string>, status: number) {
   try {
     const page = loadPage(dir, root);
     assert.ok(page);
-    await checkEsphome(page, { bin: fakeEsphome(status), timeoutMs: 10_000, limit: (fn) => fn() });
+    await checkEsphome(page, { bin: fakeBin(status, output), timeoutMs: 10_000, limit: (fn) => fn() });
     return page.findings.map((f) => ({ level: f.level, file: path.basename(f.file), message: f.message }));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -199,4 +200,38 @@ test("an add-on skipped because its base failed gets a notice", async () => {
   const extra = findings.find((f) => f.file === "extra.yaml");
   assert.equal(extra?.level, "notice");
   assert.match(extra?.message ?? "", /not validated: `config.yaml` did not validate/);
+});
+
+test("a logged fetch failure doesn't downgrade a real Failed config error", async () => {
+  const output = "WARNING ConnectionError fetching a font\nFailed config\n\nsensor: [unknown]: Invalid key";
+  const findings = await esphomeFindings(
+    { "index.md": fence("file=config.yaml"), "config.yaml": CONFIG },
+    1,
+    output
+  );
+  assert.equal(findings[0].level, "error");
+});
+
+test("a page the importer returns no row for is an import error", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "validate-esphome-test-"));
+  const pages = ["Plug-A", "Plug-B"].map((name) => {
+    const dir = path.join(root, name);
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, "index.md"), fence("file=config.yaml"));
+    fs.writeFileSync(path.join(dir, "config.yaml"), CONFIG);
+    const page = loadPage(dir, root);
+    assert.ok(page);
+    return page;
+  });
+  const prev = process.env.DEVICE_BUILDER_CMD;
+  process.env.DEVICE_BUILDER_CMD = fakeBin(0, '[{"device": "Plug-A", "imported": true, "reason": null}]');
+  try {
+    await checkImport(pages, root);
+  } finally {
+    if (prev === undefined) delete process.env.DEVICE_BUILDER_CMD;
+    else process.env.DEVICE_BUILDER_CMD = prev;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+  assert.deepEqual(pages[0].findings, []);
+  assert.match(pages[1].findings[0]?.message ?? "", /returned no result for this page/);
 });
