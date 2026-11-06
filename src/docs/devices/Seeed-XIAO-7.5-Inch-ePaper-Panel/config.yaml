@@ -53,3 +53,14 @@ display:
       it.fill(Color(255, 255, 255));
       it.printf(400, 200, id(font_title), TextAlign::CENTER, "XIAO ePaper Panel");
       it.printf(400, 270, id(font_body), TextAlign::CENTER, "800 x 480, black and white");
+
+binary_sensor:
+  # The Boot button behind the stand is the XIAO ESP32-C3's GPIO9. It has its
+  # own pull-up resistor and reads low while pressed.
+  - platform: gpio
+    id: boot_button
+    name: Boot button
+    pin:
+      number: GPIO9
+      inverted: true
+      ignore_strapping_warning: true

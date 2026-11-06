@@ -22,6 +22,7 @@ board, the panel connector and the battery circuit are already wired together.
 - SPI on `GPIO8` (clock) and `GPIO10` (data), with CS `GPIO3`, DC `GPIO5`, reset `GPIO2` and busy `GPIO4`
 - The busy line is active-low, so it needs `inverted: true`
 - Onboard battery connector, intended for long refresh intervals rather than continuous operation
+- Boot and Reset buttons behind the stand; the Boot button is on `GPIO9`
 
 ## Setup
 
@@ -35,7 +36,8 @@ board, the panel connector and the battery circuit are already wired together.
 ## Configuration
 
 This is the hardware configuration. It brings the panel up and draws once at boot, which is enough to prove
-the wiring and the panel model are right before you put a dashboard on it.
+the wiring and the panel model are right before you put a dashboard on it. The Boot button is exposed as a
+binary sensor.
 
 ```yaml file=config.yaml
 ```
