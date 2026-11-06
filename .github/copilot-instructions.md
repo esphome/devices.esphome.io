@@ -11,10 +11,15 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 1. **Pull Request Title**
 
    - ✅ Should clearly describe what device is being added/updated
+   - ✅ Take the device name from the page's frontmatter `title`
    - ✅ Format: "Add [Device Name]" for new devices
    - ✅ Format: "Update [Device Name] - [brief description]" for updates
+   - ✅ Format: "Remove [Device Name]" for removals
+   - ✅ Cross-device cleanup: an imperative summary naming the change, e.g. "Fix broken datasheet links on Tuya pages"
    - ✅ Use proper capitalization and spelling
    - ❌ Avoid generic titles like "Update device" or "Fix docs"
+   - ❌ Never a file name ("index.md", "config.yaml"), a branch name, "new device", or a title that doesn't name the device
+   - When a title breaks these rules, suggest a conforming one from the device folder and frontmatter `title`; a bad title alone doesn't block a merge
 
 2. **Pull Request Scope**
 

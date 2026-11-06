@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           # Check out the PR head (not the merge ref) so the page content is
           # exactly what the contributor submitted. Full history so the
