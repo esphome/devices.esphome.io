@@ -1,0 +1,5 @@
+# Config for Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light
+# https://devices.esphome.io/devices/mirabella-genio-wi-fi-14m-pixel-led-corner-light/
+
+rtl87xx:
+  board: t103-v1.0
