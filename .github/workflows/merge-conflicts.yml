@@ -65,9 +65,10 @@ jobs:
             await script({ github, context, core });
 
       # A promotion marks drafts ready with GITHUB_TOKEN, whose event starts no
-      # workflow, so ask Copilot here with the app token.
+      # workflow, so ask Copilot here with the app token. This also runs after
+      # a failed sweep, for the PRs it promoted before failing.
       - name: Generate a token
-        if: steps.sync.outputs.marked-ready
+        if: ${{ !cancelled() && steps.sync.outputs.marked-ready }}
         id: generate-token
         uses: actions/create-github-app-token@v3.3.0
         with:
@@ -75,7 +76,7 @@ jobs:
           private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Request Copilot reviews
-        if: steps.sync.outputs.marked-ready
+        if: ${{ !cancelled() && steps.sync.outputs.marked-ready }}
         uses: actions/github-script@v9.0.0
         env:
           PR_NUMBERS: ${{ steps.sync.outputs.marked-ready }}

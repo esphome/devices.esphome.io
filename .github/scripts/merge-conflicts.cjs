@@ -189,18 +189,22 @@ module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r)
   const repromote = context.eventName === "push" || context.payload.action === "edited";
   const pace = makePacer(sleep);
   const markedReady = [];
-  for (const pull of settled) {
-    const changed = await check({ github, core, owner, repo, pace, defaultBranch }, pull);
-    const conflict = pull.mergeable === "CONFLICTING";
-    if (changed && (repromote || conflict) && hasLabel(pull, MFE_LABEL)) {
-      await pace();
-      if (await promote({ github, core, owner, repo, prNumber: pull.number })) {
-        markedReady.push(pull.number);
+  try {
+    for (const pull of settled) {
+      const changed = await check({ github, core, owner, repo, pace, defaultBranch }, pull);
+      const conflict = pull.mergeable === "CONFLICTING";
+      if (changed && (repromote || conflict) && hasLabel(pull, MFE_LABEL)) {
+        await pace();
+        if (await promote({ github, core, owner, repo, prNumber: pull.number })) {
+          markedReady.push(pull.number);
+        }
       }
     }
+  } finally {
+    // The workflow requests these Copilot reviews with the app token, even
+    // when a later PR fails the sweep.
+    if (markedReady.length > 0) core.setOutput("marked-ready", markedReady.join(","));
   }
-  // The workflow requests these Copilot reviews with the app token.
-  if (markedReady.length > 0) core.setOutput("marked-ready", markedReady.join(","));
   for (const pull of unknown) {
     core.warning(`#${pull.number}: mergeability still unknown; label and check left unchanged`);
   }

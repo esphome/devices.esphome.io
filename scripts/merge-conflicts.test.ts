@@ -397,3 +397,16 @@ test("a sweep that marks nothing ready sets no output", async () => {
   await conflicts({ github, context: pushContext, core, sleep: async () => {} });
   assert.deepEqual(outputs, {});
 });
+
+test("PRs promoted before a sweep fails are still handed to the Copilot review step", async () => {
+  const read = (n: number) => [pr(n, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" })];
+  const { github } = makeGithub({ 8: read(8), 9: read(9) }, [[8, 9]], { 8: "User", 9: "User" });
+  const update = github.rest.checks.update;
+  github.rest.checks.update = async (a: { check_run_id: number; name: string; conclusion: string }) => {
+    if (a.check_run_id === 109) throw new Error("HTTP 502");
+    return update(a);
+  };
+  const { core, outputs } = makeCore();
+  await assert.rejects(conflicts({ github, context: pushContext, core, sleep: async () => {} }), /HTTP 502/);
+  assert.deepEqual(outputs, { "marked-ready": "8" });
+});
