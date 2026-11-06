@@ -62,8 +62,6 @@
       "board: ",
       "---",
       "",
-      "# " + name,
-      "",
       "<!-- Describe the device here. See the front-matter table on the contributing page for valid options. -->",
       "",
       "## Basic Configuration",
