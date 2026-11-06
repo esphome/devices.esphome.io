@@ -1,0 +1,67 @@
+substitutions:
+  name: "tuya-bsd34-plug"
+  friendly_name: "Tuya BSD34 Smart Plug"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+logger:
+
+wifi:
+  # Fallback hotspot for initial setup or network recovery
+  ap:
+
+status_led:
+  pin:
+    number: P8
+    inverted: true
+
+binary_sensor:
+  - platform: gpio
+    id: button
+    name: "Button"
+    internal: true
+    pin:
+      number: P10
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+    on_press:
+      - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: P26
+    restore_mode: ALWAYS_OFF
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    cf_pin:
+      number: P7
+      inverted: true
+    cf1_pin:
+      number: P6
+      inverted: true
+    sel_pin:
+      number: P24
+      inverted: true
+    current_resistor: 0.001
+    # May need calibration on your specific unit
+    voltage_divider: 760
+    initial_mode: VOLTAGE
+    update_interval: 5s
+    change_mode_every: 4
+    voltage:
+      name: "Voltage"
+    current:
+      name: "Current"
+    power:
+      name: "Power"
