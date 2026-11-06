@@ -1,0 +1,30 @@
+tuya:
+  on_datapoint_update:
+    - sensor_datapoint: 6
+      datapoint_type: raw
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "on_datapoint_update %s", format_hex_pretty(x).c_str());
+            id(voltage).publish_state((x[0] << 8 | x[1]) * 0.1);
+            id(current).publish_state((x[3] << 8 | x[4]) * 0.001);
+            id(power).publish_state((x[6] << 8 | x[7]) * 1);
+
+sensor:
+  - platform: template
+    id: voltage
+    name: "Volt"
+    unit_of_measurement: "V"
+    icon: "mdi:sine-wave"
+    accuracy_decimals: 1
+  - platform: template
+    id: current
+    name: "Curent"
+    icon: "mdi:current-ac"
+    unit_of_measurement: "A"
+    accuracy_decimals: 2
+  - platform: template
+    id: power
+    name: "Power"
+    icon: "mdi:flash"
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
