@@ -10,6 +10,8 @@ difficulty: 4
 The Shelly Duo Bulb E27 Gen3 (`S3BL-D010009AEU`) is a Wi-Fi LED bulb with an E27 socket and tunable white (one warm
 and one cold white channel). It is built around an `ESP-Shelly-C38F` module (ESP32-C3, 8 MB flash).
 
+Product page: <https://www.shelly.com/products/shelly-duo-bulb-e27-gen3>.
+
 ![Shelly Duo Bulb E27 Gen3](../Shelly-Duo-Bulb-E27-Gen3/Shelly-Duo-Bulb-E27-Gen3.png "Shelly Duo Bulb E27 Gen3")
 
 Both white channels are driven directly by PWM from two GPIOs, so ESPHome's `cwww` light works without an external
