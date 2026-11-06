@@ -9,7 +9,7 @@ difficulty: 4
 
 ![Solimo Power Monitoring Plug 6A](solimo-plug.jpg "Solimo Power Monitoring Plug 6A")
 
-The Solimo Power Monitoring Plug 6A measures voltage, current, power and energy. 
+The Solimo Power Monitoring Plug 6A measures voltage, current, power and energy.
 It uses an RTL8710BN and a BL0937 power-monitoring chip.
 
 ## Flashing
