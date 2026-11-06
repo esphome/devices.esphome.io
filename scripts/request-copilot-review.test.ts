@@ -234,3 +234,35 @@ test("the list helper requests a review on each marked-ready PR", async () => {
   await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
   assert.deepEqual(calls, [8, 10]);
 });
+
+test("a promotion batch looks up the requesting account once", async () => {
+  let lookups = 0;
+  const requested: number[] = [];
+  const github = {
+    paginate: async () => [],
+    rest: {
+      users: {
+        getAuthenticated: async () => {
+          lookups += 1;
+          return { data: { login: REQUESTER } };
+        },
+      },
+      issues: { listEventsForTimeline: () => {} },
+      pulls: {
+        requestReviewers: async (args: { pull_number: number }) => void requested.push(args.pull_number),
+      },
+    },
+  };
+  const { core } = makeCore();
+  await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
+  assert.equal(lookups, 1);
+  assert.deepEqual(requested, [8, 10]);
+});
+
+test("a rejected token stops a promotion batch after one failure", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 401 });
+  const { core, failures } = makeCore();
+  await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
+  assert.equal(calls.length, 0);
+  assert.equal(failures.length, 1);
+});

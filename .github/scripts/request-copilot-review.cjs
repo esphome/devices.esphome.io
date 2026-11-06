@@ -11,7 +11,26 @@ const COPILOT_REVIEWER = "copilot-pull-request-reviewer[bot]";
 // the bot account.
 const COPILOT_LOGINS = new Set(["Copilot", COPILOT_REVIEWER]);
 
-async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
+// The account the token belongs to: { login }, {} when it can't be told
+// (requests go ahead unconfirmed), or { stop: true } when the token is rejected.
+async function identify({ github, core }) {
+  try {
+    const { data } = await github.rest.users.getAuthenticated();
+    return { login: data.login };
+  } catch (err) {
+    // An expired or revoked token fails loudly so someone rotates it.
+    if (err.status === 401) {
+      core.setFailed(
+        `COPILOT_REVIEW_TOKEN was rejected (${err.message}); rotate esphome-review-bot's token.`
+      );
+      return { stop: true };
+    }
+    core.warning(`Could not identify the requesting account, so requests go unconfirmed: ${err.message}`);
+    return {};
+  }
+}
+
+async function requestCopilotReview({ github, core, owner, repo, prNumber, identity }) {
   const readTimeline = () =>
     github.paginate(github.rest.issues.listEventsForTimeline, {
       owner,
@@ -19,21 +38,8 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
       issue_number: prNumber,
       per_page: 100,
     });
-  let requester;
-  try {
-    ({
-      data: { login: requester },
-    } = await github.rest.users.getAuthenticated());
-  } catch (err) {
-    // An expired or revoked token fails loudly so someone rotates it.
-    if (err.status === 401) {
-      core.setFailed(
-        `COPILOT_REVIEW_TOKEN was rejected (${err.message}); rotate esphome-review-bot's token.`
-      );
-      return;
-    }
-    core.warning(`Could not identify the requesting account, so the request goes unconfirmed: ${err.message}`);
-  }
+  const { login: requester, stop } = identity ?? (await identify({ github, core }));
+  if (stop) return;
   let before = null;
   if (requester) {
     try {
@@ -109,8 +115,12 @@ module.exports = async ({ github, context, core }) => {
 // Requests a review on each PR in a comma-separated list, the promotion jobs'
 // marked-ready output.
 async function requestCopilotReviews({ github, core, owner, repo, prNumbers }) {
-  for (const number of String(prNumbers).split(",").filter(Boolean)) {
-    await requestCopilotReview({ github, core, owner, repo, prNumber: Number(number) });
+  const numbers = String(prNumbers).split(",").filter(Boolean);
+  if (numbers.length === 0) return;
+  const identity = await identify({ github, core });
+  if (identity.stop) return;
+  for (const number of numbers) {
+    await requestCopilotReview({ github, core, owner, repo, prNumber: Number(number), identity });
   }
 }
 
