@@ -1,0 +1,98 @@
+# Basic Config
+substitutions:
+  friendly_name: Socket 16A IL
+  device_name: socket-16a-il
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  # Some WB02A/LN882H units have a blank/all-FF Tuya OTP MAC.
+  # Generate a stable MAC from the ESPHome node name.
+  on_boot:
+    priority: 800
+    then:
+      - lambda: |-
+          const char *name = App.get_name().c_str();
+
+          uint32_t hash = 2166136261u;
+          while (*name) {
+            hash ^= (uint8_t) *name++;
+            hash *= 16777619u;
+          }
+
+          uint8_t mac[6] = {
+            0x02,  // locally administered, unicast
+            0xA0,
+            0xB0,
+            (uint8_t) (hash >> 16),
+            (uint8_t) (hash >> 8),
+            (uint8_t) hash
+          };
+
+          WiFi.setMacAddress(mac);
+
+ln882x:
+  board: generic-ln882hki
+
+# Enable logging
+logger:
+
+wifi:
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+
+output:
+  - platform: gpio
+    id: button_led
+    pin: PA10
+    inverted: true
+
+binary_sensor:
+  - platform: gpio
+    id: binary_switch
+    pin:
+      number: PA03
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    name: Relay Switch
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin: PA05
+    on_turn_on:
+      then:
+        - output.turn_on: button_led
+    on_turn_off:
+      then:
+        - output.turn_off: button_led
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    cf_pin:
+      number: PA06
+      inverted: true
+    cf1_pin:
+      number: PA07
+      inverted: true
+    sel_pin:
+      number: PA04
+      inverted: true
+    current:
+      name: Current
+      accuracy_decimals: 3
+    voltage:
+      name: Voltage
+    power:
+      name: Power
+    energy:
+      name: Energy
+    voltage_divider: 1600
+    current_resistor: 0.001 ohm
+    update_interval: 1s
+    change_mode_every: 1
