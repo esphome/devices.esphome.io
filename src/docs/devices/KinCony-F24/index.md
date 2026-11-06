@@ -24,7 +24,7 @@ esphome:
   name: f24
   friendly_name: f24
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: arduino
 

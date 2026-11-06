@@ -3,14 +3,14 @@ title: Athom C02 Sensor (SS01-CO2)
 date-published: 2025-08-25
 type: sensor
 standard: global
-board: esp32c3
+board: esp32
 project-url: https://github.com/athom-tech/esp32-configs/blob/main/athom-scd40-sensor.yaml
 difficulty: 1
 ---
 
 ![SS01-CO2](SS01-CO2.webp "Athom Multi Target Radar Sensor - SS01-CO2")
 
-Maker: https://www.athom.tech
+Maker: [https://www.athom.tech](https://www.athom.tech)
 
 ## Available from
 
@@ -28,9 +28,9 @@ Can flash firmware directly via USB.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO9  | Button              |
-| GPIO21 | WS2812              |
-| GPIO10 | SDA                 |
-| GPIO8  | SCL                 |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO9  | Button   |
+| GPIO21 | WS2812   |
+| GPIO10 | SDA      |
+| GPIO8  | SCL      |

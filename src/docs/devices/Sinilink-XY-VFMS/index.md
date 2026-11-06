@@ -6,14 +6,15 @@ standard: global
 board: esp8266
 ---
 
-This device can be found on [Aliexpress](https://www.aliexpress.com/wholesale?SearchText=Sinilink+XY-WFF)
+This device can be found on [AliExpress](https://www.aliexpress.com/wholesale?SearchText=Sinilink+XY-WFF)
 for about 5 USD.
 
 ## Flashing
 
-![alt text](/sinilink-xy-wfms.png "XY-WFMS front, back and flashing pinout")
+![alt text](./sinilink-xy-wfms.png "XY-WFMS front, back and flashing pinout")
 
-Can be tricky to solder the ground connection to the PCB due to heavy ground plane, I used P50 pogo pins in a printed adapter for 6x1.25mm but the Vin- screw terminal could also be used for conveient ground connection.
+Can be tricky to solder the ground connection to the PCB due to heavy ground plane, I used P50 pogo pins in a printed
+adapter for 6x1.25mm but the Vin- screw terminal could also be used for conveient ground connection.
 
 ## GPIO Pinout
 
@@ -26,9 +27,13 @@ Can be tricky to solder the ground connection to the PCB due to heavy ground pla
 
 ## Basic Config
 
-The following configuration is adapted from https://github.com/esphome/esphome-devices/blob/main/_devices/Sinilink-XY-WFUSB-USB-Switch-Relay/Sinilink-XY-WFUSB-USB-Switch-Relay.md with only minor changes to fit the new device.
+The following configuration is adapted from the [Sinilink XY-WFUSB USB Switch Relay][1] device page with only minor
+changes to fit the new device.
 
-There is a 3D printable case available from https://www.thingiverse.com/thing:4638431 which I remixed from https://www.thingiverse.com/thing:4146127
+[1]: /devices/Sinilink-XY-WFUSB-USB-Switch-Relay/
+
+There is a 3D printable case available from
+[https://www.thingiverse.com/thing:4146127](https://www.thingiverse.com/thing:4146127)
 
 ```yaml
 substitutions:

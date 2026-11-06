@@ -9,7 +9,7 @@ difficulty: 4
 ![Immax Neo RGBCW Ceiling Light](product_photo.png)
 
 - The Immax RGBCW ceiling light has has CB3L (BK7231N) chip.
-- Product site: https://www.immax.cz/immax-neo-lite-tudo-smart-stropni-svitidlo-rgb-podsviceni-40cm-50w-tuya-wifi-beacon-bila-p15662/
+- Product site: [https://www.immax.cz/immax-neo-lite-tudo-smart-stropni-svitidlo-rgb-podsviceni-40cm-50w-tuya-wifi-beacon-bila-p15662/](https://www.immax.cz/immax-neo-lite-tudo-smart-stropni-svitidlo-rgb-podsviceni-40cm-50w-tuya-wifi-beacon-bila-p15662/)
 
 ![PCB in the light](pcb.jpg)
 ![C3BL Pinout Photo](c3bl_pinout_photo.png)

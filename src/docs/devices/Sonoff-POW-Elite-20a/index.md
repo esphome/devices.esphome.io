@@ -9,7 +9,9 @@ difficulty: 3
 
 ## Bootloop Workaround
 
-Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only (not on AC). Here's a workaround: https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868
+Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only
+(not on AC). Here's a workaround:
+[https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868](https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868)
 
 ## GPIO Pinout
 
@@ -42,14 +44,14 @@ esphome:
     then:
       - if:
           condition:
-            lambda: 'return id(v_sensor).state > 10;'
+            lambda: 'return id(v_sensor).state > 90 || (id(v_sensor).state > 10 && id(a_sensor).state > 0.1);'
           then:
             - switch.turn_on: relay_1
           else:
             - switch.turn_off: relay_1
 
 esp32:
-  board: nodemcu-32s
+  variant: esp32
   framework:
     type: esp-idf
 
@@ -163,7 +165,6 @@ sensor:
     id: power_factor
     lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
 
-
 binary_sensor:
   - platform: gpio
     pin:
@@ -240,7 +241,7 @@ output:
 switch:
   - platform: template
     name: $friendly_name
-    optimistic: true
+    lambda: 'return id(v_sensor).state > 90 || (id(v_sensor).state > 10 && id(a_sensor).state > 0.1);'
     id: relay_1
     turn_off_action:
       - switch.turn_on: relay_off
@@ -265,12 +266,11 @@ switch:
       ignore_strapping_warning: true
     on_turn_on:
       - delay: 500ms
-      - switch.turn_off: relay_on  # bi-stable relay so no need to keep on
+      - switch.turn_off: relay_on # bi-stable relay so no need to keep on
       - light.turn_on: switch_led
     interlock: [relay_off]
   - platform: restart
     name: $friendly_name Restart
-
 
 text_sensor:
   - platform: template

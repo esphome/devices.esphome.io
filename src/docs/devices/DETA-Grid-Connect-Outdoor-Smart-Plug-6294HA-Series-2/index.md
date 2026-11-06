@@ -8,19 +8,26 @@ board: bk72xx
 
 ## Overview
 
-The [DETA Outdoor Double Powerpoint Series 2](https://www.bunnings.com.au/deta-grid-connect-smart-outdoor-double-powerpoint_p0172781) comes with a CB2S module.
+The [DETA Outdoor Double Powerpoint Series 2][1] comes with a CB2S module.
 
-This is in contrast to the series 1 device which has a WB2S module. The associated pins for each function have changed slightly as a result.
+[1]: https://www.bunnings.com.au/deta-grid-connect-smart-outdoor-double-powerpoint_p0172781
+
+This is in contrast to the series 1 device which has a WB2S module. The associated pins for each function have changed
+slightly as a result.
 
 ### Using Cloudcutter
 
-[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool that simplifies flashing Tuya-based devices. It allows you to flash the firmware remotely, eliminating the need to physically open the device. [Follow these instructions](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to flash your Deta 6294HA device using Cloudcutter.
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool that simplifies flashing Tuya-based
+devices. It allows you to flash the firmware remotely, eliminating the need to physically open the device.
+[Follow these instructions](https://github.com/tuya-cloudcutter/tuya-cloudcutter) to flash your Deta 6294HA device using
+Cloudcutter.
 
 ---
 
 ### Note on Power Monitoring
 
-Power measurement uses the HLW8032 or CSE7766 protocol at 4800 baud. Program the device before installing the module as the RX pin is used.
+Power measurement uses the HLW8032 or CSE7766 protocol at 4800 baud. Program the device before installing the module as
+the RX pin is used.
 
 ---
 
@@ -28,31 +35,32 @@ Power measurement uses the HLW8032 or CSE7766 protocol at 4800 baud. Program the
 
 #### ESP-Based Pinout
 
-| Pin    | Function                  |
-| ------ | ------------------------- |
-| GPIO03 | RX for CSE7766            |
-| GPIO04 | Button 1 (inverted)       |
-| GPIO05 | LED (inverted)            |
-| GPIO12 | Button 2 (inverted)       |
-| GPIO13 | Relay 1                   |
-| GPIO14 | Relay 2                   |
+| Pin    | Function            |
+| ------ | ------------------- |
+| GPIO03 | RX for CSE7766      |
+| GPIO04 | Button 1 (inverted) |
+| GPIO05 | LED (inverted)      |
+| GPIO12 | Button 2 (inverted) |
+| GPIO13 | Relay 1             |
+| GPIO14 | Relay 2             |
 
 #### BK72XX-Based Pinout
 
-| Pin    | Function                  |
-| ------ | ------------------------- |
-| RX1    | RX for CSE7766            |
-| P7     | Button 1 (inverted)       |
-| P6     | LED (inverted)            |
-| P24    | Button 2 (inverted)       |
-| P8     | Relay 1                   |
-| P26    | Relay 2                   |
+| Pin | Function            |
+| --- | ------------------- |
+| RX1 | RX for CSE7766      |
+| P7  | Button 1 (inverted) |
+| P6  | LED (inverted)      |
+| P24 | Button 2 (inverted) |
+| P8  | Relay 1             |
+| P26 | Relay 2             |
 
 ---
 
 ### Calibration
 
-For calibration, check out Frenck's [comprehensive guide](https://frenck.dev/calibrating-an-esphome-flashed-power-plug/#7-applying-corrections-to-the-firmware).
+For calibration, check out Frenck's
+[comprehensive guide](https://frenck.dev/calibrating-an-esphome-flashed-power-plug/#7-applying-corrections-to-the-firmware).
 
 ---
 
@@ -71,13 +79,12 @@ substitutions:
   friendlyname_left: Socket 1
   # Right Socket
   friendlyname_right: Socket 2
-  
+
   update_interval: 1s
 
 #################################
 
 wifi:
-  
   ap:
     ssid: DETA Outdoor Double Power Point
     password: ""
@@ -89,7 +96,7 @@ api:
 captive_portal:
 
 ota:
-    platform: esphome
+  platform: esphome
 
 esphome:
   name: ${devicename}
@@ -179,7 +186,7 @@ switch:
       - switch.turn_on: relay_1
     turn_off_action:
       - switch.turn_off: relay_1
-  
+
     # Right Switch (Templated)
   - platform: template
     name: ${friendlyname_right}
@@ -194,7 +201,6 @@ switch:
       - switch.turn_on: relay_2
     turn_off_action:
       - switch.turn_off: relay_2
-
 
 ## ------------------ ##
 ##  Power Monitoring  ##
@@ -218,8 +224,8 @@ sensor:
       filters:
         - throttle_average: ${update_interval}
         - calibrate_linear:
-          - 0.0 -> 0.0
-          - 120.0 -> 230.0
+            - 0.0 -> 0.0
+            - 120.0 -> 230.0
     power:
       name: "${friendlyname} Power"
       filters:

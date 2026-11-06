@@ -20,7 +20,10 @@ Hiking TOMZN (Tuya)
 
 ## Flashing info
 
-I flashed the compiled config using tasmotizer with no issues. Desolding the ESP-Board is required as the TX/RX pins are connected to the Tuya MCU, guide [here](https://github.com/krikk/Hiking-DDS238-2-WIFI-Din-Rail-Energy-Meter-flashing-Tasmota) for Tasmota with photo's.
+I flashed the compiled config using tasmotizer with no issues. Desolding the ESP-Board is required as the TX/RX pins are
+connected to the Tuya MCU, guide
+[available on GitHub](https://github.com/krikk/Hiking-DDS238-2-WIFI-Din-Rail-Energy-Meter-flashing-Tasmota) for Tasmota
+with photo's.
 
 ## GPIO Pinout
 

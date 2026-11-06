@@ -3,7 +3,7 @@ title: LSC smart plug with monitoring 3202087
 date-published: 2025-02-09
 type: plug
 standard: eu
-board: BK7231N
+board: bk72xx
 difficulty: 3
 ---
 
@@ -18,7 +18,8 @@ difficulty: 3
 
 ## Getting it up and running
 
-I followed this [guide](https://keetsupport.nl/2024/03/20/how-to-flash-lsc-power-plug-with-esphome) with one important note - soldering isn't required if you have oscilloscope test probe clips.
+I followed this [guide](https://keetsupport.nl/2024/03/20/how-to-flash-lsc-power-plug-with-esphome) with one important
+note - soldering isn't required if you have oscilloscope test probe clips.
 
 ## GPIO Pinout
 
@@ -38,7 +39,7 @@ I followed this [guide](https://keetsupport.nl/2024/03/20/how-to-flash-lsc-power
 esphome:
   name: sockact
   friendly_name: ${friendly_name}
-  
+
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
 
@@ -63,7 +64,6 @@ wifi:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
   ap:
-
 
 sensor:
   - platform: hlw8012
@@ -119,7 +119,7 @@ output:
 esphome:
   name: sockact
   friendly_name: ${friendly_name}
-  
+
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
 
@@ -132,9 +132,9 @@ captive_portal:
 
 substitutions:
   friendly_name: LSC Powerplug 1
-  voltage_divider: '795'
-  current_resistor: '0.001'
-  current_multiply: '0.450'
+  voltage_divider: "795"
+  current_resistor: "0.001"
+  current_multiply: "0.450"
 
 mdns:
 
@@ -226,11 +226,11 @@ sensor:
       return id(voltage).state * id(current).state;
     update_interval: never
     on_value:
-        component.update: power_factor
+      component.update: power_factor
   - platform: template
     name: "Power factor"
     id: power_factor
-    unit_of_measurement: ''
+    unit_of_measurement: ""
     device_class: power_factor
     lambda: |-
       return id(power).state / id(apparent_power).state;

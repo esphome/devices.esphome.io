@@ -11,7 +11,8 @@ difficulty: 3
 
 ## Product Description
 
-This is a wall mounted light dimmer for EU standard wall boxes. The rotary dimmer is available in different versions (WiFi / ZigBee). The WiFi version with WB3S module is suitable for ESPHome and can be flashed directly.
+This is a wall mounted light dimmer for EU standard wall boxes. The rotary dimmer is available in different versions
+(WiFi / ZigBee). The WiFi version with WB3S module is suitable for ESPHome and can be flashed directly.
 
 ## Flashing
 

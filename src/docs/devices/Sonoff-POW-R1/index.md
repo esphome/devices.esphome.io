@@ -9,7 +9,7 @@ difficulty: 3
 
 ## Product Images
 
-![A picture of the PCB inside of the SONOFF POWR1](/inside.jpg "inside")
+![A picture of the PCB inside of the SONOFF POWR1](./inside.jpg "inside")
 
 ## GPIO Pinout
 

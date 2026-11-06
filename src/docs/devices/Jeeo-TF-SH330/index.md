@@ -8,17 +8,17 @@ board: esp8266
 
 ## Product Images
 
-![alt text](/TF-SH330.jpg "Profile picture of device")
+![alt text](./TF-SH330.jpg "Profile picture of device")
 
-Inspired by the Tasmota template: https://templates.blakadder.com/jeeo_TF-SH330.html
+Inspired by the Tasmota template: [https://templates.blakadder.com/jeeo_TF-SH330.html](https://templates.blakadder.com/jeeo_TF-SH330.html)
 
 ## GPIO Pinout
 
-| Pin    | Function                   |
-| ------ | -------------------------- |
-| GPIO0  | Blue Status LED            |
-| GPIO13 | Switch Input               |
-| GPIO15 | Mains Relay                |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO0  | Blue Status LED |
+| GPIO13 | Switch Input    |
+| GPIO15 | Mains Relay     |
 
 ## Basic Configuration
 
@@ -98,5 +98,4 @@ light:
     internal: true
     output: led
     restore_mode: RESTORE_DEFAULT_OFF
-
 ```

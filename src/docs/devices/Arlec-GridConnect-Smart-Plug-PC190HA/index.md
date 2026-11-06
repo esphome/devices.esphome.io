@@ -7,7 +7,8 @@ board: esp8266
 ---
 
 Arlec Grid Connect products are a Tuya-based smart devices
-sold by Bunnings and Kmart respectively in Australia.  This configuration is valid for when the device has been converted to use an ESP8266 or is an older model that was sold with the ESP8266 from factory.
+sold by Bunnings and Kmart respectively in Australia.  This configuration is valid for when the device has been
+converted to use an ESP8266 or is an older model that was sold with the ESP8266 from factory.
 
 ![image](./PC190HA.png)
 

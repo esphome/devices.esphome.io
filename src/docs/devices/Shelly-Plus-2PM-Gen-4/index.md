@@ -10,18 +10,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function                    |
-| ------ | --------------------------- |
-| GPIO0  | LED (Inverted)              |
-| GPIO3  | Switch 2 input              |
-| GPIO4  | NTC                         |
-| GPIO5  | Switch 1 input              |
-| GPIO6  | SDA                         |
-| GPIO7  | SDL                         |
-| GPIO10 | Relay 2                     |
-| GPIO11 | Relay 1                     |
-| GPIO12 | Button                      |
-| GPIO33 | ade7953 IRQ                 |
+| Pin    | Function       |
+| ------ | -------------- |
+| GPIO0  | LED (Inverted) |
+| GPIO3  | Switch 2 input |
+| GPIO4  | NTC            |
+| GPIO5  | Switch 1 input |
+| GPIO6  | SDA            |
+| GPIO7  | SDL            |
+| GPIO10 | Relay 2        |
+| GPIO11 | Relay 1        |
+| GPIO12 | Button         |
+| GPIO33 | ade7953 IRQ    |
 
 The Shelly Plus 2PM Gen 4 is based on the ESP32-C6 (Single core, 160MHz, 8MB embedded flash)
 
@@ -34,7 +34,7 @@ esphome:
   name: 0-shelly2pm-gen-4
 
 esp32:
-  board: esp32-c6-devkitc-1
+  variant: esp32c6
   flash_size: 8MB
   framework:
     type: esp-idf
@@ -62,7 +62,6 @@ output:
   - id: relay_2_output
     platform: gpio
     pin: GPIO3
-
 
 binary_sensor:
   - id: shelly_2pm_gen4_switch_1
@@ -155,7 +154,7 @@ esphome:
   name: 0-shelly2pm-gen-4
 
 esp32:
-  board: esp32-c6-devkitc-1
+  variant: esp32c6
   flash_size: 8MB
   framework:
     type: esp-idf
@@ -298,7 +297,7 @@ binary_sensor:
       then:
         - switch.turn_off: relay_1
         - switch.turn_off: relay_2
-  
+
   - id: error_overpower_1
     name: Overpowering output 1
     device_class: problem
@@ -312,7 +311,7 @@ binary_sensor:
             condition:
               sensor.in_range:
                 id: sensor_current_1
-                above: 10  # This is model specific!
+                above: 10 # This is model specific!
     on_press:
       then:
         - switch.turn_off: relay_1
@@ -330,7 +329,7 @@ binary_sensor:
             condition:
               sensor.in_range:
                 id: sensor_current_2
-                above: 10  # This is model specific!
+                above: 10 # This is model specific!
     on_press:
       then:
         - switch.turn_off: relay_2

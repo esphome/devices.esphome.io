@@ -6,14 +6,15 @@ standard: us
 board: esp8266
 ---
 
-Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://amzn.to/39iCxEM)
+Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://www.amazon.com/dp/B074YGV2NK)
 
-At least two versions of this plug exist, but the only difference between the two is the pull-up on the pin for the button.
+At least two versions of this plug exist, but the only difference between the two is the pull-up on the pin for the
+button.
 
 ## Pictures
 
-![alt text](/zentec-outside.jpg "Outside of smart plug")
-![alt text](/zentec-inside.jpg "Inside view")
+![alt text](./zentec-outside.jpg "Outside of smart plug")
+![alt text](./zentec-inside.jpg "Inside view")
 
 ## GPIO Pinout
 
@@ -99,7 +100,8 @@ switch:
 
 ## Split Configuration
 
-If you have multiple of these sockets (likely since they come in packs), you may want to keep the shared code in one file and only put device specific information in files for each relay.
+If you have multiple of these sockets (likely since they come in packs), you may want to keep the shared code in one
+file and only put device specific information in files for each relay.
 
 zentec-common.yaml:
 

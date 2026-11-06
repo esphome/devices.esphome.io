@@ -7,18 +7,18 @@ board: esp8266
 ---
 
 ![alt text](athom_PG01V2-EU16A.webp "Athom Smart Plug PG01V2 EU16A")
-Maker: <https://www.athom.tech/>
+Maker: [https://www.athom.tech/](https://www.athom.tech/)
 
 Also on Aliexpress, with preflashed Tasmota or Homekit.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | CSE7766 Rx          |
-| GPIO5  | Button              |
-| GPIO12 | Relay               |
-| GPIO13 | LedLink             |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | CSE7766 Rx |
+| GPIO5  | Button     |
+| GPIO12 | Relay      |
+| GPIO13 | LedLink    |
 
 ## Basic Configuration
 
@@ -52,7 +52,7 @@ ota:
 web_server:
   port: 80
 
-# Time used for daily KWh usage  
+# Time used for daily KWh usage
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -132,8 +132,8 @@ sensor:
     name: "${upper_devicename} Total Daily Energy"
     power_id: "${devicename}Wattage"
     filters:
-        # Multiplication factor from W to kW is 0.001
-        - multiply: 0.001
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
     unit_of_measurement: kWh
     icon: mdi:clock-alert
   - platform: uptime

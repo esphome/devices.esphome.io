@@ -1,0 +1,139 @@
+/* <remote-yaml-include> — styling for inline yaml fetched at visit time.
+ *
+ * The pre/code is rendered inside Expressive Code's `.expressive-code`
+ * structure, so EC's CSS handles bg, padding, scrollbar, font, and the
+ * token colours (via the inline `--0/--1` styles emitted by the
+ * highlighter). The build-time remark plugin injects a hidden EC trigger
+ * code block on every page that uses a `url=` fence, so EC's stylesheet is
+ * always loaded — even on pages that have no other code blocks.
+ *
+ * This file only styles:
+ *   - the URL+Copy header strip above the code,
+ *   - the loading/error placeholder colours,
+ *   - the `<yaml-include-action>` Copy-!include button.
+ */
+
+remote-yaml-include {
+  display: block;
+  margin: 1em 0;
+}
+
+/* Collapse the bottom margin when an action button follows so it sits flush
+ * under the code block, like the `file=` blocks do. */
+remote-yaml-include:has(+ yaml-include-action) {
+  margin-bottom: 0;
+}
+
+/* Shared header strip — sits above the code block on both `file=` (build-time
+ * inlined) and `url=` (live-fetched) blocks, showing the github source URL.
+ * The remote-yaml header gets a Copy button child too; the file= header is
+ * link-only since EC's own copy button handles the yaml content. */
+remote-yaml-include .remote-yaml-header,
+.yaml-source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background-color: var(--sl-color-gray-6, var(--sl-color-bg-sidebar));
+  border: 1px solid var(--sl-color-hairline);
+  border-bottom: none;
+  border-radius: 0.4rem 0.4rem 0 0;
+  font-size: 0.8rem;
+}
+
+remote-yaml-include .remote-yaml-source,
+.yaml-source-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sl-color-text);
+  text-decoration: none;
+  font-family: var(--sl-font-system-mono);
+}
+
+remote-yaml-include .remote-yaml-source:hover,
+.yaml-source-link:hover {
+  text-decoration: underline;
+}
+
+remote-yaml-include .remote-yaml-copy {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--sl-color-text);
+  background-color: var(--sl-color-bg);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+remote-yaml-include .remote-yaml-copy:hover {
+  background-color: var(--sl-color-gray-6, var(--sl-color-bg-sidebar));
+}
+
+/* Square the top corners of the EC frame so it slots flush against the
+ * header strip above — EC's own border-radius would otherwise round it. */
+remote-yaml-include .expressive-code .frame,
+remote-yaml-include .expressive-code .frame pre,
+.yaml-source-header + .expressive-code .frame,
+.yaml-source-header + .expressive-code .frame pre {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Starlight's `.sl-markdown-content X + Y { margin-top: var(--sl-content-gap-y) }`
+ * rule lands a gap between the header and the EC wrapper because the wrapper
+ * isn't inside `.not-content`. Cancel it so the two parts read as one widget. */
+remote-yaml-include .remote-yaml-header + .expressive-code,
+.yaml-source-header + .expressive-code {
+  margin-top: 0;
+}
+
+/* Loading / error states override EC's token colours for placeholder text. */
+remote-yaml-include pre.remote-yaml-body[data-state="loading"] code,
+remote-yaml-include pre.remote-yaml-body[data-state="loading"] code * {
+  color: var(--sl-color-gray-3, var(--sl-color-text-accent)) !important;
+  font-style: italic;
+}
+
+remote-yaml-include pre.remote-yaml-body[data-state="error"] code,
+remote-yaml-include pre.remote-yaml-body[data-state="error"] code * {
+  color: var(--sl-color-red, #c1272d) !important;
+}
+
+/* Sibling action emitted after every yaml code block — sits flush under the
+ * code block, right-aligned, and copies the !include directive. */
+yaml-include-action {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.25rem 0 1rem 0;
+}
+
+yaml-include-action .yaml-include-copy {
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--sl-color-text);
+  background-color: var(--sl-color-gray-6, var(--sl-color-bg-sidebar));
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  font-family: var(--sl-font-system-mono);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+yaml-include-action .yaml-include-copy:hover {
+  background-color: var(--sl-color-bg);
+}
+
+yaml-include-action .yaml-include-copy.is-flashing {
+  color: var(--sl-color-accent-high);
+  border-color: var(--sl-color-accent);
+}

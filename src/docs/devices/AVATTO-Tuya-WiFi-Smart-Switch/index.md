@@ -14,12 +14,12 @@ board: bk72xx
 
 ## GPIO Pinout
 
-| Pin    | Function           |
-| ------ | ------------------ |
-| GPIO6  | Blue Status LED    |
-| GPIO8  | Button             |
-| GPIO14 | S1 Input           |
-| GPIO20 | Relais             |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO6  | Blue Status LED |
+| GPIO8  | Button          |
+| GPIO14 | S1 Input        |
+| GPIO20 | Relais          |
 
 ## Configuration
 
@@ -42,10 +42,10 @@ ota:
 
 wifi:
   networks:
-  - ssid: !secret wifi_ssid
-    password: !secret wifi_password
-  - ssid: "secondWiFi"
-    password: "secondWiFi"
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: "secondWiFi"
+      password: "secondWiFi"
 
 captive_portal:
 
@@ -66,7 +66,7 @@ binary_sensor:
       inverted: true
       mode: INPUT_PULLUP
     filters:
-     - delayed_on_off: 50ms
+      - delayed_on_off: 50ms
     on_press:
       then:
         - switch.toggle: relais
@@ -77,7 +77,7 @@ binary_sensor:
       inverted: true
       mode: INPUT_PULLUP
     filters:
-     - delayed_on_off: 50ms
+      - delayed_on_off: 50ms
     on_press:
       then:
         - switch.turn_on: relais

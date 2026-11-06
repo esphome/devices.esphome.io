@@ -5,19 +5,20 @@ type: misc
 standard: global
 board: esp32
 ---
+
 ![alt text](ProDinoESP32Ex_2.jpg "ProDinoESP32Ex")
 
 Manufacturer: [KMP Electronics](https://kmpelectronics.eu/shop/prodino-esp32ex/)
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO16 | TX RS485                           |
-| GPIO04 | RX RS485                           |
-| GPIO02 | flow_controll RS485                |
-| GPIO0  | WS2812B RBG Status LED             |
-| GPIO32 | mcp23s08_hub                       |
+| Pin    | Function               |
+| ------ | ---------------------- |
+| GPIO16 | TX RS485               |
+| GPIO04 | RX RS485               |
+| GPIO02 | flow_controll RS485    |
+| GPIO0  | WS2812B RBG Status LED |
+| GPIO32 | mcp23s08_hub           |
 
 ## Basic Configuration
 
@@ -27,7 +28,7 @@ esphome:
   name: prodino1
 
 esp32:
-  board: esp-wrover-kit
+  variant: esp32
 
 wifi:
   ssid: "ssid"
@@ -56,27 +57,27 @@ ota:
 #  - pin: GPIO21
 
 sensor:
- #optional onewire
- # - platform: dallas_temp
- #   address: 0xcb021564bbacffff
- #   name: "Ds18B20 Temperature"
+  #optional onewire
+  # - platform: dallas_temp
+  #   address: 0xcb021564bbacffff
+  #   name: "Ds18B20 Temperature"
 
   - platform: dht
     model: AM2302
     pin: GPIO21
     temperature:
-     name: "Living Room Temperature1"
+      name: "Living Room Temperature1"
     humidity:
-     name: "Living Room Humidity1"
+      name: "Living Room Humidity1"
     update_interval: 30s
 
   - platform: dht
     model: AM2302
     pin: GPIO22
     temperature:
-     name: "Living Room Temperature2"
+      name: "Living Room Temperature2"
     humidity:
-     name: "Living Room Humidity2"
+      name: "Living Room Humidity2"
     update_interval: 30s
 
 spi:
@@ -107,7 +108,7 @@ modbus_controller:
 # Modbus RS485 till here
 
 mcp23s08:
-  - id: 'mcp23s08_hub'
+  - id: "mcp23s08_hub"
     cs_pin: GPIO32
     deviceaddress: 0
 # Individual outputs

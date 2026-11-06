@@ -9,20 +9,20 @@ difficulty: 2
 ---
 
 ![alt text](currysmarter.jpg "CurrySmarter 16A v1.1 Plug")
-Maker: <https://currysmarter.com/>
+Maker: [https://currysmarter.com/](https://currysmarter.com/)
 
 Available on Amazon (preflashed with Tasmota)
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | HLWBL Sel_i         |
-| GPIO4  | Button_i            |
-| GPIO5  | Led_i               |
-| GPIO12 | Relay               |
-| GPIO13 | BL0937 CF           |
-| GIPO14 | HLWBL CF1           |
+| Pin    | Function    |
+| ------ | ----------- |
+| GPIO3  | HLWBL Sel_i |
+| GPIO4  | Button_i    |
+| GPIO5  | Led_i       |
+| GPIO12 | Relay       |
+| GPIO13 | BL0937 CF   |
+| GIPO14 | HLWBL CF1   |
 
 ## Basic Configuration
 
@@ -82,8 +82,8 @@ sensor:
       id: power
       filters:
         - calibrate_linear:
-          - 0.0000 -> 0.0000
-          - 17.7014 -> 16.000
+            - 0.0000 -> 0.0000
+            - 17.7014 -> 16.000
     update_interval: 10s
 
   - platform: total_daily_energy

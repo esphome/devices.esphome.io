@@ -12,7 +12,7 @@ difficulty: 3
 ## GPIO Pinout
 
 | Pin    | Function                           |
-| ------ | -----------------------------------|
+| ------ | ---------------------------------- |
 | GPIO00 | Push Button (HIGH = off, LOW = on) |
 | GPIO13 | Right LED (Green/Auto)             |
 | GPIO15 | Middle LED (Blue/WiFi)             |
@@ -27,10 +27,10 @@ RJ9 pins, when the connector is viewed from the contacts side, cables exiting at
 
 | Pin | Function               |
 | --- | ---------------------- |
-|  1  | Sensor 3.3V Power      |
-|  2  | Sensor Bus Data In/Out |
-|  3  | Not Connected          |
-|  4  | Sensor Ground          |
+| 1   | Sensor 3.3V Power      |
+| 2   | Sensor Bus Data In/Out |
+| 3   | Not Connected          |
+| 4   | Sensor Ground          |
 
 ## Configuration using DS18B20 temperature sensor
 
@@ -59,22 +59,21 @@ esphome:
   on_boot:
     - priority: 90
       then:
-      # Make sure the relay is in a known state at startup
-      - switch.turn_off: relay
-      # Default to running the climate control in Home mode
-      - climate.control:
-          id: climate_control
-          preset: "Home"
+        # Make sure the relay is in a known state at startup
+        - switch.turn_off: relay
+        # Default to running the climate control in Home mode
+        - climate.control:
+            id: climate_control
+            preset: "Home"
 
 esp32:
-  board: nodemcu-32s
-
+  variant: esp32
+  framework:
+    type: esp-idf
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: $device_name
-
 captive_portal:
 
 logger:
@@ -123,15 +122,12 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
     id: esp32_temp
-    lambda: return temperatureRead();
 
   # External DS18B20 Digital Temperature Sensor
-  - platform: dallas
+  - platform: dallas_temp
     index: 0
     name: $friendly_name Temperature
     id: temp
@@ -240,9 +236,9 @@ interval:
           - light.turn_off: wifi_status_led
 
 # DS18B20 Digital Temperature Sensor Hub
-dallas:
-  - pin: GPIO25
-    update_interval: 10s
+one_wire:
+  - platform: gpio
+    pin: GPIO25
 
 climate:
   - platform: thermostat
@@ -264,16 +260,16 @@ climate:
       - name: Home
         default_target_temperature_low: 20 °C
     on_state:
-    - if:
-        condition:
-          lambda: |-
-            return id(climate_control).mode == CLIMATE_MODE_OFF;
-        then:
-          - light.turn_off: auto_led
-    - if:
-        condition:
-          lambda: |-
-            return id(climate_control).mode == CLIMATE_MODE_HEAT;
-        then:
-          - light.turn_on: auto_led
+      - if:
+          condition:
+            lambda: |-
+              return id(climate_control).mode == CLIMATE_MODE_OFF;
+          then:
+            - light.turn_off: auto_led
+      - if:
+          condition:
+            lambda: |-
+              return id(climate_control).mode == CLIMATE_MODE_HEAT;
+          then:
+            - light.turn_on: auto_led
 ```

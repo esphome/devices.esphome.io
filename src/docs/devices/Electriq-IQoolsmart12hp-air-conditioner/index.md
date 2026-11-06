@@ -13,7 +13,7 @@ board: esp8266
 ## GPIO Pinout
 
 | Pin    | Function     |
-| ------ | -------------|
+| ------ | ------------ |
 | GPIO13 | UART Tuya RX |
 | GPIO15 | UART Tuya TX |
 

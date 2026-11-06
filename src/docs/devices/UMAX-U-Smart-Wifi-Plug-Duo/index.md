@@ -14,16 +14,16 @@ Leds for active sockets are not controlled separatelly, only through the switch.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO0  | Button2i            |
-| GPIO4  | HLWBL CF       ???  |
-| GPIO5  | HLWBL CF1      ???  |
-| GPIO12 | HLWBL SELi     ???  |
-| GPIO13 | Status LEDi         |
-| GPIO14 | Relay1              |
-| GPIO15 | Relay2              |
-| GPIO16 | Button1i            |
+| Pin    | Function       |
+| ------ | -------------- |
+| GPIO0  | Button2i       |
+| GPIO4  | HLWBL CF ???   |
+| GPIO5  | HLWBL CF1 ???  |
+| GPIO12 | HLWBL SELi ??? |
+| GPIO13 | Status LEDi    |
+| GPIO14 | Relay1         |
+| GPIO15 | Relay2         |
+| GPIO16 | Button1i       |
 
 ## Basic Configuration
 
@@ -114,8 +114,8 @@ sensor:
     name: "${plug_name} - daily"
     power_id: "${plug_name}_Wattage"
     filters:
-        # Multiplication factor from W to kW is 0.001
-        - multiply: 0.001
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
     unit_of_measurement: kWh
     icon: mdi:clock-alert
 
@@ -167,18 +167,18 @@ switch:
     pin: GPIO14
     id: relay1
     restore_mode: RESTORE_DEFAULT_OFF
-    name: '${plug_name} - Switch1'
+    name: "${plug_name} - Switch1"
     icon: mdi:power-socket-eu
-#    on_turn_on:
-#      - output.turn_on: led1
-#    on_turn_off:
-#      - output.turn_off: led1
+  #    on_turn_on:
+  #      - output.turn_on: led1
+  #    on_turn_off:
+  #      - output.turn_off: led1
 
   - platform: gpio
     pin: GPIO15
     id: relay2
     restore_mode: RESTORE_DEFAULT_OFF
-    name: '${plug_name} - Switch2'
+    name: "${plug_name} - Switch2"
     icon: mdi:power-socket-eu
 #    on_turn_on:
 #      - output.turn_on: led2

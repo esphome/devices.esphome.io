@@ -11,51 +11,51 @@ difficulty: 2
 
 ## Drivers
 
-* Processor: ESP32-WROVER-B
-* Touchscreen: `6336`
-* Display: ST7789 (using `ili9xxxx` plaform)
+- Processor: ESP32-WROVER-B
+- Touchscreen: `6336`
+- Display: ST7789 (using `ili9xxxx` plaform)
 
 ## GPIO Pinout
 
 ### SPI (used for display)
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO19 | clock   |
-| GPIO23 | mosi    |
-| GPIO25 | miso    |
-| GPIO22 | cs      |
-| GPIO21 | dc      |
-| GPIO18 | reset   |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO19 | clock    |
+| GPIO23 | mosi     |
+| GPIO25 | miso     |
+| GPIO22 | cs       |
+| GPIO21 | dc       |
+| GPIO18 | reset    |
 
 ### I²C (used for touchscreen)
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO4 | i2c SDA     |
-| GPIO0 | i2c SCL     |
+| Pin   | Function |
+| ----- | -------- |
+| GPIO4 | i2c SDA  |
+| GPIO0 | i2c SCL  |
 
 ### Backlight
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO5  | backlight   |
+| Pin   | Function  |
+| ----- | --------- |
+| GPIO5 | backlight |
 
 ### Mood Light
 
-| Pin     | Function      | Newer devices   |
-| ------- | ------------- | --------------- |
-| GPIO26  | red           | controls WS2811 |
-| GPIO32  | green         | unused          |
-| GPIO33  | blue          | unused          |
+| Pin    | Function | Newer devices   |
+| ------ | -------- | --------------- |
+| GPIO26 | red      | controls WS2811 |
+| GPIO32 | green    | unused          |
+| GPIO33 | blue     | unused          |
 
 ### Relay (3-gang switch model)
 
-| Pin    | Function      |
-| ------ | ------------- |
-| GPIO12  | relay #1   |
-| GPIO14  | relay #2   |
-| GPIO27  | relay #3   |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO12 | relay #1 |
+| GPIO14 | relay #2 |
+| GPIO27 | relay #3 |
 
 ### How To Flash
 
@@ -65,6 +65,11 @@ No soldering required.
 ### Example Configuration
 
 ```yaml
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
 psram:
   speed: 80MHz
 
@@ -146,6 +151,5 @@ lvgl:
     then:
       - light.turn_off: backlight
       - lvgl.pause:
-  pages:
-     ...
+  pages: ...
 ```

@@ -1,39 +1,44 @@
 {
   "name": "devices.esphome.io",
   "private": true,
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "This website is a repository of device configuration templates and setup guides for devices running ESPHome firmware.",
   "author": "",
   "license": "GPL-3.0",
-  "dependencies": {
-    "@rocketseat/gatsby-theme-docs": "^3.2.0",
-    "algoliasearch": "^4.14.2",
-    "gatsby": "^4.25.9",
-    "gatsby-plugin-algolia": "^0.26.0",
-    "gatsby-plugin-canonical-urls": "^4.25.0",
-    "gatsby-plugin-google-analytics": "^4.25.0",
-    "gatsby-plugin-google-gtag": "^4.25.0",
-    "gatsby-plugin-manifest": "^4.25.0",
-    "gatsby-plugin-netlify": "^5.0.1",
-    "gatsby-plugin-offline": "^5.25.0",
-    "gatsby-plugin-sitemap": "^5.24.0",
-    "prop-types": "^15.8.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-instantsearch-dom": "^6.35.0"
-  },
-  "keywords": [
-    "gatsby",
-    "rocketseat",
-    "gatsby-starter"
-  ],
-  "scripts": {
-    "build": "gatsby build",
-    "start": "gatsby develop",
-    "serve": "gatsby serve",
-    "clean": "gatsby clean"
-  },
+  "type": "module",
   "engines": {
-    "node": "18"
+    "node": ">=22.12.0",
+    "npm": ">=9.6.5"
+  },
+  "scripts": {
+    "dev": "npm run validate-devices && astro dev --host",
+    "build": "npm run validate-devices && astro build",
+    "preview": "astro preview",
+    "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
+    "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
+    "validate-esphome": "tsx scripts/validate-esphome-configs.ts",
+    "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
+    "check-workflow-scripts": "for f in .github/scripts/*.cjs; do node --check \"$f\" || exit 1; done",
+    "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",
+    "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
+    "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",
+    "check-links": "tsx scripts/check-links.ts",
+    "wrap-markdown": "tsx scripts/wrap-markdown-lines.ts",
+    "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.3.1",
+    "gray-matter": "^4.0.3",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@esphome/netlify-plugin-cloudflare-cache-purge": "github:esphome/netlify-plugin-cloudflare-cache-purge#v1.0.1",
+    "@types/node": "^26.4.1",
+    "js-yaml": "^5.5.0",
+    "tsx": "^4.23.13",
+    "vfile": "^6.0.3"
   }
 }

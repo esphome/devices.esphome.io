@@ -3,7 +3,7 @@ title: LEDVANCE E27 DIM Light 806lm
 date-published: 2025-03-21
 type: light
 standard: eu
-board: bk27xx
+board: bk72xx
 ---
 
 Product ID: AC33908

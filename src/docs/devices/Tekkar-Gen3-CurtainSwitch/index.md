@@ -9,16 +9,16 @@ difficulty: 4
 
 ## GPIO Pinout
 
-| Pin    | Function                            |
-| ------ | ----------------------------------- |
-| P23    | Green LED top button (inverted)     |
-| P9     | blue LED all buttons (inverted)     |
-| P26    | Red LED middle button (inverted)    |
-| P10    | Open button                         |
-| P7     | Stop button                         |
-| P8     | Close button                        |
-| P14    | Open Relay                          |
-| P24    | Close Relay                         |
+| Pin | Function                         |
+| --- | -------------------------------- |
+| P23 | Green LED top button (inverted)  |
+| P9  | blue LED all buttons (inverted)  |
+| P26 | Red LED middle button (inverted) |
+| P10 | Open button                      |
+| P7  | Stop button                      |
+| P8  | Close button                     |
+| P14 | Open Relay                       |
+| P24 | Close Relay                      |
 
 ## General
 
@@ -30,12 +30,16 @@ The switch uses the CB3S BK7231N chip.
 
 ## Flashing/Soldering
 
-To flash the chip, the front cover needs to be removed. After removing it, the circuit board can be taken out by pulling it off. On the bottom side of the circuit board, you will find the CB3S chip. Connect `RX1` (`P10`), `TX1` (`P11`), `GND` and `3V3` to a USB to TTL serial adapter. For a stable connection, the easiest method is to solder the four pins.
+To flash the chip, the front cover needs to be removed. After removing it, the circuit board can be taken out by pulling
+it off. On the bottom side of the circuit board, you will find the CB3S chip. Connect `RX1` (`P10`), `TX1` (`P11`),
+`GND` and `3V3` to a USB to TTL serial adapter. For a stable connection, the easiest method is to solder the four pins.
+
 > Note: In my case, it was necessary to desolder the entire chip because the connection could not be established.
 
 ![CB3S Pinout](cb3s.png "CB3S Pinout")
 
-For flashing, you can use `ltchiptool`. Once you have soldered and connected, start `ltchiptool`. While it is actively trying to connect, briefly bridge either one of the `CEN` pins to ground and then release.
+For flashing, you can use `ltchiptool`. Once you have soldered and connected, start `ltchiptool`. While it is actively
+trying to connect, briefly bridge either one of the `CEN` pins to ground and then release.
 
 ## Basic Configuration
 
@@ -82,12 +86,12 @@ cover:
     open_action:
       - switch.turn_off: relay_close
       - switch.turn_on: relay_open
-      - delay: 16s                      # Adjust according to your setup
+      - delay: 16s # Adjust according to your setup
       - switch.turn_off: relay_open
     close_action:
       - switch.turn_off: relay_open
       - switch.turn_on: relay_close
-      - delay: 16s                      # Adjust according to your setup
+      - delay: 16s # Adjust according to your setup
       - switch.turn_off: relay_close
     stop_action:
       - switch.turn_off: relay_open
@@ -127,7 +131,6 @@ light:
     id: led_blue
     output: led_blue_out
     restore_mode: RESTORE_DEFAULT_OFF
-
 # Status LED
 #status_led:
 #  pin:

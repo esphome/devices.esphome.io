@@ -8,9 +8,12 @@ board: esp8266
 
 ## General Notes
 
-This works with a typical rotary encoder hardware, and simply sets the volume on a Home Assistant media_player via automations.yaml. This does present some problems, for example if the esp device is restarted, the volume mutes to 0.0. I haven't bothered to fix this, but of course contributions welcome :)
+This works with a typical rotary encoder hardware, and simply sets the volume on a Home Assistant media_player via
+automations.yaml. This does present some problems, for example if the esp device is restarted, the volume mutes to 0.0.
+I haven't bothered to fix this, but of course contributions welcome :)
 
-These devices usually have a built in momentary switch which you activate by pressing on the control knob. You could use this, for example, to change the device that is being controlled. That would require some more HA automation.
+These devices usually have a built in momentary switch which you activate by pressing on the control knob. You could use
+this, for example, to change the device that is being controlled. That would require some more HA automation.
 
 You can also use this to control, for example, smart bulbs.
 
@@ -70,8 +73,6 @@ sensor:
 
 ## Home Assistant automations.yaml
 
-{% raw %}
-
 ```yaml
 - id: Adjust Volume on Rotary Encoder Move
   alias: Rotary Volume Change
@@ -84,5 +85,3 @@ sensor:
       data_template:
         volume_level: "{{ states.sensor.rotary_encoder.state | float / 100 }}"
 ```
-
-{% endraw %}
