@@ -97,7 +97,8 @@ it after a timeout, you can add the following:
 
 ## Temperature and humidity sensor
 
-The TR variant has an SHT20 at I2C address 0x40, which works with the `htu21d` platform ([docs](https://esphome.io/components/sensor/htu21d/)):
+The TR variant has an SHT20 at I2C address 0x40, which works with the `htu21d` platform
+([docs](https://esphome.io/components/sensor/htu21d/)):
 
 ```yaml file=SHT20.yaml
 
