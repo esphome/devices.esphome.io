@@ -86,18 +86,21 @@ The display needs a 3-wire SPI bus only to send its init sequence. Because GPIO4
 lines, the `spi` pins must be declared with `allow_other_uses`, as in the configuration above. The display model
 sends the init sequence before the RGB interface starts, which is required for this sharing to work.
 
+## Backlight
+
+By default, the screen will turn on the backlight, but if you want to take control of it, ie. to turn it off or dim
+it after a timeout, you can add the following:
+
+```yaml file=backlight.yaml
+
+```
+
 ## Temperature and humidity sensor
 
 The TR variant has an SHT20 at I2C address 0x40, which works with the `htu21d` platform ([docs](https://esphome.io/components/sensor/htu21d/)):
 
-```yaml inline
-sensor:
-  - platform: htu21d
-    temperature:
-      name: Temperature
-    humidity:
-      name: Humidity
-    update_interval: 60s
+```yaml file=SHT20.yaml
+
 ```
 
 The sensor sits inside the enclosure next to the ESP32 and the display, so it will read higher than the room

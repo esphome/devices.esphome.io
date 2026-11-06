@@ -49,17 +49,3 @@ touchscreen:
       x_max: 480
       y_min: 0
       y_max: 480
-
-# Uncomment the following sections to take control of the backlight
-# output:
-#   - platform: ledc
-#     pin: GPIO5
-#     id: backlight_led
-#     frequency: 5kHz
-
-# light:
-#   - platform: monochromatic
-#     output: backlight_led
-#     name: Backlight
-#     id: backlight
-#     restore_mode: ALWAYS_ON

@@ -1,0 +1,8 @@
+sensor:
+  - platform: htu21d
+    temperature:
+      name: Temperature
+    humidity:
+      name: Humidity
+    update_interval: 60s
+
