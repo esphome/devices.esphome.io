@@ -29,12 +29,15 @@ Available from [M5Stack](https://docs.m5stack.com/en/core/AtomS3R).
 | Pin     | Function       |
 | ------- | -------------- |
 | GPIO 0  | I2C SCL        |
+| GPIO 1  | Grove (white)  |
+| GPIO 2  | Grove (yellow) |
 | GPIO 14 | Display CS     |
 | GPIO 15 | SPI CLK        |
 | GPIO 21 | SPI MOSI       |
 | GPIO 41 | Button         |
 | GPIO 42 | Display DC     |
 | GPIO 45 | I2C SDA        |
+| GPIO 47 | IR LED         |
 | GPIO 48 | Display Reset  |
 
 ## I2C Devices
@@ -49,17 +52,11 @@ appearing directly on the main bus.
 
 ## Basic Configuration
 
-<!-- TODO: esphome/esphome#18436 and #18453 are pending merge into a release. Once both land,
-     remove the external_components: override in config.yaml and delete this paragraph. -->
+This configuration requires ESPHome 2026.11 or newer, which adds the BMM150 support for the `bmi270` platform and the
+`lp5562` output component.
 
-The IMU (`bmi270`, with BMM150 auxiliary support) and the display backlight driver (`lp5562`) are
-both driven by upstream ESPHome platforms that are currently pending merge as
-[esphome/esphome#18436](https://github.com/esphome/esphome/pull/18436) and
-[esphome/esphome#18453](https://github.com/esphome/esphome/pull/18453). Until those land in a
-release, the config below pulls them in directly via `external_components:` — remove that block
-once both PRs are merged.
-
-BMI270 also requires a large I2C buffer, hence the `build_flags: -DI2C_BUFFER_LENGTH=8193`.
+If the BMI270 fails to read over I2C, uncomment the `build_flags: -DI2C_BUFFER_LENGTH=8193` line in the `esphome:`
+block to enlarge the Arduino I2C buffer.
 
 The display uses the `mipi_spi` platform with the built-in `M5STACK-ATOMS3R-GC9107` model, which already
 supplies the correct dimensions, offsets, and pin assignments for this board's GC9107 controller. That model
@@ -82,28 +79,11 @@ bottom, `90` at the left, and `270` at the right.
 ## Display All Sensor Values
 
 The basic configuration above only prints "Hello World!" on the display. To turn it into a small
-IMU dashboard, add a smaller font (the default 20pt font is too large to fit ten readings on a
-128x128 screen) and replace the `display:` lambda with one that prints the accelerometer,
+IMU dashboard, add the file below. It adds a smaller font (the default 20pt font is too large to fit ten
+readings on a 128x128 screen) and replaces the `display:` lambda with one that prints the accelerometer,
 gyroscope, magnetometer, temperature, and current backlight brightness:
 
-```yaml inline
-font:
-  - file: "gfonts://Roboto"
-    id: font_mini
-    size: 10
-
-display:
-  - platform: mipi_spi
-    model: M5STACK-ATOMS3R-GC9107
-    lambda: |-
-      it.printf(0, 0, id(font_mini), "AX %.2f AY %.2f", id(imu_accel_x).state, id(imu_accel_y).state);
-      it.printf(0, 10, id(font_mini), "AZ %.2f", id(imu_accel_z).state);
-      it.printf(0, 20, id(font_mini), "GX %.1f GY %.1f", id(imu_gyro_x).state, id(imu_gyro_y).state);
-      it.printf(0, 30, id(font_mini), "GZ %.1f", id(imu_gyro_z).state);
-      it.printf(0, 40, id(font_mini), "MX %.1f MY %.1f", id(imu_mag_x).state, id(imu_mag_y).state);
-      it.printf(0, 50, id(font_mini), "MZ %.1f", id(imu_mag_z).state);
-      it.printf(0, 60, id(font_mini), "Temp %.1f C", id(imu_temperature).state);
-      it.printf(0, 70, id(font_mini), "Backlight %.0f%%", id(display_backlight).current_values.get_brightness() * 100.0f);
+```yaml file=sensor-dashboard.yaml
 ```
 
 ## Use Cases

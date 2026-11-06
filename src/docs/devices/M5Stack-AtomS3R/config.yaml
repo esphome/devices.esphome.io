@@ -1,8 +1,8 @@
 esphome:
   name: m5stack-atoms3r
   friendly_name: M5Stack AtomS3R
-# Required for the BMI270's I2C reads
-build_flags: -DI2C_BUFFER_LENGTH=8193
+  # If the BMI270 fails to read over I2C, uncomment to enlarge the Arduino I2C buffer:
+  # build_flags: -DI2C_BUFFER_LENGTH=8193
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -13,14 +13,6 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
-
-# TODO: drop this override once esphome/esphome#18436 (bmi270 BMM150 aux
-# support) and #18453 (lp5562) are merged into a release.
-external_components:
-  - source: github://pr#18436
-    components: [bmi270]
-  - source: github://pr#18453
-    components: [lp5562]
 
 wifi:
   ap:
@@ -127,6 +119,7 @@ spi:
 
 display:
   - platform: mipi_spi
+    id: main_display
     model: M5STACK-ATOMS3R-GC9107
     rotation: 0           # 180 = USB-C port is bottom, 90 = port is left, 270 = port is right
     lambda: |-
