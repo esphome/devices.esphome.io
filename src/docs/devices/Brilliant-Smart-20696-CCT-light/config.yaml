@@ -1,0 +1,32 @@
+substitutions:
+  device_name: brilliantsmart-cct-light
+  friendly_name: BrilliantSmart CCT Light
+  device_description: Brilliant Lighting BL20696 8.5W 800lm globe with CCT support.
+
+esphome:
+  name: $device_name
+  comment: $device_description
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+
+logger:
+wifi:
+  ap: {}
+
+output:
+  - platform: esp8266_pwm
+    id: ww_color_temp
+    pin: GPIO12
+  - platform: esp8266_pwm
+    id: cw_color_temp
+    pin: GPIO14
+
+light:
+  - platform: cwww
+    name: $friendly_name
+    cold_white: cw_color_temp
+    warm_white: ww_color_temp
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
