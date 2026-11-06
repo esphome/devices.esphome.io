@@ -31,9 +31,10 @@ To flash the controller, open up the controller and take the board out.
 
 ![Picture of the board](board.jpg "Picture of the board")
 
-On the back of the board there are 2 pins on the Tuya CBU module you need to solder wires to.
-Please look up a Tuya CBU Module Pinout
-You will need to solder to the `TX1` and `RX1` pins (optionally also the `CEN` pin)
+Use a Tuya CBU module pinout to locate `TX1`, `RX1`, and `GND` on the back of the board.
+Connect module `TX1` to the flasher's RX, module `RX1` to its TX, and board `GND` to the flasher's GND.
+Use 3.3 V UART logic even when powering the board through its 5 V USB input.
+Optionally, solder a wire to `CEN` to make resetting the module easier.
 
 Alternatively if you are a bit creative you can try to use some wires and some pins and hold them to the required points.
 This is not recommended but is an option if you are very bad with soldering or can't for some reason.
