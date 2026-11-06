@@ -13,6 +13,14 @@ esphome:
 esp8266:
   board: esp07
 
+# Enable logging
+# baud_rate: 0 is required, because the Tuya UART (GPIO15/GPIO13) is the
+# swapped hardware UART0, which the logger would otherwise also use.
+# Logs remain available via the API and the web server.
+logger:
+  baud_rate: 0
+  level: $log_level
+
 # Enable Web server
 web_server:
   port: 80
