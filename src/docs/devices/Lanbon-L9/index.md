@@ -60,8 +60,8 @@ Note, programming the proximity sensor for different sensitivity, etc. is not ye
 
 ## How to Flash
 
-1. Open the switch, by removing the terminal covers and the 4 small screws on the cornors.
-1. The front part of hte switch should "pop off", with a small amount of pressure.
+1. Open the switch, by removing the 4 small screws in the corners, or by prying the back cover (newer model).
+1. The front part of the switch should "pop off", with a small amount of pressure.
 1. Connect a USB level shifter to the pin header on the front panel, using the pinout below. Note, you must provide 5v
    power, while the Tx/Rx pins use a 3.3v level.
 1. Connect the GPIO0 pin to ground to put the ESP32 into the flash boot mode.
@@ -102,6 +102,7 @@ wifi:
   password: !secret wifi_password
 
 psram:
+  mode: octal
   speed: 80MHz
 
 output:

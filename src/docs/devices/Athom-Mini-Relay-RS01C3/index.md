@@ -32,7 +32,7 @@ Maximum support current 10A
 | GPIO7  | Led        |
 | GPIO20 | CSE7766 RX |
 
-## Basic Configuration
+## Configuration
 
-The [Latest configuration](https://github.com/athom-tech/esp32-configs/blob/main/athom-mini-relay-v2.yaml)
-can be found on Athom's GitHub repo.
+```yaml url=https://github.com/athom-tech/esp32-configs/blob/main/athom-mini-relay-v2.yaml
+```

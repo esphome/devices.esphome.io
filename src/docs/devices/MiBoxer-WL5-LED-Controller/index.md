@@ -138,12 +138,14 @@ number:
 select:
   - platform: tuya
     name: Mode
-    enum_datapoint: 21
+    enum_datapoint: 104
     optimistic: true
     options:
-      0: White
-      1: Color
-      2: Scene
+      0: "Single colour"
+      1: "Dual white"
+      2: "RGB"
+      3: "RGBW"
+      4: "RGBW + CCT"
     icon: mdi:menu-open
     entity_category: config
 ```

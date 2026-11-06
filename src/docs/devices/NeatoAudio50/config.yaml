@@ -1,0 +1,9 @@
+substitutions:
+  id: "1"
+  name: audio-${id}
+  friendly_name: "NeatoFx Audio ${id}"
+
+packages:
+  board: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/boards/rev2_4.yaml@main
+  rftx: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/boards/common/rftx_none.yaml@main
+  config: github://CodeMakesItGo/NeatoFx_Public/Audio/NeatoAudio50/configs/home_assistant.yaml@main

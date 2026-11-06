@@ -16,7 +16,7 @@ Possibiliity of wireless voice control via Alexa or Google home."
 
 Also known as C152547 WIFI LED Cord Dimmer is a dimmer based on Tuya, with 2 microcontrollers.
 The dimmer side is controlled by stm microcontroller (Tuya MCU), and the Wi-Fi functionality
-by a [**Tuya WR3**](https://developer.tuya.com/en/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
+by a [**Tuya WR3**](https://developer.tuya.com/docs/iot/wr3-module-datasheet?id=K9g3ainzbj9z1) module.
 
 ### Specs
 
@@ -110,6 +110,7 @@ ltchiptool flash write realtek-ambz firmware.uf2
 ## Basic configuration
 
 ```yaml
+
 esphome:
   name: Ledkia-LED-Cord-DIMMER
   friendly_name: Ledkia LED Cord DIMMER Switch
@@ -155,4 +156,65 @@ wifi:
 
 captive_portal:
     
+```
+
+## ESP32 migration
+
+Stability of WR3 is not the best, changing the WR3 for a ESP32 module is recommended.
+I changed the WR3 for ESP12F WT0132C6-S5. You will have to check pad and footprint
+compatibility if choosing other module.
+
+Be aware of the thermal fuse in the board, it is 130C rated and will trigger pretty easilly.
+It is very important to disable uart logging (baud_rate: 0), as the pins used by the
+tuya MCU are the same as the default UART port of ESP12F WT0132C6-S5.
+
+```yaml
+
+esphome:
+  name: Ledkia-LED-Cord-DIMMER
+  friendly_name: Ledkia LED Cord DIMMER Switch
+
+esp32:
+  board: esp32-c6-devkitc-1
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: GPIO17
+  tx_pin: GPIO16
+  baud_rate: 9600
+
+tuya:
+
+# Create a light using the dimmer
+light:
+  - platform: "tuya"
+    name: "Luz"
+    dimmer_datapoint: 2
+    switch_datapoint: 1
+    max_value: 1000
+    icon: mdi:lamp
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Dimmer-C6 Fallback Hotspot"
+    password: !secret wifi_password
+
+captive_portal:
+
 ```

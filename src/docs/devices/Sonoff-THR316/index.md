@@ -68,13 +68,12 @@ esphome:
 
 esp32:
   variant: esp32
-
+  framework:
+    type: esp-idf
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: $device_name
-
 captive_portal:
 
 logger:
@@ -123,15 +122,12 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
-  - platform: template
-    name: $friendly_name ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
     id: esp32_temp
-    lambda: return temperatureRead();
 
   # External DS18B20 Digital Temperature Sensor
-  - platform: dallas
+  - platform: dallas_temp
     index: 0
     name: $friendly_name Temperature
     id: temp
@@ -240,9 +236,9 @@ interval:
           - light.turn_off: wifi_status_led
 
 # DS18B20 Digital Temperature Sensor Hub
-dallas:
-  - pin: GPIO25
-    update_interval: 10s
+one_wire:
+  - platform: gpio
+    pin: GPIO25
 
 climate:
   - platform: thermostat

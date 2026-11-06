@@ -81,7 +81,7 @@ captive_portal:
 
 ota:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time

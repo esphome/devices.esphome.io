@@ -26,7 +26,7 @@ difficulty: 3
 
 Based on Sonoff POW Elite 20a (POWR320D) (Source: [https://devices.esphome.io/devices/Sonoff-POW-Elite-20a](https://devices.esphome.io/devices/Sonoff-POW-Elite-20a)).
 
-To get the correct current and power values, the measurement must be divided by the PI number.
+To get the correct current and power values, the measurement must be divided by the M_PI constant.
 
 ```yaml
 # Basic Config
@@ -46,6 +46,8 @@ esphome:
 
 esp32:
   variant: esp32
+  framework:
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -83,8 +85,8 @@ sensor:
       accuracy_decimals: 3
       icon: mdi:current-ac
       filters:
-        # Measurement divided by the PI number
-        - lambda: return x / PI;
+        # Measurement divided by the M_PI constant
+        - lambda: return x / M_PI;
     voltage:
       name: Voltage
       id: v_sensor
@@ -94,8 +96,8 @@ sensor:
       name: Power
       id: w_sensor
       filters:
-        # Measurement divided by the PI number
-        - lambda: return x / PI;
+        # Measurement divided by the M_PI constant
+        - lambda: return x / M_PI;
       icon: mdi:flash
       on_value_range:
         - above: 4.0
@@ -118,13 +120,9 @@ sensor:
       # Multiplication factor from W to kW is 0.001
       - multiply: 0.001
 
-  - platform: template
+  - platform: internal_temperature
     name: ESP32 Internal Temp
-    device_class: temperature
-    unit_of_measurement: °C
     id: esp32_temp
-    icon: mdi:thermometer
-    lambda: return temperatureRead();
 
   - platform: template
     name: Power Factor

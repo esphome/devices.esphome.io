@@ -57,14 +57,16 @@ logger:
 
 api:
   encryption:
-    key: !secret api_encryption_key
+    key: "" # Add your API encryption key here
 
 ota:
-  password: !secret ota_password
+  - platform: esphome
+    password: "" # Add your OTA password here
 
 remote_transmitter:
   pin: GPIO26
   carrier_duty_percent: 100%
+  non_blocking: true
 
 remote_receiver:
   pin:
@@ -78,11 +80,11 @@ remote_receiver:
     value: 26us
   idle: 1500us
   buffer_size: 15kB
-  memory_blocks: 5
-  clock_divider: 160
+  rmt_symbols: 320
+  clock_resolution: 500000
   on_abbwelcome:
     then:
-      - lambda: "id(doorbell_intercom).publish_state(x.to_string().c_str());"
+      - lambda: "char buf[192]; x.format_to(buf, 192); id(doorbell_intercom).publish_state(buf);"
       - if:
           condition:
             and:
@@ -186,5 +188,7 @@ button:
           data: [0x00]
 
 status_led:
-  pin: GPIO2
+  pin:
+    number: GPIO2
+    ignore_strapping_warning: true
 ```

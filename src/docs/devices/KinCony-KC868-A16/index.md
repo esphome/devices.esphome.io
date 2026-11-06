@@ -39,6 +39,7 @@ ESPHome installation methods.
 ```yaml
 esphome:
   name: kc868-a16
+  friendly_name: Some more HA user friendly text
 
 esp32:
   variant: esp32
@@ -63,7 +64,9 @@ ethernet:
   type: LAN8720
   mdc_pin: GPIO23
   mdio_pin: GPIO18
-  clk_mode: GPIO17_OUT
+  clk:
+    pin: GPIO17
+    mode: CLK_OUT
   phy_addr: 0
 
 uart:

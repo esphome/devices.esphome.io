@@ -129,19 +129,7 @@ i2c:
 
 display:
   - platform: mipi_spi
-    model: ILI9341
-    cs_pin: GPIO5
-    dc_pin: GPIO15
-    data_rate: 40MHz
-    invert_colors: true
-    pixel_mode: 18bit
-    dimensions:
-      width: 320
-      height: 240
-    transform: # must be explicitly set
-      swap_xy: false
-      mirror_x: false
-      mirror_y: false
+    model: M5CORE2
     show_test_card: true
 
 touchscreen:
@@ -217,7 +205,7 @@ time:
 
 ## Notes
 
-- **Display**: works reliably with `mipi_spi` (ILI9341)
+- **Display**: works reliably with `mipi_spi` (M5CORE2)
 - **Touchscreen**: works well with `ft63x6`, including virtual button regions (A/B/C)
 - **MPU6886 IMU**: provides data for accelerometer, gyroscope, and temperature. Temperature readings are erratic and
   inaccurate
