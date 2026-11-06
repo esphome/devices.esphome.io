@@ -19,7 +19,7 @@ flash and 8MB PSRAM and sports Ethernet with PoE and an external antenna for bet
 great.
 
 The sugar on top is that it costs only ~$24 on their
-[website](https://store.gl-inet.com/products/gl-s10-bluetooth-iot-gateway) or
+[website](https://www.gl-inet.com/products/gl-s10/) or
 [AliExpress](https://www.aliexpress.us/item/3256803802198078.html).
 
 ## Disassembly
@@ -102,7 +102,7 @@ Click “LOGS & CONSOLE” to check if the Bluetooth proxy starts properly. It s
 
 Configuration file was made to mimic the original functions as close as possible. That means the Power LED will always
 be on and Bluetooth LED turns on when connected to Home Assistant or other API endpoint. Network LED serves as a
-[status LED](https://esphome.io/components/status_led.html).
+[status LED](https://esphome.io/components/status_led/).
 
 I2C ports are preconfigured to the CLK and DAT pin holes on the PCB which makes the GL-S10 expandable. During my testing
 I connected a BH1750 illumination sensor and it just worked, zero problems. I would warn against putting any temperature

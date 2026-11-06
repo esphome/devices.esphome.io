@@ -33,15 +33,17 @@ your devices as soon as possible.
 | ------ | ----------------------------------------------- |
 | GPIO0  | Push Button (HIGH = off, LOW = on)              |
 | GPIO4  | Small Relay (Dry Contact)                       |
-| GPIO19 | Large/Main Relay pin 1, pull high for relay ON  |
-| GPIO22 | Large/Main Relay pin 2, pull high for relay OFF |
 | GPIO5  | Display (TM1621) Data                           |
+| GPIO13 | Right LED (Green)                               |
+| GPIO15 | Middle LED (Blue)                               |
+| GPIO16 | Left LED (Red)                                  |
 | GPIO17 | Display (TM1621) CS                             |
 | GPIO18 | Display (TM1621) Write                          |
+| GPIO19 | Large/Main Relay pin 1, pull high for relay ON  |
+| GPIO22 | Large/Main Relay pin 2, pull high for relay OFF |
 | GPIO23 | Display (TM1621) Read                           |
-| GPIO16 | Left LED (Red)                                  |
-| GPIO15 | Middle LED (Blue)                               |
-| GPIO13 | Right LED (Green)                               |
+| GPIO25 | Pin 2 of the RJ-9 connector                     |
+| GPIO27 | Pin 1 of the RJ-9 connector                     |
 
 ## Basic Configuration
 

@@ -12,7 +12,7 @@ Data can be gathered from your Pentair Pentek Intellidrive PID Variable Frequenc
 with a PID10 Device.
 
 The Intellidrive provides a 2-wire RS485 interface. Wire up a an RS485 transceiver like MAX485 to an ESP32 to interface
-with the device using Esphome's [Modbus Component](https://esphome.io/components/modbus.html)
+with the device using Esphome's [Modbus Component](https://esphome.io/components/modbus/)
 
 ## Modbus Interface Notes
 
@@ -74,43 +74,168 @@ modbus_controller:
     setup_priority: -10
     update_interval: 10s
 
-sensor:
-  # SETTINGS PARAMS --------------
-
-    # software version is a string, low-byte first
+select:
   - platform: modbus_controller
     modbus_controller_id: modctrl2
-    address: 0x0000
-    name: "AOC Software Version"
-    register_type: holding
-    value_type: RAW
-    register_count: 10
-    accuracy_decimals: 2
-    lambda: |-
-      if (data.size() < item->offset + 20) return NAN;
-      std::string temp;
-      std::string result;
-      bool found_dot = false;
+    name: "Setpoint Int"
+    id: setpoint_int
+    address: 0x00DA
+    value_type: U_WORD
+    optimistic: True
+    optionsmap:
+      "15 PSI": 103
+      "16 PSI": 110
+      "17 PSI": 117
+      "18 PSI": 124
+      "19 PSI": 131
+      "20 PSI": 138
+      "21 PSI": 145
+      "22 PSI": 152
+      "23 PSI": 159
+      "24 PSI": 165
+      "25 PSI": 172
+      "26 PSI": 179
+      "27 PSI": 186
+      "28 PSI": 193
+      "29 PSI": 200
+      "30 PSI": 207
+      "31 PSI": 214
+      "32 PSI": 221
+      "33 PSI": 228
+      "34 PSI": 234
+      "35 PSI": 241
+      "36 PSI": 248
+      "37 PSI": 255
+      "38 PSI": 262
+      "39 PSI": 269
+      "40 PSI": 276
+      "41 PSI": 283
+      "42 PSI": 290
+      "43 PSI": 296
+      "44 PSI": 303
+      "45 PSI": 310
+      "46 PSI": 317
+      "47 PSI": 324
+      "48 PSI": 331
+      "49 PSI": 338
+      "50 PSI": 345
+      "51 PSI": 352
+      "52 PSI": 359
+      "53 PSI": 365
+      "54 PSI": 372
+      "55 PSI": 379
+      "56 PSI": 386
+      "57 PSI": 393
+      "58 PSI": 400
+      "59 PSI": 407
+      "60 PSI": 414
+      "61 PSI": 421
+      "62 PSI": 427
+      "63 PSI": 434
+      "64 PSI": 441
+      "65 PSI": 448
+      "66 PSI": 455
+      "67 PSI": 462
+      "68 PSI": 469
+      "69 PSI": 476
+      "70 PSI": 483
+      "71 PSI": 490
+      "72 PSI": 496
+      "73 PSI": 503
+      "74 PSI": 510
+      "75 PSI": 517
+      "76 PSI": 524
+      "77 PSI": 531
+      "78 PSI": 538
+      "79 PSI": 545
+      "80 PSI": 552
+      "81 PSI": 558
+      "82 PSI": 565
+      "83 PSI": 572
+      "84 PSI": 579
+      "85 PSI": 586
 
-      for (int i = 0; i < 20; i+=2) {
-        char chars[] = {
-          static_cast<char>(data[item->offset + i]),      // low byte
-          static_cast<char>(data[item->offset + i + 1]),  // high byte
-        };
-        for (char c : chars) {
-          temp += c;
-        }
-      }
-      for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
-          char c = *it;
-          if (c == '.' && !found_dot) {
-              result += c; found_dot = true;
-          } else if (c >= '0' && c <= '9') {
-              result += c;
-          }
-      }
-      return std::stof(result);
+  - platform: modbus_controller
+    modbus_controller_id: modctrl2
+    address: 0x00E5
+    name: "Setpoint Ext"
+    id: setpoint_ext
+    value_type: U_WORD
+    optimistic: True
+    optionsmap:
+      "15 PSI": 103
+      "16 PSI": 110
+      "17 PSI": 117
+      "18 PSI": 124
+      "19 PSI": 131
+      "20 PSI": 138
+      "21 PSI": 145
+      "22 PSI": 152
+      "23 PSI": 159
+      "24 PSI": 165
+      "25 PSI": 172
+      "26 PSI": 179
+      "27 PSI": 186
+      "28 PSI": 193
+      "29 PSI": 200
+      "30 PSI": 207
+      "31 PSI": 214
+      "32 PSI": 221
+      "33 PSI": 228
+      "34 PSI": 234
+      "35 PSI": 241
+      "36 PSI": 248
+      "37 PSI": 255
+      "38 PSI": 262
+      "39 PSI": 269
+      "40 PSI": 276
+      "41 PSI": 283
+      "42 PSI": 290
+      "43 PSI": 296
+      "44 PSI": 303
+      "45 PSI": 310
+      "46 PSI": 317
+      "47 PSI": 324
+      "48 PSI": 331
+      "49 PSI": 338
+      "50 PSI": 345
+      "51 PSI": 352
+      "52 PSI": 359
+      "53 PSI": 365
+      "54 PSI": 372
+      "55 PSI": 379
+      "56 PSI": 386
+      "57 PSI": 393
+      "58 PSI": 400
+      "59 PSI": 407
+      "60 PSI": 414
+      "61 PSI": 421
+      "62 PSI": 427
+      "63 PSI": 434
+      "64 PSI": 441
+      "65 PSI": 448
+      "66 PSI": 455
+      "67 PSI": 462
+      "68 PSI": 469
+      "69 PSI": 476
+      "70 PSI": 483
+      "71 PSI": 490
+      "72 PSI": 496
+      "73 PSI": 503
+      "74 PSI": 510
+      "75 PSI": 517
+      "76 PSI": 524
+      "77 PSI": 531
+      "78 PSI": 538
+      "79 PSI": 545
+      "80 PSI": 552
+      "81 PSI": 558
+      "82 PSI": 565
+      "83 PSI": 572
+      "84 PSI": 579
+      "85 PSI": 586
 
+sensor:
   # PID control settings
   - platform: modbus_controller
     modbus_controller_id: modctrl2
@@ -194,28 +319,11 @@ sensor:
     name: "App Password"
     register_type: holding
     value_type: U_WORD
-
-  # SET POINTS
-  - platform: modbus_controller
-    modbus_controller_id: modctrl2
-    address: 0x00DA
-    name: "Setpoint Internal"
-    unit_of_measurement: "psi"
-    device_class: "pressure"
-    register_type: holding
-    value_type: U_WORD
-    filters:
-      - multiply: 0.1450
-  - platform: modbus_controller
-    modbus_controller_id: modctrl2
-    address: 0x00E5
-    name: "Setpoint External"
-    unit_of_measurement: "psi"
-    device_class: "pressure"
-    register_type: holding
-    value_type: U_WORD
-    filters:
-      - multiply: 0.1450
+    internal: True
+    on_value:
+      then:
+        - lambda: |-
+            id(app_password).publish_state(std::to_string((uint16_t)x));
 
   # MOTOR settings
   - platform: modbus_controller
@@ -394,40 +502,6 @@ sensor:
       - multiply: 0.1450
 
   # MONITORING PARAMS --------------
-
-    # software version is a string, low-byte first
-  - platform: modbus_controller
-    modbus_controller_id: modctrl2
-    address: 0x13EC
-    name: "MOC Software Version"
-    register_type: holding
-    value_type: RAW
-    register_count: 10
-    accuracy_decimals: 2
-    lambda: |-
-      if (data.size() < item->offset + 20) return NAN;
-      std::string temp;
-      std::string result;
-      bool found_dot = false;
-
-      for (int i = 0; i < 20; i+=2) {
-        char chars[] = {
-          static_cast<char>(data[item->offset + i]),      // low byte
-          static_cast<char>(data[item->offset + i + 1]),  // high byte
-        };
-        for (char c : chars) {
-          temp += c;
-        }
-      }
-      for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
-          char c = *it;
-          if (c == '.' && !found_dot) {
-              result += c; found_dot = true;
-          } else if (c >= '0' && c <= '9') {
-              result += c;
-          }
-      }
-      return std::stof(result);
 
   - platform: modbus_controller
     modbus_controller_id: modctrl2
@@ -657,7 +731,72 @@ binary_sensor:
     register_type: holding
 
 text_sensor:
-  - platform: template
+    # software version is a string, low-byte first
+  - platform: modbus_controller
+    modbus_controller_id: modctrl2
+    address: 0x0000
+    name: "AOC Software Version"
+    entity_category: diagnostic
+    register_type: holding
+    register_count: 10
+    lambda: |-
+      if (data.size() < item->offset + 20) return {""};
+      std::string temp;
+      std::string result;
+      bool found_dot = false;
+
+      for (int i = 0; i < 20; i+=2) {
+        char chars[] = {
+          static_cast<char>(data[item->offset + i]),      // low byte
+          static_cast<char>(data[item->offset + i + 1]),  // high byte
+        };
+        for (char c : chars) {
+          temp += c;
+        }
+      }
+      for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
+          char c = *it;
+          if (c == '.' && !found_dot) {
+              result += c; found_dot = true;
+          } else if (c >= '0' && c <= '9') {
+              result += c;
+          }
+      }
+      return result;
+
+  - platform: modbus_controller
+    modbus_controller_id: modctrl2
+    address: 0x13EC
+    name: "MOC Software Version"
+    register_type: holding
+    entity_category: diagnostic
+    register_count: 10
+    lambda: |-
+      if (data.size() < item->offset + 20) return {""};
+      std::string temp;
+      std::string result;
+      bool found_dot = false;
+
+      for (int i = 0; i < 20; i+=2) {
+        char chars[] = {
+          static_cast<char>(data[item->offset + i]),      // low byte
+          static_cast<char>(data[item->offset + i + 1]),  // high byte
+        };
+        for (char c : chars) {
+          temp += c;
+        }
+      }
+      for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
+          char c = *it;
+          if (c == '.' && !found_dot) {
+              result += c; found_dot = true;
+          } else if (c >= '0' && c <= '9') {
+              result += c;
+          }
+      }
+      return result;
+
+- platform: template
     name: "Run Mode"
     id: run_mode
   - platform: template
@@ -678,5 +817,39 @@ text_sensor:
   - platform: template
     name: "I/O Output Mode"
     id: io_output_mode
+  - platform: template
+    name: "App Password"
+    id: app_password
 
+number:
+  - platform: modbus_controller
+    modbus_controller_id: modctrl2
+    address: 999
+    register_type: holding
+    id: run_mode_setter
+    value_type: U_WORD
+    internal: True
+    min_value: 1
+    max_value: 2
+
+button:
+  - platform: template
+    name: "Mode: Stop"
+    on_press:
+      - lambda: |-
+          auto call = id(run_mode_setter)->make_call();
+          call.set_value(2);
+          call.perform();
+
+          id(run_mode).publish_state("Stop");
+
+  - platform: template
+    name: "Mode: Auto"
+    on_press:
+      - lambda: |-
+          auto call = id(run_mode_setter)->make_call();
+          call.set_value(1);
+          call.perform();
+
+          id(run_mode).publish_state("Auto Start");
 ```

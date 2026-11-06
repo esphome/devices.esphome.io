@@ -21,14 +21,17 @@ Series 1 models could be OTA flashed using using tuya-convert.
 
 ### Series 2
 
-Recently purchased devices are using the Beken BK7231T microcontroller and can be OTA flashed using using Cloudcutter.
-
 [Triple 6903HA][4] and [Quad 6904HA][5] The pin outs on the 3 & 4 gang switches are different to the 1 and 2 gang
 switches. Some 4 gang switches are on random Tuya firmware 1.1.5 and may need to use the "Lonsonho" brand
 "X804A 4 Gang Smart Wifi Switch" option in Cloudcutter, otherwise use the Deta single gang switch.
 
 [4]: https://www.bunnings.com.au/deta-smart-touch-activated-triple-gang-light-switch-with-grid-connect_p0161014
 [5]: https://www.bunnings.com.au/deta-smart-touch-activated-quad-gang-light-switch-with-grid-connect_p0161015
+
+### Series 3
+
+Recently purchased devices are using the Beken BK7231N microcontroller and need flashing with a serial flasher. There
+are headers on the board.
 
 ## Getting it up and running
 
@@ -63,6 +66,11 @@ of the [Grid Connect ecosystem][3]. These switches are available at Bunnings sto
 
 > **Note**: The [Triple 6903HA][4] and [Quad 6904HA][5] models have different pinouts compared to the 1 and 2 gang
 switches.
+>
+### Series 3 - Flashing
+
+- **Microcontroller**: Beken BK7231N
+- **Flashing Method**: Serial
 
 ## Setup Guide
 
