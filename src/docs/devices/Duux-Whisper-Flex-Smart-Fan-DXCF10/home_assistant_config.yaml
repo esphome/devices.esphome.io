@@ -29,6 +29,7 @@ ota:
   - platform: esphome
 
 wifi:
+  ap: {}
 
 uart:
   tx_pin: GPIO15
