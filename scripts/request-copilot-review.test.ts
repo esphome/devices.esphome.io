@@ -41,6 +41,7 @@ function makeGithub(
     before?: unknown[];
     after?: unknown[];
     timelineError?: "before" | "after";
+    whoamiStatus?: number;
   } = {}
 ) {
   const calls: Record<string, unknown>[] = [];
@@ -60,7 +61,14 @@ function makeGithub(
         return read.events;
       },
       rest: {
-        users: { getAuthenticated: async () => ({ data: { login: REQUESTER } }) },
+        users: {
+          getAuthenticated: async () => {
+            if (opts.whoamiStatus) {
+              throw Object.assign(new Error("Bad credentials"), { status: opts.whoamiStatus });
+            }
+            return { data: { login: REQUESTER } };
+          },
+        },
         issues: { listEventsForTimeline },
         pulls: {
           requestReviewers: async (args: Record<string, unknown>) => {
@@ -76,10 +84,16 @@ function makeGithub(
 function makeCore() {
   const warnings: string[] = [];
   const infos: string[] = [];
+  const failures: string[] = [];
   return {
     warnings,
     infos,
-    core: { info: (m: string) => void infos.push(m), warning: (m: string) => void warnings.push(m) },
+    failures,
+    core: {
+      info: (m: string) => void infos.push(m),
+      warning: (m: string) => void warnings.push(m),
+      setFailed: (m: string) => void failures.push(m),
+    },
   };
 }
 
@@ -180,6 +194,24 @@ test("a failed baseline read still requests the review, unconfirmed", async () =
   assert.equal(calls.length, 1);
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /goes unconfirmed: secondary rate limit/);
+});
+
+test("a rejected token fails the run so it gets rotated", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 401 });
+  const { core, failures } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 0);
+  assert.match(failures[0], /COPILOT_REVIEW_TOKEN was rejected/);
+});
+
+test("a failed account lookup still requests the review, unconfirmed", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 502 });
+  const { core, warnings, failures } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(failures, []);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Could not identify the requesting account/);
 });
 
 test("the exported helper takes a PR number", async () => {

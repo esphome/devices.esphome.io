@@ -6,6 +6,9 @@ name: Request Copilot review
 # contributor without Copilot access gets none. GitHub only acts on a request
 # from an account with a Copilot seat (GITHUB_TOKEN and app requests are
 # accepted and then ignored), so this uses esphome-review-bot's token.
+# COPILOT_REVIEW_TOKEN is a fine-grained token of that account (Pull requests
+# read and write on this repo) and expires: when it is rejected the run fails,
+# and an org owner signs in as the bot, creates a new one and replaces the secret.
 # Drafts the Made for ESPHome promotion marks ready use GITHUB_TOKEN, whose
 # events trigger no workflow, so made-for-esphome-pr.yml requests those.
 # Logic lives in .github/scripts/request-copilot-review.cjs.

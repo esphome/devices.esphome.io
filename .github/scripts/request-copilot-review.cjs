@@ -19,16 +19,28 @@ async function requestCopilotReview({ github, core, owner, repo, prNumber }) {
       issue_number: prNumber,
       per_page: 100,
     });
-  let before;
   let requester;
   try {
     ({
       data: { login: requester },
     } = await github.rest.users.getAuthenticated());
-    before = await readTimeline();
   } catch (err) {
-    before = null;
-    core.warning(`Could not read the timeline of #${prNumber}, so the request goes unconfirmed: ${err.message}`);
+    // An expired or revoked token fails loudly so someone rotates it.
+    if (err.status === 401) {
+      core.setFailed(
+        `COPILOT_REVIEW_TOKEN was rejected (${err.message}); rotate esphome-review-bot's token.`
+      );
+      return;
+    }
+    core.warning(`Could not identify the requesting account, so the request goes unconfirmed: ${err.message}`);
+  }
+  let before = null;
+  if (requester) {
+    try {
+      before = await readTimeline();
+    } catch (err) {
+      core.warning(`Could not read the timeline of #${prNumber}, so the request goes unconfirmed: ${err.message}`);
+    }
   }
   try {
     await github.rest.pulls.requestReviewers({
