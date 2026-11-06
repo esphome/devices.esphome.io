@@ -1,0 +1,79 @@
+substitutions:
+  devicename: govee-ceiling-light
+
+esphome:
+  name: $devicename
+
+rtl87xx:
+  board: generic-rtl8720cm-4mb-1712k
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/ericyanush/esphome-rtl8720-components.git
+    components: [rtl87xx_spi_led_strip]
+
+bp5758d:
+  data_pin: PA2
+  clock_pin: PA23
+
+power_supply:
+  - id: main_power
+    pin: PA4
+    enable_time: 20ms
+    keep_on_time: 10s
+  - id: ring_power
+    pin: PA18
+    enable_time: 20ms
+    keep_on_time: 0s
+
+output:
+  - platform: bp5758d
+    id: output_red
+    channel: 3
+    current: 15
+    power_supply: main_power
+  - platform: bp5758d
+    id: output_green
+    channel: 2
+    current: 15
+    power_supply: main_power
+  - platform: bp5758d
+    id: output_blue
+    channel: 1
+    current: 15
+    power_supply: main_power
+  - platform: bp5758d
+    id: output_ww
+    channel: 4
+    current: 15
+    power_supply: main_power
+  - platform: bp5758d
+    id: output_cw
+    channel: 5
+    current: 15
+    power_supply: main_power
+
+light:
+  - platform: rgbww
+    name: "Main Light"
+    red: output_red
+    green: output_green
+    blue: output_blue
+    cold_white: output_cw
+    warm_white: output_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2200 K
+    color_interlock: true
+    gamma_correct: 1.8
+  - platform: rtl87xx_spi_led_strip
+    id: ring_light
+    name: "Ring Light"
+    chipset: WS2811
+    num_leds: 13
+    rgb_order: GRB
+    data_pin: PA19
+    clock_pin: PA3
+    cs_pin: PA17
+    power_supply: ring_power
+    gamma_correct: 1.8
