@@ -48,6 +48,11 @@ The TYWE1S is flashed like any ESP8266 with `esptool`:
 | GPIO15 | UART TX (to AC indoor unit) |
 | GPIO13 | UART RX (from AC unit)      |
 
+GPIO15 and GPIO13 are UART0, the same port the ESP8266 logger uses by default, so the config
+below sets `baud_rate: 0` on the logger. Without that, log output is written to the same wire
+the climate component uses and the indoor unit receives garbage. Use the API or the web server
+to read logs instead of the serial port.
+
 ## Basic Configuration
 
 The config below exposes the climate entity (modes, presets, fan speeds and per-axis swing

@@ -5,6 +5,12 @@ esphome:
 esp8266:
   board: esp01_1m
 
+# GPIO15 and GPIO13 are UART0, which is also the default logger output on the
+# ESP8266. The logger has to stay off the serial port or its output ends up on
+# the wire that talks to the indoor unit.
+logger:
+  baud_rate: 0
+
 external_components:
   - source: github://gnacho/esphome-tcl-ac@main
     components: [tcl_climate]
