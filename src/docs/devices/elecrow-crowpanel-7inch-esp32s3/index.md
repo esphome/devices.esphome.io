@@ -35,18 +35,9 @@ GPIO19 and GPIO20 are shared with the ESP32-S3 USB_SERIAL_JTAG peripheral. Its U
 (ESP-IDF 5.5.3 and later) and was still present in ESPHome 2026.10.2. As of November 2026, the upstream issue is still
 open.
 
-The fix clears that pull-up before the I2C bus starts. Add this under `esphome:` in your YAML, as the basic
-configuration below does:
-
-```yaml
-esphome:
-  includes:
-    - <soc/usb_serial_jtag_reg.h>
-  on_boot:
-    priority: 1001
-    then:
-      - lambda: CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
-```
+The fix clears that pull-up before the I2C bus starts. The basic configuration below does this under `esphome:`, with
+`<soc/usb_serial_jtag_reg.h>` in `includes:` and an `on_boot` lambda at priority 1001 that calls
+`CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP)`.
 
 Turning the USB interface off in `sdkconfig_options` is not enough, because the pull-up stays on.
 
