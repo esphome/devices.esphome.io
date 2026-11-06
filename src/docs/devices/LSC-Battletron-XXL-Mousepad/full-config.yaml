@@ -18,10 +18,8 @@ logger:
   baud_rate: 0
 api:
   encryption:
-    key:
 ota:
   - platform: esphome
-    encryption:
 wifi:
   power_save_mode: NONE
   ap:
