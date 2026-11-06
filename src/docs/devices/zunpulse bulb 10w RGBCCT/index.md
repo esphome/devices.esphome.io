@@ -1,5 +1,5 @@
 ---
-title: Zunpulse bulb 10w RGBCCT
+title: Zunpulse Bulb 10W RGBCCT
 date-published: 2025-01-09
 type: light
 standard: in
@@ -7,84 +7,27 @@ board: bk72xx
 difficulty: 4
 ---
 
-## GPIO pinout
+![Zunpulse Bulb 10W RGBCCT](zunpulse-bulb.jpg "Zunpulse Bulb 10W RGBCCT")
 
-| Pin    | Function          |
-|--------|-------------------|
-| P26    | Red               |
-| P6     | Green             |
-| P24    | Blue              |
-| P8     | Output cold       |
-| P7     | Output warm       |
+The Zunpulse 10W RGBCCT bulb is a smart bulb sold in India with red, green, blue,
+cold white and warm white channels. It uses a BK7231N.
 
-## Basic configuration
+## Flashing
 
-```yaml
-esphome:
-  name: zunpulse-light
-  friendly_name: zunpulse light
+The bulb is not flashable over the air out of the box, so it needs soldering.
 
-bk72xx:
-  board: cb2l
+## GPIO Pinout
 
-# Enable logging
-logger:
+| Pin | Function    |
+|-----|-------------|
+| P26 | Red         |
+| P6  | Green       |
+| P24 | Blue        |
+| P8  | Output cold |
+| P7  | Output warm |
 
-# Enable Home Assistant API
-api:
-  encryption:
-    key: ""
+## Basic Configuration
 
-ota:
-  - platform: esphome
-    password: ""
+```yaml file=config.yaml
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Zunpulse-Light1 Fallback Hotspot"
-    password: ""
-
-captive_portal:
-
-web_server:
-  port: 80
-
-text_sensor:
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
-
-output:
-  - platform: libretiny_pwm
-    id: output_red
-    pin: P26
-  - platform: libretiny_pwm
-    id: output_green
-    pin: P6
-  - platform: libretiny_pwm
-    id: output_blue
-    pin: P24
-  - platform: libretiny_pwm
-    id: output_cold
-    pin: P8
-  - platform: libretiny_pwm
-    id: output_warm
-    pin: P7
-
-light:
-  - platform: rgbww
-    id: light_rgbww
-    name: Light
-    color_interlock: true
-    cold_white_color_temperature: 6500 K
-    warm_white_color_temperature: 2700 K
-    red: output_red
-    green: output_green
-    blue: output_blue
-    cold_white: output_cold
-    warm_white: output_warm
-    restore_mode: RESTORE_AND_ON
+```
