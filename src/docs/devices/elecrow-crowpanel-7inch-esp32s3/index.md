@@ -30,39 +30,25 @@ Product page:
 
 ### I2C Fix Required for GPIO 19/20 (USB_SERIAL_JTAG Pins)
 
-GPIO19 and GPIO20 are shared with the ESP32-S3 USB_SERIAL_JTAG peripheral. The USB PHY pad holds these pins even after
-the I2C driver tries to release them, causing continuous `I2C software timeout` errors. This affects ESPHome 2026.3.0
-and later (ESP-IDF 5.5.3 and later) and was still present in ESPHome 2026.10.2. As of November 2026, the upstream
-issue is still open.
+GPIO19 and GPIO20 are shared with the ESP32-S3 USB_SERIAL_JTAG peripheral. Its USB D+ pull-up stays enabled on GPIO20
+(the touch SCL line) and causes continuous `I2C software timeout` errors. This affects ESPHome 2026.3.0 and later
+(ESP-IDF 5.5.3 and later) and was still present in ESPHome 2026.10.2. As of November 2026, the upstream issue is still
+open.
 
-The fix requires a C header file (`usb_disable.h`) that disables the USB PHY pad before the I2C driver initializes.
-Create this file in your ESPHome config directory alongside your YAML:
+The fix clears that pull-up before the I2C bus starts. Add this under `esphome:` in your YAML, as the basic
+configuration below does:
 
-**usb_disable.h:**
-
-```c
-#pragma once
-
-#include "soc/usb_serial_jtag_reg.h"
-#include "soc/io_mux_reg.h"
-#include "hal/usb_serial_jtag_ll.h"
-
-static __attribute__((constructor(101))) void disable_usb_serial_jtag_phy() {
-    usb_serial_jtag_ll_phy_enable_pad(false);
-    CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_USB_PAD_ENABLE);
-    CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
-    PIN_FUNC_SELECT(IO_MUX_GPIO19_REG, PIN_FUNC_GPIO);
-    PIN_FUNC_SELECT(IO_MUX_GPIO20_REG, PIN_FUNC_GPIO);
-    PIN_INPUT_ENABLE(IO_MUX_GPIO19_REG);
-    PIN_INPUT_ENABLE(IO_MUX_GPIO20_REG);
-    REG_SET_BIT(IO_MUX_GPIO19_REG, FUN_PU);
-    REG_SET_BIT(IO_MUX_GPIO20_REG, FUN_PU);
-    REG_CLR_BIT(IO_MUX_GPIO19_REG, FUN_PD);
-    REG_CLR_BIT(IO_MUX_GPIO20_REG, FUN_PD);
-}
+```yaml
+esphome:
+  includes:
+    - <soc/usb_serial_jtag_reg.h>
+  on_boot:
+    priority: 1001
+    then:
+      - lambda: CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
 ```
 
-Then list it under `esphome:` `includes:` in your YAML, as the basic configuration below does.
+Turning the USB interface off in `sdkconfig_options` is not enough, because the pull-up stays on.
 
 See [#15356](https://github.com/esphome/esphome/issues/15356) for details.
 
@@ -121,12 +107,12 @@ configuration could fix. Reseating the touch ribbon cable is a good first check.
 | Missing `invert_colors: true` | Wrong colors | Add it |
 | Missing `pclk_inverted: true` | Garbled display | Add it |
 | Adding `interrupt_pin: 38` | Touch stops responding | Remove it and use polling (GPIO38 is not the touch INT line) |
-| Missing `usb_disable.h` | `I2C software timeout` | Add the header file (see notes above) |
+| Missing the D+ pull-up fix | `I2C software timeout` | Add the `on_boot` lambda (see notes above) |
 | Logger not on UART0 | No logs over the USB-C port | Add `logger: hardware_uart: UART0` |
 
 ## Basic Configuration
 
-Minimal working config with display, touch and backlight, without LVGL. Requires `usb_disable.h` (see Important Notes
+Minimal working config with display, touch and backlight, without LVGL. It includes the I2C fix (see Important Notes
 above).
 
 ```yaml file=config.yaml

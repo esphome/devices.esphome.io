@@ -8,6 +8,7 @@ lvgl:
   page_wrap: false
   pages:
     - id: page_one
+      bg_color: 0x202020
       on_swipe_left:
         - lvgl.page.next:
             animation: MOVE_LEFT
@@ -44,6 +45,7 @@ lvgl:
                     time: 300ms
 
     - id: page_two
+      bg_color: 0x202020
       on_swipe_right:
         - lvgl.page.previous:
             animation: MOVE_RIGHT

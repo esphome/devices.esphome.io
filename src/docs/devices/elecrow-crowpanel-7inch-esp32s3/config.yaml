@@ -2,7 +2,11 @@ esphome:
   name: crowpanel-7inch
   friendly_name: CrowPanel 7 Inch
   includes:
-    - usb_disable.h
+    - <soc/usb_serial_jtag_reg.h>
+  on_boot:
+    priority: 1001
+    then:
+      - lambda: CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
 
 esp32:
   board: esp32-s3-devkitc-1
