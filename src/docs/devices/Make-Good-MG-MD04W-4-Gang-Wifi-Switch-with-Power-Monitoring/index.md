@@ -25,7 +25,7 @@ board: esp8266
 
 ## Getting it up and running
 
-These switches can no longer be converted with Tuya-convert. See discussion here https://github.com/sillyfrog/contact/issues/4
+These switches can no longer be converted with Tuya-convert. See discussion here [https://github.com/sillyfrog/contact/issues/4](https://github.com/sillyfrog/contact/issues/4)
 
 ## Basic Functionality with Power Monitoring and Device status sensors (No Timers)
 
@@ -36,9 +36,10 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
-  esp8266_restore_from_flash: true
+  restore_from_flash: true
 
 wifi:
   ssid: !secret wifi_ssid

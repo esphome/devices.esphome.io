@@ -1,30 +1,30 @@
 ---
-title: Aubess WiFi Smart Switch
+title: Aubess WiFi Smart Switch (CB2S)
 date-published: 2025-03-13
 type: switch
 standard: global
 board: bk72xx
 pcb: CB2S
 ---
-![Product Image](/Aubess-WiFi-Smart-Switch.jpg "Product Image")
 
-Maker: <https://aubess.net/>
+![Product Image](./Aubess-WiFi-Smart-Switch.jpg "Product Image")
+
+Maker: [https://aubess.net/](https://aubess.net/)
 
 Also on Aliexpress.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| P8     | Button              |
-| P26    | External Switch     |
-| p24    | Relay               |
-| P7     | Status Led          |
+| Pin | Function        |
+| --- | --------------- |
+| P8  | Button          |
+| P26 | External Switch |
+| p24 | Relay           |
+| P7  | Status Led      |
 
 ## Basic Configuration
 
 ```yaml
-
 esphome:
   name: relayname
   friendly_name: relayname
@@ -54,7 +54,7 @@ substitutions:
 
 ## ---------------- ##
 ##    Status LED    ##
-## Если есть ошибка в ESPhome, то диод мигает. Eсли все хорошо, то индикатором можно управлять из HA
+## Если есть ошибка в ESPHome, то диод мигает. Eсли все хорошо, то индикатором можно управлять из HA
 ## ---------------- ##
 
 light:
@@ -68,7 +68,7 @@ light:
 ##  Binary Sensors  ##
 ## ---------------- ##
 binary_sensor:
-# Button 1
+  # Button 1
   - platform: gpio
     id: button_back
     pin:
@@ -80,7 +80,7 @@ binary_sensor:
         - switch.toggle: relay
     filters:
       - delayed_on_off: 50ms
-# Rocker switch
+  # Rocker switch
   - platform: gpio
     name: "${device_friendly_name} Switch S1-S2"
     pin: P26
@@ -93,7 +93,7 @@ binary_sensor:
 ##      Switch      ##
 ## ---------------- ##
 switch:
-#Relay
+  #Relay
   - platform: output
     name: "${device_friendly_name} Relay"
     icon: ${device_icon}

@@ -15,22 +15,25 @@ difficulty: 4
 
 ## Product Images
 
-![device](/device.png "Device")
+![device](./device.png "Device")
 
 ## Programming
 
-This device is powered by a [PSF-B01](https://templates.blakadder.com/PSF-B.html) board (ESP8285). You can flash it through the programming pins:
+This device is powered by a [PSF-B01](https://templates.blakadder.com/PSF-B.html) board (ESP8285). You can flash it
+through the programming pins:
 
-![/programming-pins.png](/programming-pins.png "Programming pins")
+![/programming-pins.png](./programming-pins.png "Programming pins")
 
-The button which is aligned with the micro-USB port is connected to GPIO0. You can use it to boot the board into flashing mode.
+The button which is aligned with the micro-USB port is connected to GPIO0. You can use it to boot the board into
+flashing mode.
 
-You can also use the micro-USB to power the board with 5V during the flash, just make sure to still bridge GND with your programmer.
+You can also use the micro-USB to power the board with 5V during the flash, just make sure to still bridge GND with your
+programmer.
 
 ## GPIO Pinout
 
 | Pin    | Function |
-| ------ | ---------|
+| ------ | -------- |
 | GPIO00 | Button   |
 | GPIO12 | Relay    |
 | GPIO13 | Red LED  |

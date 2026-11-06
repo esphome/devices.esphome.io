@@ -6,7 +6,7 @@ type: light
 standard: au
 board: esp8266
 ---
-  ![alt text](/Kogan-RGB-Cool-Warm-White-2m-LED-Strip.jpg "Product Image")
+  ![alt text](./Kogan-RGB-Cool-Warm-White-2m-LED-Strip.jpg "Product Image")
 
 [https://www.kogan.com/au/buy/kogan-smarterhome-rgb-cool-warm-white-smart-led-light-strip-2m/](https://www.kogan.com/au/buy/kogan-smarterhome-rgb-cool-warm-white-smart-led-light-strip-2m/)
 
@@ -29,7 +29,8 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:

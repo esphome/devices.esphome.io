@@ -7,20 +7,20 @@ board: esp8266
 ---
 
 ![alt text](Athom-Plug-AU.png "Athom Smart Plug AU")
-Maker: https://www.athom.tech/
+Maker: [https://www.athom.tech/](https://www.athom.tech/)
 
 Also on Aliexpress, with preflashed Tasmota or Homekit.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | Button              |
-| GPIO4  | BL0937 CF           |
-| GPIO5  | HLWBL CF1           |
-| GPIO12 | HLWBL SELi          |
-| GPIO13 | LedLink             |
-| GPIO14 | Relay               |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | Button     |
+| GPIO4  | BL0937 CF  |
+| GPIO5  | HLWBL CF1  |
+| GPIO12 | HLWBL SELi |
+| GPIO13 | LedLink    |
+| GPIO14 | Relay      |
 
 ## Basic Configuration
 
@@ -50,8 +50,6 @@ wifi:
   password: !secret wifi_password
   ap:
 
-
-
 binary_sensor:
   - platform: gpio
     pin:
@@ -66,7 +64,7 @@ binary_sensor:
       max_length: 8s
       then:
         - lambda: |-
-              ESP.reset();
+            ESP.reset();
 
 sensor:
   - platform: uptime
@@ -84,7 +82,7 @@ sensor:
       id: socket_my_amps
       accuracy_decimals: 2
       filters:
-          - calibrate_linear:
+        - calibrate_linear:
             - 0.0000 -> 0.0110 # Relay off no load
             - 0.0097 -> 0.0260 # Relay on no load
             - 0.9270 -> 0.7570
@@ -93,8 +91,8 @@ sensor:
             - 5.4848 -> 4.4210
             - 8.4308 -> 6.8330
             - 9.9171 -> 7.9830
-          # Normalize for plug load
-          - lambda: if (x < 0.0260) return 0; else return (x - 0.0260);
+        # Normalize for plug load
+        - lambda: if (x < 0.0260) return 0; else return (x - 0.0260);
     voltage:
       name: $upper_devicename Voltage
       unit_of_measurement: V
@@ -105,7 +103,7 @@ sensor:
       id: socket_my_power
       unit_of_measurement: W
       filters:
-          - calibrate_linear:
+        - calibrate_linear:
             - 0.0000 -> 0.5900 # Relay off no load
             - 0.0000 -> 1.5600 # Relay on no load
             - 198.5129 -> 87.8300
@@ -114,8 +112,8 @@ sensor:
             - 1067.0067 -> 460.1000
             - 1619.8098 -> 699.2000
             - 2043.0282 -> 885.0000
-          # Normalize for plug load
-          - lambda: if (x < 1.5600) return 0; else return (x - 1.5600);
+        # Normalize for plug load
+        - lambda: if (x < 1.5600) return 0; else return (x - 1.5600);
     change_mode_every: 1
     update_interval: 5s
   - platform: total_daily_energy

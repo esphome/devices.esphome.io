@@ -8,13 +8,14 @@ project-url: https://github.com/iprak/esphome/blob/master/x13.yaml
 Made-for-esphome: False
 difficulty: 4
 ---
-[Amazon Link](https://amzn.to/3XyT5Ag)
+[Amazon Link](https://www.amazon.com/dp/B08NFQ5FKQ)
 
 All information provided is from [Iprak](https://github.com/iprak) documentation.
 
 The device has 2 indicator LEDs under the button and 2 indiviually controllable outlets.
 [FCC filing](https://fccid.io/2AKBP-X13/)
-[Tasmato](https://templates.blakadder.com/aoycocr_X13.html) wiki mentioned that it might not be able to use Tuya-Convert.
+[Tasmato](https://templates.blakadder.com/aoycocr_X13.html) wiki mentioned that it might not be able to use
+Tuya-Convert.
 
 ## Product Image
 
@@ -22,8 +23,10 @@ The device has 2 indicator LEDs under the button and 2 indiviually controllable 
 
 ## GPIO Pinout
 
-The GPIO pinout was learned from [Iprak](https://github.com/iprak/esphome/blob/master/Instructions/Aoycocr-x13.md) documentation.
-The ESP module is ESP8266-S3 and the [FCC filing](https://fccid.io/2AKBPESP8266-S3/Users-Manual/User-Manual-3594791) provided the pins
+The GPIO pinout was learned from [Iprak](https://github.com/iprak/esphome/blob/master/Instructions/Aoycocr-x13.md)
+documentation.
+The ESP module is ESP8266-S3 and the [FCC filing](https://fccid.io/2AKBPESP8266-S3/Users-Manual/User-Manual-3594791)
+provided the pins
 
 1. EN
 2. TOUT
@@ -42,7 +45,7 @@ The ESP module is ESP8266-S3 and the [FCC filing](https://fccid.io/2AKBPESP8266-
 
 The pins are on alternate sides:
 
-```us
+```txt
 
 1  3  5  7  9  11  13
 2  4  6  8  10 12  14

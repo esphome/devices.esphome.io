@@ -8,7 +8,7 @@ standard: global
 This example shows how to use a cheap BLE keyring tag to trigger
 arbitrary events. An ESP32 is used, which provides a BLE peripheral.
 
-![image](/esp32_ble_itag.png)
+![image](./esp32_ble_itag.png)
 
 These tags can be had for a couple of dollars each and run for several
 months on a coin cell. Using the BLE features of ESPHome, you can use
@@ -25,7 +25,7 @@ find this out. You may also wish to change the name and id fields where
 appropriate to suit your device(s).
 
 Note that a maximum of three devices are supported due to limitations in
-the ESP32\'s BLE stack.
+the ESP32's BLE stack.
 
 ## Configuration example
 
@@ -93,10 +93,10 @@ the tracker, and establish a connection to the given device when it is
 available.
 
 The `binary_sensor` provides a template sensor which will export to the
-HA frontend the sensor that\'s switched by the BLE tag\'s button.
+HA frontend the sensor that's switched by the BLE tag's button.
 
 The first entry in the `sensor` component is used to configure the
-specific Service and Characteristic UUIDs for an iTag\'s button. It also
+specific Service and Characteristic UUIDs for an iTag's button. It also
 enables BLE notifications and sets up an automation to toggle the
 `binary_sensor` when a notification is received from the tag. Automatic
 updates are disabled, there is no point querying the tag for the device
@@ -105,6 +105,6 @@ state, as we will be immediately notified when the button is pressed.
 The next `sensor` entry listens for a well-known Service and
 Chacteristic that is used by many BLE devices to give battery level
 information. This sensor will be exposed in the HA frontend to determine
-the state of the tag\'s battery. Note that many tags will not provide
+the state of the tag's battery. Note that many tags will not provide
 this service, so you will not see a valid value. If not, you can remove
 this from the config.

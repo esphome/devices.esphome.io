@@ -12,7 +12,7 @@ board: esp8266
 
 ### Updated for ESPHOME 2025.2.0 and later (2025-03-04)
 
-https://esphome.io/guides/contributing#a-note-about-custom-components
+[https://esphome.io/guides/contributing#a-note-about-custom-components](https://esphome.io/guides/contributing#a-note-about-custom-components)
 
 ### Working
 
@@ -649,9 +649,9 @@ captive_portal:
 
 For lovelace card, you need this HACS Addons :
 
-- custom:vertical-stack-in-card https://github.com/ofekashery/vertical-stack-in-card
-- custom:fan-percent-button-row https://github.com/finity69x2/fan-percent-button-row
-- custom:paper-buttons-row https://github.com/jcwillox/lovelace-paper-buttons-row
+- custom:vertical-stack-in-card [https://github.com/ofekashery/vertical-stack-in-card](https://github.com/ofekashery/vertical-stack-in-card)
+- custom:fan-percent-button-row [https://github.com/finity69x2/fan-percent-button-row](https://github.com/finity69x2/fan-percent-button-row)
+- custom:paper-buttons-row [https://github.com/jcwillox/lovelace-paper-buttons-row](https://github.com/jcwillox/lovelace-paper-buttons-row)
 
 File diffuser.png need to be in this path : config/www/
 
@@ -755,6 +755,7 @@ cards:
 
 ## Original firmware
 
-I have put a backup of the original firmware, and I also modified the AMA HOME APK but only for reconnect the original firmware to Wifi, ssg360 seems down.
+I have put a backup of the original firmware, and I also modified the AMA HOME APK but only for reconnect the original
+firmware to Wifi, ssg360 seems down.
 
-https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware
+[https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware](https://github.com/antibill51/Alfawise_SJ-7_HASSIO/tree/master/Original%20firmware)
