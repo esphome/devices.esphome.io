@@ -1,0 +1,142 @@
+substitutions:
+  device_name: shelly-plus-plug-it
+  friendly_name: Shelly Plus Plug IT
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: esp32
+  board: esp32dev
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # ESP32-U4WDH is single core
+      CONFIG_FREERTOS_UNICORE: y
+
+logger:
+
+wifi:
+  ap:
+
+binary_sensor:
+  # Button: short press toggles the relay, hold 10 s = factory reset
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: GPIO26
+      inverted: true
+      mode: INPUT_PULLUP
+    on_multi_click:
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - switch.toggle: relay
+      - timing:
+          - ON for at least 10s
+        then:
+          - button.press: btn_factory_reset
+
+switch:
+  # Relay (SNPL-00110IT is the 10 A model)
+  - platform: gpio
+    name: "Relay"
+    pin: GPIO4
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - output.turn_on: led_1
+    on_turn_off:
+      - output.turn_off: led_1
+
+button:
+  - platform: factory_reset
+    name: "Factory Reset"
+    id: btn_factory_reset
+    entity_category: diagnostic
+
+# Two LEDs, active low
+output:
+  - platform: gpio
+    id: led_1
+    pin:
+      number: GPIO32
+      inverted: true
+  - platform: gpio
+    id: led_2
+    pin:
+      number: GPIO33
+      inverted: true
+
+light:
+  - platform: binary
+    name: "LED 2"
+    output: led_2
+    entity_category: config
+
+sensor:
+  # BL0937 power meter
+  # The multipliers were measured on one unit against a reference meter
+  # (hair dryer, ~1.9 kW, ~217 V). A second unit differed by 3-4 %: calibrate yours.
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: GPIO12
+      inverted: true
+      ignore_strapping_warning: true
+    cf_pin: GPIO27
+    cf1_pin: GPIO14
+    current_resistor: 0.001 ohm
+    voltage_divider: 770
+    change_mode_every: 1
+    update_interval: 5s
+    voltage:
+      name: "Voltage"
+      filters:
+        - multiply: 2.857
+    current:
+      name: "Current"
+      filters:
+        - multiply: 1.057
+      on_value_range:
+        - above: 10.5
+          then:
+            - switch.turn_off: relay
+    power:
+      name: "Power"
+      filters:
+        - multiply: 3.355
+    energy:
+      name: "Energy"
+      unit_of_measurement: kWh
+      filters:
+        # Wh -> kWh, with the same factor as the power
+        - multiply: 0.003355
+
+  # NTC: 10k at 25 °C, B 3950, 10k resistor, NTC to GND
+  - platform: adc
+    id: ntc_adc
+    pin: GPIO34
+    attenuation: 12db
+    update_interval: 10s
+  - platform: resistance
+    id: ntc_res
+    sensor: ntc_adc
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+  - platform: ntc
+    sensor: ntc_res
+    name: "Internal Temperature"
+    entity_category: diagnostic
+    calibration:
+      b_constant: 3950
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    # Like the stock firmware: relay off above 90 °C
+    on_value_range:
+      - above: 90
+        then:
+          - switch.turn_off: relay
