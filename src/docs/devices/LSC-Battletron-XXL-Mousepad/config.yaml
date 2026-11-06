@@ -8,7 +8,6 @@ logger:
 wifi:
   power_save_mode: NONE
   ap:
-    ssid: "Mousepad Fallback Hotspot"
 light:
   - platform: beken_spi_led_strip
     chipset: WS2812
