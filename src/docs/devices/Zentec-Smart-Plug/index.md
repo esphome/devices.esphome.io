@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://amzn.to/39iCxEM)
+Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://www.amazon.com/dp/B074YGV2NK)
 
 At least two versions of this plug exist, but the only difference between the two is the pull-up on the pin for the
 button.

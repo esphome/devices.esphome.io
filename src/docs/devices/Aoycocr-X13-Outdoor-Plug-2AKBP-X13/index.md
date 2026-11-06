@@ -8,7 +8,7 @@ project-url: https://github.com/iprak/esphome/blob/master/x13.yaml
 Made-for-esphome: False
 difficulty: 4
 ---
-[Amazon Link](https://amzn.to/3XyT5Ag)
+[Amazon Link](https://www.amazon.com/dp/B08NFQ5FKQ)
 
 All information provided is from [Iprak](https://github.com/iprak) documentation.
 
@@ -45,7 +45,7 @@ provided the pins
 
 The pins are on alternate sides:
 
-```us
+```txt
 
 1  3  5  7  9  11  13
 2  4  6  8  10 12  14

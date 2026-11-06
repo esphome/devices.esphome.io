@@ -61,7 +61,7 @@ between the GPIO13 and the RESET pin of the ESP8266 MCU.
 ```yaml
 # Basic Config
 ---
-# https://esphome.io/devices/esp8266.html
+# https://esphome.io/components/esp8266/
 esphome:
   name: ir_remote
 
@@ -87,11 +87,11 @@ api:
 ota:
   password: !secret ota_password
 
-# https://esphome.io/components/status_led.html
+# https://esphome.io/components/status_led/
 status_led:
   pin: 4
 
-# https://esphome.io/components/remote_receiver.html
+# https://esphome.io/components/remote_receiver/
 remote_receiver:
   id: rcvr
   pin:
@@ -99,13 +99,13 @@ remote_receiver:
     mode: INPUT_PULLUP
     inverted: True
 
-# https://www.esphome.io/components/remote_transmitter.html
+# https://www.esphome.io/components/remote_transmitter/
 remote_transmitter:
   id: tamtr
   pin: 14
   carrier_duty_percent: 50%
 
-# https://esphome.io/components/climate/ir_climate.html
+# https://esphome.io/components/climate/climate_ir/
 climate:
   - platform: toshiba
     id: ac
@@ -126,7 +126,7 @@ switch:
           fan_mode: AUTO
           swing_mode: VERTICAL
 
-    # https://esphome.io/components/switch/shutdown.html
+    # https://esphome.io/components/switch/shutdown/
   - platform: shutdown
     name: "IR Remote Shutdown"
     id: ir_remote_shutdown

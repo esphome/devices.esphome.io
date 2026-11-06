@@ -23,7 +23,7 @@ The advantage of the dual core version is that it supports the arduino framework
 and dual core ESP32-U4WDH. No problems were faced with this assumption.
 
 The single core version of the ESP32-U4WDH will probably be discontinued according to
-[Espressif PCN](https://www.espressif.com/sites/default/files/pcn_downloads/PCN-2021-021%20ESP32-U4WDH%20%E5%8D%87%E7%BA%A7%E4%B8%BA%E5%8F%8C%E6%A0%B8%E5%A4%84%E7%90%86%E5%99%A8%E4%BA%A7%E5%93%81.pdf)
+[Espressif PCN](https://documentation.espressif.com/PCN-2021-021%20ESP32-U4WDH%20%e5%8d%87%e7%ba%a7%e4%b8%ba%e5%8f%8c%e6%a0%b8%e5%a4%84%e7%90%86%e5%99%a8%e4%ba%a7%e5%93%81.pdf)
 
 The PCB version number is printed on the back of the PCB.
 ![Shelly Plus 2PM PCB Versions](shellyplus2pm_pcb_versions.png "Shelly Plus 2PM PCB Versions")
@@ -54,7 +54,7 @@ contains 8 characters starting with "H", the chip is single core 160MHz. If the 
 ## Internal Temperature Sensor
 
 An internal NTC temperature sensor in a "DOWNSTREAM" configuration is fitted
-([ESPHome reference](https://esphome.io/components/sensor/resistance.html)). Both R1 and R2 has been desoldered and
+([ESPHome reference](https://esphome.io/components/sensor/resistance/)). Both R1 and R2 has been desoldered and
 found to be 10k fixed resistor and 10k@25C NTC. The Beta constant of the NTC cannot easily be measured, and is guessed
 to be ~3350.
 
@@ -523,7 +523,7 @@ status_led:
 ## Current Based Cover Configuration Example for PCB v0.1.9 and Dual Core
 
 To use the Shelly Plus 2PM to control a window cover with an "opening" and a "closing" motor, the
-[Current Based Cover](https://esphome.io/components/cover/current_based) is used.
+[Current Based Cover](https://esphome.io/components/cover/current_based/) is used.
 
 This configuration was implemented and tested on three pieces bought in Austria in 2024. As opposed to the examples
 above, power channel A is for relay 1 (for the "opening" motor), power channel B is for relay 2 (for the "closing"

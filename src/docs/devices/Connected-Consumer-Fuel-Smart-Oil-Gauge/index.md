@@ -44,7 +44,7 @@ SKU: CCF-901
    ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
 5. Follow the directions as outlined by ESPHome for physically connecting to your device:
   
-[https://esphome.io/guides/physical_device_connection#physically-connecting-to-your-device](https://esphome.io/guides/physical_device_connection#physically-connecting-to-your-device)
+[https://esphome.io/guides/physical_device_connection#physically-connecting-to-your-device](https://esphome.io/guides/physical_device_connection/)
 
 ## Operation
 
@@ -86,7 +86,7 @@ like an HC-SR04 ultrasonic distance sensor.
 ### TPL5111 - Nano-Power System Timer for Power Gating
 
 SMD Marking: ZFVX \
-[https://www.ti.com/lit/ds/symlink/tpl5111.pdf?ts=1739630376626&ref_url=https%253A%252F%252Fwww.google.com%252F](https://www.ti.com/lit/ds/symlink/tpl5111.pdf?ts=1739630376626&ref_url=https%253A%252F%252Fwww.google.com%252F)
+[https://www.ti.com/lit/ds/symlink/tpl5111.pdf?ts=1739630376626&ref_url=https%253A%252F%252Fwww.google.com%252F](https://www.ti.com/lit/ds/symlink/tpl5111.pdf)
 
 Power Gating of 3.3VDC to the ESP8266.\
 Hardwired to restart the controller every hour.\
@@ -96,7 +96,7 @@ Timer will cut 3.3V when DONE pin goes HIGH, will wake after 1hr.
 
 SMD Marking: C5F \
 Datasheet:
-[https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf?ts=1740393486499](https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf?ts=1740393486499)
+[https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf?ts=1740393486499](https://www.ti.com/lit/ds/symlink/sn74lvc1g3157.pdf)
 
 Switches the connection to A0 (GPIO17)
 

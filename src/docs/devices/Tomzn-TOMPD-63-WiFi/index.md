@@ -11,7 +11,7 @@ difficulty: 4
 
 ## Programming
 
-Internally, it uses the [TUYA CBU](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u) chip,
+Internally, it uses the [TUYA CBU](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u) chip,
 which is based on the BK7231N.
 
 You need to solder 5 wires for the GND, +3v3, RX, TX and CEN (Reset) signals in order to connect them to a USB-to-serial
