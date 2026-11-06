@@ -3,7 +3,7 @@ title: WAVESHARE ESP32-S3-ETH-8DI-8RO
 date-published: 2025-07-31
 type: relay
 standard: global
-board: esp32-s3
+board: esp32
 ---
 
 ![Product](./image1.jpg "Product Image")
@@ -32,8 +32,8 @@ version (ESP32-S3-POE-ETH-8DI-8RO). The config below will work for both versions
 
 More information:
 
-- Product page: https://www.waveshare.com/esp32-s3-eth-8di-8ro.htm
-- Wiki: https://www.waveshare.com/wiki/ESP32-S3-ETH-8DI-8RO
+- Product page: [https://www.waveshare.com/esp32-s3-eth-8di-8ro.htm](https://www.waveshare.com/esp32-s3-eth-8di-8ro.htm)
+- Wiki: [https://www.waveshare.com/wiki/ESP32-S3-ETH-8DI-8RO](https://www.waveshare.com/wiki/ESP32-S3-ETH-8DI-8RO)
 
 ## GPIO Pinout
 
@@ -42,7 +42,8 @@ More information:
 ## Basic Config
 
 This config has Ethernet enabled by default. You cannot use both WiFi and Ethernet at the same
-time ([link](https://esphome.io/components/ethernet.html#ethernet-component)). In order to use WiFi,
+time ([ESPHome Ethernet documentation](https://esphome.io/components/ethernet/#ethernet-component)). In order to use
+WiFi,
 uncomment the WiFi block and comment the Ethernet blocks.
 
 ```yaml
@@ -172,7 +173,7 @@ uart:
     data_bits: 8 #default to 8E1
     parity: EVEN #default to 8E1
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -199,6 +200,87 @@ binary_sensor:
     on_press:
       then:
         - button.press: restart_button
+
+# Digital Inputs
+  - platform: gpio
+    id: di1
+    name: "DI1"
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di2
+    name: "DI2"
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di3
+    name: "DI3"
+    pin:
+      number: GPIO6
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di4
+    name: "DI4"
+    pin:
+      number: GPIO7
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di5
+    name: "DI5"
+    pin:
+      number: GPIO8
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di6
+    name: "DI6"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di7
+    name: "DI7"
+    pin:
+      number: GPIO10
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    id: di8
+    name: "DI8"
+    pin:
+      number: GPIO11
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 10ms
 
 # buzzer
 output:
@@ -325,5 +407,5 @@ button:
 
 ## Buzzer control through ESPHome
 
-Read more about it here: https://esphome.io/components/rtttl.html#test-setup.
-Some fun beeps to send are here: https://esphome.io/components/rtttl.html#common-beeps
+Read more about it here: [https://esphome.io/components/rtttl/#test-setup](https://esphome.io/components/rtttl/#test-setup).
+Some fun beeps to send are here: [https://esphome.io/components/rtttl/#common-beeps](https://esphome.io/components/rtttl/#common-beeps)

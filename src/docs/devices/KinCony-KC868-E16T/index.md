@@ -10,18 +10,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO35 | ANALOG_A2           |
-| GPIO34 | ANALOG_A3           |
-| GPIO39 | ANALOG_A4           |
-| GPIO16 | IIC_SDA             |
-| GPIO15 | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO4  | 433MHz Receiver     |
-| GPIO2  | Buzzer              |
-| GPIO12 | LED                 |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO36 | ANALOG_A1       |
+| GPIO35 | ANALOG_A2       |
+| GPIO34 | ANALOG_A3       |
+| GPIO39 | ANALOG_A4       |
+| GPIO16 | IIC_SDA         |
+| GPIO15 | IIC_SCL         |
+| GPIO14 | 1-Wire GPIO     |
+| GPIO4  | 433MHz Receiver |
+| GPIO2  | Buzzer          |
+| GPIO12 | LED             |
 
 [Additional pinout/design details](https://www.kincony.com/tuya-esp32-din-rail-relay-module.html)
 
@@ -33,7 +33,7 @@ esphome:
   name: kc868-e16t
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Example configuration entry for ESP32
 i2c:
@@ -52,16 +52,16 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x21
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 9-16
+  - id: "pcf8574_hub_out_2" # for output channel 9-16
     address: 0x25
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     address: 0x24
 
 # Individual outputs

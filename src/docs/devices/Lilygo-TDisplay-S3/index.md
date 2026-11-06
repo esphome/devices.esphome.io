@@ -3,7 +3,7 @@ title: Lilygo TDisplay S3
 date-published: 2024-04-08
 type: misc
 standard: global
-board: esp32s3
+board: esp32
 project-url: https://www.lilygo.cc/en-ca/products/t-display-s3
 ---
 
@@ -21,7 +21,7 @@ esphome:
   friendly_name: ESP32-S3 T-Display
 
 esp32:
-  board: esp32-s3-devkitc-1
+  variant: esp32s3
   framework:
     type: esp-idf
   flash_size: 16MB

@@ -13,22 +13,20 @@ difficulty: 4
 
 ## GPIO Pinout
 
-| Pin  | Function          |
-| ---- | ----------------- |
-| P6   | Button            |
-| P24  | Relay             |
-| P8   | LED, inverted     |
-| P7   | Status LED        |
+| Pin | Function      |
+| --- | ------------- |
+| P6  | Button        |
+| P24 | Relay         |
+| P8  | LED, inverted |
+| P7  | Status LED    |
 
 ## Board Configuration
 
 ```yaml
-
 bk72xx:
   board: wb2s
   framework:
     version: latest
     options:
       LT_UART_DEFAULT_PORT: 1
-
 ```

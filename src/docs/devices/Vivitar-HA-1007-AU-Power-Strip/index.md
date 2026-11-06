@@ -5,8 +5,10 @@ type: plug
 standard: au
 board: esp8266
 ---
-The Vivitar HA-1007-AU Power Strip has four individually switched AC outlets (each has a status LED that do not seem to be individually controllable.
-There are also four USB power/charge ports, all switchable but not individually. There is a button and blue and red controllable leds.
+The Vivitar HA-1007-AU Power Strip has four individually switched AC outlets (each has a status LED that do not seem to
+be individually controllable.
+There are also four USB power/charge ports, all switchable but not individually. There is a button and blue and red
+controllable leds.
 
 ## GPIO Pinout
 
@@ -32,13 +34,16 @@ The device can be flashed using tuya-convert.
 
 ## Code
 
-This yaml is borrowed from the author of the Arlec PB89HA Power Board page. The multi click stuff for the button is optional, but can be useful if you are at the powerboard.
+This yaml is borrowed from the author of the Arlec PB89HA Power Board page. The multi click stuff for the button is
+optional, but can be useful if you are at the powerboard.
 
 The blue led is used as a status led and flashes as the wifi is connecting.
 
-The red led is used as an indication that the master switch is on (none of the sockets actually get any power if this is off)
+The red led is used as an indication that the master switch is on (none of the sockets actually get any power if this is
+off)
 
-If the "master" switch is off, it will turn off all the other switches so there's no confusion from the state of the LED's per individiual socket
+If the "master" switch is off, it will turn off all the other switches so there's no confusion from the state of the
+LED's per individiual socket
 
 Turning on any individual socket should also turn on the master automatically
 

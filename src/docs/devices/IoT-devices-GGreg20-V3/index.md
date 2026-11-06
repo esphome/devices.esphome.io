@@ -18,20 +18,25 @@ Sensor-side interface: pulse output
 
 MCU-side interface: GPIO with pulse counter
 
-GGreg20_v3 is compatible with the ESP8266/ESP32 logic signal levels (3V3 ACTIVE-LOW: 3.0-3.3V HIGH and about 0.7V LOW), and will work even with the 5V logic input.
+GGreg20_v3 is compatible with the ESP8266/ESP32 logic signal levels (3V3 ACTIVE-LOW: 3.0-3.3V HIGH and about 0.7V LOW),
+and will work even with the 5V logic input.
 Sensor compatibility: any ESP8266- or ESP32- powered device
 
-Vendor site: https://allmylinks.com/iot-devices
+Vendor site: [https://allmylinks.com/iot-devices](https://allmylinks.com/iot-devices)
 
 ## Connection
 
-For example, it could be GPIO0 (D3). This pin is convenient because it has a built-in Flash button in most devices and boards based on the ESP8266 module - in case you need to check how the controller counts pulses without a sensor, it is possible to simulate pulses with a button.
+For example, it could be GPIO0 (D3). This pin is convenient because it has a built-in Flash button in most devices and
+boards based on the ESP8266 module - in case you need to check how the controller counts pulses without a sensor, it is
+possible to simulate pulses with a button.
 
 > ![GGreg20_V3 wired connection](image.jpg)
 
 ## Powering from a 2.4V input source
 
-If you want to power the GGreg20_V3 from a 2.4 volt source, you need to short the Schottky diode shown in the photo with a wire or replace it with a 0 ohm resistor. Note, however, that such a correction will disable the module's reverse polarity protection:
+If you want to power the GGreg20_V3 from a 2.4 volt source, you need to short the Schottky diode shown in the photo with
+a wire or replace it with a 0 ohm resistor. Note, however, that such a correction will disable the module's reverse
+polarity protection:
 ![GGreg20_V3 reverse polarity prptection diode](image2.jpg)
 
 ## Basic Configuration

@@ -5,7 +5,7 @@ type: sensor
 standard: global
 ---
 
-![image](/iaq_board2.jpg)
+![image](./iaq_board2.jpg)
 
 IAQ Board is a DIY device for measuring internal air quality running
 with esphome. It's quite small and is based on a custom PCB where part
@@ -189,4 +189,4 @@ Full YAML configuration: [iaq_board.yaml](https://github.com/nkitanov/iaq_board/
 
 Full documentation: [PCB, Schematic, esphome yaml config](https://github.com/nkitanov/iaq_board), [Video](https://www.youtube.com/embed/X75OGs2TTT8)
 
-![image](/iaq_board1.jpg)
+![image](./iaq_board1.jpg)

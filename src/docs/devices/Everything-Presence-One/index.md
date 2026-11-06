@@ -13,7 +13,8 @@ project-url: https://github.com/EverythingSmartHome/everything-presence-one
 
 ## Description
 
-The Everything Presence One is a comprehensive presence sensor with dual detection technology and the following features:
+The Everything Presence One is a comprehensive presence sensor with dual detection technology and the following
+features:
 
 - DFRobot SEN0395/SEN0609 24GHz mmWave sensor with up to 9m detection range
 - Panasonic Industrial PIR EKMC1603111/2/3 with 12m detection range
@@ -25,7 +26,8 @@ The Everything Presence One is a comprehensive presence sensor with dual detecti
 - Modular design with removable mmWave and PIR modules
 - 4 additional GPIO pins for expansion
 
-The EP1 combines both mmWave and PIR for lightning-fast responses and flexability in detecting false positives, detecting both micro and macro movements.
+The EP1 combines both mmWave and PIR for lightning-fast responses and flexability in detecting false positives,
+detecting both micro and macro movements.
 
 Compatible mmWave sensors (validated only):
 
@@ -38,7 +40,13 @@ Compatible mmWave sensors (validated only):
 2. Plug in the Everything Presence One via USB-C.
 3. Using the Home Assistant Mobile App, go to Settings > Devices and find the auto discovered Everything Presence One
 4. Hit add and enter WiFi details
-5. In Home Assistant, check the discovered devices for the auto discovered Everything Presence One using the esphome integration.
+5. In Home Assistant, check the discovered devices for the auto discovered Everything Presence One using the esphome
+   integration.
+
+## Configuration
+
+```yaml url=https://github.com/EverythingSmartHome/everything-presence-one/blob/main/everything-presence-one.yaml
+```
 
 ## Support
 

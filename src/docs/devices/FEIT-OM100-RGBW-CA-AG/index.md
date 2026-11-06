@@ -8,7 +8,9 @@ board: esp8266
 
 ## OM 100 Feit Electric (Lowe's)
 
-This is the 100W Bulb from FEIT Electric. It is sold at Lowe's and it is completely different from its 60W counterpart the OM60. There is a need to use a CustomLight to make the white balance work correctly and to prevent the white and color leds to turn on at the same time causing the bulb to overheat:
+This is the 100W Bulb from FEIT Electric. It is sold at Lowe's and it is completely different from its 60W counterpart
+the OM60. There is a need to use a CustomLight to make the white balance work correctly and to prevent the white and
+color leds to turn on at the same time causing the bulb to overheat:
 
 ```yaml
 esphome:
@@ -49,9 +51,10 @@ light:
 
 ## Custom Light Header file
 
-Here is the c code for the header file. The code is not mine. I just made some modifications for this bulb. This file should be named `better_rgbw_output.h` and be saved in the esphome directory
+Here is the c code for the header file. The code is not mine. I just made some modifications for this bulb. This file
+should be named `better_rgbw_output.h` and be saved in the esphome directory
 
-```C#
+```cpp
 /*  A Better RGBW(W) Output
 
     Based on/inspired by user *envy* at https://github.com/esphome/feature-requests/issues/212#issuecomment-498036079

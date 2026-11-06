@@ -12,12 +12,12 @@ difficulty: 4
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO9  | Push Button (HIGH = off, LOW = on) |
-| GPIO4  | Relay and its status red LED       |
-| GPIO5  | Status LED                         |
-| GPIO7  | TX pin (CSE7759B meter)            |
+| Pin   | Function                           |
+| ----- | ---------------------------------- |
+| GPIO9 | Push Button (HIGH = off, LOW = on) |
+| GPIO4 | Relay and its status red LED       |
+| GPIO5 | Status LED                         |
+| GPIO7 | TX pin (CSE7759B meter)            |
 
 ## Links
 
@@ -38,7 +38,7 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: esp-idf
 
@@ -53,9 +53,9 @@ wifi:
   ap:
 
 status_led:
-    pin:
-      number: GPIO5
-      inverted: true
+  pin:
+    number: GPIO5
+    inverted: true
 
 switch:
   - id: switch_1
@@ -70,6 +70,7 @@ binary_sensor:
     internal: true
     pin:
       number: GPIO9
+      inverted: true
     on_press:
       - switch.toggle: switch_1
     filters:
@@ -91,5 +92,4 @@ uart:
   rx_pin: GPIO7
   baud_rate: 4800
   parity: EVEN
-
 ```

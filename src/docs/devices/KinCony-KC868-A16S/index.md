@@ -10,20 +10,20 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO34 | ANALOG_A2           |
-| GPIO35 | ANALOG_A3           |
-| GPIO39 | ANALOG_A4           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO16 | 433MHz Receiver     |
-| GPIO32 | RS485_RXD           |
-| GPIO33 | RS485_TXD           |
-| GPIO15 | GSM_RXD             |
-| GPIO13 | GSM_TXD             |
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO36 | ANALOG_A1       |
+| GPIO34 | ANALOG_A2       |
+| GPIO35 | ANALOG_A3       |
+| GPIO39 | ANALOG_A4       |
+| GPIO4  | IIC_SDA         |
+| GPIO5  | IIC_SCL         |
+| GPIO14 | 1-Wire GPIO     |
+| GPIO16 | 433MHz Receiver |
+| GPIO32 | RS485_RXD       |
+| GPIO33 | RS485_TXD       |
+| GPIO15 | GSM_RXD         |
+| GPIO13 | GSM_TXD         |
 
 [Additional pinout/design details](https://www.kincony.com/16-channel-esp32-4g-relay-board.html)
 
@@ -35,7 +35,7 @@ esphome:
   name: KC868-A16S
 
 esp32:
-  board: esp32dev
+  variant: esp32
 
 # Example configuration entry for ESP32
 i2c:
@@ -54,16 +54,16 @@ ethernet:
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 9-16
+  - id: "pcf8574_hub_out_2" # for output channel 9-16
     address: 0x25
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 9-16
+  - id: "pcf8574_hub_in_2" # for input channel 9-16
     address: 0x23
 
 # Individual outputs

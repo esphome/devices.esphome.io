@@ -9,7 +9,9 @@ difficulty: 1
 
 ## Description
 
-The Horus Blind Controller allows you to automate and control your blinds using Home Assistant while keeping manual operation via your existing physical switches. It seamlessly integrates with Home Assistant through ESPHome and requires minimal setup.
+The Horus Blind Controller allows you to automate and control your blinds using Home Assistant while keeping manual
+operation via your existing physical switches. It seamlessly integrates with Home Assistant through ESPHome and requires
+minimal setup.
 
 ![module](module.png "module")
 ![bottom top view](bottom-top-vew.png "bottom top view")

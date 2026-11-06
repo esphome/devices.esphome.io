@@ -5,7 +5,7 @@ type: plug
 standard: eu
 board: esp8266
 ---
-  ![alt text](/BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
+  ![alt text](./BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
 
 Model reference: BW-SHP8
 

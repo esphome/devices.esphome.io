@@ -8,7 +8,10 @@ board: esp32
 
 ## Description
 
-The **Martin Jerry RP-SD01** is a US-style wall dimmer switch based on the **ESP32-C3-12F** module. It ships with Tasmota preinstalled, but its default configuration can be unintuitive — the up/down rocker only controls dimming, while toggling the relay requires pressing a small Wi-Fi button on the front panel. After attempting to adjust this behavior using Tasmota rules, flashing ESPHome provided a much more intuitive and responsive experience.
+The **Martin Jerry RP-SD01** is a US-style wall dimmer switch based on the **ESP32-C3-12F** module. It ships with
+Tasmota preinstalled, but its default configuration can be unintuitive — the up/down rocker only controls dimming, while
+toggling the relay requires pressing a small Wi-Fi button on the front panel. After attempting to adjust this behavior
+using Tasmota rules, flashing ESPHome provided a much more intuitive and responsive experience.
 
 [Amazon Link](https://a.co/d/3KxaLps)
 
@@ -85,7 +88,6 @@ esphome:
   name_add_mac_suffix: true
 
 esp32:
-  board: esp32-c3-devkitm-1
   variant: esp32c3
   framework:
     type: esp-idf
@@ -179,7 +181,6 @@ esphome:
       - script.execute: update_led_bar
 
 esp32:
-  board: esp32-c3-devkitm-1
   variant: esp32c3
   framework:
     type: esp-idf

@@ -10,20 +10,20 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO36 | ANALOG_A1           |
-| GPIO39 | ANALOG_A17          |
-| GPIO34 | ANALOG_A18          |
-| GPIO35 | ANALOG_A19          |
-| GPIO4  | IIC_SDA             |
-| GPIO16 | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO5  | 1-Wire GPIO         |
-| GPIO32 | RS485_RXD           |
-| GPIO33 | RS485_TXD           |
-| GPIO13 | GSM_RXD             |
-| GPIO15 | GSM_TXD             |
+| Pin    | Function    |
+| ------ | ----------- |
+| GPIO36 | ANALOG_A1   |
+| GPIO39 | ANALOG_A17  |
+| GPIO34 | ANALOG_A18  |
+| GPIO35 | ANALOG_A19  |
+| GPIO4  | IIC_SDA     |
+| GPIO16 | IIC_SCL     |
+| GPIO14 | 1-Wire GPIO |
+| GPIO5  | 1-Wire GPIO |
+| GPIO32 | RS485_RXD   |
+| GPIO33 | RS485_TXD   |
+| GPIO13 | GSM_RXD     |
+| GPIO15 | GSM_TXD     |
 
 [Additional pinout/design details](https://www.kincony.com/esp32-all-in-one-board-home-assistant.html)
 
@@ -35,7 +35,7 @@ esphome:
   name: KC868-AIO
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
 
@@ -61,39 +61,39 @@ ethernet:
   phy_addr: 0
 
 i2c:
-   - id: bus_a
-     sda: 4
-     scl: 16
-     scan: true
+  - id: bus_a
+    sda: 4
+    scl: 16
+    scan: true
 
 # Example configuration entry
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-16
+  - id: "pcf8574_hub_out_1" # for output channel 1-16
     i2c_id: bus_a
     address: 0x24
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_2'  # for output channel 17-32
+  - id: "pcf8574_hub_out_2" # for output channel 17-32
     i2c_id: bus_a
     address: 0x25
     pcf8575: true
 
-  - id: 'pcf8574_hub_out_in_3'  # for output channel 33-38  + (input 49-58)
+  - id: "pcf8574_hub_out_in_3" # for output channel 33-38  + (input 49-58)
     i2c_id: bus_a
     address: 0x26
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-16
+  - id: "pcf8574_hub_in_1" # for input channel 1-16
     i2c_id: bus_a
     address: 0x21
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_2'  # for input channel 17-32
+  - id: "pcf8574_hub_in_2" # for input channel 17-32
     i2c_id: bus_a
     address: 0x22
     pcf8575: true
 
-  - id: 'pcf8574_hub_in_3'  # for input channel 33-48
+  - id: "pcf8574_hub_in_3" # for input channel 33-48
     i2c_id: bus_a
     address: 0x23
     pcf8575: true
@@ -401,7 +401,6 @@ one_wire:
 
 # Example configuration entry
 sensor:
-
   - platform: dallas_temp
     address: 0xec0921405caae128
     name: "aio--ds18b20"
@@ -545,7 +544,7 @@ sensor:
     sensor: adc36
     update_interval: 5s
 
-# Individual inputs  
+# Individual inputs
 binary_sensor:
   - platform: gpio
     name: "aio--input1"
@@ -1012,87 +1011,87 @@ binary_sensor:
       inverted: true
 
 pca9685:
-    id: 'pca9685_hub'
-    frequency: 500
+  id: "pca9685_hub"
+  frequency: 500
 
 output:
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM0"
     channel: 0
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM1"
     channel: 1
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM2"
     channel: 2
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM3"
     channel: 3
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM4"
     channel: 4
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM5"
     channel: 5
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM6"
     channel: 6
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM7"
     channel: 7
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM8"
     channel: 8
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM9"
     channel: 9
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM10"
     channel: 10
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM11"
     channel: 11
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM12"
     channel: 12
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM13"
     channel: 13
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM14"
     channel: 14
 
   - platform: pca9685
-    pca9685_id: 'pca9685_hub'
+    pca9685_id: "pca9685_hub"
     id: "PWM15"
     channel: 15
 
