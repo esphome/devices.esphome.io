@@ -35,14 +35,14 @@ jobs:
       # Check out the base repo (default branch, trusted) only to load the
       # command handler — no PR code is fetched or executed here.
       - name: Checkout scripts
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts
           sparse-checkout-cone-mode: false
 
       - name: Validate command and re-run review
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-review-command.cjs');
