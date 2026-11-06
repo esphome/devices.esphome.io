@@ -16,6 +16,10 @@
     "preview": "astro preview",
     "validate-devices": "tsx scripts/validate-devices.ts && tsx scripts/validate-yaml-configs.ts",
     "validate-yaml": "tsx scripts/validate-yaml-configs.ts",
+    "validate-esphome": "tsx scripts/validate-esphome-configs.ts",
+    "review-made-for-esphome": "tsx scripts/review-made-for-esphome.ts",
+    "check-workflow-scripts": "for f in .github/scripts/*.cjs; do node --check \"$f\" || exit 1; done",
+    "test": "npm run --silent check-workflow-scripts && tsx --test scripts/*.test.ts",
     "extract-yaml": "tsx scripts/extract-inline-yaml.ts",
     "extract-yaml:check": "tsx scripts/extract-inline-yaml.ts --check",
     "check-links": "tsx scripts/check-links.ts",
@@ -23,15 +27,18 @@
     "lint-frontmatter": "tsx scripts/lint-frontmatter.ts"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "^7.2.1",
-    "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/starlight": "^0.41.3",
-    "astro": "^7.0.7",
+    "@astrojs/markdown-remark": "^7.3.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.3.1",
     "gray-matter": "^4.0.3",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "tsx": "^4.23.1"
+    "@esphome/netlify-plugin-cloudflare-cache-purge": "github:esphome/netlify-plugin-cloudflare-cache-purge#v1.0.1",
+    "@types/node": "^26.4.1",
+    "js-yaml": "^5.5.0",
+    "tsx": "^4.23.13",
+    "vfile": "^6.0.3"
   }
 }
