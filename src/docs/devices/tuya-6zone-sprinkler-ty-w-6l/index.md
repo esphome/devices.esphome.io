@@ -62,12 +62,15 @@ is powered from 24VAC**. You can damage the board.
 
 The UART pads sit on the low voltage side, but the board is powered while you
 flash, so the 24 VAC supply must come from an isolating transformer whose
-secondary is not referenced to earth. A mains-referenced 24 VAC supply puts
-hazardous voltage on GND, RX and TX, and therefore on the USB adapter and the
-computer. If you cannot confirm that the transformer is isolating, put a USB
-isolator between the adapter and the computer. Touch nothing on the board except
-the pads you are probing, and unplug the transformer as soon as the write
-finishes.
+secondary is not referenced to earth, and you must be able to confirm that. A
+mains-referenced 24 VAC supply puts hazardous voltage on GND, RX and TX, and
+therefore on the USB adapter and the computer. A USB isolator between the adapter
+and the computer protects the computer only: the adapter leads and the pads on
+the board stay live. If you cannot verify that the transformer is isolating, do
+not flash the board while it is powered. Desolder the module, or power it from an
+isolated bench supply with the 24VAC input disconnected. Touch nothing on the
+board except the pads you are probing, and unplug the transformer as soon as the
+write finishes.
 
 ### 1. Back up the original firmware first
 
@@ -95,15 +98,17 @@ On the ESPHome Dashboard use Install, Manual download, UF2 package instead.
 
 ### 3. Write the firmware
 
-Enter download mode (bridge CEN/RST to GND while powering the board, then release
-the bridge when the tool starts writing) and flash the compiled image:
+Run the command first, it waits for the chip. Then briefly bridge CEN to GND to
+reset the chip and release it, and the tool links and writes:
 
 ```bash
-ltchiptool flash write bk7231n firmware.uf2
+ltchiptool flash write firmware.uf2
 ```
 
-ltchiptool only writes a compiled image, it does not compile ESPHome YAML, so pass
-the UF2 file and not `config.yaml`.
+CEN is the reset pin, so holding it to GND keeps the chip in reset and the tool
+never connects. `flash write` takes the image alone, the UF2 header tells
+ltchiptool which chip family it is. ltchiptool only writes a compiled image, it
+does not compile ESPHome YAML, so pass the UF2 file and not `config.yaml`.
 
 ## Button usage
 

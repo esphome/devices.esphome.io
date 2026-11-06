@@ -91,6 +91,7 @@ switch:
   - platform: gpio
     id: valve_1
     name: "Valve 1"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 0
@@ -98,6 +99,7 @@ switch:
   - platform: gpio
     id: valve_2
     name: "Valve 2"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 1
@@ -105,6 +107,7 @@ switch:
   - platform: gpio
     id: valve_3
     name: "Valve 3"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 2
@@ -112,6 +115,7 @@ switch:
   - platform: gpio
     id: valve_4
     name: "Valve 4"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 3
@@ -119,6 +123,7 @@ switch:
   - platform: gpio
     id: valve_5
     name: "Valve 5"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 4
@@ -126,6 +131,7 @@ switch:
   - platform: gpio
     id: valve_6
     name: "Valve 6"
+    internal: true
     pin:
       sn74hc595: valve_sn74hc595
       number: 5
