@@ -22,9 +22,10 @@ name: Made for ESPHome PR
 #
 # SECURITY: every job here runs in the base-repo context with a writable
 # token, so none of them ever checks out or executes the PR's code. Intake
-# reads the diff through the API, and the workflow_run jobs read only the
-# artifact and the GitHub API. The one checkout is of the trusted base repo,
-# to load the handler scripts.
+# reads the diff through the API, and the workflow_run jobs take the pull
+# request from the triggering run and read artifacts only for report text and
+# verdicts. The one checkout is of the trusted base repo, to load the handler
+# scripts.
 
 on:
   pull_request_target:
@@ -57,7 +58,7 @@ jobs:
       pull-requests: write  # to convert the PR to a draft and comment on it
     steps:
       - name: Checkout scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts
@@ -67,7 +68,7 @@ jobs:
       # the changed pages through the contents API, and pull_request_target
       # already runs in the base-repo context with write access.
       - name: Draft and label the pull request
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-intake.cjs');
@@ -91,7 +92,7 @@ jobs:
       # Check out the base repo (default branch, trusted) only to load the
       # handler scripts, never the PR's code.
       - name: Checkout scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts
@@ -103,7 +104,7 @@ jobs:
         # nothing, so a missing artifact is expected. Don't fail over it, the
         # outcome check below skips the remaining steps instead.
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: mfe-review-report
           run-id: ${{ github.event.workflow_run.id }}
@@ -113,14 +114,14 @@ jobs:
       - name: Generate a token
         if: steps.download.outcome == 'success'
         id: generate-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        uses: actions/create-github-app-token@v3.3.0
         with:
           client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
           private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Supersede and repost review
         if: steps.download.outcome == 'success'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -135,7 +136,7 @@ jobs:
       # workflow_run already runs in the base-repo context.
       - name: Promote the pull request when checks pass
         if: steps.download.outcome == 'success'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
@@ -160,18 +161,19 @@ jobs:
       pull-requests: write  # to mark the PR ready for review
     steps:
       - name: Checkout scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts
           sparse-checkout-cone-mode: false
 
-      # Only for the PR number it carries; the validation report itself is
-      # handled by the pr-validation-feedback workflow.
+      # Only a gate: a cancelled CI run uploads nothing, so promotion is
+      # skipped. The PR comes from the triggering run, and the validation
+      # report itself is handled by the pr-validation-feedback workflow.
       - name: Download validation artifact
         id: download
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        uses: actions/download-artifact@v8.0.2
         with:
           name: validation-report
           run-id: ${{ github.event.workflow_run.id }}
@@ -180,7 +182,7 @@ jobs:
 
       - name: Promote the pull request when checks pass
         if: steps.download.outcome == 'success'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
