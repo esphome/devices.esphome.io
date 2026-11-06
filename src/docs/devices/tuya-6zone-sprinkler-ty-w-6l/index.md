@@ -13,6 +13,8 @@ PCB model TY-W-6L-AC-DZAK. Uses two independent 74HC595 shift registers for
 LEDs and valves, the same architecture as the 8-zone
 [TY-W-8L](../tuya-8zone-sprinkler-ty-w-8l/) with two fewer zones.
 
+![TY-W-6L pinout](pinout.png "TY-W-6L-AC-DZAK: BK7231N GPIO to shift registers, LEDs and valves")
+
 ## Hardware
 
 - **SoC**: Beken BK7231N (CBU module)
