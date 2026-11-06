@@ -1,4 +1,5 @@
-# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server): https://github.com/makethingshappy/MTH-for-ESPHome/blob/a38f23c006aa3ed14a521c8e01b3ec0af9aadacd/Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a38f23c006aa3ed14a521c8e01b3ec0af9aadacd/Configs/IoTsmart_ESP32-S3/iotextra-mosfet2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
 # IoTextra MOSFET2 3.02 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
 # Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/MOSFET2/v.3.02/host-map.yaml
 # Outputs DO1..DO8: MOSFET, active-low on the HOST line (output on = 0)
@@ -30,11 +31,19 @@ i2c:
   scan: true
 
 switch:
-  - {platform: gpio, id: do1, name: "DO1", pin: {number: GPIO8, inverted: true}, restore_mode: ALWAYS_OFF}   # AP0, group S
-  - {platform: gpio, id: do2, name: "DO2", pin: {number: GPIO9, inverted: true}, restore_mode: ALWAYS_OFF}   # AP1, group S
-  - {platform: gpio, id: do3, name: "DO3", pin: {number: GPIO10, inverted: true}, restore_mode: ALWAYS_OFF}   # AP2, group S
-  - {platform: gpio, id: do4, name: "DO4", pin: {number: GPIO11, inverted: true}, restore_mode: ALWAYS_OFF}   # AP3, group S
-  - {platform: gpio, id: do5, name: "DO5", pin: {number: GPIO4, inverted: true}, restore_mode: ALWAYS_OFF}   # AP4, group N
-  - {platform: gpio, id: do6, name: "DO6", pin: {number: GPIO5, inverted: true}, restore_mode: ALWAYS_OFF}   # AP5, group N
-  - {platform: gpio, id: do7, name: "DO7", pin: {number: GPIO6, inverted: true}, restore_mode: ALWAYS_OFF}   # AP6, group N
-  - {platform: gpio, id: do8, name: "DO8", pin: {number: GPIO7, inverted: true}, restore_mode: ALWAYS_OFF}   # AP7, group N
+  # AP0, group S
+  - {platform: gpio, id: do1, name: "DO1", pin: {number: GPIO8, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP1, group S
+  - {platform: gpio, id: do2, name: "DO2", pin: {number: GPIO9, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP2, group S
+  - {platform: gpio, id: do3, name: "DO3", pin: {number: GPIO10, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP3, group S
+  - {platform: gpio, id: do4, name: "DO4", pin: {number: GPIO11, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP4, group N
+  - {platform: gpio, id: do5, name: "DO5", pin: {number: GPIO4, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP5, group N
+  - {platform: gpio, id: do6, name: "DO6", pin: {number: GPIO5, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP6, group N
+  - {platform: gpio, id: do7, name: "DO7", pin: {number: GPIO6, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP7, group N
+  - {platform: gpio, id: do8, name: "DO8", pin: {number: GPIO7, inverted: true}, restore_mode: ALWAYS_OFF}
