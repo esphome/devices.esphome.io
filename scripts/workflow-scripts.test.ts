@@ -47,9 +47,14 @@ function makeGithub(opts: {
   // Tag the list functions so paginate can dispatch reviews vs comments.
   const listReviews = Object.assign(() => {}, { _kind: "reviews" });
   const listComments = Object.assign(() => {}, { _kind: "comments" });
+  const listPulls = Object.assign(() => {}, { _kind: "pulls" });
   const github = {
     paginate: async (fn: { _kind?: string }) =>
-      fn && fn._kind === "comments" ? opts.comments ?? [] : opts.reviews ?? [],
+      fn && fn._kind === "pulls"
+        ? runPulls()
+        : fn && fn._kind === "comments"
+          ? opts.comments ?? []
+          : opts.reviews ?? [],
     rest: {
       repos: {
         getCollaboratorPermissionLevel: async (args: unknown) => {
@@ -64,6 +69,7 @@ function makeGithub(opts: {
         },
       },
       pulls: {
+        list: listPulls,
         listReviews,
         createReview: record("createReview"),
         updateReview: record("updateReview"),
@@ -112,19 +118,38 @@ function freshCore() {
   };
 }
 
-const context = { repo: { owner: "esphome", repo: "esphome-devices" } };
+// The PR the triggering run belongs to, as the scripts resolve it from
+// context.payload.workflow_run (never from the artifact). null = no open PR.
+let runPrNumber: number | null = 42;
+const RUN = {
+  head_sha: "sha1", // the PR head the mocks return
+  head_branch: "add-device",
+  head_repository: { full_name: "fork/esphome-devices", owner: { login: "fork" } },
+};
+const runPulls = () =>
+  runPrNumber === null
+    ? []
+    : [{ number: runPrNumber, head: { sha: RUN.head_sha, repo: { full_name: RUN.head_repository.full_name } } }];
+
+const context = {
+  repo: { owner: "esphome", repo: "esphome-devices" },
+  payload: { workflow_run: RUN },
+};
 
 // --- feedback script -------------------------------------------------------
 
-// `status` writes mfe-status.txt (the review verdict); pass `undefined` to omit
-// it entirely (simulating a crashed run).
+// `prNumber` is the triggering run's PR (non-numeric means no matching PR); the
+// artifact itself only gets a decoy number. `status` writes mfe-status.txt (the
+// review verdict); pass `undefined` to omit it entirely (a crashed run).
 function withArtifact(
   prNumber: string,
   report: string | null,
   status?: string
 ): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-art-"));
-  fs.writeFileSync(path.join(dir, "pr-number.txt"), prNumber + "\n");
+  // A decoy: the scripts must take the PR from the run, never this file.
+  fs.writeFileSync(path.join(dir, "pr-number.txt"), "999\n");
+  runPrNumber = /^\d+$/.test(prNumber) ? Number(prNumber) : null;
   if (report !== null) fs.writeFileSync(path.join(dir, "mfe-review-report.md"), report);
   if (status !== undefined) fs.writeFileSync(path.join(dir, "mfe-status.txt"), status + "\n");
   process.env.MFE_ARTIFACT_DIR = dir;
@@ -295,13 +320,22 @@ test("feedback: crashed run (no status file) does NOT dismiss", async () => {
   assert.equal(c._warned.length, 1);
 });
 
-test("feedback: unreadable PR number -> setFailed", async () => {
+test("feedback: no open PR matches the run's head -> nothing posted", async () => {
   withArtifact("not-a-number", "## body", "changes");
   const { github, calls } = makeGithub({ reviews: [] });
   const c = freshCore();
   await feedbackScript({ github, context, core: c });
-  assert.equal(c._failed.length, 1);
+  assert.equal(c._failed.length, 0);
   assert.equal(calls.length, 0);
+});
+
+test("feedback: the artifact's PR number is ignored in favour of the run's PR", async () => {
+  withArtifact("999", "## report body", "changes");
+  runPrNumber = 42;
+  const { github, calls } = makeGithub({ reviews: [] });
+  await feedbackScript({ github, context, core: freshCore() });
+  const review = calls.find((c) => c.method === "createReview");
+  assert.equal((review?.args as { pull_number: number }).pull_number, 42);
 });
 
 // --- command script --------------------------------------------------------
@@ -758,6 +792,8 @@ function makePromoteGithub(
   const listEvents = Object.assign(() => {}, { _kind: "events" });
   const github = {
     paginate: async (fn: { _kind?: string }, args: unknown) => {
+      // The run-PR lookup isn't a promote decision; keep it out of `calls`.
+      if (fn._kind === "pulls") return runPulls();
       calls.push({ method: `paginate:${fn._kind}`, args });
       return fn._kind === "checks" ? opts.checks ?? [] : opts.events ?? [];
     },
@@ -769,6 +805,7 @@ function makePromoteGithub(
     rest: {
       checks: { listForRef },
       pulls: {
+        list: Object.assign(() => {}, { _kind: "pulls" }),
         get: async (args: unknown) => {
           calls.push({ method: "pulls.get", args });
           return { data: opts.pr ?? makePr([]) };
@@ -825,7 +862,7 @@ const draftedBy = (type: string) => [
   { event: "convert_to_draft", actor: { type } },
 ];
 
-// The promote script only needs pr-number.txt out of the review artifact.
+// Sets the mocked run's PR; promote reads nothing from the artifact.
 const withPrNumber = (prNumber: string) => withArtifact(prNumber, null, "pass");
 
 test("promote: all checks green -> adds the pending label", async () => {
@@ -1018,12 +1055,12 @@ test("promote: a closed PR is left alone", async () => {
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
 });
 
-test("promote: an unreadable PR number -> setFailed", async () => {
+test("promote: no open PR matches the run's head -> nothing done", async () => {
   withPrNumber("not-a-number");
   const { github, calls } = makePromoteGithub({ pr: makePr([MFE]) });
   const core = freshCore();
   await promoteScript({ github, context, core });
-  assert.equal(core._failed.length, 1);
+  assert.equal(core._failed.length, 0);
   assert.equal(calls.length, 0);
 });
 
@@ -1051,25 +1088,6 @@ test("promote: any other removeLabel error propagates", async () => {
   );
 });
 
-test("promote: falls back to ./artifact when MFE_ARTIFACT_DIR is unset", async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-cwd-"));
-  fs.mkdirSync(path.join(dir, "artifact"));
-  fs.writeFileSync(path.join(dir, "artifact", "pr-number.txt"), "42\n");
-  delete process.env.MFE_ARTIFACT_DIR;
-  const cwd = process.cwd();
-  process.chdir(dir);
-  try {
-    const { github, calls } = makePromoteGithub({
-      pr: makePr([MFE]),
-      checks: [ga("completed", "success")],
-    });
-    await promoteScript({ github, context, core: freshCore() });
-    assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
-  } finally {
-    process.chdir(cwd);
-  }
-});
-
 test("promote: a failed ready-for-review mutation warns instead of throwing", async () => {
   withPrNumber("42");
   const { github, calls } = makePromoteGithub({
@@ -1085,4 +1103,15 @@ test("promote: a failed ready-for-review mutation warns instead of throwing", as
   // The label still goes on; the job that won the race requested the review.
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
   assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
+});
+
+test("promote: a PR that moved past the run's commit is left alone", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: { ...makePr([MFE]), head: { sha: "newer" } },
+    checks: [ga("completed", "success")],
+  });
+  await promoteScript({ github, context, core: freshCore() });
+  assert.equal(calls.filter((c) => c.method === "addLabels").length, 0);
+  assert.equal(calls.filter((c) => c.method.startsWith("paginate:")).length, 0);
 });
