@@ -26,14 +26,7 @@ VeSync app when running OEM firmware.
 
 ## Additional Resources
 
-### Etekcity Smart Outlet
-
-- [Etekcity Product Page](https://etekcity.com/products/voltson-smart-wifi-outlet-1)
-- [Etekcity Product Manual](https://docs.ai-thinker.com/_media/esp8266/docs/esp-01e_product_specification_en.pdf)
-
 ### ESP 01E Module
-
-- [Ai-Thinker - ESP 01E Datasheet](https://docs.ai-thinker.com/_media/esp8266/docs/esp-01e_product_specification_en.pdf)
 
 | Specification   | Details                                |
 | --------------- | -------------------------------------- |
@@ -136,7 +129,7 @@ converter is attached to COM3.
 
 ### 4. Flashing ESPHome
 
-If you do not already have an instance of [ESPHome Dashboard](https://esphome.io/guides/getting_started_hassio.html)
+If you do not already have an instance of [ESPHome Dashboard](https://esphome.io/guides/getting_started_hassio/)
 running, or your instance does not meet the requirements to flash devices, you can use this
 [official site](https://web.esphome.io) to flash a basic configuration or upload a custom configuration.
 
@@ -145,11 +138,11 @@ running, or your instance does not meet the requirements to flash devices, you c
 3. Disconnect the IO0 test pad from GND so that the device will no longer boot into Flash Mode when powered on.
 4. Plug the VCC wire back into the USB serial converter. The device should now boot normally.
 5. You should now see an access point with the name "esphome" in it. Connect to the access point and use the
-   [captive portal](https://esphome.io/components/captive_portal) to configure the Wi-Fi settings on the device.
-   - **_NOTE:_** If [Improv via Serial](https://esphome.io/components/improv_serial) was included in the configuration,
+   [captive portal](https://esphome.io/components/captive_portal/) to configure the Wi-Fi settings on the device.
+   - **_NOTE:_** If [Improv via Serial](https://esphome.io/components/improv_serial/) was included in the configuration,
      you can also configure the Wi-Fi settings via serial.
 6. Once connected to Wi-Fi, you should be able to access the device's
-   [web server](https://esphome.io/components/web_server) via its IP address. If you have not already, you can now adopt
+   [web server](https://esphome.io/components/web_server/) via its IP address. If you have not already, you can now adopt
    the device with ESPHome Dashboard.
 
 ## ESP Home Configuration
@@ -186,7 +179,7 @@ substitutions:
   throttle_average: 60s # How often average sensor values are published (this is NOT how often sensor readings are taken)
   # HLW8012 Energy Monitoring Defaults for the Etekcity Voltson ESW01-USA-R6P
   # These defaults are a good starting point for the Etekcity Voltson ESW01-USA-R6P. However, further tuning will yield the best results.
-  # More information on HLW8012 tuning is available at https://esphome.io/components/sensor/hlw8012
+  # More information on HLW8012 tuning is available at https://esphome.io/components/sensor/hlw8012/
   voltage_divider: "2017.5014044943819"
   current_resistor: "0.0009273577235772359"
   current_multiply: "1.0"
@@ -194,7 +187,7 @@ substitutions:
 ##################################
 ### ESPHome Core Configuration ###
 ##################################
-# More information available at https://esphome.io/components/esphome.html
+# More information available at https://esphome.io/components/esphome/
 
 esphome:
   name: ${name}
@@ -206,7 +199,7 @@ esphome:
   name_add_mac_suffix: False
 
 # ESP8266 Platform Configuration
-# More information available at https://esphome.io/components/esp8266
+# More information available at https://esphome.io/components/esp8266/
 esp8266:
   board: esp01_1m
   early_pin_init: False # ⚠ IMPORTANT: This setting will prevent the outlet from flickering on/off during reboots!
@@ -216,7 +209,7 @@ esp8266:
 ##########################################
 
 # Enable Logging
-logger: # More information available athttps://esphome.io/components/logger
+logger: # More information available at https://esphome.io/components/logger/
   level: INFO # By default, the log level is DEBUG. Increasing the log level severity (e.g., to INFO or WARN) can help improve the performance and memory usage of the application.
 
 wifi: # More information available at https://esphome.io/components/wifi
@@ -236,23 +229,23 @@ wifi: # More information available at https://esphome.io/components/wifi
 
 # This option along with the "ap" option allows a user to reconfigure the Wi-Fi connection.
 # NOTE: If the captive portal webpage is not loading, rebooting the plug may allow it to load.
-captive_portal: # More information available at https://esphome.io/components/captive_portal
+captive_portal: # More information available at https://esphome.io/components/captive_portal/
 
 # Enables Home Assistant API
-api:# More information available at https://esphome.io/components/api
+api:# More information available at https://esphome.io/components/api/
   # ⚠ SECURITY WARNING: Not specifying an encryption key here will allow anyone on your network with the IP of the device to interact with the API!
-#  encryption: # The key value for the "encryption" option is a 32-byte base64 encoded string. A random one can be copied from https://esphome.io/components/api
+#  encryption: # The key value for the "encryption" option is a 32-byte base64 encoded string. A random one can be copied from https://esphome.io/components/api/
 #    key: O3FXh9ceOxMU8swMRjlhGvvef4YkiVU8jmGkL/RbcMg=
 
 # Allow Over-The-Air updates
-ota:# More information available at https://esphome.io/components/ota
+ota:# More information available at https://esphome.io/components/ota/
   # ⚠ SECURITY WARNING: Not specifying a password here will allow anyone on your network with the ip of the device to reflash a new binary!
 #  password: !secret ota_password
 
 # You can enable a web server to interact with the plug directly via your web browser.
 # ⚠ WARNING: Enabling this component will take up a lot of memory and may decrease overall stability, especially on devices with ESP8266 modules, which this device uses.
 # NOTE: This component is not required to interact with the plug via Home Assistant or the API.
-web_server: # More information available at https://esphome.io/components/web_server
+web_server: # More information available at https://esphome.io/components/web_server/
 #  ota: False # ⚠ SECURITY WARNING: Keep in mind that even with an OTA password set, if OTA is enabled in the web server, anyone with access to the web server can reflash new firmware!
 #  auth: # ⚠ SECURITY WARNING: Not specifying a username and password here will allow anyone on your network with the IP of the device to interact with it!
 #    username: !secret web_server_username
@@ -298,7 +291,7 @@ binary_sensor:
 
 sensor:
   # Energy Monitoring via HLW8012 Module
-  # More information available at https://esphome.io/components/sensor/hlw8012
+  # More information available at https://esphome.io/components/sensor/hlw8012/
   - platform: hlw8012
     sel_pin: GPIO15
     cf_pin: GPIO13
@@ -339,7 +332,7 @@ current_resistor, and current_multiply have been provided in the Basic Configura
 These values have been tuned with a FLUKE 87 and have been tested on a few of these plugs, yielding decent results.
 
 If you want to fine-tune the energy readings further, follow the instructions for the
-[HWL8012 module](https://esphome.io/components/sensor/hlw8012).
+[HWL8012 module](https://esphome.io/components/sensor/hlw8012/).
 
 ### Total Daily Energy Sensor
 
@@ -358,7 +351,7 @@ sensor:
   # ...
 
   # Total Daily Energy Sensor
-  # More information available at https://esphome.io/components/sensor/total_daily_energy
+  # More information available at https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: "Total Daily Energy"
     power_id: wattage
@@ -372,7 +365,7 @@ sensor:
 
 # Time Component
 # This will reset the "Total Daily Energy Sensor" to 0 at midnight, synced with Home Assistant's clock.
-time: # More information available at https://esphome.io/components/time
+time: # More information available at https://esphome.io/components/time/
   - platform: homeassistant
     id: homeassistant_time
 ```
@@ -393,7 +386,7 @@ sensor:
   # ...
 
   # Debug component
-  # More information at https://esphome.io/components/debug
+  # More information at https://esphome.io/components/debug/
   - platform: debug
     free:
       name: "Heap Free"

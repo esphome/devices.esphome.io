@@ -43,7 +43,7 @@ There are 2 ways of flashing ESPHome on to this controller.
    changes the controller to bk72xx) then copy the yaml file coresponding with your led strip in the edit window and
    lastly click install(Top Right) and manual download the file as a UF2 package. **IMPORTANT: Change the api encription
    key with a random generated key from
-   [the ESPHome API documentation](https://esphome.io/components/api.html#configuration-variables), change the ota
+   [the ESPHome API documentation](https://esphome.io/components/api/#configuration-variables), change the ota
    password if you want to use ota and change the ap password if you want to have a fallback ap.**
 2. Get a USB to serial converter that can work with 3.3V. Example:
    ![usb serial adapter](usb-serial-adapter.jpg "usb serial adapter")
@@ -106,7 +106,7 @@ tuya:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
 
 ota:
   password: "CHANGE-THIS-PASSWORD-OR-REMOVE-OTA"
@@ -178,7 +178,7 @@ tuya:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
 
 ota:
   password: "CHANGE-THIS-PASSWORD-OR-REMOVE-OTA"
@@ -250,7 +250,7 @@ tuya:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
 
 ota:
   password: "CHANGE-THIS-PASSWORD-OR-REMOVE-OTA"
@@ -321,7 +321,7 @@ tuya:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
 
 ota:
   password: "CHANGE-THIS-PASSWORD-OR-REMOVE-OTA"
@@ -392,7 +392,7 @@ tuya:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "GET-A-KEY-HERE-https://esphome.io/components/api.html#configuration-variables"
+    key: "GET-A-KEY-HERE-https://esphome.io/components/api/#configuration-variables"
 
 ota:
   password: "CHANGE-THIS-PASSWORD-OR-REMOVE-OTA"

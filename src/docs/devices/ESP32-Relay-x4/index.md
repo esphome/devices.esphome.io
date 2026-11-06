@@ -8,6 +8,7 @@ board: esp32
 
 ![Product front](./ac-dc-esp32-relayx4-front.jpg "Product front image")
 ![Product back](./ac-dc-esp32-relayx4-back.jpg "Product back image")
+![Product back](./ESP32_Relay-x4_V1.1-303E32AC411.jpg "Product back image")
 
 ## Product description
 

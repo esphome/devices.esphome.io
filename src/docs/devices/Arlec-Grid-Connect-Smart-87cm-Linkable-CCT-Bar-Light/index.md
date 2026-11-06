@@ -9,7 +9,7 @@ difficulty: 5
 
 The `Arlec Grid Connect Smart 87cm Linkable CCT Bar Light` is part of the
 [Grid Connect ecosystem](https://grid-connect.com.au/) sold at Bunnings in Australia and uses the
-Tuya [CBLC9](https://developer.tuya.com/en/docs/iot/cblc9-module-datasheet) module.
+Tuya [CBLC9](https://developer.tuya.com/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) module.
 This module is a variant of the BK7231 family and must be re-flashed or replaced with an ESP8266
 series module which fits inside the housing.
 

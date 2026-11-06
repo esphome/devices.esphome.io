@@ -35,10 +35,10 @@ More info and the housing STLs are available here:
 | GPIO08 | Touch Button "Minus" |
 | GPIO05 | LED-Strip            |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is
-[available on GitHub](https://github.com/Nerdiyde/ESPHomeSnippets/blob/main/Snippets/selfIY_ring/nerdiys-selfiy-ring.yaml).
+```yaml url=https://github.com/Nerdiyde/ESPHomeSnippets/blob/main/Snippets/selfIY_ring/nerdiys-selfiy-ring.yaml
+```
 
 ## Dimensions
 

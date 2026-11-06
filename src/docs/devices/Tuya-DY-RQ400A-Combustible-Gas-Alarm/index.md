@@ -16,7 +16,7 @@ project-url: https://github.com/dshcherb/DY-RQ400A-gas-alarm-esphome
 ![PCB Front Wi-Fi Chip Back](pcb-front-wifi-back.webp "PCB Front with the PCB Model Name")
 ![PCB Front Wi-Fi Chip Front](pcb-front-wifi-front.webp "PCB Front with the Wi-Fi Chip Model Name")
 
-[Tuya DY-RQ400A Combustible Gas Alarm](https://expo.tuya.com/product/602455) is a device that contains the
+Tuya DY-RQ400A Combustible Gas Alarm is a device that contains the
 [WB2S](https://docs.libretiny.eu/boards/wb2s/) (BK7231T) chip along with a
 [RJM8L151F6P6](https://www.runjetic.com/product/774.html) MCU (a
 [datasheet](https://cdn.myxypt.com/4412af49/22/06/ae01795334fbb272e3dcdc0f6464371691535dc2.pdf) is only available in
@@ -29,7 +29,7 @@ Chinese). The device has Wi-Fi and Zigbee variants (this page is for the Wi-Fi m
 The MCU communicates with the WB2S chip over UART1 which is also the UART used for flashing the chip. The protocol
 interactions follow [the Tuya serial protocol][1] and so the Tuya components implemented in ESPHome are applicable here.
 
-[1]: https://developer.tuya.com/en/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb
+[1]: https://developer.tuya.com/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb
 
 The gas level tracking and alarm logic is built into the MCU which exchanges the data points with the WB2S module, some
 parameters can be changed by the Wi-Fi module, some are merely used for status updates. There are also hardware buttons
@@ -38,7 +38,7 @@ for:
 1. Triggering a self-test which sets the alarm off as if the gas level is above a built-in threshold;
 2. Triggering a Wi-Fi module reset (the reset button is connected to the MCU which
   
-[can trigger the Wi-Fi module reset](https://developer.tuya.com/en/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb#title-10-Reset%20Wi-Fi%20connection)).
+[can trigger the Wi-Fi module reset](https://developer.tuya.com/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb#title-10-Reset%20Wi-Fi%20connection)).
 
 There is no way to adjust the gas threshold which is documented in the printed manual to be at 7±3 LEL
 ([Lower Explosive Limit](https://en.wikipedia.org/wiki/Flammability_limit)). Upon reaching that limit the alarm will go
@@ -54,11 +54,11 @@ which is normal and expected.
 
 There are a number of [Tuya data points][2] exchanged between the Wi-Fi module and the MCU.
 
-[2]: https://developer.tuya.com/en/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb#title-3-Data%20units
+[2]: https://developer.tuya.com/docs/iot/tuya-cloud-universal-serial-port-access-protocol?id=K9hhi0xxtn9cb#title-3-Data%20units
 
 During the [module initialization][3] process those data points are exposed by the MCU:
 
-[3]: https://developer.tuya.com/en/docs/iot/mcu-protocol?id=K9hrdpyujeotg#title-6-Module%20initialization
+[3]: https://developer.tuya.com/docs/iot/mcu-protocol?id=K9hrdpyujeotg#title-6-Module%20initialization
 
 ```log
   [21:50:55][C][tuya:041]: Tuya:
@@ -135,7 +135,7 @@ command is started so that the flashing process starts).
 
 ```yaml
 esphome:
-  # DY-RQ400A https://expo.tuya.com/product/602455
+  # DY-RQ400A
   name: tuya-gas-alarm-wb2s
 
 bk72xx:

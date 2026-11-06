@@ -42,7 +42,7 @@ More information:
 ## Basic Config
 
 This config has Ethernet enabled by default. You cannot use both WiFi and Ethernet at the same
-time ([ESPHome Ethernet documentation](https://esphome.io/components/ethernet.html#ethernet-component)). In order to use
+time ([ESPHome Ethernet documentation](https://esphome.io/components/ethernet/#ethernet-component)). In order to use
 WiFi,
 uncomment the WiFi block and comment the Ethernet blocks.
 
@@ -173,7 +173,7 @@ uart:
     data_bits: 8 #default to 8E1
     parity: EVEN #default to 8E1
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -407,5 +407,5 @@ button:
 
 ## Buzzer control through ESPHome
 
-Read more about it here: [https://esphome.io/components/rtttl.html#test-setup](https://esphome.io/components/rtttl.html#test-setup).
-Some fun beeps to send are here: [https://esphome.io/components/rtttl.html#common-beeps](https://esphome.io/components/rtttl.html#common-beeps)
+Read more about it here: [https://esphome.io/components/rtttl/#test-setup](https://esphome.io/components/rtttl/#test-setup).
+Some fun beeps to send are here: [https://esphome.io/components/rtttl/#common-beeps](https://esphome.io/components/rtttl/#common-beeps)

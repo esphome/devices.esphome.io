@@ -384,7 +384,7 @@ See: [sgp4x](https://esphome.io/components/sensor/sgp4x/) component
 
 (I2C Address: 0x62)
 
-See: [scd4x](https://esphome.io/components/sensor/scd4x) component
+See: [scd4x](https://esphome.io/components/sensor/scd4x/) component
 
 ## Example Configuration
 
