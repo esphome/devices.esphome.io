@@ -21,7 +21,7 @@ difficulty: 2
 | I/O Expander | PCA9557 at I2C 0x18 |
 | Backlight | PWM on GPIO 2 |
 | USB | USB-C via a CH340 USB-serial chip on UART0 (flashing and logs) |
-| Power | 5V via USB-C or JST connector |
+| Power | 5V via USB-C. The JST connector (J1) is for a single-cell lithium battery, not 5V |
 
 Product page:
 [Elecrow CrowPanel 7.0" ESP32-S3 HMI](https://www.elecrow.com/esp32-display-7-inch-hmi-display-rgb-tft-lcd-touch-screen-support-lvgl.html)
