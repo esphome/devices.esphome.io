@@ -38,12 +38,14 @@ voltage. The example lambda draws the date, time and battery voltage so you can 
 
 ### The panel is behind a load switch
 
-`epd_enable` on `GPIO12` is **active low** and powers the panel. Until it is turned on, the display component
-talks to a panel that is not powered — the device boots, connects and logs perfectly normally while the screen
-never changes. The `on_boot` block turns it on and waits before the first refresh.
+`epd_enable` on `GPIO12` is **active low** and powers the panel. It has to be on before the display component sets
+up, because that is when the driver resets and initialises the panel. If it isn't, the device boots, connects and
+logs perfectly normally while the screen never changes. The first `on_boot` block turns it on at priority 600,
+after the GPIO outputs are set up (800) and before the display (400).
 
-`batt_enable` on `GPIO25` does the same job for the battery voltage divider. Leaving it on continuously drains
-the battery for no reason, which rather defeats the point of a battery-powered display.
+`batt_enable` on `GPIO25` does the same job for the battery voltage divider. The `read_battery` script switches it
+on only while it takes a reading, at boot and then hourly, because leaving it on drains the battery for no reason.
+The divider is 470&nbsp;kΩ over 1.6&nbsp;MΩ, so the reading is multiplied by 1.29375.
 
 ## Notes
 

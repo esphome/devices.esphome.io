@@ -6,13 +6,19 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   on_boot:
-    priority: -10
-    then:
-      # The panel is powered through a load switch — it has to be enabled
-      # before the display component can talk to it.
-      - output.turn_on: epd_enable
-      - delay: 2s
-      - component.update: epaper
+    # The panel is powered through a load switch, and the display component
+    # resets and initialises the panel during its own setup. GPIO outputs set
+    # up at priority 800 and the display at 400, so the switch goes on at 600.
+    - priority: 600
+      then:
+        - output.turn_on: epd_enable
+    # Once everything is running, take a battery reading and draw the first
+    # screen with it.
+    - priority: -100
+      then:
+        - script.execute: read_battery
+        - script.wait: read_battery
+        - component.update: epaper
 
 esp32:
   board: esp32dev
@@ -37,8 +43,9 @@ output:
     pin:
       number: GPIO12
       inverted: true
-  # Power enable for the battery voltage divider. Active low — leave it off
-  # except while sampling, or the divider drains the battery continuously.
+  # Power enable for the battery voltage divider. Active low. The read_battery
+  # script switches it on only while it takes a reading, so the divider doesn't
+  # drain the battery.
   - platform: gpio
     id: batt_enable
     pin:
@@ -61,10 +68,26 @@ sensor:
     name: Battery Voltage
     pin: GPIO39
     attenuation: 11db
-    update_interval: 60min
-    # The pin sits on a 2:1 divider.
+    # Read only by the read_battery script, which powers the divider first.
+    update_interval: never
+    # The divider is 470k over 1.6M (Paperd.ink rev4 schematic), so the battery
+    # is (470 + 1600) / 1600 = 1.29375 times the pin voltage.
     filters:
-      - multiply: 2.0
+      - multiply: 1.29375
+
+script:
+  # Power the divider, let it settle, read it, then switch it off again.
+  - id: read_battery
+    then:
+      - output.turn_on: batt_enable
+      - delay: 50ms
+      - component.update: batt_voltage
+      - output.turn_off: batt_enable
+
+interval:
+  - interval: 60min
+    then:
+      - script.execute: read_battery
 
 binary_sensor:
   - platform: gpio
@@ -138,4 +161,6 @@ display:
       if (now.is_valid()) {
         it.strftime(10, 10, id(font_body), BLK, "%Y-%m-%d %H:%M", now);
       }
-      it.printf(10, 50, id(font_body), RED, "%.2f V", id(batt_voltage).state);
+      if (id(batt_voltage).has_state()) {
+        it.printf(10, 50, id(font_body), RED, "%.2f V", id(batt_voltage).state);
+      }
