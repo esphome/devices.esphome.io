@@ -24,11 +24,12 @@ import * as path from "node:path";
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { changedPaths } from "./changed-paths.ts";
 import { scanExternalCode } from "./external-code-scan.ts";
 import { stripAnsi } from "./review-made-for-esphome.ts";
-import { ESPHOME_YAML_SCHEMA, findYamlFences, type Issue } from "./validate-yaml-configs.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
+import { findYamlFences, type Issue } from "./validate-yaml-configs.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -67,7 +68,7 @@ const isMapping = (v: unknown): v is Mapping =>
 
 function parseYaml(text: string): unknown {
   try {
-    return yaml.load(text, { schema: ESPHOME_YAML_SCHEMA });
+    return yaml.load(text, { schema: ESPHOME_SCHEMA });
   } catch {
     return undefined; // validate-yaml reports parse errors
   }

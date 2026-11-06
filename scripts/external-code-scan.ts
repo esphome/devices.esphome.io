@@ -5,7 +5,7 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 class Tagged {
   constructor(
@@ -20,17 +20,36 @@ const TAGS = [
   "!remove", "!force",
 ];
 
-const SCAN_SCHEMA = yaml.DEFAULT_SCHEMA.extend(
-  TAGS.flatMap((tag) =>
-    (["scalar", "sequence", "mapping"] as const).map(
-      (kind) =>
-        new yaml.Type(tag, {
-          kind,
-          construct: (data) => new Tagged(tag, data),
-          instanceOf: Tagged,
-        })
-    )
-  )
+// Every ESPHome tag, on any node kind, loads as a Tagged wrapper so the scan
+// sees what it points at.
+const SCAN_SCHEMA = yaml.CORE_SCHEMA.withTags(
+  yaml.mergeTag,
+  TAGS.flatMap((tag) => [
+    yaml.defineScalarTag(tag, {
+      resolve: (source) => new Tagged(tag, source === "" ? null : source),
+      identify: () => false,
+    }),
+    yaml.defineSequenceTag<unknown[], Tagged>(tag, {
+      create: () => [],
+      addItem: (items, item) => {
+        items.push(item);
+      },
+      finalize: (items) => new Tagged(tag, items),
+      identify: () => false,
+    }),
+    yaml.defineMappingTag<Record<string, unknown>, Tagged>(tag, {
+      create: () => ({}),
+      addPair: (map, key, value) => {
+        map[String(key)] = value;
+        return "";
+      },
+      has: (map, key) => Object.hasOwn(map, String(key)),
+      keys: (tagged) => Object.keys(tagged.value as Record<string, unknown>),
+      get: (tagged, key) => (tagged.value as Record<string, unknown>)[String(key)],
+      finalize: (map) => new Tagged(tag, map),
+      identify: () => false,
+    }),
+  ])
 );
 
 // Git sources ESPHome fetches packages and components from.
