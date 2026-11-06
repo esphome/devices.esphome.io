@@ -24,6 +24,11 @@ when requesting a change.
    separate PRs. General code-quality changes may span several devices if related.
 3. Identify every added or changed file. Only review what the diff touches. Do not flag
    pre-existing issues on untouched pages.
+4. Check the title names the device by its frontmatter `title`: `Add <Device Name>`,
+   `Update <Device Name> - <what changed>`, `Remove <Device Name>`, or an imperative summary for a
+   cross-device cleanup. Never a file name (`index.md`, `config.yaml`), a branch name, "new device",
+   or a title that doesn't name the device. Suggest a conforming title when it breaks these rules;
+   a bad title alone doesn't block a merge.
 
 ## Page structure and YAML fences
 
@@ -88,8 +93,10 @@ Key points:
 - The ESPHome configuration is open source. At least one ` ```yaml url=… ` fence points at a
   `.yaml` file in the manufacturer's GitHub, Codeberg, or GitLab repo so the rendered page shows
   the live upstream config.
-- Wi-Fi devices include `esp32_improv:`, and `improv_serial:` when there is a USB port.
-- The device can be "taken control" of via the ESPHome Builder: `dashboard_import:`, the
+- Wi-Fi devices include `improv_ble:` (`esp32_improv:` is the deprecated spelling), and `improv_serial:`
+  when there is a USB port.
+- The device can be "taken control" of via the ESPHome Builder: `dashboard_import:` (its
+  `package_import_url` must resolve to the config file, case-sensitively), the
   `ota.esphome` component, serial flashing not disabled, and OTA updates via the
   `update.http_request` component.
 - No secrets (not even `!secret wifi_ssid` / `!secret wifi_password`), no passwords, no static
