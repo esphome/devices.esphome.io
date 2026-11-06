@@ -73,29 +73,24 @@ script:
           id(selected_zone) = -1;
           id(all_zones_mode) = 0;
 
+  # start_single_valve() opens the valve for its configured duration without
+  # touching the per-zone enable switches, which are config entities with a
+  # restored state and belong to the user, not to the panel.
   - id: activate_zone
     parameters:
       zone: int
     then:
       - lambda: |
-          for (size_t i = 0; i < 8; i++) {
-            if (static_cast<int>(i) == zone) {
-              id(irrigador).enable_switch(i)->turn_on();
-            } else {
-              id(irrigador).enable_switch(i)->turn_off();
-            }
-          }
-          id(irrigador).resume_or_start_full_cycle();
+          id(irrigador).start_single_valve(static_cast<size_t>(zone));
           id(selected_zone) = -1;
           id(all_zones_mode) = 0;
 
+  # start_full_cycle() runs the cycle over the enabled zones and enables every
+  # zone when none is enabled, so it works on a freshly flashed board too.
   - id: activate_all_zones
     then:
       - lambda: |
-          for (size_t i = 0; i < 8; i++) {
-            id(irrigador).enable_switch(i)->turn_on();
-          }
-          id(irrigador).resume_or_start_full_cycle();
+          id(irrigador).start_full_cycle();
           id(selected_zone) = -1;
           id(all_zones_mode) = 0;
 

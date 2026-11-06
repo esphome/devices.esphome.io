@@ -70,6 +70,11 @@ If Option A fails, disconnect the 3.3V cable and use the 24VAC transformer:
 In Option B, **DO NOT connect the 3.3V cable from the USB adapter**. Only GND,
 TX and RX. The board generates its own 3.3V internally from the 24VAC.
 
+The transformer must be an isolating type whose secondary is not referenced to
+earth. A mains-referenced 24 VAC supply puts hazardous voltage on GND, TX and RX,
+and therefore on the USB adapter and the computer. If you cannot confirm that the
+transformer is isolating, put a USB isolator between the adapter and the computer.
+
 ### 1. Back up the original firmware first
 
 Read the whole flash before writing anything. Once ESPHome is on the chip this is
