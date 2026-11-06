@@ -39,6 +39,8 @@ It needs no network, so it is a quick proof that the panel is scanning correctly
 For reference, the preset resolves to R1 `GPIO25`, G1 `GPIO26`, B1 `GPIO27`, R2 `GPIO14`, G2 `GPIO12`,
 B2 `GPIO13`, A `GPIO23`, B `GPIO19`, C `GPIO5`, D `GPIO17`, E `GPIO18`, LAT `GPIO4`, OE `GPIO15`, CLK `GPIO16`.
 
+![ESP32 Trinity HUB75 pins from the esp32-trinity board preset](trinity-pin-map.png "ESP32 Trinity HUB75 pins")
+
 ### Clock
 
 Once the board is on your Wi-Fi, add this to replace the test pattern with a clock from network time. Until the
