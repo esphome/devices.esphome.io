@@ -8,7 +8,7 @@ configs the page pulls in.
 The rules below are what CI enforces (`npm run validate-devices`, `npm run validate-yaml`,
 `npm run lint-frontmatter`, markdownlint, yamllint, the CRLF check and the external link check), plus the pull
 request template and the Made for ESPHome standard. If a document ever disagrees with CI, the validator scripts
-in `scripts/` win; fix the document. The same rules are repeated for other tools in
+in `scripts/` win; fix the document (CI test). The same rules are repeated for other tools in
 `.github/copilot-instructions.md` and `.github/skills/code-review/SKILL.md`, so keep those in step when a rule
 changes.
 
