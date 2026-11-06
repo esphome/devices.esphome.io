@@ -10,15 +10,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   markdown_lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: markdownlint-cli
-        uses: nosborn/github-action-markdown-cli@508d6cefd8f0cc99eab5d2d4685b1d5f470042c1 # v3.5.0
+        uses: nosborn/github-action-markdown-cli@v3.5.0
         with:
           config_file: ".markdownlintrc"
           files: src
@@ -27,17 +30,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: yamllint-cli
         uses: "docker://pipelinecomponents/yamllint:latest"
         with:
           args: yamllint -c .yamllintrc .
+  frontmatter_lint:
+    name: Frontmatter YAML Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint frontmatter in changed markdown
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run --silent lint-frontmatter -- --annotations
   line_endings:
     name: Line Endings Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: Check for CRLF line endings
         run: |
           echo "Checking for files with CRLF line endings..."
@@ -46,7 +71,11 @@ jobs:
           files_with_crlf=$(find . -type f \
             -not -path "./.git/*" \
             -not -path "./node_modules/*" \
-            \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" -o -name "*.py" -o -name "*.sh" -o -name "*.js" -o -name "*.ts" \) \
+            \( \
+              -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
+              -o -name "*.json" -o -name "*.py" -o -name "*.sh" \
+              -o -name "*.js" -o -name "*.ts" \
+            \) \
             -exec file {} \; | grep "CRLF" || true)
 
           if [ -n "$files_with_crlf" ]; then
@@ -60,3 +89,172 @@ jobs:
           else
             echo "✅ All files have correct LF line endings"
           fi
+  yaml_validate:
+    name: YAML Config Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Need history for the new-page diff (PRs only); shallow is fine
+          # for push events but harmless to fetch full depth here.
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate referenced yaml configs
+        env:
+          # On pull_request events these populate the "newly-added page"
+          # check that forbids inline yaml on new device pages. Push events
+          # leave them empty, so the inline-yaml rule is skipped there.
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # On failure the validator writes a markdown report here; the
+          # pr-validation-feedback workflow turns it into a REQUEST_CHANGES
+          # review on the PR.
+          VALIDATION_REPORT: ${{ github.workspace }}/validation-report.md
+        run: npm run --silent validate-yaml
+      - name: Record PR number for feedback
+        # Always (even on failure) so the follow-up workflow can resolve the
+        # PR — workflow_run payloads omit the PR number for forks.
+        if: always() && github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
+      - name: Upload validation feedback
+        # Upload on every PR run. When the validator passes there is no
+        # report file (if-no-files-found: ignore) and only pr-number.txt is
+        # uploaded, which signals the feedback workflow to dismiss any stale
+        # review.
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: validation-report
+          path: |
+            pr-number.txt
+            validation-report.md
+          if-no-files-found: ignore
+          retention-days: 1
+  esphome_validate:
+    name: ESPHome Config Validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    # SECURITY: no code a PR's yaml pulls in runs here. Pages that use
+    # external_components, remote packages or out-of-folder includes get a
+    # notice instead, and ESPHome and the importer run in a container with no
+    # network and no token (see AGENTS.md).
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # esphome/device-builder commit whose importer
+      # (script/sync_esphome_devices.py --check) decides whether a page
+      # imports. Bump it to a newer device-builder main commit to pick up
+      # importer changes; ESPHome is the latest stable release that commit's
+      # `esphome` extra accepts, shared by both checks.
+      DEVICE_BUILDER_REF: 2ff818fd2913cd204263eef4c128356db4ad2895
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Commits and trees only: the diff needs no file contents, and only
+          # the changed device folders are added to the sparse checkout below.
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            src/lib
+          persist-credentials: false
+      - name: Find changed device pages with file= configs
+        id: scope
+        run: |
+          # Assignments fail the step on a git error, so a broken diff or an
+          # unreadable page can't pass as "no changed pages".
+          changed=$(git diff --name-only --diff-filter=ACMRTD "$BASE_SHA...$HEAD_SHA" -- src/docs/devices)
+          dirs=""
+          for d in $(printf '%s\n' "$changed" | sed -n 's|^src/docs/devices/\([^/]*\)/.*|\1|p' | sort -u); do
+            page="HEAD:src/docs/devices/$d/index.md"
+            # The tree is local in a blobless clone, so this only says whether the
+            # page exists; a failed blob fetch in git show then fails the step.
+            entry=$(git ls-tree HEAD -- "src/docs/devices/$d/index.md")
+            [ -n "$entry" ] || continue  # page removed
+            content=$(git show "$page")
+            if printf '%s' "$content" | grep -q 'file='; then
+              dirs="$dirs $d"
+            fi
+          done
+          if [ -z "$dirs" ]; then
+            echo "No changed device pages with file= configs."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Checking:$dirs"
+          # shellcheck disable=SC2086
+          git sparse-checkout add $(printf 'src/docs/devices/%s ' $dirs)
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+          echo "run=true" >> "$GITHUB_OUTPUT"
+      - name: Checkout Device Builder
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: esphome/device-builder
+          ref: ${{ env.DEVICE_BUILDER_REF }}
+          path: _device-builder
+          persist-credentials: false
+      - name: Build the ESPHome and Device Builder image
+        if: steps.scope.outputs.run == 'true'
+        # The build context is the Device Builder checkout only, so this
+        # networked step never sees the PR's files.
+        run: |
+          docker build -t esphome-validate -f - _device-builder <<'EOF'
+          FROM python:3.12-slim
+          COPY . /opt/device-builder
+          RUN pip install --no-cache-dir "/opt/device-builder[esphome]" && esphome version
+          EOF
+      - name: Setup Node.js
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+      - name: Install dependencies
+        if: steps.scope.outputs.run == 'true'
+        run: npm ci
+      - name: Validate with ESPHome and the Device Builder importer
+        if: steps.scope.outputs.run == 'true'
+        env:
+          DIRS: ${{ steps.scope.outputs.dirs }}
+          # Each call runs in a fresh container: no network, no token, capped
+          # CPU, memory, processes and time.
+          ESPHOME_BIN: ${{ github.workspace }}/scripts/sandbox/esphome
+          DEVICE_BUILDER_CMD: ${{ github.workspace }}/scripts/sandbox/device-builder
+          JOBS: "3"
+        # shellcheck disable=SC2086
+        run: npm run --silent validate-esphome -- --annotations $DIRS
+  link_check:
+    name: External Link Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Check external links in changed markdown
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run --silent check-links -- --annotations

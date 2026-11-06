@@ -44,7 +44,7 @@ Select `LinkGear EMESS-PT` in the LinkGear web flasher.
 | GPIO17 | SK6812 LED data |
 | GPIO25 | Buzzer |
 
-## Basic Configuration
+## Configuration
 
-The configuration is available on
-[the GitHub page.](https://github.com/performeon/LinkGearMisc/tree/main/products/lg-emept)
+```yaml url=https://github.com/performeon/LinkGearMisc/blob/main/products/lg-emept/emept_esphome_config_hwv1d0_cv1.yaml
+```

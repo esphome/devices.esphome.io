@@ -23,6 +23,11 @@ We designed these to look good, be as small as possible and blend in with your h
 ![Bluetooth Proxy Stick in xbox](Bluetooth-proxy-straight-xbox.jpg "Bluetooth Proxy Stick in xbox")
 ![Bluetooth Proxy Stick angled in wall socket](Bluetooth-Proxy-In-Wall-Socket.jpg "Bluetooth Proxy Stick Angled in Wall Socket")
 
+## Configuration
+
+```yaml url=https://github.com/SmartHomeGuys/Bluetooth-Proxy/blob/main/bluetooth-proxy.yaml
+```
+
 ## Support
 
 - [Shop](https://www.ebay.co.uk/itm/227206771185)

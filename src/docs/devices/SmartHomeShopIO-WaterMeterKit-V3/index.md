@@ -53,6 +53,11 @@ It is also one of the earliest purpose-built ESPHome water meter kits created sp
 Please check our [full documentation and Quick Start Guide](https://smarthomeshop.io/quick-start-watermeterkit)
 and our [compatible water meters overview](https://watermeterkit.nl/en/) to confirm fitment for your meter type.
 
+## Configuration
+
+```yaml url=https://github.com/smarthomeshop/watermeterkit/blob/main/watermeterkit-v3/watermeterkit.yaml
+```
+
 ## Links
 
 - [Shop](https://watermeterkit.nl/en)

@@ -32,10 +32,10 @@ consumption. Features:
 | PMS7003 SET  | D4       | GPIO6  | GPIO22 | GPIO43 |
 | WS2812B      | D7       | GPIO20 | GPIO17 | GPIO44 |
 
-## Basic Config
+## Configuration
 
-The latest state of the configuration is
-[available on GitHub](https://github.com/SiloCityLabs/esp32-airquality/blob/main/esphome-v1.yaml).
+```yaml url=https://github.com/SiloCityLabs/esp32-airquality/blob/main/esphome-v1.yaml
+```
 
 ## Pictures
 
