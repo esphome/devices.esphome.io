@@ -35,7 +35,8 @@ Use a Tuya CBU module pinout to locate `TX1`, `RX1`, and `GND` on the back of th
 Connect module `TX1` to the flasher's RX, module `RX1` to its TX, and board `GND` to the flasher's GND.
 Use 3.3 V UART logic even when powering the board through its 5 V USB input.
 Optionally, solder a wire to `CEN` to make resetting the module easier or use a jumper wire.
-Shorting the `CEN` Pin is required to enter download mode
+While ltchiptool is waiting to connect, briefly connect `CEN` to `GND`, then release it to reset the module.
+Do not keep `CEN` grounded during the transfer.
 
 Alternatively you can try to use some wires, tape and some pins and hold them to the required points.
 This is not recommended but is possible if soldering is not an option.
