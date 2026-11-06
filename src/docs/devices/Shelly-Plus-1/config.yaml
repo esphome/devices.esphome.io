@@ -6,9 +6,12 @@ esphome:
 
 esp32:
   variant: esp32
+  cpu_frequency: 160MHz
   toolchain: esp-idf
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
     advanced:
       flash_chip: generic
       minimum_chip_revision: '3.0'
