@@ -1,0 +1,25 @@
+# Clock from network time. Add this once the board is on your Wi-Fi; it replaces
+# the test pattern from the hardware configuration.
+time:
+  - platform: sntp
+    id: sntp_time
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_clock
+    size: 16
+
+display:
+  - id: !extend matrix
+    lambda: |-
+      it.clear();
+      auto now = id(sntp_time).now();
+      if (now.is_valid()) {
+        it.strftime(it.get_width() / 2, it.get_height() / 2, id(font_clock),
+                    Color(255, 255, 255), TextAlign::CENTER, "%H:%M", now);
+      } else {
+        // Waiting for network time. A dim placeholder shows the panel is
+        // scanning, so a dark panel still means a real fault.
+        it.print(it.get_width() / 2, it.get_height() / 2, id(font_clock),
+                 Color(64, 64, 64), TextAlign::CENTER, "--:--");
+      }
