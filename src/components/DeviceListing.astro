@@ -13,6 +13,10 @@ const initial = devices
   .slice()
   .sort((a, b) => a.data.title.localeCompare(b.data.title));
 
+// Alias rows are extra names for a device that is already in the list, so
+// they must not inflate the count.
+const deviceCount = devices.filter((d) => !d.aliasOf).length;
+
 const devicesJson = JSON.stringify(
   devices.map((d) => ({
     id: d.id,
@@ -27,7 +31,7 @@ const devicesJson = JSON.stringify(
 ---
 
 <div class="pageHeader">
-  <p><strong>{devices.length}</strong> devices</p>
+  <p><strong>{deviceCount}</strong> devices</p>
 
   <div class="sortControls">
     <span class="sortLabel">Sort by:</span>
