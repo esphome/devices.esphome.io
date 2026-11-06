@@ -38,14 +38,6 @@ uart:
   tx_pin: GPIO15
   rx_pin: GPIO13
   baud_rate: 9600
-  # debug:
-  #   direction: BOTH
-  #   dummy_receiver: false
-  #   debug_prefix: "[MODBUS] "
-  #   after:
-  #     delimiter: "\n"
-  #   sequence:
-  #     - lambda: UARTDebug::log_string(direction, bytes, debug_prefix);
 
 # Register the Tuya MCU connection
 tuya:
