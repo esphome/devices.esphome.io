@@ -14,11 +14,11 @@ uart:
   - rx_pin: D5
     tx_pin: D6
     baud_rate: 9600
-    id: uart1
+    id: uart_pms
   - rx_pin: D4
     tx_pin: D3
     baud_rate: 9600
-    id: uart2
+    id: uart_co2
 
 sensor:
   - platform: sht3xd
@@ -32,12 +32,12 @@ sensor:
     update_interval: 5s
   - platform: pmsx003
     type: PMSX003
-    uart_id: uart1
+    uart_id: uart_pms
     pm_2_5:
       id: pm25
       name: "Particulate Matter <2.5µm Concentration"
   - platform: senseair
-    uart_id: uart2
+    uart_id: uart_co2
     co2:
       id: co2
       name: "SenseAir CO2 Value"
