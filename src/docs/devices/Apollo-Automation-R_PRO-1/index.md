@@ -41,6 +41,11 @@ intrusive way to place the sensor in a room.
 4. In Home Assistant, look at discovered devices.
 5. If you'd like to switch to the ethernet version please follow the guide on our wiki
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/R_PRO-1/blob/main/Integrations/ESPHome/R_PRO-1_W.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/r-1)

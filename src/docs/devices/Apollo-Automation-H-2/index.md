@@ -56,6 +56,11 @@ code is like a little time capsule of what we've been up to this year.
 3. Input WiFi credentials.
 4. In Home Assistant, look at discovered devices.
 
+## Configuration
+
+```yaml url=https://github.com/ApolloAutomation/H-2/blob/main/Integrations/ESPHome/H-2.yaml
+```
+
 ## Links
 
 - [Shop](https://apolloautomation.com/products/apollo-h-2-annual-holiday-ornament)

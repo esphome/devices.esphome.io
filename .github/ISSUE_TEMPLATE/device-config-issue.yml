@@ -23,7 +23,7 @@ body:
     id: device-url
     attributes:
       label: Device Page URL
-      description: Please provide the URL to the device page on esphome-devices.com
+      description: Please provide the URL to the device page on devices.esphome.io
       placeholder: https://devices.esphome.io/devices/...
     validations:
       required: true

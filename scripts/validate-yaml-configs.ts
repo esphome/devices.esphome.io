@@ -14,8 +14,16 @@
  *      Example configs must not depend on entries the user may not have
  *      defined in their secrets file.
  *
- * Additional rules for the page-level form (markdown with `file=` fences):
- *   4. The first yaml fence on a page must reference `config.yaml`.
+ * Additional rules for the page-level form (markdown with `file=`/`url=`
+ * fences):
+ *   4. The first `file=` fence on a page must reference `config.yaml`.
+ *      `url=` fences may appear before or after — the ordering rule only
+ *      counts `file=` fences, since `config.yaml` is the in-repo hardware
+ *      manifest and `url=` is the live upstream link. Pages added or
+ *      modified in the current PR (detected via BASE_SHA/HEAD_SHA env
+ *      vars) must use `file=`- or `url=`-based fences exclusively — no
+ *      inline yaml. Pages untouched by the PR remain unchecked for inline
+ *      yaml so the in-flight migration of legacy pages isn't blocked.
  *   5. `config.yaml` must be hardware-only:
  *        - No top-level `api:`, `ota:`, `mqtt:`, `web_server:`,
  *          `web_server_idf:`, `improv_serial:`, `captive_portal:`,
@@ -27,12 +35,46 @@
  *        - No `platform: homeassistant`, `platform: mqtt`, or
  *          `platform: template` anywhere in the tree — those are
  *          network-dependent or user-derived, not hardware.
+ *   6. Pages with `made-for-esphome: true` in frontmatter that are added
+ *      or modified in the current PR must include at least one `url=`
+ *      yaml fence pointing at a yaml file on the manufacturer's GitHub,
+ *      Codeberg or GitLab repo. See src/lib/upstream-url.ts for the exact
+ *      accepted URL shapes.
+ *      The Made-for-ESPHome programme requires the firmware config to be
+ *      open and reachable; a live link to the upstream yaml is how we
+ *      surface that on the device page. `url=` is also permitted on
+ *      non-made-for-esphome pages (e.g. to mirror an upstream config) but
+ *      isn't the standard form there — `file=config.yaml` is.
+ *   7. One device per pull request: a PR may add at most one new device
+ *      page (a newly-added `src/docs/devices/<Device>/index.md`). Detected
+ *      via BASE_SHA/HEAD_SHA, so enforced on pull_request events only.
  */
 import * as fs from "fs";
 import * as path from "path";
+import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
-// js-yaml is a transitive dep of gray-matter; import directly to parse.
-import yaml from "js-yaml";
+import matter from "gray-matter";
+// js-yaml (v5) parses the example configs; gray-matter bundles its own copy.
+import * as yaml from "js-yaml";
+import { parseUpstreamUrl } from "../src/lib/upstream-url.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
+import { changedPaths, type ChangedPath } from "./changed-paths.ts";
+
+// Truthy `made-for-esphome` covers the YAML boolean (`true`/`True` parse to
+// the JS boolean `true`) and the rare string form. Anything else — missing,
+// `false`, `pending` — is treated as not made-for-esphome.
+function isMadeForEsphome(content: string): boolean {
+  let data: Record<string, unknown>;
+  try {
+    data = matter(content).data as Record<string, unknown>;
+  } catch {
+    return false;
+  }
+  const v = data["made-for-esphome"];
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") return /^true$/i.test(v.trim());
+  return false;
+}
 
 const HARDWARE_ONLY_FORBIDDEN = new Set([
   "api",
@@ -119,14 +161,16 @@ function checkSensitiveInTree(
   }
 }
 
-interface FenceRef {
-  fileAttr: string;
+export interface YamlFence {
+  fileAttr: string | null; // null when the fence has no `file=` attr
+  urlAttr: string | null; // null when the fence has no `url=` attr
+  inline: boolean; // true when the fence carries the bare `inline` marker
   lineNumber: number; // 1-indexed source line of the fence opener
 }
 
-function findFenceRefs(md: string): FenceRef[] {
+export function findYamlFences(md: string): YamlFence[] {
   const lines = md.split(/\r?\n/);
-  const refs: FenceRef[] = [];
+  const fences: YamlFence[] = [];
   let inFence: { char: string; len: number } | null = null;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -146,14 +190,20 @@ function findFenceRefs(md: string): FenceRef[] {
     inFence = { char: fenceChar, len: fenceLen };
     if (lang !== "yaml" && lang !== "yml") continue;
     const fileMatch = meta.match(/(^|\s)file=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/);
-    if (!fileMatch) continue;
-    const fileAttr = fileMatch[2] ?? fileMatch[3] ?? fileMatch[4] ?? "";
-    refs.push({ fileAttr, lineNumber: i + 1 });
+    const fileAttr = fileMatch
+      ? fileMatch[2] ?? fileMatch[3] ?? fileMatch[4] ?? ""
+      : null;
+    const urlMatch = meta.match(/(^|\s)url=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/);
+    const urlAttr = urlMatch
+      ? urlMatch[2] ?? urlMatch[3] ?? urlMatch[4] ?? ""
+      : null;
+    const inline = /(^|\s)inline(?=\s|$)/.test(meta);
+    fences.push({ fileAttr, urlAttr, inline, lineNumber: i + 1 });
   }
-  return refs;
+  return fences;
 }
 
-interface Issue {
+export interface Issue {
   file: string;
   line?: number;
   message: string;
@@ -170,23 +220,12 @@ function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
     return issues;
   }
 
-  // Parse — tolerate ESPHome custom tags. Re-stamp the tag onto the
-  // resulting string so `password: !secret foo` parses to `"!secret foo"`,
-  // which the password check correctly recognises as non-literal.
-  const schema = yaml.DEFAULT_SCHEMA.extend(
-    ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"].map(
-      (tag) =>
-        new yaml.Type(tag, {
-          kind: "scalar",
-          construct: (data) =>
-            data === null || data === undefined ? tag : `${tag} ${data}`,
-          represent: (data) => data as string,
-        })
-    )
-  );
+  // Parse — ESPHOME_SCHEMA tolerates ESPHome custom tags, so
+  // `password: !secret foo` parses to `"!secret foo"`, which the password
+  // check correctly recognises as non-literal.
   let parsed: unknown = undefined;
   try {
-    parsed = yaml.load(raw, { schema });
+    parsed = yaml.load(raw, { schema: ESPHOME_SCHEMA });
   } catch (err) {
     const e = err as yaml.YAMLException;
     issues.push({
@@ -270,16 +309,141 @@ function checkYamlFile(absPath: string, isHardwareOnly: boolean): Issue[] {
   return issues;
 }
 
-function walkMarkdown(dir: string, out: string[]): void {
+// Walk subdirectories of devicesRoot only. Top-level files like
+// `adding-devices.mdx` and `tuya-convert.md` are docs about the devices
+// tree, not device pages — they contain illustrative yaml examples
+// (inline frontmatter, `url=` demos) that aren't bound by the
+// per-device rules. Real device pages always live one level deeper at
+// `src/docs/devices/<Device>/index.md`.
+function walkMarkdown(dir: string, out: string[], depth = 0): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
-      walkMarkdown(p, out);
-    } else if (entry.isFile() && /\.(md|mdx)$/i.test(entry.name)) {
+      walkMarkdown(p, out, depth + 1);
+    } else if (
+      entry.isFile() &&
+      depth > 0 &&
+      /\.(md|mdx)$/i.test(entry.name)
+    ) {
       out.push(p);
     }
   }
+}
+
+// Resolve the set of markdown files in `devicesRoot` that the current PR
+// adds, modifies, renames, copies, or changes type for, between BASE_SHA
+// and HEAD_SHA. Returns absolute paths so callers can match against the
+// same form `walkMarkdown` produces. Returns null if the env vars are
+// absent (the no-inline-yaml rule is then skipped — local runs and `push`
+// builds don't have a meaningful diff base).
+//
+// `--name-status -z` (instead of `--diff-filter=… --name-only`) so we can
+// see git's per-entry status code and pull the *new* path on R/C entries.
+// Any entry whose new path lands on a device markdown counts as changed —
+// including pure renames (`R100`). A pure rename is still a file
+// modification from the contributor's perspective, and the new-rules
+// requirement applies. Only `D` (deletion) and `U` (unmerged, shouldn't
+// appear in CI) are ignored.
+function findChangedMarkdown(devicesRoot: string): Set<string> | null {
+  const changes = prChanges();
+  if (changes === null) return null;
+  const changed = new Set<string>();
+  for (const c of changes) {
+    // A = added, M = modified, T = type change, R/C = the new path of a
+    // rename/copy. D (deleted) and U (unmerged) are ignored.
+    if (!["A", "M", "T", "R", "C"].includes(c.status)) continue;
+    if (!/\.(md|mdx)$/i.test(c.path)) continue;
+    const abs = path.resolve(process.cwd(), c.path);
+    // Restrict to the devices tree (the path-spec already does, but be
+    // defensive against future trigger changes).
+    if (!abs.startsWith(devicesRoot + path.sep) && abs !== devicesRoot) continue;
+    changed.add(abs);
+  }
+  return changed;
+}
+
+// The PR's changes under src/docs/devices between BASE_SHA and HEAD_SHA, or
+// null when the env vars are absent (local runs and push builds).
+function prChanges(): ChangedPath[] | null {
+  const base = process.env.BASE_SHA;
+  const head = process.env.HEAD_SHA;
+  if (!base || !head) return null;
+  try {
+    return changedPaths(base, head, "src/docs/devices");
+  } catch (err) {
+    console.error(`git diff failed: ${(err as Error).message}`);
+    process.exit(1);
+  }
+}
+
+// Identify the device directories this PR newly adds — i.e. each
+// `src/docs/devices/<Device>/index.md` that appears with git status `A`.
+// A new device always introduces a new `index.md` one level under the
+// devices root, so that addition is the signal. Renames (status `R`) move
+// an existing device to a new slug and don't count; only true additions do
+// (`C` copies, which git only emits with `-C`, are treated as additions
+// defensively). Returns null when BASE_SHA/HEAD_SHA are absent (local runs
+// and `push` builds have no meaningful diff base), so the one-device rule
+// is enforced on pull_request events only.
+function findAddedDevices(): string[] | null {
+  const changes = prChanges();
+  if (changes === null) return null;
+  const devices = new Set<string>();
+  for (const c of changes) {
+    // A rename relocates an existing device, so it isn't a new one; a copy
+    // spawns a new device dir.
+    if (c.status !== "A" && c.status !== "C") continue;
+    const m = c.path.match(/^src\/docs\/devices\/([^/]+)\/index\.(?:md|mdx)$/i);
+    if (m) devices.add(m[1]);
+  }
+  return [...devices].sort();
+}
+
+const ADDING_DEVICES_HELP_URL =
+  "https://devices.esphome.io/devices/adding-devices#configuration-yaml-files";
+
+// The report is posted verbatim as a bot review on the PR, and parts of it
+// derive from fork-controlled input (device slugs, file paths). Insert a
+// zero-width space after any `@` that precedes a word character so those
+// values can't turn into `@mention` notifications to third parties.
+function neutralizeMentions(text: string): string {
+  return text.replace(/@(?=[A-Za-z0-9_-])/g, "@" + String.fromCharCode(0x200b));
+}
+
+// Render the collected issues as a markdown report suitable for a PR review
+// body. Grouped by file so a contributor sees, per page, exactly what to fix.
+// Written to the path in VALIDATION_REPORT (set in CI) so a follow-up
+// workflow can surface it as a `REQUEST_CHANGES` review.
+function buildReport(issues: Issue[]): string {
+  const byFile = new Map<string, Issue[]>();
+  for (const issue of issues) {
+    const list = byFile.get(issue.file) ?? [];
+    list.push(issue);
+    byFile.set(issue.file, list);
+  }
+
+  const lines: string[] = [];
+  lines.push("## ❌ Device configuration checks failed");
+  lines.push("");
+  lines.push(
+    `The automated checks for the device pages in this pull request found ` +
+      `**${issues.length} issue${issues.length === 1 ? "" : "s"}**. ` +
+      `Please address the items below and push an update — this review ` +
+      `refreshes automatically and will be dismissed once the checks pass.`
+  );
+  lines.push("");
+  for (const file of [...byFile.keys()].sort()) {
+    lines.push(`### \`${file}\``);
+    for (const issue of byFile.get(file) ?? []) {
+      const prefix = issue.line !== undefined ? `**line ${issue.line}** — ` : "";
+      lines.push(`- ${prefix}${issue.message}`);
+    }
+    lines.push("");
+  }
+  lines.push("---");
+  lines.push(`Need help? See the [Adding Devices guide](${ADDING_DEVICES_HELP_URL}).`);
+  return neutralizeMentions(lines.join("\n") + "\n");
 }
 
 function main(): void {
@@ -296,6 +460,26 @@ function main(): void {
 
   const issues: Issue[] = [];
 
+  // Pages added or modified by the current PR (when BASE_SHA/HEAD_SHA are
+  // set) must be on the migrated `file=`-based form — no inline yaml fences
+  // allowed. Pages the PR doesn't touch are mid-migration and remain
+  // unchecked here.
+  const changedMarkdown = findChangedMarkdown(devicesRoot);
+
+  // One device per pull request: a PR may add at most one new device page so
+  // each can be reviewed on its own and a failure points at a single device.
+  const addedDevices = findAddedDevices();
+  if (addedDevices && addedDevices.length > 1) {
+    issues.push({
+      file: "src/docs/devices",
+      message:
+        `this PR adds ${addedDevices.length} new devices ` +
+        `(${addedDevices.map((d) => `\`${d}\``).join(", ")}) — ` +
+        "add a single device per pull request and split the rest into separate PRs. " +
+        `See ${ADDING_DEVICES_HELP_URL}`,
+    });
+  }
+
   // Walk markdown first to collect every yaml file referenced via a `file=`
   // fence. Pre-existing yaml files that no markdown points at (legacy
   // downloadable examples) are intentionally out of scope: this validator
@@ -305,9 +489,57 @@ function main(): void {
 
   const referencedYaml = new Set<string>();
   for (const md of mdFiles) {
-    const refs = findFenceRefs(fs.readFileSync(md, "utf8"));
-    if (refs.length === 0) continue;
+    const rawMd = fs.readFileSync(md, "utf8");
+    const fences = findYamlFences(rawMd);
     const rel = path.relative(process.cwd(), md);
+    const isChangedPage = changedMarkdown?.has(md) ?? false;
+    const madeForEsphome = isMadeForEsphome(rawMd);
+
+    const refs = fences.filter(
+      (f): f is YamlFence & { fileAttr: string } => f.fileAttr !== null
+    );
+
+    if (isChangedPage) {
+      for (const f of fences) {
+        // A fence is "inline" only when it has neither `file=` nor `url=`.
+        // `url=` blocks pull from the manufacturer's repo at visit time —
+        // they're a valid migrated form for made-for-esphome devices that
+        // don't want their config vendored into this repo. The bare `inline`
+        // marker is an explicit opt-out for tiny snippets that shouldn't be
+        // extracted to a file at all.
+        if (f.fileAttr === null && f.urlAttr === null && !f.inline) {
+          issues.push({
+            file: rel,
+            line: f.lineNumber,
+            message:
+              "added or modified device pages must use `file=`- or `url=`-based yaml fences — inline yaml is no longer accepted; move the config into a sibling yaml file and reference it. " +
+              `See ${ADDING_DEVICES_HELP_URL}`,
+          });
+        }
+      }
+
+      // Made-for-ESPHome devices certify that their config is open and
+      // available to end users (see .github/made-for-esphome-checklist.md).
+      // The way we surface that on a device page is a `url=` yaml fence
+      // pointing at the manufacturer's repo so the rendered page shows the
+      // current upstream config. Require at least one such fence on every
+      // PR that adds or modifies a made-for-esphome page.
+      if (madeForEsphome) {
+        const hasUpstreamUrlFence = fences.some(
+          (f) => f.urlAttr !== null && parseUpstreamUrl(f.urlAttr) !== null
+        );
+        if (!hasUpstreamUrlFence) {
+          issues.push({
+            file: rel,
+            message:
+              "`made-for-esphome: true` pages must include a yaml fence with `url=` pointing at a `.yaml` file in the manufacturer's GitHub, Codeberg or GitLab repo - e.g. ```` ```yaml url=https://github.com/<owner>/<repo>/blob/<ref>/<path>.yaml ```` (or the `raw.githubusercontent.com` equivalent, ```` ```yaml url=https://codeberg.org/<owner>/<repo>/src/branch/<branch>/<path>.yaml ```` for Codeberg, or ```` ```yaml url=https://gitlab.com/<owner>/<repo>/-/blob/<ref>/<path>.yaml ```` for GitLab) - so the rendered page shows the upstream config live. " +
+              `See ${ADDING_DEVICES_HELP_URL}`,
+          });
+        }
+      }
+    }
+
+    if (refs.length === 0) continue;
     if (refs[0].fileAttr.toLowerCase() !== "config.yaml") {
       issues.push({
         file: rel,
@@ -331,6 +563,11 @@ function main(): void {
   if (issues.length === 0) {
     console.log(`Validated ${yamlFiles.length} yaml file(s) — clean.`);
     return;
+  }
+
+  const reportPath = process.env.VALIDATION_REPORT;
+  if (reportPath) {
+    fs.writeFileSync(reportPath, buildReport(issues), "utf8");
   }
 
   console.error(`Found ${issues.length} issue(s):`);

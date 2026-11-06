@@ -22,6 +22,11 @@ All the existing functionality of the desk's controller is retained.
 ![DeskUp Pro Controls](DeskUpPro-C6-Controls-HomeAssistant.png "DeskUp Pro Controls")
 ![DeskUp Pro Sensors](DeskUpPro-Sensors-black.jpg "DeskUp Pro Sensors")
 
+## Configuration
+
+```yaml url=https://github.com/SmartHomeGuys/DeskUp-Pro-Controller-RJ12/blob/main/deskup-pro-controller.yaml
+```
+
 ## Support
 
 - [Shop](https://www.ebay.co.uk/itm/226942026649)
