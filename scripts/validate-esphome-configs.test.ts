@@ -125,14 +125,20 @@ const scaffoldCases: [string, unknown, unknown, boolean][] = [
   ["config.yaml with Wi-Fi", { wifi: { ap: {} } }, {}, false],
   ["config.yaml with ethernet", { ethernet: {} }, {}, false],
   ["an ethernet fragment", { esp32: {} }, { ethernet: { type: "W5500" } }, false],
+  ["a standalone config.yaml", { esp8266: {}, binary_sensor: [] }, undefined, true],
 ];
 for (const [name, base, fragment, wifi] of scaffoldCases) {
   test(`scaffold: ${name}`, () => {
     const out = userScaffold(base, fragment);
-    assert.match(out, /^api:\nota:\n {2}- platform: esphome\n/);
+    assert.match(out, /^logger:\napi:\nota:\n {2}- platform: esphome\n/);
     assert.equal(out.includes("wifi:"), wifi);
   });
 }
+
+test("scaffold: a full example adds only what it lacks", () => {
+  assert.equal(userScaffold({ logger: {}, api: {}, wifi: {} }, undefined), "ota:\n  - platform: esphome\n");
+  assert.equal(userScaffold({ logger: {}, api: {}, ota: [], ethernet: {} }, undefined), "");
+});
 
 test("device dirs include subfolder and deleted paths, not top-level docs", () => {
   const changes = parseNameStatus(

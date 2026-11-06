@@ -282,7 +282,8 @@ no-passwords / no-`!secret` rules.
 
 `npm run validate-esphome` runs on every device folder a pull request touches. Each yaml referenced with `file=`
 must pass `esphome config`: `config.yaml` (and any file with its own `esphome: name:`) on its own, and other files
-merged onto `config.yaml`. The page must also import into the
+merged onto `config.yaml`. Each is checked with the `logger:`, `api:`, `ota:` and Wi-Fi a user's config adds,
+where the files don't already have them. The page must also import into the
 [ESPHome Device Builder](https://github.com/esphome/device-builder); the check prints why not.
 
 If you have inline yaml in an existing markdown page, extract it to files with `npm run extract-yaml -- <path>`.
