@@ -12,6 +12,7 @@ Generic Tuya 8-zone irrigation controller with Beken BK7231N (CBU module).
 PCB model TY-W-8L-AC-DZAK. Uses two independent 74HC595 shift registers for
 LEDs and valves.
 
+![TY-W-8L-AC-DZAK board](board.jpg "TY-W-8L-AC-DZAK rev 24.9.19: CBU module, eight BT134 triacs for the valve outputs and the AC terminals")
 ![TY-W-8L pinout](pinout.png "TY-W-8L-AC-DZAK: BK7231N GPIO to shift registers, LEDs and valves")
 
 ## Hardware
