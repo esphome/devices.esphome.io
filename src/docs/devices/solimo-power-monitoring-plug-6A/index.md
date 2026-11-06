@@ -9,12 +9,12 @@ difficulty: 4
 
 ![Solimo Power Monitoring Plug 6A](solimo-plug.jpg "Solimo Power Monitoring Plug 6A")
 
-The Solimo Power Monitoring Plug 6A is a smart plug sold in India that measures voltage, current, power and energy. It uses an RTL8710BN and a BL0937 power-monitoring chip.
-
+The Solimo Power Monitoring Plug 6A measures voltage, current, power and energy. 
+It uses an RTL8710BN and a BL0937 power-monitoring chip.
 
 ## Flashing
 
-The plug is not flashable over the air out of the box, so it needs soldering. 
+The plug is not flashable over the air out of the box, so it needs soldering.
 
 ## GPIO Pinout
 
