@@ -11,7 +11,8 @@ esphome:
           green: 1
           blue: 1
       - delay: 5s
-      - light.turn_off:
+      - light.turn_off: pad_leds
+bk72xx:
   board: generic-bk7231n-qfn32-tuya
 logger:
   baud_rate: 0
