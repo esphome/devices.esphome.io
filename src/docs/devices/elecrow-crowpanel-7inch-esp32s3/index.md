@@ -32,7 +32,8 @@ Product page:
 
 GPIO19 and GPIO20 are shared with the ESP32-S3 USB_SERIAL_JTAG peripheral. The USB PHY pad holds these pins even after
 the I2C driver tries to release them, causing continuous `I2C software timeout` errors. This affects ESPHome 2026.3.0
-and later (ESP-IDF 5.5.3 and later). As of November 2026, the upstream issue is still open.
+and later (ESP-IDF 5.5.3 and later) and was still present in ESPHome 2026.10.2. As of November 2026, the upstream
+issue is still open.
 
 The fix requires a C header file (`usb_disable.h`) that disables the USB PHY pad before the I2C driver initializes.
 Create this file in your ESPHome config directory alongside your YAML:
@@ -74,36 +75,25 @@ documentation reference 16MB.
 With 4 MB of flash, each of the two OTA slots holds about 1.75 MB. A full LVGL interface with several large fonts used
 roughly 91-95 % of that in my builds, so it is worth keeping the number and size of fonts modest.
 
-### Do NOT Touch the PCA9557
+### The PCA9557 Is Not Needed for Touch
 
 The CrowPanel V3.0 has a PCA9557 I/O expander (I2C 0x18) that is connected to the GT911 reset and interrupt lines.
-Many people try to use it to reset the GT911 during boot. **This breaks touch every time.**
+Touch works without any PCA9557 configuration, because the GT911 comes out of reset on its own at power-on. In my
+earlier testing, resetting the GT911 through the PCA9557 broke touch. On ESPHome 2026.10.2, a `reset_pin` on PCA9557
+pin 0 worked, but it is not required.
 
-Here's why it works without PCA9557 manipulation:
-
-1. PCA9557 powers up with all pins as inputs (high-impedance)
-2. A pull-up resistor on the GT911 RST line brings it HIGH automatically
-3. GT911 exits reset and boots on its own before ESPHome firmware starts
-4. By the time ESPHome's GT911 driver calls `setup()`, the GT911 is already ready
-
-### GT911 Address Varies Between Units
+### GT911 I2C Address
 
 The GT911 I2C address is set by the state of GPIO38 during power-on:
 
 - **GPIO38 LOW** -> address **0x5D** (most common)
 - **GPIO38 HIGH** -> address **0x14**
 
-This varies between individual units due to internal pull-up/pull-down differences. If touch doesn't work, try the other
-address.
+ESPHome tries 0x5D first and falls back to 0x14 on its own, so the address does not need to be changed.
 
-If the log shows `Address: 0x14` together with `Calibration error`, the GT911 did not respond at either address.
-ESPHome tries 0x5D first and then 0x14, so this points to a hardware problem rather than the address. On one of my
-units this turned out to be a touch fault that no configuration could fix. Reseating the touch ribbon cable is a good
-first check.
-
-### I2C Scan Breaks GT911
-
-Setting `scan: true` on the I2C bus can interfere with GT911 communication. Always use `scan: false`.
+If the log shows `Address: 0x14` together with `Calibration error`, the GT911 did not respond at either address. This
+points to a hardware problem rather than the address. On one of my units this turned out to be a touch fault that no
+configuration could fix. Reseating the touch ribbon cable is a good first check.
 
 ## Pin Configuration
 
@@ -126,18 +116,15 @@ Setting `scan: true` on the I2C bus can interfere with GT911 communication. Alwa
 | Mistake | Symptom | Fix |
 |---------|---------|-----|
 | `flash_size: 16MB` | Boot loop, no logging | Change to `4MB` |
-| `i2c: scan: true` | GT911 fails | Set `scan: false` |
 | Missing `invert_colors: true` | Wrong colors | Add it |
 | Missing `pclk_inverted: true` | Garbled display | Add it |
-| PCA9557 writes in `on_boot` | Touch stops working | Remove all PCA9557 code |
-| Adding `interrupt_pin: 38` | Touch intermittent | Remove it, use polling |
-| Adding `calibration:` to touchscreen | "Communication failed" | Remove it |
+| Adding `interrupt_pin: 38` | Touch stops responding | Remove it, use polling |
 | Missing `usb_disable.h` | `I2C software timeout` | Add the header file (see notes above) |
 | Logger not on UART0 | No logs over the USB-C port | Add `logger: hardware_uart: UART0` |
 
 ## Basic Configuration
 
-Minimal working config with display, touch, and backlight -- no LVGL. Requires `usb_disable.h` (see Important Notes
+Minimal working config with display, touch and backlight, without LVGL. Requires `usb_disable.h` (see Important Notes
 above).
 
 ```yaml file=config.yaml

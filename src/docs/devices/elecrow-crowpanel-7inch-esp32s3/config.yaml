@@ -36,7 +36,7 @@ touchscreen:
   - platform: gt911
     id: my_touchscreen
     i2c_id: touch_i2c
-    address: 0x5D    # Try 0x14 if touch doesn't work
+    address: 0x5D
     display: my_display
     update_interval: 50ms
 
