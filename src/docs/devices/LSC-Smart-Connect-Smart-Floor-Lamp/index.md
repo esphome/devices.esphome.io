@@ -16,8 +16,7 @@ This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Actio
 | Brand | LSC Smart Connect |
 | Retailer | Action |
 | Product | Smart Floor Lamp |
-| Article number | **3221699** |
-| Article Link | https://www.action.com/de-de/p/3221699/lsc-smart-connect-smarte-rgb-stehleuchte/ |
+| Article number | [**3221699**](https://www.action.com/de-de/p/3221699/lsc-smart-connect-smarte-rgb-stehleuchte/) |
 
 ![Bottom of the lamp](3221699.png)
 
@@ -77,8 +76,8 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
 ### LTChipTool
 
-For detailed installation and usage instructions, please refer to the official LibreTiny
-LTChipTool documentation.
+ For detailed installation and usage instructions, refer to the official LibreTiny
+ [LTChipTool documentation](https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/).
 
 ### GPIO configuration
 
