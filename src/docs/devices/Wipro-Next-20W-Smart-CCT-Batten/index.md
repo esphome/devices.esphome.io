@@ -6,11 +6,14 @@ standard: in
 board: esp8266
 ---
 
-T5 Sized Tubelight with CCT & Dimming supports, limits being 2700K-6500K. Works natively with either Tuya/Smart Life/Wipro Smart Home. Based on TYWE3L.
+T5 Sized Tubelight with CCT & Dimming supports, limits being 2700K-6500K. Works natively with either Tuya/Smart
+Life/Wipro Smart Home. Based on TYWE3L.
 
 ## Flashing process
 
-Open the two grey tabs on the sides of the batten and carefully pull out the PCB and solder the wires according to the TYWE3L pinout.Serial flashing is identical to that of ESP-12. Make sure to use 3.3V logic levels for serial communication (USB adapters like CH340G, CP2102). Using ESPHome Flasher is advisable.
+Open the two grey tabs on the sides of the batten and carefully pull out the PCB and solder the wires according to the
+TYWE3L pinout.Serial flashing is identical to that of ESP-12. Make sure to use 3.3V logic levels for serial
+communication (USB adapters like CH340G, CP2102). Using ESPHome Flasher is advisable.
 
 ## GPIO Pinout
 

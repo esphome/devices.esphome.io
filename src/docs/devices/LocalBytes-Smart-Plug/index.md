@@ -9,20 +9,20 @@ difficulty: 1
 ---
 
 ![alt text](LocalBytes-Plug.png "LocalBytes Plug")
-Maker: https://mylocalbytes.com/
+Maker: [https://mylocalbytes.com/](https://mylocalbytes.com/)
 
 Preflashed with ESPHome or Tasmota
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | Button              |
-| GPIO4  | BL0937 CF           |
-| GPIO5  | HLWBL CF1           |
-| GPIO12 | HLWBL SELi          |
-| GPIO13 | LedLink             |
-| GPIO14 | Relay               |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | Button     |
+| GPIO4  | BL0937 CF  |
+| GPIO5  | HLWBL CF1  |
+| GPIO12 | HLWBL SELi |
+| GPIO13 | LedLink    |
+| GPIO14 | Relay      |
 
 ## Basic Configuration
 

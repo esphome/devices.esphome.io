@@ -8,28 +8,43 @@ board: esp32
 
 ## Initial Install
 
-This device requires a triangle screw driver bit to [remove the cover and use the serial header](https://www.digiblur.com/2021/03/how-to-flash-wyze-outdoor-plug-esphome.html) for the first upload.
+### Hardware Flashing
+
+This device requires a triangle screw driver bit to [remove the cover and use the serial header][1] for the first
+upload.
+
+[1]: https://digiblur.com/2021/03/27/how-to-flash-the-wyze-outdoor-plug-esphome-or-tasmota-local-control/
+
+### Software Flashing
+
+Some of these devices may be able to be flashed OTA with ESPHome using [this guide][2].
+The firmware is first downgraded to 1.2.0.73 with the [Wyze Updater Tool][3],
+and then flashing ESPHome OTA for the first upload.
+
+[2]: https://www.inlimbo.org/2025/06/wyze-outdoor-plug-esphome/
+[3]: https://github.com/gtxaspec/WyzeUpdater
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO5  | Status LED                         |
-| GPIO18 | Button 1                           |
-| GPIO17 | Button 2                           |
-| GPIO15 | Relay 1                            |
-| GPIO32 | Relay 2                            |
-| GPIO19 | Relay 1 LED                        |
-| GPIO16 | Relay 2 LED                        |
-| GPIO34 | LUX Sensor                         |
-| GPIO25 | SEL                                |
-| GPIO27 | CF                                 |
-| GPIO26 | CF1                                |
+| Pin    | Function    |
+| ------ | ----------- |
+| GPIO5  | Status LED  |
+| GPIO18 | Button 1    |
+| GPIO17 | Button 2    |
+| GPIO15 | Relay 1     |
+| GPIO32 | Relay 2     |
+| GPIO19 | Relay 1 LED |
+| GPIO16 | Relay 2 LED |
+| GPIO34 | LUX Sensor  |
+| GPIO25 | SEL         |
+| GPIO27 | CF          |
+| GPIO26 | CF1         |
 
 ## Notes
 
 - The Lux sensor is a binary sensor and can be used like a daylight sensor. (e.g. turn on lights when it gets dark)
-- This device can be used as a Bluetooh proxy in Home Assistant see the [docs on how to enable](https://esphome.io/components/bluetooth_proxy)
+- This device can be used as a Bluetooh proxy in Home Assistant see the
+  [docs on how to enable](https://esphome.io/components/bluetooth_proxy/)
 
 ## Basic Configuration
 
@@ -44,8 +59,9 @@ substitutions:
 
 esphome:
   name: wyzeoutdoor
-  platform: ESP32
-  board: esp-wrover-kit
+
+esp32:
+  variant: esp32
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
@@ -107,7 +123,7 @@ sensor:
     id: lux_sensor
     device_class: illuminance
     unit_of_measurement: lx
-    attenuation: 11db
+    attenuation: 12db
   - platform: hlw8012
     sel_pin:
       number: GPIO25
@@ -126,6 +142,8 @@ sensor:
       name: "${display_name} Volts"
       unit_of_measurement: V
       accuracy_decimals: 1
+    energy:
+      name: "${display_name} Energy"
     power:
       name: "${display_name} Watts"
       unit_of_measurement: W
@@ -158,14 +176,14 @@ binary_sensor:
     name: ${display_name} daylight
     device_class: light
     lambda: |-
-        // the senor reads 3.1 volts if there is light and 0.5 if there is not light not much inbetween
-        if (id(lux_sensor).state > 2) {
-          // there is daylight outside.
-          return true;
-        } else {
-          // there is no daylight outside (e.g. it is dark).
-          return false;
-        }
+      // the senor reads 3.1 volts if there is light and 0.5 if there is not light not much inbetween
+      if (id(lux_sensor).state > 2) {
+        // there is daylight outside.
+        return true;
+      } else {
+        // there is no daylight outside (e.g. it is dark).
+        return false;
+      }
 
 status_led:
   pin:

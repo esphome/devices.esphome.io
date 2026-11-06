@@ -8,31 +8,32 @@ board: esp8266
 
 ## Initial Install
 
-When taking the device apart, there are no headers for RX/TX. You must solder them on.  They are labeled on the board.
+When taking the device apart, there are no headers for RX/TX. You must solder them on. They are labeled on the board.
 
-There are headers for ground and 5v.  You can use these to power the device while flashing.  Press and hold the button while powering on the device to put it into flash mode.
+There are headers for ground and 5v. You can use these to power the device while flashing. Press and hold the button
+while powering on the device to put it into flash mode.
 
 This device is also sold and marketed as the CloudFree SWM1.
 
 ## GPIO Pinout
 
-| Pin    | Function                           |
-| ------ | ---------------------------------- |
-| GPIO0  | button |
-| GPIO5  | motion |
-| GPIO12 | relay |
-| GPIO13 | blue led |
+| Pin    | Function     |
+| ------ | ------------ |
+| GPIO0  | button       |
+| GPIO5  | motion       |
+| GPIO12 | relay        |
+| GPIO13 | blue led     |
 | GPIO14 | light sensor |
-| GPIO16 | green led |
+| GPIO16 | green led    |
 
 ## Example Configuration
 
-Courtesy of rootnegativ1 on the Home Assistant forums: https://community.home-assistant.io/t/milfra-motion-sensor-light-switch-mfa05/439857/8
+Courtesy of rootnegativ1 on the Home Assistant forums:
+[https://community.home-assistant.io/t/milfra-motion-sensor-light-switch-mfa05/439857/8](https://community.home-assistant.io/t/milfra-motion-sensor-light-switch-mfa05/439857/8)
 
 ```yaml
 # https://templates.blakadder.com/cloudfree_SWM1.html
 # https://templates.blakadder.com/milfra_MFA05.html
-
 
 # GPIO16 boots HIGH which means the green led is ON.
 # This is an issue because of the green led takes precendence over the blue led
@@ -41,18 +42,15 @@ Courtesy of rootnegativ1 on the Home Assistant forums: https://community.home-as
 #    (I) output.turn_off
 #     or (II) digitalWrite(16, LOW) after boot
 
-
 substitutions:
   node_name: milfra-motion-light-switch
   friendly_name: Milfra MFA05 Motion Light Switch
-
 
 esphome:
   name: ${node_name}
   build_path: ./build/${node_name}
   comment: Milfra MFA05 Motion Light Switch
   name_add_mac_suffix: true
-
 
 esp8266:
   board: esp01_1m
@@ -61,21 +59,23 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
 api:
+  encryption:
+    key: !secret esphome_encryption_key
+  reboot_timeout: 0s
 
-# Enable the captive portal
 captive_portal:
 
 improv_serial:
+
+logger:
+
+ota:
 
 button:
   - platform: restart
@@ -85,6 +85,16 @@ button:
   - platform: safe_mode
     id: restart_button_safe_mode
     name: "${friendly_name} Restart (Safe Mode)"
+
+text_sensor:
+  - platform: version
+    name: "${friendly_name} ESPHome Version"
+
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    mac_address:
+      name: "${friendly_name} MAC Address"
 
 number:
   - platform: template # time the relay is ON when triggered by motion
@@ -126,12 +136,10 @@ number:
     mode: box
     unit_of_measurement: s
 
-
 output:
   - platform: gpio # green LED
     id: green_led
     pin: GPIO16
-
 
 light:
   - platform: status_led # blue LED
@@ -148,7 +156,6 @@ light:
               duration: 250ms
             - state: false
               duration: 250ms
-
 
 binary_sensor:
   - platform: gpio # physical button
@@ -240,7 +247,6 @@ binary_sensor:
           then:
             - light.turn_on: blue_status
 
-
 switch:
   - platform: gpio # relay
     id: relay
@@ -263,14 +269,13 @@ switch:
     device_class: switch
     restore_mode: RESTORE_DEFAULT_OFF
 
-
 script:
   # not in motion sensor on_release because of an issue with on_press not cancelling the delay
   - id: motion_timeout
     mode: restart
     then:
       # subtract 5 for the delayed_off of the motion sensor
-      - delay:  !lambda 'return (id(motion_delay).state - 5) * 1000;'
+      - delay: !lambda "return (id(motion_delay).state - 5) * 1000;"
       - if:
           condition:
             - switch.is_on: motion_enabled
@@ -296,11 +301,11 @@ script:
     mode: single
     then:
       - switch.turn_off: motion_enabled
-      - delay: !lambda 'return id(motion_cooldown).state * 1000;'
+      - delay: !lambda "return id(motion_cooldown).state * 1000;"
       - switch.turn_on: motion_enabled
 
   - id: button_timeout
     mode: restart
     then:
-      - delay: !lambda 'return id(button_delay).state * 1000;'
+      - delay: !lambda "return id(button_delay).state * 1000;"
 ```

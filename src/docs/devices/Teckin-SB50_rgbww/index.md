@@ -6,7 +6,7 @@ standard: global
 board: esp8266
 ---
 
-![image](/teckin_sb50.jpg)
+![image](./teckin_sb50.jpg)
 
 #### Note
 

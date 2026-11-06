@@ -6,22 +6,28 @@ standard: global
 board: esp8266
 ---
 
-Single channel relay with 433Mhz RF module. On this device, the relay is controlled directly by the RF module, and the ESP module talks to the RF module over UART. For example, when a command to turn on the relay comes in over wifi, this is sent over the UART to the RF module, which then switches the relay. When a 433Mhz control button paired to the module is pressed, the RF module switches the relay and tells the ESP over UART.
+Single channel relay with 433Mhz RF module. On this device, the relay is controlled directly by the RF module, and the
+ESP module talks to the RF module over UART. For example, when a command to turn on the relay comes in over wifi, this
+is sent over the UART to the RF module, which then switches the relay. When a 433Mhz control button paired to the module
+is pressed, the RF module switches the relay and tells the ESP over UART.
 
-Since the RF module still handles all the RF input, the pairing instructions are the same. Press the button on the module a certain amount of times, then press the RF button(s).
+Since the RF module still handles all the RF input, the pairing instructions are the same. Press the button on the
+module a certain amount of times, then press the RF button(s).
 
 - For momentary mode, press the button on the module once, then the RF button.
 - For toggle mode ('normal' mode), press the button twice, then the RF button.
 - For interlocking mode, press the button three times, then the first RF button, then the second.
 - To clear all remotes, press the button eight times.
 
-Because the ESP's main UART is connected to the RF module, programming with an external UART and pulling down GPIO0 does not work, you must use tuya-convert. Since flashing the ESP does not reset the RF module, your paired remotes will not be changed.
+Because the ESP's main UART is connected to the RF module, programming with an external UART and pulling down GPIO0 does
+not work, you must use tuya-convert. Since flashing the ESP does not reset the RF module, your paired remotes will not
+be changed.
 
 ## Pictures
 
-![alt text](/top.jpg "Top of closed module")
-![alt text](/inside-1.jpg "Inside view 1")
-![alt text](/inside-2.jpg "Inside view 2")
+![alt text](./top.jpg "Top of closed module")
+![alt text](./inside-1.jpg "Inside view 1")
+![alt text](./inside-2.jpg "Inside view 2")
 
 ## GPIO Pinout
 
@@ -33,7 +39,8 @@ Because the ESP's main UART is connected to the RF module, programming with an e
 
 ## Basic Configuration
 
-To handle the incoming UART messages from the RF module, a custom module is required. You will need both a yaml file and qiachip-uart.h.
+To handle the incoming UART messages from the RF module, a custom module is required. You will need both a yaml file and
+qiachip-uart.h.
 
 qiachip.yaml:
 
@@ -122,28 +129,29 @@ esphome:
 
 esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on #we only have one WiFi AP so just use the first one that matches
+  ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
+    ssid: ${friendly_name}_AP
+    password: !secret wifi_password
 
-# Enabling the logging component
 logger:
   hardware_uart: UART1 # move logging to UART 1 since RF module is on UART 0
+#  baud_rate: 0 #disable UART logging
 
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+# Enable OTA updates
+ota:
+  safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 uart:
   baud_rate: 9600
@@ -183,7 +191,8 @@ switch:
       - uart.write: [0xAC, 0x20, 0x00, 0x29]
 ```
 
-The UART module checks the UART buffer every 100ms, expecting the 4 byte long messages sent by the RF module, and updates when it receives one.
+The UART module checks the UART buffer every 100ms, expecting the 4 byte long messages sent by the RF module, and
+updates when it receives one.
 
 qiachip-uart.h:
 
@@ -219,7 +228,8 @@ class QiachipUART : public PollingComponent, public BinarySensor{
 
 ## Split Configuration
 
-If you have multiple of these relays, you may want to keep the shared code in one file and only put device specific information in files for each relay. Leave qiachip-uart.h as is in this situation.
+If you have multiple of these relays, you may want to keep the shared code in one file and only put device specific
+information in files for each relay. Leave qiachip-uart.h as is in this situation.
 
 qiachip-common.yaml:
 
@@ -304,28 +314,29 @@ esphome:
 
 esp8266:
   board: esp01_1m
-   
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on #we only have one WiFi AP so just use the first one that matches
+  ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
+    ssid: ${friendly_name}_AP
+    password: !secret wifi_password
 
-# Enabling the logging component
 logger:
   hardware_uart: UART1 # move logging to UART 1 since RF module is on UART 0
+#  baud_rate: 0 #disable UART logging
 
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+# Enable OTA updates
+ota:
+  safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 uart:
   baud_rate: 9600

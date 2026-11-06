@@ -7,27 +7,28 @@ board: esp8266
 ---
 
 ![alt text](Athom-EU-Plug.png "Athom Smart Plug TP29 EU")
-Maker: https://www.athom.tech/
+Maker: [https://www.athom.tech/](https://www.athom.tech/)
 
 Also on Aliexpress, with preflashed Tasmota or Homekit.
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | Button              |
-| GPIO4  | BL0937 CF           |
-| GPIO5  | HLWBL CF1           |
-| GPIO12 | HLWBL SELi          |
-| GPIO13 | LedLink             |
-| GPIO14 | Relay               |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | Button     |
+| GPIO4  | BL0937 CF  |
+| GPIO5  | HLWBL CF1  |
+| GPIO12 | HLWBL SELi |
+| GPIO13 | LedLink    |
+| GPIO14 | Relay      |
 
 ## Basic Configuration
 
 ```yaml
 substitutions:
   devicename: athomsmartplug
-  upper_devicename: Athom Smart Plug
+  upper_devicename:
+    Athom Smart Plug
     # Higher value gives lower watt readout
   current_res: "0.00225"
   # Lower value gives lower voltage readout
@@ -35,7 +36,7 @@ substitutions:
 
 esphome:
   name: $devicename
-  
+
 esp8266:
   board: esp01_1m
     
@@ -43,9 +44,9 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component
@@ -60,7 +61,7 @@ captive_portal:
 # Enable the Web Server component 
 webserver:
 
-# Time used for daily KWh usage  
+# Time used for daily KWh usage
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -71,7 +72,7 @@ status_led:
     inverted: yes
 
 binary_sensor:
-    # Button 1 configuration
+  # Button 1 configuration
   - platform: gpio
     pin:
       number: GPIO3
@@ -96,9 +97,9 @@ switch: # Set relays as switches
     pin: GPIO14
     name: "${upper_devicename} Switch"
     on_turn_on:
-    - switch.turn_on: sw_led1
+      - switch.turn_on: sw_led1
     on_turn_off:
-    - switch.turn_off: sw_led1
+      - switch.turn_off: sw_led1
   # Register LED on GPIO
   - platform: gpio
     id: sw_led1
@@ -137,8 +138,8 @@ sensor:
     name: "${upper_devicename} Total Daily Energy"
     power_id: "${devicename}_Wattage"
     filters:
-        # Multiplication factor from W to kW is 0.001
-        - multiply: 0.001
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
     unit_of_measurement: kWh
     icon: mdi:clock-alert
   - platform: uptime

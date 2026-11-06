@@ -5,7 +5,8 @@ type: switch
 standard: us
 board: esp8266
 ---
-[Amazon Link](https://amzn.to/3GQvWBH)
+
+[Amazon Link](https://www.amazon.com/dp/B0C7L49BXL)
 
 [Device on Martin Jerry](https://www.martinjerry.com/us-ss02)
 
@@ -15,15 +16,17 @@ These switches come preflashed with custom tasmota firmware, which leaves no spa
 
 If you would try to flash it with an ESPHome binary - update will fail.
 
-This can be worked around by flashing the device with a [Tasmota minimal binary](http://ota.tasmota.com/tasmota/tasmota-minimal.bin.gz) first, then re-flashing with your ESPHome binary.
+This can be worked around by flashing the device with a
+[Tasmota minimal binary](http://ota.tasmota.com/tasmota/tasmota-minimal.bin.gz) first, then re-flashing with your
+ESPHome binary.
 
 ## GPIO Pinout
 
-| Pin   | Function |
-| ----- | -------- |
-| GPIO3 | button |
-| GPIO5 | relay  |
-| GPIO4 | i2c SCL  |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO3  | button   |
+| GPIO5  | relay    |
+| GPIO4  | i2c SCL  |
 | GPIO12 | red LED  |
 | GPIO13 | i2c SDA  |
 | GPIO14 | blue LED |
@@ -40,6 +43,9 @@ substitutions:
 esphome:
   name: "${name}"
   friendly_name: "${friendly_name}"
+
+esp8266:
+  board: esp8285
 
 esp8266:
   board: esp01_1m
@@ -82,7 +88,7 @@ number:
     icon: "mdi:water-percent"
     entity_category: config
     on_value:
-      - lambda: 'id(aht10_sensor).update();'
+      - lambda: "id(aht10_sensor).update();"
   - platform: template
     name: "${friendly_name} Off Humidity Threshold"
     id: off_humidity_threshold_ui
@@ -98,7 +104,7 @@ number:
     icon: "mdi:water-percent"
     entity_category: config
     on_value:
-      - lambda: 'id(aht10_sensor).update();'
+      - lambda: "id(aht10_sensor).update();"
 
 sensor:
   - platform: aht10

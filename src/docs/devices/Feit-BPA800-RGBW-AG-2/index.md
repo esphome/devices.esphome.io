@@ -21,8 +21,9 @@ substitutions:
    name: $devicename
    comment: "${comment}"
 
-esp8266:
-  board: esp01_1m    
+ wifi:
+   ssid: !secret wifi_ssid
+   password: !secret wifi_password
 
 # OTA flashing
 ota:

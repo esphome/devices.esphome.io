@@ -8,7 +8,8 @@ board: bk72xx
 
 ## Notice
 
-- This switch is flashable using the latest tuya-cloudcutter with a compiled ESPHome binary. I recommend following this [Youtube Video](https://youtu.be/sSj8f-HCHQ0).
+- This switch is flashable using the latest tuya-cloudcutter with a compiled ESPHome binary. I recommend following this
+  [Youtube Video](https://youtu.be/sSj8f-HCHQ0).
 - Version 1.1.4 in the App and with BK7231N (WB2S module)
 
 ## Product Images
@@ -50,6 +51,20 @@ logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: !secret encryption_key
+
+# Enable over the air updates
+ota:
+  password: !secret ota_password
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  ap:
+    ssid: ${friendly_name} Hotspot
+    password: !secret ap_password
 
 # Enable the captive portal
 captive_portal:
@@ -61,8 +76,18 @@ time:
 # Enable the Web Server component 
 webserver:
 
-sensor:
+debug:
+  update_interval: 5s
 
+sensor:
+  - platform: debug
+    free:
+      name: ${friendly_name} Heap Free
+    loop_time:
+      name: ${friendly_name} Loop Time
+  - platform: wifi_signal
+    name: ${friendly_name} WiFi Signal
+    update_interval: 30s
   - platform: uptime
     name: Uptime Sensor
     id: uptime_sensor
@@ -106,7 +131,7 @@ binary_sensor:
     name: ${friendly_name} button
     internal: true
     filters:
-      - delayed_on:  10ms
+      - delayed_on: 10ms
       - delayed_off: 10ms
     on_press:
       - switch.toggle: relay

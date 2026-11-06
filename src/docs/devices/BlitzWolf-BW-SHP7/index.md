@@ -31,7 +31,8 @@ Manufacturer: [BlitzWolf](https://www.blitzwolf.com/3680W-EU-Dual-WiFi-Smart-Soc
 ## Basic Config
 
 The configuration has some default sensors for wifi reporting etc.
-Some SHP7 devices experiences unexpected reboots after few minutes from start. By adding some config for GPIO15 it is solved.
+Some SHP7 devices experiences unexpected reboots after few minutes from start. By adding some config for GPIO15 it is
+solved.
 
 ```yaml
 substitutions:
@@ -51,9 +52,10 @@ esphome:
 esp8266:
   board: esp8285
 
-# OTA flashing
-ota:
-  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 wifi: # Your Wifi network details
   
@@ -173,7 +175,8 @@ sensor:
 
 ## Advanced config additions
 
-Starting with ESPHome v1.16.1 the `hlw8012` platform sensor now supports energy, so we can add the following to the `hlw8012` platform sensor and get rid of the `total_daily_energy` platform sensor and the `homeassistant` time sensor:
+Starting with ESPHome v1.16.1 the `hlw8012` platform sensor now supports energy, so we can add the following to the
+`hlw8012` platform sensor and get rid of the `total_daily_energy` platform sensor and the `homeassistant` time sensor:
 
 ```yaml
 sensor:
@@ -192,4 +195,6 @@ In the esphome section, you can perform actions when the device boots:
       - switch.turn_on: relay1
 #  - switch.turn_on: relay2
 
+Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect)
+and create a backup AP
 

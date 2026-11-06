@@ -9,7 +9,7 @@ board: esp8266
 Ilonda Wifi Smart Fish Feeder (L88) is a Tuya-based device sold by
 Amazon (not only under Ilonda, but also under other brand names).
 
-![image](/ilonda-wifi-smart-fish-feeder.jpg)
+![image](./ilonda-wifi-smart-fish-feeder.jpg)
 
 Originally intended to be used with its companion app, once flashed
 using [tuya-convert](https://github.com/ct-Open-Source/tuya-convert),

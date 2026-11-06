@@ -15,8 +15,8 @@ board: esp8266
 
 | Pin   | Function |
 | ----- | -------- |
-| GPIO3 | RX      |
-| GPIO1 | TX      |
+| GPIO3 | RX       |
+| GPIO1 | TX       |
 
 ## Basic Config
 
@@ -30,9 +30,9 @@ esphome:
 esp8266:
   board: esp01_1m
 
-# OTA flashing
-ota:
-  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 wifi: # Your Wifi network details
   
@@ -49,9 +49,9 @@ api:
 captive_portal:
 
 uart:
-    rx_pin: GPIO3
-    tx_pin: GPIO1
-    baud_rate: 9600
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
 
 tuya:
 

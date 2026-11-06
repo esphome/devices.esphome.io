@@ -81,7 +81,18 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "1G-Beken Fallback Hotspot"
+    password: !secret ap_password
+
 captive_portal:
 
 # Enable the Web Server component 
@@ -146,7 +157,18 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "2G-Beken Fallback Hotspot"
+    password: !secret ap_password
+
 captive_portal:
 
 # Enable the Web Server component 
@@ -227,7 +249,18 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "3G-Beken Fallback Hotspot"
+    password: !secret ap_password
+
 captive_portal:
 
 # Enable the Web Server component 
@@ -358,7 +391,18 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "3G-Beken Fallback Hotspot"
+    password: !secret ap_password
+
 captive_portal:
 
 # Enable the Web Server component 

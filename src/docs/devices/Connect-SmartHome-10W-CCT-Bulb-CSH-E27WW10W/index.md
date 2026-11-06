@@ -44,10 +44,10 @@ esphome:
 esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
+
+wifi:
+  ssid: "ssid"
+  password: "password"
 
 wifi: # Your Wifi network details
   

@@ -22,44 +22,46 @@ board: esp8266
 ---
 esphome:
   name: SP10
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
 wifi: # Your Wifi network details
   
 # Enable fallback hotspot in case wifi connection fails  
   ap:
+    ssid: SP10_AP
+    password: !secret wifi_password
+    channel: 1
 
 # Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-
-# Enable the captive portal
-captive_portal:
-
-# Enable the Web Server component 
-webserver:
+ota:
+web_server:
+  port: 80
+  # https://esphome.io/web-api/
 
 time:
   - platform: homeassistant
-    # https://esphome.io/components/time
+    # https://esphome.io/components/time/
     id: homeassistant_time
 
 status_led:
-  # https://esphome.io/components/status_led
+  # https://esphome.io/components/status_led/
   pin:
     number: GPIO0
     inverted: True
 
 output:
-  # https://esphome.io/components/output/esp8266_pwm.html
+  # https://esphome.io/components/output/esp8266_pwm/
   - platform: esp8266_pwm
     id: blue_led_output
     pin:
@@ -67,7 +69,7 @@ output:
       inverted: True
 
 light:
-  # https://esphome.io/components/light/monochromatic.html
+  # https://esphome.io/components/light/monochromatic/
   - platform: monochromatic
     name: SP10 Blue LED
     output: blue_led_output
@@ -79,9 +81,20 @@ sensor:
   - platform: uptime
     name: SP10 Uptime
 
+  - platform: wifi_signal
+    name: SP10 Wifi Signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: SP10 ESPHome Version
+  - platform: wifi_info
+    ip_address:
+      name: SP10 IP
+
 binary_sensor:
   - platform: gpio
-    # https://esphome.io/components/binary_sensor/gpio.html
+    # https://esphome.io/components/binary_sensor/gpio/
     pin:
       number: GPIO13
     id: button
@@ -92,13 +105,13 @@ binary_sensor:
 
 switch:
   - platform: gpio
-    # https://esphome.io/components/switch/gpio
+    # https://esphome.io/components/switch/gpio/
     pin: GPIO15
     id: relay
 
   # tie the led & relay operation together and report status based on relay state
   - platform: template
-    # https://esphome.io/components/switch/template.html
+    # https://esphome.io/components/switch/template/
     name: SP10
     id: relay_template
     lambda: |-

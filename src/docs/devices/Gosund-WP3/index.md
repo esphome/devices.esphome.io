@@ -10,9 +10,9 @@ board: esp8266
 
 | Pin    | Function             |
 | ------ | -------------------- |
-| GPIO4 | Push Button inverted |
-| GPIO12  | Red LED              |
-| GPIO13  | Blue LED             |
+| GPIO4  | Push Button inverted |
+| GPIO12 | Red LED              |
+| GPIO13 | Blue LED             |
 | GPIO14 | Relay 1              |
 
 ## Basic Configuration
@@ -81,4 +81,18 @@ output:
     inverted: true
     id: led
 
+sensor:
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi signal"
+    id: "${device_name}_wifi_signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    id: "${device_name}_uptime"
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: "${friendly_name} ESPHome Version"
+    id: "${device_name}_esphome_version"
 ```

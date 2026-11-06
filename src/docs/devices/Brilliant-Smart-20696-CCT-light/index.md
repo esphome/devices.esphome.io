@@ -33,27 +33,23 @@ substitutions:
 esphome:
   name: $device_name
   comment: $device_description
-  
+
 esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+logger:
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  password: "password"
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
 captive_portal:
 
 output:

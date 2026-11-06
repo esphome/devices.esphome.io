@@ -15,7 +15,12 @@ this is a AU/NZ standard wall outlet/powerpoint based on the TYWE3S module.
 
 ### tuya-convert
 
-These outlets are Tuya devices, so if you don't want to open them up to flash directly, you can attempt to [use tuya-convert to initially get ESPHome onto them](/guides/tuya-convert/) however recently purchased devices are no longer Tuya-Convert compatible.  There's useful guide to disassemble and serial flash similar switches [here.](https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/) After that, you can use ESPHome's OTA functionality to make any further changes.
+These outlets are Tuya devices, so if you don't want to open them up to flash directly, you can attempt to
+[use tuya-convert to initially get ESPHome onto them](/devices/tuya-convert) however recently purchased devices are no
+longer Tuya-Convert compatible.  There's a useful guide to disassemble and serial flash similar switches
+[on Mike McGuire's blog][1]. After that, you can use ESPHome's OTA functionality to make any further changes.
+
+[1]: https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/
 
 - Put the outlet into "smartconfig" / "autoconfig" / pairing mode by holding any button for about 5 seconds.
 - The status LED (to the side of the button(s)) blinks rapidly to confirm that it has entered pairing mode.
@@ -33,21 +38,21 @@ You may be able to simply dig at it enough that the 3v3 pin is accessible.
 
 ## GPIO pinout
 
-| GPIO # | Component   |
-|:------:|------------:|
-| GPIO00 |        None |
-| GPIO01 |        None |
-| GPIO02 |        None |
-| GPIO03 |        None |
-| GPIO04 |  Status LED |
-| GPIO05 |        None |
-| GPIO09 |        None |
-| GPIO10 |        None |
-| GPIO12 |   Button 2n |
-| GPIO13 |     Relay 1 |
-| GPIO14 |     Relay 2 |
-| GPIO15 |        None |
-| GPIO16 |   Button 1n |
+| GPIO # |  Component |
+| :----: | ---------: |
+| GPIO00 |       None |
+| GPIO01 |       None |
+| GPIO02 |       None |
+| GPIO03 |       None |
+| GPIO04 | Status LED |
+| GPIO05 |       None |
+| GPIO09 |       None |
+| GPIO10 |       None |
+| GPIO12 |  Button 2n |
+| GPIO13 |    Relay 1 |
+| GPIO14 |    Relay 2 |
+| GPIO15 |       None |
+| GPIO16 |  Button 1n |
 
 ## Basic Configuration
 
@@ -59,8 +64,23 @@ substitutions:
 #################################
 
 esphome:
-  platform: ESP8266
   name: ${device_name}
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "ESPHOME"
+    password: "12345678"
+
+api:
+  encryption:
+    key: !secret api_encryption_key
 
 esp8266:
   board: esp01_1m
@@ -84,8 +104,18 @@ api:
 # Enable the captive portal
 captive_portal:
 
-# Enable the Web Server component 
-webserver:
+  - platform: wifi_signal
+    name: ${device_name} Wifi Signal
+    update_interval: 60s
+
+text_sensor:  
+  - platform: version
+    name: ${device_name} ESPHome Version
+  - platform: wifi_info
+    ip_address:
+      name: ${device_name} IP
+
+#################################
 
 status_led:
   pin:

@@ -25,7 +25,7 @@ board: esp8266
 
 ## Getting it up and running
 
-These switches can no longer be converted with Tuya-convert. See discussion here https://github.com/sillyfrog/contact/issues/4
+These switches can no longer be converted with Tuya-convert. See discussion here [https://github.com/sillyfrog/contact/issues/4](https://github.com/sillyfrog/contact/issues/4)
 
 ## Basic Functionality with Power Monitoring and Device status sensors (No Timers)
 
@@ -38,12 +38,13 @@ esphome:
   name: ${device_name}
 
 esp8266:
-  board: esp8285
+  board: esp01_1m
   restore_from_flash: true
-  
-# OTA flashing
-ota:
-  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on
 
 wifi: # Your Wifi network details
   

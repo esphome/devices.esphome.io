@@ -8,18 +8,18 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO34 | ANALOG_A1           |
-| GPIO35 | ANALOG_A2           |
-| GPIO4  | IIC_SDA             |
-| GPIO5  | IIC_SCL             |
-| GPIO14 | 1-Wire GPIO         |
-| GPIO13 | 1-Wire GPIO         |
-| GPIO32 | 1-Wire GPIO         |
-| GPIO33 | 1-Wire GPIO         |
-| GPIO15 | 433MHz Transmitter  |
-| GPIO2  | 433MHz Receiver     |
+| Pin    | Function           |
+| ------ | ------------------ |
+| GPIO34 | ANALOG_A1          |
+| GPIO35 | ANALOG_A2          |
+| GPIO4  | IIC_SDA            |
+| GPIO5  | IIC_SCL            |
+| GPIO14 | 1-Wire GPIO        |
+| GPIO13 | 1-Wire GPIO        |
+| GPIO32 | 1-Wire GPIO        |
+| GPIO33 | 1-Wire GPIO        |
+| GPIO2 | 433MHz Transmitter |
+| GPIO15  | 433MHz Receiver    |
 
 [Additional pinout/design details](https://www.kincony.com/arduino-esp32-8-channel-relay-module-kc868-a8.html)
 
@@ -31,25 +31,7 @@ esphome:
   name: kc868-a8
 
 esp32:
-  board: esp32dev
-
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
-captive_portal:
+  variant: esp32
 
 i2c:
   sda: 4
@@ -65,10 +47,10 @@ ethernet:
   phy_addr: 0
 
 pcf8574:
-  - id: 'pcf8574_hub_out_1'  # for output channel 1-8
+  - id: "pcf8574_hub_out_1" # for output channel 1-8
     address: 0x24
 
-  - id: 'pcf8574_hub_in_1'  # for input channel 1-8
+  - id: "pcf8574_hub_in_1" # for input channel 1-8
     address: 0x22
 
 # Individual outputs
@@ -214,12 +196,18 @@ binary_sensor:
       number: 33
       inverted: true
 
-dallas:
-  - pin: 14
+one_wire:
+  - platform: gpio
+    pin: GPIO14
 
 sensor:
-  - platform: dallas
+  - platform: dallas_temp
     address: 0x1c0000031edd2a28 #replace with your sensor's ID
     name: "ds18b20-1"
 
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
 ```

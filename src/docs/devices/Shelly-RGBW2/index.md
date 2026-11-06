@@ -6,7 +6,7 @@ standard: uk, us, eu
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/2ZcvAmy)
+[Amazon Link](https://www.amazon.com/dp/B0965C6W58)
 
 ![Product Image](Shelly-RGBW2.png "Shelly RGBW")
 
@@ -264,28 +264,30 @@ esphome:
 
 esp8266:
   board: esp01_1m
-      
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${device_name}"
+    password: !secret ap_pass
+
+ota:
+  safe_mode: True
+  password: !secret ota_pass
+
 captive_portal:
 
 status_led:
   pin: GPIO2
-  
+
 light:
   - platform: cwww
     restore_mode: ALWAYS_OFF

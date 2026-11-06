@@ -29,13 +29,18 @@ board: esp8266
 ```yaml
 esphome:
   name: TH3D_EZPlug_Plus
-
-ESP8266:
-  board: esp01_1m
   restore_from_flash: true
   early_pin_init: true
-    
-# OTA flashing
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+logger:
+api:
 ota:
   - platform: esphome
 

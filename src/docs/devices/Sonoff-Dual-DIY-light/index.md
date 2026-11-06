@@ -21,7 +21,7 @@ a push button, that looks like a light switch.
 We will be using GPIO4 and GPIO14 for the two retractive switches,
 again they will both short to 0V when the switch is clicked.
 
-![Product Image](/sonoff_dual_r2.jpg "Product Image")
+![Product Image](./sonoff_dual_r2.jpg "Product Image")
 
 The R1 version of the Dual controls the relays via the UART:
 

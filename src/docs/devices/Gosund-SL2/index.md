@@ -11,7 +11,9 @@ board: esp8266
 
 ## Gosund SL2 LED light stripe
 
-This is a cheap LED light stripe which can be bought at Amazon. Older versions of this LED controller allow to flash the device using tuya-convert whereas newer version needs to be flashed using a cable connection to the pins on the controller.
+This is a cheap LED light stripe which can be bought at Amazon. Older versions of this LED controller allow to flash the
+device using tuya-convert whereas newer version needs to be flashed using a cable connection to the pins on the
+controller.
 
 ```yaml
 # Define the name
@@ -25,13 +27,9 @@ esphome:
 esp8266:
   board: esp01_1m
 
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component

@@ -6,6 +6,13 @@ standard: eu
 board: esp8266
 ---
 
+## General Notes
+
+This device have two versions, with ESP or Bekken microcontroller.
+You are now looking at ESP configuration, Bekken version can be found [in the Gosund SP211 BK72XX documentation](../Gosund-SP211-BK72XX/).
+
+## Configuration
+
 ```yaml
 esphome:
   name: sp211
@@ -13,13 +20,9 @@ esphome:
 esp8266:
   board: esp8285
 
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component

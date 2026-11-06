@@ -6,54 +6,71 @@ standard: us
 board: esp32
 ---
 
-RGBWW smart light bulb, ultra slim recessed lighting kit, RGB colors + warm/cold white (2000K to 5000K), 120V AC 50/60Hz.
+RGBWW smart light bulb, ultra slim recessed lighting kit, RGB colors + warm/cold white (2000K to 5000K), 120V AC
+50/60Hz.
 
-This device uses an incompatible module [WB2S](https://fcc.report/FCC-ID/2ANDL-WB2S/4580213.pdf "FCC") which needs to be replaced with an ESP module. Besides the module, this process will require heat gun, soldering tools and moderate soldering skill.
+This device uses an incompatible module [WB2S](https://fcc.report/FCC-ID/2ANDL-WB2S/4580213.pdf "FCC") which needs to be
+replaced with an ESP module. Besides the module, this process will require heat gun, soldering tools and moderate
+soldering skill.
 
-Works with [WT32C3-01N](https://www.alibaba.com/product-detail/WT32C3-01N-4MB-OEM-ESP32-wi_1600348544006.html "Alibaba") module using the following template, but can work with others as well. This ESP32-C3 chip requires DIO flash mode to avoid boot loops. If encountering brown out issues with `rst:0xf (BROWNOUT_RST)`, then try using a dedicated 3V3 power supply with 28 guage or thicker wires (may need to be soldered). All wifi power saving must be disabled with this module by including `power_save_mode: none`, reducing packet loss and average ping time from >1000ms to around 2-3ms on average.
+Works with [WT32C3-01N](https://www.alibaba.com/product-detail/WT32C3-01N-4MB-OEM-ESP32-wi_1600348544006.html "Alibaba")
+module using the following template, but can work with others as well. This ESP32-C3 chip requires DIO flash mode to
+avoid boot loops. If encountering brown out issues with `rst:0xf (BROWNOUT_RST)`, then try using a dedicated 3V3 power
+supply with 28 guage or thicker wires (may need to be soldered). All wifi power saving must be disabled with this module
+by including `power_save_mode: none`, reducing packet loss and average ping time from >1000ms to around 2-3ms on
+average.
 
-Constant Brightness (`constant_brightness`) is set to `true`. The original WB2S balances both white channels to combined 100% duty cycle.
-Color Interlock (`color_interlock`) is set to `true` as well. The original WB2S does not enable white and color leds at the same time.
+Constant Brightness (`constant_brightness`) is set to `true`. The original WB2S balances both white channels to combined
+100% duty cycle.
+Color Interlock (`color_interlock`) is set to `true` as well. The original WB2S does not enable white and color leds at
+the same time.
 
 ## Flashing
 
 Flash using ESP Web install and select ESP32-C3 option.
 
-To put ESP32-C3 in flash mode EN needs to be pulled high and GPIO9 need to be pulled low. May take a 2-3 attempts, but just disconnect and reconnect 3V3 while keeping GPIO9 pulled low and click the retry button again until it works.
+To put ESP32-C3 in flash mode EN needs to be pulled high and GPIO9 need to be pulled low. May take a 2-3 attempts, but
+just disconnect and reconnect 3V3 while keeping GPIO9 pulled low and click the retry button again until it works.
 
-The [datasheet](https://templates.blakadder.com/assets/WT32C3-01N_datasheet.pdf) references GPIO8 which needs to be pulled low during flashing, but I couldn't easily find this on the board. Didn't seem to matter though.
+The [datasheet](https://templates.blakadder.com/assets/WT32C3-01N_datasheet.pdf) references GPIO8 which needs to be
+pulled low during flashing, but I couldn't easily find this on the board. Didn't seem to matter though.
 
-| ESP32 Pin | USB Serial Pin | Comments |
-| --- | --- | --- |
-| 3V3 | 3V3 | Connect to dedicated 3V3 1A power supply if encountering brown out |
-| G | GND | |
-| IO9 | Ground | Round contact pad on back of board, pull low BEFORE attaching 3V3 |
-| IO8 | 3V3 | Could not find this pin, but it didn't seem to be required |
-| TX | RX | |
-| RX | TX | |
-| EN | 3V3 | Pull high to enable ESP32 (do not leave floating) |
+| ESP32 Pin | USB Serial Pin | Comments                                                           |
+| --------- | -------------- | ------------------------------------------------------------------ |
+| 3V3       | 3V3            | Connect to dedicated 3V3 1A power supply if encountering brown out |
+| G         | GND            |                                                                    |
+| IO9       | Ground         | Round contact pad on back of board, pull low BEFORE attaching 3V3  |
+| IO8       | 3V3            | Could not find this pin, but it didn't seem to be required         |
+| TX        | RX             |                                                                    |
+| RX        | TX             |                                                                    |
+| EN        | 3V3            | Pull high to enable ESP32 (do not leave floating)                  |
 
 ## Running
 
-For normal operation connect EN to VCC (pull high) to enable the C3 chip. GPIO9 has an internal pullup and it needs to be high on power up for the module to boot so try and avoid that pin similar to GPIO0 on ESP8266.
+For normal operation connect EN to VCC (pull high) to enable the C3 chip. GPIO9 has an internal pullup and it needs to
+be high on power up for the module to boot so try and avoid that pin similar to GPIO0 on ESP8266.
 
-ESP32's are power hungry on boot and the USB to serial adapter might not be able to provide enough power for that. Use a stable 3.3v power supply that can supply more than 1A.
+ESP32's are power hungry on boot and the USB to serial adapter might not be able to provide enough power for that. Use a
+stable 3.3v power supply that can supply more than 1A.
 
 ## GPIO Pinout
 
-PINs matched using Saleae analyzer with the original WB2S module. The original chip uses 1KHz PWM by default, however the and the ESP32-C3 seem to work better at [1220Hz](https://www.esphome.io/components/output/ledc.html "ESPHome LEDC Frequencies").
+PINs matched using Saleae analyzer with the original WB2S module. The original chip uses 1KHz PWM by default, however
+the and the ESP32-C3 seem to work better at
+[1220Hz](https://www.esphome.io/components/output/ledc/ "ESPHome LEDC Frequencies").
 
-| Pin    | Name | Function                        |
-| ------ | ---- | ------------------------------- |
-| GPIO3  | PWM1 | red (pwm, default 1KHz)         |
-| GPIO10 | PWM2 | green (pwm, default 1KHz)       |
-| GPIO6  | PWM3 | blue (pwm, default 1KHz)        |
-| GPIO5  | PWM4 | warm white (pwm, default 1KHz)  |
-| GPIO4  | PWM5 | cold white (pwm, default 1KHz)  |
-| GPIO1  |      | unused, leave floating or low   |
-| EN     |      | chip enable (pull high)         |
+| Pin    | Name | Function                       |
+| ------ | ---- | ------------------------------ |
+| GPIO3  | PWM1 | red (pwm, default 1KHz)        |
+| GPIO10 | PWM2 | green (pwm, default 1KHz)      |
+| GPIO6  | PWM3 | blue (pwm, default 1KHz)       |
+| GPIO5  | PWM4 | warm white (pwm, default 1KHz) |
+| GPIO4  | PWM5 | cold white (pwm, default 1KHz) |
+| GPIO1  |      | unused, leave floating or low  |
+| EN     |      | chip enable (pull high)        |
 
-NOTE: To pull EN high for normal use, solder a wire between the round 3V3 and EN contact pads on the back of the board. This must be done manually otherwise the chip won't power on if left floating.
+NOTE: To pull EN high for normal use, solder a wire between the round 3V3 and EN contact pads on the back of the board.
+This must be done manually otherwise the chip won't power on if left floating.
 
 ## Basic Configuration
 
@@ -76,7 +93,7 @@ esphome:
     board_build.flash_mode: dio
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   framework:
     type: esp-idf
 
@@ -94,6 +111,7 @@ logger:
   baud_rate: 115200
   
 # Enable Home Assistant API
+ota: { "password": !secret ota_password }
 api:
 
 # Enable the captive portal
@@ -135,5 +153,4 @@ output:
     pin: GPIO4
     frequency: ${ledc_frequency}
     id: output_pwm5_white_cold
-
 ```

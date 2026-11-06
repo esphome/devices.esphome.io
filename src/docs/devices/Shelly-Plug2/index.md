@@ -53,6 +53,12 @@ time:
   - platform: homeassistant
     id: my_time
 
+esphome:
+  name: ${devicename}
+
+esp8266:
+  board: esp8285
+
 binary_sensor:
   - platform: gpio
     pin:

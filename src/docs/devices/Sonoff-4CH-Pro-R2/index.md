@@ -4,6 +4,7 @@ date-published: 2019-10-11
 type: relay
 standard: global
 board: esp8266
+difficulty: 3
 ---
 
 ## GPIO Pinout
@@ -27,30 +28,17 @@ board: esp8266
 esphome:
   name: sonoff_4chpror2
 
-ESP8266:
+esp8266:
   board: esp01_1m
     
 # OTA flashing
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
-captive_portal:
-
 # Device Specific Config
 binary_sensor:
   - platform: gpio
+    name: "Sonoff 4CH Pro Button 1"
     pin:
       number: GPIO0
       mode: INPUT_PULLUP
@@ -58,6 +46,7 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_1"
   - platform: gpio
+    name: "Sonoff 4CH Pro Button 2"
     pin:
       number: GPIO9
       mode: INPUT_PULLUP
@@ -65,6 +54,7 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_2"
   - platform: gpio
+    name: "Sonoff 4CH Pro Button 3"
     pin:
       number: GPIO10
       mode: INPUT_PULLUP
@@ -72,37 +62,13 @@ binary_sensor:
     on_press:
       - switch.toggle: "relay_3"
   - platform: gpio
+    name: "Sonoff 4CH Pro Button 4"
     pin:
       number: GPIO14
       mode: INPUT_PULLUP
       inverted: True
     on_press:
       - switch.toggle: "relay_4"
-
-  - platform: gpio
-    pin:
-      number: GPIO0
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "Sonoff 4CH Pro Button 1"
-  - platform: gpio
-    pin:
-      number: GPIO9
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "Sonoff 4CH Pro Button 2"
-  - platform: gpio
-    pin:
-      number: GPIO10
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "Sonoff 4CH Pro Button 3"
-  - platform: gpio
-    pin:
-      number: GPIO14
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "Sonoff 4CH Pro Button 4"
 
   - platform: status
     name: "Sonoff 4CH Pro Status"
@@ -128,9 +94,10 @@ switch:
 
 ## LED Configuration
 
-Use _one_ of the following three configurations to adjust the led to your needs.  Note:  Using the Status LED on the 4CH Pro may cause relay 4 to activate on power up.
+Use _one_ of the following three configurations to adjust the led to your needs. Note: Using the Status LED on the 4CH
+Pro may cause relay 4 to activate on power up.
 
-### Status LED (see <https://esphome.io/components/status_led.html>)
+### Status LED (see [https://esphome.io/components/status_led/](https://esphome.io/components/status_led/))
 
 ```yaml
 status_led:

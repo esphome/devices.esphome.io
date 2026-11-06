@@ -26,28 +26,26 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
+    ssid: "genio22 Fallback Hotspot"
+    password: !secret wifi_password
 
-# Enabling the logging component
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: !secret ha_encrypt_password
 
-# Enable the captive portal
-captive_portal:
+ota:
+  password: !secret esp_ota_password
 
-# Enable the Web Server component 
-webserver:
-  
+web_server:
+  port: 80
 sensor:
   - platform: wifi_signal
     name: "genio22 WiFi Signal"

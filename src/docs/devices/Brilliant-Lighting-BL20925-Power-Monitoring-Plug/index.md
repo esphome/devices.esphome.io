@@ -5,7 +5,7 @@ type: plug
 standard: au
 board: esp8266
 ---
-  ![alt text](/Brilliant-Lighting-BL20925-Power-Monitoring-Plug.jpeg "Product Image")
+  ![alt text](./Brilliant-Lighting-BL20925-Power-Monitoring-Plug.jpeg "Product Image")
   
 [https://www.officeworks.com.au/shop/officeworks/p/brilliant-lighting-smart-wifi-plug-with-energy-monitoring-bl20925](https://www.officeworks.com.au/shop/officeworks/p/brilliant-lighting-smart-wifi-plug-with-energy-monitoring-bl20925)
 
@@ -32,18 +32,17 @@ substitutions:
 esphome:
   name: $devicename
   comment: ${device_description}
-  platform: ESP8266
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+esp8266:
+  board: esp01_1m
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
-# Enabling the logging component
+captive_portal:
+
+# Enable logging
 logger:
 
 # Enable Home Assistant API
@@ -88,7 +87,7 @@ sensor:
       name: ${friendly_name} Voltage
       unit_of_measurement: V
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -138,7 +137,7 @@ light:
   output: brilliant_smartplug_1_blue_output
   id: brilliant_smartplug_1_blue_led
 
-# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the blue light for other things as well.
+# Blink the blue light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the blue light for other things as well.
 # Only if not connected after 30s
 interval:
   - interval: 2000ms

@@ -1,10 +1,17 @@
 ---
 title: Sonoff POW Elite 16a (POWR316D)
 date-published: 2022-12-30
-type: plug
+type: relay
 standard: global
 board: esp32
+difficulty: 3
 ---
+
+## Bootloop Workaround
+
+Some people experience a boot loop after flashing esphome directly. The boot loop seems to appear on 3.3V DC power only
+(not on AC). Here's a workaround:
+[https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868](https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868)
 
 ## GPIO Pinout
 
@@ -27,16 +34,15 @@ board: esp32
 substitutions:
   friendly_name: POW Elite 16A
   device_name: pow-elite-16a
+  update_interval: 2s
 
 esphome:
   name: $device_name
 
 esp32:
-  board: nodemcu-32s
- 
-# OTA flashing
-ota:
-  - platform: esphome
+  variant: esp32
+  framework:
+    type: esp-idf
 
 wifi: # Your Wifi network details
   
@@ -51,8 +57,8 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+ota:
+  - platform: esphome
 
 # Enable the Web Server component 
 webserver:
@@ -71,6 +77,7 @@ bluetooth_proxy:
 uart:
   rx_pin: GPIO16
   baud_rate: 4800
+  parity: EVEN
 
 time:
   - platform: homeassistant
@@ -78,19 +85,26 @@ time:
 
 sensor:
   - platform: cse7766
-    update_interval: 2s
     current:
       name: $friendly_name Current
       id: a_sensor
+      filters:
+        - throttle_average: ${update_interval}
     voltage:
       name: $friendly_name Voltage
       id: v_sensor
+      filters:
+        - throttle_average: ${update_interval}
     power:
       name: $friendly_name Power
       id: w_sensor
+      filters:
+        - throttle_average: ${update_interval}
     energy:
       name: $friendly_name Energy
       id: wh_sensor
+      filters:
+        - throttle_average: ${update_interval}
 
   - platform: total_daily_energy
     name: $friendly_name Total Daily Energy
@@ -118,15 +132,15 @@ sensor:
                 (to_string(seconds) + "s")
               ).c_str();
 
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
+    id: esp32_temp
+
   - platform: template
     name: $friendly_name Power Factor
     device_class: power_factor
     id: power_factor
     lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
-
-  - platform: esp32_hall
-    name: $friendly_name ESP32 Hall Sensor
-    update_interval: 60s
 
 binary_sensor:
   - platform: gpio
@@ -236,5 +250,4 @@ interval:
           - light.turn_on: wifi_status_led
         else:
           - light.turn_off: wifi_status_led
-
 ```

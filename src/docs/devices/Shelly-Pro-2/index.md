@@ -8,30 +8,33 @@ board: esp32
 
 Information about the pinout and internals of the Shelly Pro 2.
 
-It's the same board as the Shelly Pro 1. The only difference is the addition of a second relay.
+It's the same board as the [Shelly Pro 1](../Shelly-Pro-1/). The only
+difference is the addition of a second relay.
 
 ![Shelly Pro 2](shelly-pro-2.jpg)
 
 ## Pinout
 
-ESP32 DOWDQ6| SN74HC595B | LAN8720A | Component
-------------|------------|----------|----------
-GPIO 4      |RCLK        |          |
-GPIO 13     |SER         |          |
-GPIO 14     |SRCLK       |          |
-GPIO 17     |            |CLKIN     |
-GPIO 18     |            |MDIO      |
-GPIO 19     |            |TXD0      |
-GPIO 21     |            |TXEN      |
-GPIO 22     |            |TXD1      |
-GPIO 23     |            |MDC       |
-GPIO 25     |            |RXD0      |
-GPIO 26     |            |RXD1      |
-GPIO 27     |            |CRS_DV    |
-GPIO 35     |            |          |Reset Button
-GPIO 36     |            |          |ADC Temperature
-GPIO 38     |            |          |Switch input 1
-GPIO 39     |            |          |Switch input 2
+ESP32 DOWDQ6 | Component
+-------------|-----------
+GPIO 4       |SN74HC595B SPI CS
+GPIO 12      |SPI MISO
+GPIO 13      |SPI MOSI
+GPIO 14      |SPI CLK
+GPIO 17      |LAN8720A CLKIN
+GPIO 18      |LAN8720A MDIO
+GPIO 19      |LAN8720A TXD0
+GPIO 21      |LAN8720A TXEN
+GPIO 22      |LAN8720A TXD1
+GPIO 23      |LAN8720A MDC
+GPIO 25      |LAN8720A RXD0
+GPIO 26      |LAN8720A RXD1
+GPIO 27      |LAN8720A CRS_DV
+GPIO 35      |Reset Button
+GPIO 36      |ADC Temperature 1
+GPIO 37      |ADC Temperature 2
+GPIO 38      |Switch input 1
+GPIO 39      |Switch input 2
 
 ## Shift register
 
@@ -39,21 +42,23 @@ A shift register is controlling the WIFI RGB LEDs and the 2 relays.
 
 ![Shift Register](shift-register.jpg)
 
-SN74HC595B| Component
-----------|----------
-QA        |Relay 1 + Out 1 LED
-QB        |Relay 2 + Out 2 LED
-QC        |WIFI RGB LED (Blue)
-QD        |WIFI RGB LED (Green)
-QE        |WIFI RGB LED (Red)
-QF        |NC
-QG        |NC
-QH        |NC
+SN74HC595B | Component
+-----------|----------
+QA         |Relay 1 + Out 1 LED
+QB         |Relay 2 + Out 2 LED
+QC         |WIFI RGB LED (Blue)
+QD         |WIFI RGB LED (Green)
+QE         |WIFI RGB LED (Red)
+QF         |NC
+QG         |NC
+QH         |NC
 
-The Out 1 status LED and the relay 1 are on the same output. The same is true for the Out 2 status LED and the relay 2.
-Turning on the relay turns the corresponding LED on.
+The Out 1 status LED and the relay 1 are on the same output. The same is true
+for the Out 2 status LED and the relay 2. Turning on the relay turns the
+corresponding LED on.
 
-The WIFI LED is an RGB LED. By turning each component on or off, you have access to 8 configurations:
+The WIFI LED is an RGB LED. By turning each component on or off, you have
+access to 8 configurations:
 
 R|G|B| Color
 -|-|-|-------
@@ -75,12 +80,11 @@ Note that the pin pitch is 1.27mm, so standard 2.54mm Dupont cables won't work.
 ## Basic Configuration
 
 ```yaml
-
 esphome:
   name: shelly-pro-2
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
     
@@ -99,8 +103,15 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+ota:
+  platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Shelly-Pro-2"
+    password: "BzwFc7HsRihG"
 
 # ethernet:
 #   type: LAN8720
@@ -108,9 +119,22 @@ captive_portal:
 #   mdio_pin: GPIO18
 #   clk_mode: GPIO17_OUT
 
+
+captive_portal:
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+  miso_pin:
+    number: GPIO12
+    ignore_strapping_warning: true
+
 button:
+  - platform: shutdown
+    id: do_shutdown
   - platform: restart
-    id: restart_1
+    name: "Restart"
+    id: do_restart
 
 binary_sensor:
   - platform: gpio
@@ -118,11 +142,9 @@ binary_sensor:
     pin:
       number: 35
       inverted: true
-    on_click:
-      min_length: 200ms
-      max_length: 1000ms
+    on_release:
       then:
-        button.press: restart_1
+        button.press: do_restart
 
   - platform: gpio
     id: input1
@@ -142,17 +164,17 @@ binary_sensor:
 
 sensor:
   - platform: adc
-    id: temp_voltage
+    id: temp_voltage1
     pin: GPIO36
     attenuation: auto
   - platform: resistance
-    id: temp_resistance
-    sensor: temp_voltage
+    id: temp_resistance1
+    sensor: temp_voltage1
     configuration: DOWNSTREAM
     resistor: 10kOhm
   - platform: ntc
-    sensor: temp_resistance
-    name: Temperature
+    sensor: temp_resistance1
+    name: Temperature 1
     unit_of_measurement: "°C"
     accuracy_decimals: 1
     icon: "mdi:thermometer"
@@ -165,11 +187,37 @@ sensor:
         then:
           - switch.turn_off: relay1
           - switch.turn_off: relay2
+          - button.press: do_shutdown
+
+  - platform: adc
+    id: temp_voltage2
+    pin: GPIO37
+    attenuation: auto
+  - platform: resistance
+    id: temp_resistance2
+    sensor: temp_voltage2
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+  - platform: ntc
+    sensor: temp_resistance2
+    name: Temperature 2
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    icon: "mdi:thermometer"
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      - above: 90
+        then:
+          - switch.turn_off: relay1
+          - switch.turn_off: relay2
+          - button.press: do_shutdown
 
 sn74hc595:
   - id: 'sn74hc595_hub'
-    data_pin: GPIO13
-    clock_pin: GPIO14
+    type: spi
     latch_pin: GPIO4
     sr_count: 1
 

@@ -33,21 +33,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
-     
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: !secret api_encryption_key
+
+web_server:
+  port: 80
+
+ota:
+  password: !secret esp_ota_pass
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  ap:
+    ssid: SP22_AP
+    password: "Hotspot password here"
 
 # Enable the captive portal
 captive_portal:
@@ -113,5 +120,4 @@ sensor:
       name: "HLW8012 Energy"
     update_interval: 10s
     change_mode_every: 3
-
 ```

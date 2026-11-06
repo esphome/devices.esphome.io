@@ -9,21 +9,25 @@ board: esp8266
 
 ## General Notes
 
-The DETA [Smart Plug Base](https://www.bunnings.com.au/deta-smart-plug-base-with-grid-connect_p0098817) are made by Arlec as part of the [Grid Connect ecosystem](https://grid-connect.com.au/), and are sold at Bunnings in Australia and New Zealand. They can be flashed without disassembly or soldering [using tuya-convert](#tuya-convert).
+The DETA [Smart Plug Base](https://www.bunnings.com.au/deta-smart-plug-base-with-grid-connect_p0098817) are made by
+Arlec as part of the [Grid Connect ecosystem](https://grid-connect.com.au/), and are sold at Bunnings in Australia and
+New Zealand. They can be flashed without disassembly or soldering [using tuya-convert](#tuya-convert).
 
 ## GPIO Pinout
 
-| Pin | Function |
-| --- | -------- |
-| GPIO1 | Button |
+| Pin    | Function |
+| ------ | -------- |
+| GPIO1  | Button   |
 | GPIO13 | Blue LED |
-| GPIO14 | Relay |
+| GPIO14 | Relay    |
 
 ## Getting it up and running
 
 ### Tuya Convert
 
-These switches are Tuya devices, so if you don't want to open them up to flash directly, you can [use tuya-convert to initially get ESPHome onto them](/guides/tuya-convert/). After that, you can use ESPHome's OTA functionality to make any further changes.
+These switches are Tuya devices, so if you don't want to open them up to flash directly, you can
+[use tuya-convert to initially get ESPHome onto them](/devices/tuya-convert). After that, you can use ESPHome's OTA
+functionality to make any further changes.
 
 - Put the switch into "smartconfig" / "autoconfig" / pairing mode by holding any button for about 5 seconds.
 - The status LED blinks rapidly to confirm that it has entered pairing mode.
@@ -45,10 +49,6 @@ esp8266:
   board: esp01_1m
   board_flash_mode: dout
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
 wifi: # Your Wifi network details
   
@@ -84,6 +84,21 @@ light:
     output: blue_led_output
     id: blue_led
     internal: True
+
+sensor:
+  - platform: uptime
+    name: ${device_name} Uptime
+
+  - platform: wifi_signal
+    name: ${device_name} Wifi Signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: ${device_name} ESPHome Version
+  - platform: wifi_info
+    ip_address:
+      name: ${device_name} IP
 
 binary_sensor:
   - platform: gpio

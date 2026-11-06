@@ -8,11 +8,9 @@ board: esp32
 
 ## Product Images
 
-![pcb](/Sonoff-DualR3-Lite-PCB.jpg "DualR3 Lite PCB v1.0")
+![pcb](./Sonoff-DualR3-Lite-PCB.jpg "DualR3 Lite PCB v1.0")
 
 ## GPIO Pinout
-
-based on <https://esphome.io/devices/sonoff.html#sonoff-dual-r3-v1-x-v2-x>
 
 ### Sonoff Dual R3 Lite - PCB version 1.x
 
@@ -47,9 +45,19 @@ esphome:
   name: sonoff-dual-r3
 
 esp32:
-  board: esp32dev
-    
-# OTA flashing
+  variant: esp32
+
+logger:
+  level: INFO
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret esp_api_key
+
 ota:
   - platform: esphome
 
@@ -67,7 +75,12 @@ api:
 # Enable the captive portal
 captive_portal:
 
-sensor:  
+sensor:
+  - platform: wifi_signal
+    name: "RSSI"
+    id: sensor_rssi
+    update_interval: 90s
+    entity_category: "diagnostic"
 
 - platform: uptime
     name: "Uptime"
@@ -111,7 +124,7 @@ binary_sensor:
         pullup: True
       inverted: True
     disabled_by_default: True
-    icon: 'mdi:radiobox-blank'
+    icon: "mdi:radiobox-blank"
     filters:
       - delayed_on: 50ms
     on_press:
@@ -146,7 +159,6 @@ binary_sensor:
       - switch.turn_on: relay_2
     on_release:
       - switch.turn_off: relay_2
-
 ```
 
 Dual R3 v1.x power meter configuration
@@ -159,21 +171,21 @@ uart:
   parity: EVEN
   stop_bits: 1
 
-sensor:  
+sensor:
   - platform: cse7761
-    update_interval: 21
+    update_interval: 21s
     voltage:
-      name: 'Voltage'
+      name: "Voltage"
     current_1:
-      name: 'Current 1'
+      name: "Current 1"
       disabled_by_default: True
     current_2:
-      name: 'Current 2'
+      name: "Current 2"
       disabled_by_default: True
     active_power_1:
-      name: 'Power 1'
+      name: "Power 1"
     active_power_2:
-      name: 'Power 2'
+      name: "Power 2"
 ```
 
 Dual R3 v2.x power meter configuration
@@ -186,25 +198,25 @@ uart:
   parity: NONE
   stop_bits: 2
 
-sensor:  
+sensor:
   - platform: bl0939
-    update_interval: 21
+    update_interval: 21s
     voltage:
-      name: 'Voltage'
+      name: "Voltage"
     current_1:
-      name: 'Current 1'
+      name: "Current 1"
       disabled_by_default: True
     current_2:
-      name: 'Current 2'
+      name: "Current 2"
       disabled_by_default: True
     active_power_1:
-      name: 'Power 1'
+      name: "Power 1"
     active_power_2:
-      name: 'Power 2'
+      name: "Power 2"
     energy_1:
-      name: 'Energy 1'
+      name: "Energy 1"
     energy_2:
-      name: 'Energy 2'
+      name: "Energy 2"
     energy_total:
-      name: 'Energy Total'
+      name: "Energy Total"
 ```

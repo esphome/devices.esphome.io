@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3tVURf8)
+[Amazon Link](https://www.amazon.com/dp/B07FM3P87S)
 
 ## GPIO Pinout
 
@@ -28,31 +28,40 @@ board: esp8266
 esphome:
   name: bedroom_ss30
 
-ESP8266:
+esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
-# Enabling the logging component
+  manual_ip:
+    static_ip: !secret bedroom_ss30_ip
+    gateway: !secret house_gateway
+    subnet: 255.255.255.0
+
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: !secret api_encryption_key
 
-# Enable the captive portal
-captive_portal:
+ota:
+  password: !secret bedroom_ss30_ota
 
 sensor:
+  - platform: wifi_signal
+    name: "Bedroom SS30 WiFi signal"
+    update_interval: 60s
 
   - platform: uptime
     name: "Bedroom SS30 uptime"
+
+text_sensor:
+  - platform: version
+    name: "Bedroom SS30 ESPHome version"
 
 switch:
   - platform: gpio

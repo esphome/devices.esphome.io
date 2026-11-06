@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-![alt text](/aukey-plug.jpg "Aukey SH-PA1 Smart WiFi Plug")
+![alt text](./aukey-plug.jpg "Aukey SH-PA1 Smart WiFi Plug")
 
 ## GPIO Pinout
 
@@ -23,6 +23,9 @@ board: esp8266
 # Basic Config
 esphome:
   name: mini_tree
+
+esp8266:
+  board: esp01_1m
   platformio_options:
     upload_speed: 115200
   
@@ -33,9 +36,9 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component

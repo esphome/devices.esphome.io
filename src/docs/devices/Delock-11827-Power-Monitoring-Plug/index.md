@@ -51,7 +51,7 @@ substitutions:
 
 esphome:
   name: ${plug_name}
-  
+
 esp8266:
   board: esp8285
     
@@ -59,9 +59,10 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
 
 # Enabling the logging component

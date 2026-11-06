@@ -10,15 +10,17 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function                    |
-| ------ | --------------------------- |
-| GPIO0  | LED (Inverted)              |
-| GPIO4  | Switch input                |
-| GPIO19 | Future external sensors?    |
-| GPIO25 | Button (Inverted, Pull-up)  |
-| GPIO26 | Relay                       |
-| GPIO32 | NTC                         |
-| GPIO33 | Relay supply voltage sensor |
+| Pin    | Function                                          |
+| ------ | ------------------------------------------------- |
+| GPIO0  | LED (Inverted), Shelly Plus Add-On: DATA (Output) |
+| GPIO1  | Shelly Plus Add-On: DATA (Input)                  |
+| GPIO3  | Shelly Plus Add-On: ANALOG IN                     |
+| GPIO4  | Switch input                                      |
+| GPIO19 | Shelly Plus Add-On: DIGITAL IN                    |
+| GPIO25 | Button (Inverted, Pull-up)                        |
+| GPIO26 | Relay                                             |
+| GPIO32 | NTC                                               |
+| GPIO33 | Relay supply voltage sensor                       |
 
 The Shelly Plus 1 is based on the ESP32-U4WDH (Single core, 160MHz, 4MB embedded flash)
 
@@ -26,7 +28,7 @@ Please calibrate the NTC, the value below is just a rough estimate!
 
 Credit and thanks to
 
-- https://templates.blakadder.com/shelly_plus_1.html
+- [https://templates.blakadder.com/shelly_plus_1.html](https://templates.blakadder.com/shelly_plus_1.html)
 
 ## Configuration as relay with overtemperature protection
 
@@ -44,7 +46,7 @@ esphome:
     board_build.f_cpu: 160000000L
 
 esp32:
-  board: esp32doit-devkit-v1
+  variant: esp32
   framework:
     type: esp-idf
     sdkconfig_options:
@@ -66,9 +68,12 @@ logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: "" # Add your API encryption key here
 
-# Enable the captive portal
-captive_portal:
+ota:
+  - platform: esphome
+    password: "" # Add your OTA password here
 
 output:
   - platform: gpio
@@ -127,12 +132,12 @@ sensor:
   - platform: adc
     id: temp_analog_reading
     pin: GPIO32
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     name: "${device_name} Relay Supply Voltage"
     pin: GPIO33
-    attenuation: 11db
+    attenuation: 12db
     filters:
       - multiply: 8
 
@@ -140,4 +145,5 @@ status_led:
   pin:
     number: GPIO0
     inverted: true
+    ignore_strapping_warning: true
 ```

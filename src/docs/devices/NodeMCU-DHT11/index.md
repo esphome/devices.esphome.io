@@ -34,7 +34,8 @@ substitutions:
 ```yaml
 esphome:
   name: ${name}
-  platform: ESP8266
+
+esp8266:
   board: nodemcuv2
     
 # OTA flashing

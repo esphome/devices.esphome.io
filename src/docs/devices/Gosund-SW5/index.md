@@ -47,7 +47,13 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
 captive_portal:
 
 status_led:

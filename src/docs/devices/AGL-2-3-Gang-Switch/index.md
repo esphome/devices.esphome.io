@@ -17,17 +17,17 @@ This config was created based on the 2 gang switch that I had.
 ## Product Images
 
 Front of 2 gang switch
-![alt text](/agl_1106062.png "Front of 2 gang switch")
+![alt text](./agl_1106062.png "Front of 2 gang switch")
 
 Back of 2 gang switch
-![alt text](/back.jpg "Back of 2 gang switch")
+![alt text](./back.jpg "Back of 2 gang switch")
 
 ## GPIO Pinout
 
 ### 2-Gang Version
 
 PCB
-![alt text](/open.jpg "PCB")
+![alt text](./open.jpg "PCB")
 
 | Pin    | Function                        |
 | ------ | ------------------------------- |
@@ -72,7 +72,11 @@ wifi: # Your Wifi network details
 # Enabling the logging component
 logger:
 
-# Enable Home Assistant API
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
 api:
 
 # Enable the captive portal

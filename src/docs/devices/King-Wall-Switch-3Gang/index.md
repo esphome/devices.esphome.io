@@ -10,13 +10,15 @@ board: bk72xx
 
 Silkscreen has King Smart Switch Tuya Panel V2021.10
 
-This is a oem 'smartlife' branded switch. They come in 1-4 gang varieties. Moren than 4 gang is supplied on two modules mounted side by side.
+This is a oem 'smartlife' branded switch. They come in 1-4 gang varieties. Moren than 4 gang is supplied on two modules
+mounted side by side.
 The 6 gang is actually 2x3 switches.
 Purchased from AliExpress.
 
 ## Flashing
 
-Use cloud-cutter. Pick 2 `By Firmware Vesion and Name` at the time of writing search by firmware/vesion and use `1.1.0 - BK7231N / oem_bk7231n_dctrl_switch`
+Use cloud-cutter. Pick 2 `By Firmware Vesion and Name` at the time of writing search by firmware/vesion and use
+`1.1.0 - BK7231N / oem_bk7231n_dctrl_switch`
 
 These are 'touch' buttons on this module. however i suspect there are a few different varieties.
 

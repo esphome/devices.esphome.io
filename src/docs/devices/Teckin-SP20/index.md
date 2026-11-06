@@ -6,7 +6,7 @@ standard: us
 board: esp8266
 ---
 
-[Amazon Link](https://amzn.to/3dYflOQ)
+[Amazon Link](https://www.amazon.com/dp/B07CVFD2KC)
 
 ## GPIO Pinout
 
@@ -22,7 +22,8 @@ board: esp8266
 
 ## Alternate GPIO Pinout
 
-Unit from 2018/April (Amazon) had a diffent pinout. Visually, the QR code was on the "Live" plug side, and programming pins were slighlty different layout.
+Unit from 2018/April (Amazon) had a diffent pinout. Visually, the QR code was on the "Live" plug side, and programming
+pins were slighlty different layout.
 
 Worth a try if standard pin out isn't working properly (relay will constantly click due sel_pin difference)
 
@@ -51,18 +52,24 @@ substitutions:
 esphome:
   name: ${device_name}
 
-ESP8266:
+esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: ${ip_address}
+    gateway: !secret wifigateway
+    subnet: !secret wifisubnet
+    dns1: !secret wifidns
   ap:
+    ssid: ${friendly_name}_AP
+    password: !secret wifi_password
+
+web_server:
+  port: 80
 
 # Enabling the logging component
 logger:
@@ -99,7 +106,7 @@ sensor:
     update_interval: 3s # default 60s
 
   - platform: total_daily_energy
-    # https://esphome.io/components/sensor/total_daily_energy.html
+    # https://esphome.io/components/sensor/total_daily_energy/
     name: ${friendly_name} Total Daily Energy
     power_id: power_monitor_value
     filters:
@@ -108,6 +115,17 @@ sensor:
 
   - platform: uptime
     name: ${friendly_name} Uptime
+
+  - platform: wifi_signal
+    name: ${friendly_name} Wifi Signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: ${friendly_name} ESPHome Version
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} IP
 
 status_led:
   pin:
@@ -145,7 +163,7 @@ switch:
     id: relay
 
   - platform: template
-    # https://esphome.io/components/switch/template.html
+    # https://esphome.io/components/switch/template/
     name: ${friendly_name}
     id: relay_template
     lambda: |-

@@ -6,11 +6,10 @@ standard: global
 board: esp32
 ---
 
-
 ## GPIO Pinout
 
 | Pin    | Function            |
-| ------ | ------------------  |
+| ------ | ------------------- |
 | GPIO15 | Relay               |
 | GPIO5  | 1-Wire GPIO         |
 | GPIO14 | 1-Wire GPIO         |
@@ -38,27 +37,12 @@ esphome:
   name: KC868-AM
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
-  
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+# Enable logging
 logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
-captive_portal:
 
 # Example configuration entry
 ethernet:

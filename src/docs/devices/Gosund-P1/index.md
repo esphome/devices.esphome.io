@@ -28,9 +28,9 @@ substitutions:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enable Home Assistant API

@@ -14,12 +14,15 @@ difficulty: 4
 OXT dimmers are another type of in-wall, brightness-only light dimming devices with Tuya-Smart application support,
 yet using different method to control light than the already-supported Tuya dimmers.
 
-Advantage of the OXT implementations is that the firmware has full control over dimming functionality and physical switch input,
+Advantage of the OXT implementations is that the firmware has full control over dimming functionality and physical
+switch input,
 so can control timings, transitions, effects, etc.
 
-The devices seem to be manufactured in China and are sold under different marketing names such as OXT (Polish brand) and Smart Best, possibly also
+The devices seem to be manufactured in China and are sold under different marketing names such as OXT (Polish brand) and
+Smart Best, possibly also
 Himojo, HaveDeer, GIRIER, RSH are compatible as well but have not been tested...
-All of them look identical and have same dimensions 39.2x39.2x18mm, so very likely they are all using same hardware design and protocol.
+All of them look identical and have same dimensions 39.2x39.2x18mm, so very likely they are all using same hardware
+design and protocol.
 
 ## Technical details
 
@@ -39,7 +42,8 @@ Each UART frame consists of:
 |------|------|------|------|------|--------|------|------|------|------|------|------|
 | 0x00 | 0x00 | 0xff | 0x55 | 0x01 | `<XX>` | 0x00 | 0x05 | 0xdc | 0x0a | 0x00 | 0x00 |
 
-where ``01 <XX>`` represents a brightness value, with `XX` ranging 0x00-0xff. The ``01`` byte could be a lenght indicator,
+where ``01 <XX>`` represents a brightness value, with `XX` ranging 0x00-0xff. The ``01`` byte could be a lenght
+indicator,
 but more likely it represents channel id, as there are also 2-channel versions available on the market. Not tested.
 
 ![OXT 1ch dimmer](oscillogram.png "Protocol decode")
@@ -53,7 +57,8 @@ skills are required to attach USB-RS232 converter cables.
 ![OXT 1ch dimmer](mcu-board.jpg "Disassembled")
 
 Need to solder cables Rx, Tx, Gnd, Vcc (3V3) and CEN pin.
-Preferred flashing software is [ltchiptool](https://github.com/libretiny-eu/ltchiptool) from LibreTiny project. Start programming like:
+Preferred flashing software is [ltchiptool](https://github.com/libretiny-eu/ltchiptool) from LibreTiny project. Start
+programming like:
 
 ```bash
 ltchiptool flash write <firmware.uf2>

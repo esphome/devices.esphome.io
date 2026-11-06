@@ -1,14 +1,14 @@
 ---
-title: LEDVANCE SMART PLUS PLUG EU
-date-published: 2024-06-06
+title: LEDVANCE SMART PLUS PLUG CH
+date-published: 2025-04-10
 type: plug
 standard: ch
 board: bk72xx
 ---
+
 LEDVANCE SMART PLUS PLUG CH based on BK7231T chip (WB2S).
 Can be flashed with esphome kickstart via tuya-cloudcutter.
-On publish date you need to use ESP-Home beta to build bk72xx targets.
-`voltage_divider` and `current_resistor` are estimated.
+`voltage_divider`, `current_resistor` and `multiply` are estimated and can be adjusted according [this instructions](https://esphome.io/components/sensor/hlw8012/#calibration).
 
 ## Product Image
 
@@ -16,14 +16,14 @@ On publish date you need to use ESP-Home beta to build bk72xx targets.
 
 ## GPIO Pinout
 
-| Pin     | Function                           |
-| ------- | ---------------------------------- |
-| GPIO6   | Relay                              |
-| GPIO7   | Button                             |
-| GPIO10  | LED                                |
-| GPIO11  | BBL0937SEL                         |
-| GPIO24  | BL0937CF1                          |
-| GPIO26  | BL0937CF                           |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO6  | Relay      |
+| GPIO7  | Button     |
+| GPIO10 | LED        |
+| GPIO11 | BBL0937SEL |
+| GPIO24 | BL0937CF1  |
+| GPIO26 | BL0937CF   |
 
 ## Basic Configuration
 
@@ -59,7 +59,20 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+# Enable upload binaries over-the-air
+ota:
+  - platform: esphome
+    password: <set here>
+
+# Wifi Settings
+wifi:
+  ssid: <set here>
+  password: <set here>
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${device_name}_fallback
+    password: <set here>
 captive_portal:
 
 # Enable the Web Server component 
@@ -101,6 +114,8 @@ sensor:
       inverted: true
     current:
       name: BL0937 Current
+      filters:
+        - multiply: 1.0 # adjust this
     voltage:
       name: BL0937 Voltage
     power:
@@ -108,8 +123,8 @@ sensor:
     energy:
       name: BL0937 Energy
     update_interval: ${update_interval_seconds}
-    voltage_divider: 800
-    current_resistor: 0.001 ohm
+    voltage_divider: 800 # adjust this
+    current_resistor: 0.001 # adjust this
 
 binary_sensor:
   - platform: gpio

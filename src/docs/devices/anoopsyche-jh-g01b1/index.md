@@ -27,7 +27,6 @@ substitutions:
 
 esphome:
   name: "${device_name}"
-  friendly_name: Example Device
 
 esp8266:
   board: esp01_1m

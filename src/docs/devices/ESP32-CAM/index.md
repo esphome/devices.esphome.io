@@ -36,6 +36,20 @@ esphome:
   name: esp_cam02
 
 esp32:
+  variant: esp32
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
+logger:
+  #level: INFO
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+esp32:
   board: esp32dev   
   
 # OTA flashing

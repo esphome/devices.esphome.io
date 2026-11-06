@@ -15,12 +15,15 @@ board: esp8266
 
 ## Connection
 
-Use RS485 adapter like this one: https://esphome.io/_images/rs485.jpg
+Use RS485 adapter like this one: [https://esphome.io/images/rs485.jpg](https://esphome.io/images/rs485.jpg)
 This one works with 3.3V and does direction switching automatically
 
 ```yaml
 esphome:
   name: energy_meter
+
+esp8266:
+  board: esp12e
 
 esp8266:
   board: esp12e

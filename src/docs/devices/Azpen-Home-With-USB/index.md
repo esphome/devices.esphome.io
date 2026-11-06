@@ -9,16 +9,16 @@ board: esp8266
 ## Product Images
 
 Wall side of relay board
-![alt text](/WallSide.jpeg "Wall Side of Board")
+![alt text](./WallSide.jpeg "Wall Side of Board")
 
 Socket side of relay board
-![alt text](/SocketSide.jpeg "Socket Side of Board")
+![alt text](./SocketSide.jpeg "Socket Side of Board")
 
 ESP8266 board
-![alt text](/ESPboard.jpeg "ESP board")
+![alt text](./ESPboard.jpeg "ESP board")
 
 GPIO Descriptions
-![alt text](/GPIOs.jpeg "GPIO Descriptions")
+![alt text](./GPIOs.jpeg "GPIO Descriptions")
 
 ## GPIO Pinout
 
@@ -35,7 +35,7 @@ GPIO Descriptions
 # Basic Config
 esphome:
   name: azpenhome
-  
+
 esp8266:
   board: esp01_1m
     
@@ -43,12 +43,11 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-
-# Enabling the logging component
+# Enable Logging.
 logger:
 
 # Enable Home Assistant API

@@ -18,7 +18,9 @@ board: esp8266
 
 ## Configuration for 2-Phase Whole-Home Energy Monitor
 
-Configuration to use a Shelly EM as per its native design. Requries 2x CT clamps, which can be purchased from the shelly.cloud store. Set the scales of the ST clamps according to your model (50A or 120A or other model you may want to use).
+Configuration to use a Shelly EM as per its native design. Requries 2x CT clamps, which can be purchased from the
+shelly.cloud store. Set the scales of the ST clamps according to your model (50A or 120A or other model you may want to
+use).
 
 Be sure to set GPIO13 to the ADE7953 IRQ pin to prevent overheating!
 
@@ -32,7 +34,7 @@ substitutions:
   scale_a_power: '1.143207411'
   scale_b_power: '1.143207411'
   # Consider calibrating CT clamps, measurements were closer to the stock Shelly EM firmware for me without calibration
-  # See: https://community.home-assistant.io/t/anyone-using-shelly-em/149867
+  # See: https://community.home-assistant.io/t/149867
 
 esphome:
   name: $devicename
@@ -70,7 +72,7 @@ i2c:
 
 sensor:
   - platform: ade7953_i2c
-    # WARNING: Prevent overheating by setting this IRQ pin! - See https://esphome.io/components/sensor/ade7953.html
+    # WARNING: Prevent overheating by setting this IRQ pin! - See https://esphome.io/components/sensor/ade7953/
     irq_pin: GPIO13
     voltage:
       name: Voltage

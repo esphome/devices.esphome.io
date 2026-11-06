@@ -24,31 +24,40 @@ board: esp8266
 esphome:
   name: outdoor_ss33
 
-ESP8266:
+esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
-# Enabling the logging component
+  manual_ip:
+    static_ip: !secret outdoor_ss33_ip
+    gateway: !secret house_gateway
+    subnet: 255.255.255.0
+
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: !secret api_encryption_key
 
-# Enable the captive portal
-captive_portal:
+ota:
+  password: !secret outdoor_ss33_ota
 
 sensor:
+  - platform: wifi_signal
+    name: "Outdoor SS33 WiFi signal"
+    update_interval: 60s
 
   - platform: uptime
     name: "Outdoor SS33 uptime"
+
+text_sensor:
+  - platform: version
+    name: "Outdoor SS33 ESPHome version"
 
 switch:
   - platform: gpio
@@ -75,6 +84,9 @@ binary_sensor:
       - switch.turn_off: relay1
       - switch.turn_off: relay2
       - switch.turn_off: relay3
+
+  - platform: status
+    name: "Outdoor SS33 Status"
 
 status_led:
   pin:

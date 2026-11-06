@@ -7,7 +7,7 @@ board: bk72xx
 difficulty: 3
 ---
 
-[Amazon Link](https://amzn.to/4bL2H0S)
+[Amazon Link](https://www.amazon.com/dp/B07STG73VS)
 
 ## Product Image
 
@@ -21,27 +21,30 @@ Manufacturer: [Geeni](https://mygeeni.com/)
 
 The Geeni Smart Wi-Fi Outlet is available at Amazon and is also available as a 2-pack.
 
-This plug is not able to be converted with tuya-convert as of May 2024. You will need to disassemble and flash with a USB to Serial adapter. The pins are easily accessible once the device is disassembled.
+This plug is not able to be converted with tuya-convert as of May 2024. You will need to disassemble and flash with a
+USB to Serial adapter. The pins are easily accessible once the device is disassembled.
 
 ## GPIO Pinout
 
-| Pin    | Function              |
-| ------ | --------------------- |
-| P6     | Relay 1               |
-| P7     | Relay 2               |
-| P24    | Button                |
-| P26    | Blue LED (inverted)   |
+| Pin | Function            |
+| --- | ------------------- |
+| P6  | Relay 1             |
+| P7  | Relay 2             |
+| P24 | Button              |
+| P26 | Blue LED (inverted) |
 
 ## Disassembly Guide
 
-1) Unscrew back cover with Qty. 4 - Phillips #1 screws - note: loosen the 2 terminal screws for hot/neutral but don't remove. They'll stay in place for reassembly. Don't take them all the way out like I did
+1. Unscrew back cover with Qty. 4 - Phillips #1 screws - note: loosen the 2 terminal screws for hot/neutral but don't
+   remove. They'll stay in place for reassembly. Don't take them all the way out like I did
    ![image](geeni-6w8007-1-back.jpg)
-2) Separate outlet into 2 parts
+2. Separate outlet into 2 parts
    ![image](geeni-6w8007-2-cover-off.jpg)
    ![image](geeni-6w8007-3-cover-off-front.jpg)
-3) Separate back half (black plastic) by prying the insert holding the chips
+3. Separate back half (black plastic) by prying the insert holding the chips
    ![image](geeni-6w8007-4-prying-out.jpg)
-4) Access CB2S for flashing. I placed it in a small vise to hold vertical and used needle probes to flash the chip, then reassembled in reverse order.
+4. Access CB2S for flashing. I placed it in a small vise to hold vertical and used needle probes to flash the chip, then
+   reassembled in reverse order.
    ![image](geeni-6w8007-5-CB2S.jpg)
    ![image](geeni-6w8007-6-CB2S-pins.jpg)
 
@@ -57,23 +60,21 @@ substitutions:
   device_chipset: Beken BK7231N
   device_friendly_location: ADD LOCATION
   device_location: ADD-LOCATION
-  
+
 esphome:
   name: $device_name
   friendly_name: $device_friendly_name
-   
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+bk72xx:
+  board: cb2s
 
-# Enabling the logging component
 logger:
   baud_rate: 0
+
+web_server:
+  port: 80
+
+captive_portal:
 
 # Enable Home Assistant API
 api:
@@ -127,16 +128,16 @@ binary_sensor:
       inverted: true
       mode: INPUT_PULLUP
     on_multi_click:
-    - timing:
-        - ON for at most 1s
-        - OFF for at least 0.5s
-      then:
-        - switch.toggle: switch_1
-    - timing:
-        - ON for at most 1s
-        - OFF for at most 1s
-        - ON for at most 1s
-        - OFF for at least 0.2s
-      then:
-        - switch.toggle: switch_2
+      - timing:
+          - ON for at most 1s
+          - OFF for at least 0.5s
+        then:
+          - switch.toggle: switch_1
+      - timing:
+          - ON for at most 1s
+          - OFF for at most 1s
+          - ON for at most 1s
+          - OFF for at least 0.2s
+        then:
+          - switch.toggle: switch_2
 ```

@@ -32,18 +32,15 @@ substitutions:
 
 esphome:
   name: ${unique_id}
- 
+
 esp8266:
   board: esp01_1m
   restore_from_flash: true
 
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+# WiFi connection
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component

@@ -1,9 +1,10 @@
 ---
 title: Sonoff RF Bridge
 date-published: 2019-10-11
-type: Misc
+type: misc
 standard: global
 board: esp8266
+difficulty: 3
 ---
 
 ## GPIO Pinout
@@ -22,7 +23,7 @@ board: esp8266
 esphome:
   name: sonoff_rf_bridge01
 
-ESP8266:
+esp8266:
   board: esp01_1m
     
 # OTA flashing

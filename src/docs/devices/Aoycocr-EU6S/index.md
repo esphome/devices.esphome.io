@@ -44,8 +44,7 @@ wifi: # Your Wifi network details
 # Enable fallback hotspot in case wifi connection fails  
   ap:
 
-# Enabling the logging component
-logger:
+captive_portal:
 
 # Enable Home Assistant API
 api:

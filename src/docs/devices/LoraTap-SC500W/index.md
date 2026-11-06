@@ -5,6 +5,7 @@ date-published: 2021-11-29
 type: relay
 standard: global
 board: esp8266
+difficulty: 4
 ---
 
 ![alt text](LoraTap-SC500W.png "Product Image")
@@ -44,9 +45,10 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
 
 # Enabling the logging component

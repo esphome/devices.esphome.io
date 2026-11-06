@@ -12,8 +12,11 @@ The latest LSC smart plug 2578685 devices use the Tuya BK7231N module, which is 
 
 ## Notice
 
-- This smart plug is flashable using the latest tuya-cloudcutter with a compiled ESPHome binary. I recommend following this [Youtube Video](https://youtu.be/sSj8f-HCHQ0).
-- There is a version with BK7231N and a version with BK7231T. Both should work but you need to make sure to use the right version. I recommend to use the the configuration gererated by ltchiptool and esphome-kickstart as shown in the video instead of this configuration, because it might change.
+- This smart plug is flashable using the latest tuya-cloudcutter with a compiled ESPHome binary. I recommend following
+  this [Youtube Video](https://youtu.be/sSj8f-HCHQ0).
+- There is a version with BK7231N and a version with BK7231T. Both should work but you need to make sure to use the
+  right version. I recommend to use the the configuration gererated by ltchiptool and esphome-kickstart as shown in the
+  video instead of this configuration, because it might change.
 - The second configuration is the version that worked for me (Version 1.1.8 in the App and with BK7231N)
 
 ## Product Images

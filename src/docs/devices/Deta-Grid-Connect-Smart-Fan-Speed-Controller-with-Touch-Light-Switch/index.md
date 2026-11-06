@@ -8,7 +8,9 @@ board: bk72xx
 
 ## General Information
 
-[Deta 6914HA](https://detaelectrical.com.au/product/deta-grid-connect-smart-touch-fan-speed-controller-with-light-switch/) is a smart fan controller with light switch sold in Australia and New Zealand.
+[Deta 6914HA][1] is a smart fan controller with light switch sold in Australia and New Zealand.
+
+[1]: https://detaelectrical.com.au/product/deta-grid-connect-smart-touch-fan-speed-controller-with-light-switch/
 
 ### Series 1
 
@@ -16,7 +18,11 @@ Original version uses ESP8266 controller.
 
 ### Series 2
 
-Newer revision uses BK7231T controller on the Tuya [WB3S module](https://developer.tuya.com/en/docs/iot/wb3s-module-datasheet?id=K9dx20n6hz5n4).
+Newer revision uses BK7231T controller on the Tuya WB3S module.
+
+### Series 3
+
+revision uses BK7231N controller on the Tuya [CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076)
 
 ## GPIO Pinout
 
@@ -52,18 +58,37 @@ Newer revision uses BK7231T controller on the Tuya [WB3S module](https://develop
 |     P7 |   Fan Relay 2 |
 |     P9 |   Fan Relay 3 |
 
+### BK7231N Version
+
+|  Pin # |     Component |
+|:------:|--------------:|
+|    P14 |       Button1 |
+|    P20 |       Button2 |
+|     P7 |       Button3 |
+|    P10 |           Led |
+|    P26 |   Light Relay |
+|     P6 |   Fan Relay 1 |
+|     P8 |   Fan Relay 2 |
+|     P9 |   Fan Relay 3 |
+
 ## Getting it up and running
 
 ### Series 1 - Tuya Convert
 
-These switches are Tuya devices, so if you don't want to open them up to flash directly, you can attempt to [use tuya-convert to initially get ESPHome onto them](/guides/tuya-convert/) however recently purchased devices are no longer Tuya-Convert compatible.  There's useful guide to disassemble and serial flash similar switches [here.](https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/) After that, you can use ESPHome's OTA functionality to make any further changes.
+These switches are Tuya devices, so if you don't want to open them up to flash directly, you can attempt to
+[use tuya-convert to initially get ESPHome onto them](/devices/tuya-convert) however recently purchased devices are no
+longer Tuya-Convert compatible.  There's a useful guide to disassemble and serial flash similar switches
+[on Mike McGuire's blog][2]. After that, you can use ESPHome's OTA functionality to make any further changes.
+
+[2]: https://blog.mikejmcguire.com/2020/05/22/deta-grid-connect-3-and-4-gang-light-switches-and-home-assistant/
 
 - Put the switch into "smartconfig" / "autoconfig" / pairing mode by holding any button for about 5 seconds.
 - The status LED (to the side of the button(s)) blinks rapidly to confirm that it has entered pairing mode.
 
 ### Series 2 - Cloudcutter
 
-[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the flashing process. Follow the [official guide](https://github.com/tuya-cloudcutter/tuya-cloudcutter) for instructions.
+[Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) is a tool designed to simplify the flashing process.
+Follow the [official guide](https://github.com/tuya-cloudcutter/tuya-cloudcutter) for instructions.
 
 ### Manual Flashing
 
@@ -90,15 +115,31 @@ esphome:
 esp8266:
   board: esp01_1m
   restore_from_flash: true
-      
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
+
+captive_portal:
+
+sensor:
+  - platform: wifi_signal
+    name: ${friendly_name} Wifi Signal Strength
+    update_interval: 60s
+  - platform: uptime
+    name: ${friendly_name} Uptime
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} IP
+    ssid:
+      name: ${friendly_name} SSID
+    bssid:
+      name: ${friendly_name} BSSID
+    mac_address:
+      name: ${friendly_name} Mac
 
 # Enabling the logging component
 logger:
@@ -330,6 +371,42 @@ webserver:
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
 
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
+logger:
+
+web_server:
+
+captive_portal:
+
+api:
+
+ota:
+
+sensor:
+  - platform: wifi_signal
+    name: ${friendlyname} Wifi Signal Strength
+    update_interval: 60s
+  - platform: uptime
+    name: ${friendlyname} Uptime
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendlyname} IP
+    ssid:
+      name: ${friendlyname} SSID
+    bssid:
+      name: ${friendlyname} BSSID
+    mac_address:
+      name: ${friendlyname} Mac
+  - platform: version
+    name: ${friendlyname} ESPHome Version
+
+#################################
 status_led:
   pin:
     number: P10

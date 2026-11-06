@@ -26,12 +26,20 @@ substitutions:
 esphome:
   name: $devicename
   friendly_name: $friendlyname
-    
+
 esp8266:
   board: esp01_1m
   board_flash_mode: dout
-    
-# OTA flashing
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
 ota:
   - platform: esphome
 
@@ -78,9 +86,9 @@ switch:
     pin: GPIO5
     id: relay
     on_turn_on:
-    - output.turn_off: light_output #turn status led OFF so LED is blue when relay is on
+      - output.turn_off: light_output #turn status led OFF so LED is blue when relay is on
     on_turn_off:
-    - output.turn_on: light_output #turn status led ON so LED is red when relay==off && status==ok
+      - output.turn_on: light_output #turn status led ON so LED is red when relay==off && status==ok
 
 # Red LED status when module initialising and connecting
 light:

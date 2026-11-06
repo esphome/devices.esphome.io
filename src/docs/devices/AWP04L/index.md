@@ -6,7 +6,8 @@ standard: us
 board: esp8266
 ---
 
-These devices come with different brands, but all have AWP04L serial number on the back sticker. FCC-ID is [2ANOO-SM800](https://fccid.io/2ANOO-SM800).
+These devices come with different brands, but all have AWP04L serial number on the back sticker. FCC-ID is
+[2ANOO-SM800](https://fccid.io/2ANOO-SM800).
 
 This template has been updated with "comment:" and "captive_portal:" feautures added in ESPHome v. 1.14
 
@@ -35,14 +36,15 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-   
+
 esp8266:
   board: esp01_1m
-  restore_from_flash: true      
+  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
 
-# OTA flashing
-ota:
-  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 wifi: # Your Wifi network details
   
@@ -129,7 +131,7 @@ sensor:
     change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
     update_interval: 10s #20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -228,7 +230,7 @@ light:
             if (state == 2)
               state = 0;
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the red light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the red light for other things as well.
 interval:
   - interval: 500ms
     then:
@@ -247,11 +249,13 @@ interval:
                 transition_length: 250ms
 ```
 
-Note: You will want to exclude the red_led and blue_led lights from your recorder componant, especially if you use the included Throb custom animation, since that would fill your database with the on/off blinking status updates.
+Note: You will want to exclude the red_led and blue_led lights from your recorder componant, especially if you use the
+included Throb custom animation, since that would fill your database with the on/off blinking status updates.
 
 ## Split Configuration
 
-If you have several of these plugs, you may prefer to keep the shared code in one file and only put the device-specific code in the files for each plug.
+If you have several of these plugs, you may prefer to keep the shared code in one file and only put the device-specific
+code in the files for each plug.
 
 In plug_common.yaml:
 
@@ -260,14 +264,15 @@ In plug_common.yaml:
 esphome:
   name: ${device_name}
   comment: ${device_description}
-   
+
 esp8266:
   board: esp01_1m
-  restore_from_flash: true      
+  restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
 
-# OTA flashing
-ota:
-  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 wifi: # Your Wifi network details
   
@@ -354,7 +359,7 @@ sensor:
     change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
     update_interval: 10s #20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
 
-  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy/
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: wattage
@@ -453,7 +458,7 @@ light:
             if (state == 2)
               state = 0;
 
-# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led.html instead but then we couldn't use the red light for other things as well.
+# Blink the red light if we aren't connected to WiFi. Could use https://esphome.io/components/status_led/ instead but then we couldn't use the red light for other things as well.
 interval:
   - interval: 500ms
     then:

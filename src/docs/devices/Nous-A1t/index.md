@@ -6,7 +6,7 @@ standard: eu
 board: esp8266
 ---
 
-![Nous A1T](neo_render4_tasmota.jpg  "Tasmota Version Plug")
+![Nous A1T](neo_render4_tasmota.jpg "Tasmota Version Plug")
 
 ## GPIO Pinout
 
@@ -27,12 +27,11 @@ board: esp8266
 | GPIO14 | Relay1     |
 | GPIO15 | None       |
 | GPIO16 | None       |
-|  FLAG  | None       |
+| FLAG   | None       |
 
 ## Basic Configuration
 
 ```yaml
-
 substitutions:
   devicename: "smartplug"
   # Higher value gives lower watt readout
@@ -51,10 +50,7 @@ esphome:
 esp8266:
   board: esp8285
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
+  early_pin_init: False
 
 wifi: # Your Wifi network details
   
@@ -67,10 +63,21 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${devicename}-AP"
+
 captive_portal:
 
-# see: https://esphome.io/components/time.html
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -81,6 +88,7 @@ webserver:
 light:
   - platform: status_led
     id: led
+    restore_mode: RESTORE_DEFAULT_ON
     pin:
       number: GPIO13
       inverted: true
@@ -103,6 +111,7 @@ switch:
     name: "${devicename} - Switch"
     icon: mdi:power
     optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
     id: "button_switch"
     lambda: |-
       if (id(relay).state) {
@@ -117,6 +126,7 @@ switch:
       - switch.turn_off: relay
       - light.turn_off: led
   - platform: gpio
+    restore_mode: RESTORE_DEFAULT_ON
     pin: GPIO14
     id: relay
 
@@ -170,4 +180,15 @@ sensor:
       unit_of_measurement: W
       icon: mdi:gauge
 
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${devicename} - IP Address"
+    ssid:
+      name: "${devicename} - Wi-Fi SSID"
+    bssid:
+      name: "${devicename} - Wi-Fi BSSID"
+  - platform: version
+    name: "${devicename} - ESPHome Version"
+    hide_timestamp: true
 ```

@@ -6,24 +6,30 @@ standard: au
 board: esp8266
 ---
 
-The Brilliant Smart WiFi wall mounted light switch is available in Australia. They come in single gang, twin, triple and quad gang configurations. They're a smooth glass front with round touch switches to control the lights.
+The Brilliant Smart WiFi wall mounted light switch is available in Australia. They come in single gang, twin, triple and
+quad gang configurations. They're a smooth glass front with round touch switches to control the lights.
 
 ## Getting Started
 
-These devices are obstensibly Tuya controlled switches, but after re-flashing them with Tuya-Convert, they work nicely with ESPHome.
-I flashed mine directly from the existing Tuya to ESPHome. (Some people go to Tasmota first - there's no need.)
+These devices are obstensibly Tuya-controlled switches, but after re-flashing them with Tuya-Convert, they work
+nicely with ESPHome. I flashed mine directly from the existing Tuya to ESPHome. (Some people go to Tasmota first –
+there's no need.)
 
-Ref: https://thehomeautomator.com.au/running-esphome-with-home-assistant/
+Ref:
+[https://thehomeautomator.com.au/running-esphome-with-home-assistant/](https://thehomeautomator.com.au/running-esphome-with-home-assistant/)
 
 ## Code
 
-This yaml is cobbled together from:
+This YAML is cobbled together from:
 
-https://devices.esphome.io/devices/DETA-Grid-Connect-Smart-Switch/ (for the WiFi signal and Uptime sensors and the Restart option)
+- [DETA Grid Connect Smart Switch template][brilliant-deta] (for the WiFi signal and uptime sensors and the restart
+  option)
+- [ESPHome Tuya component documentation][brilliant-tuya]
+- [ESPHome Tuya switch documentation][brilliant-tuya-switch]
 
-https://esphome.io/components/tuya.html
-
-https://esphome.io/components/switch/tuya.html
+[brilliant-deta]: https://devices.esphome.io/devices/DETA-Grid-Connect-Smart-Switch/
+[brilliant-tuya]: https://esphome.io/components/tuya/
+[brilliant-tuya-switch]: https://esphome.io/components/switch/tuya/
 
 ```yaml
 substitutions:
@@ -35,7 +41,7 @@ substitutions:
 esphome:
   name: ${device_name}
 
- esp8266:
+esp8266:
   board: esp01_1m
 
 # OTA flashing
@@ -95,4 +101,3 @@ switch:
 #  - platform: "tuya"
 #    name: "${friendly_name} 4"
 #    switch_datapoint: 4
-```

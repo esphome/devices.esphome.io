@@ -29,12 +29,11 @@ The device comes with Tasmota installed, but can be reflashed to ESPHome.
 | GPIO14 | Relay1     |
 | GPIO15 | None       |
 | GPIO16 | Button1    |
-|  FLAG  | None       |
+| FLAG   | None       |
 
 ## Basic Configuration
 
 ```yaml
-
 substitutions:
   friendly_name: "A5T"
   devicename: "nous-a5t"
@@ -81,7 +80,24 @@ uart:
   rx_pin: GPIO3
   baud_rate: 4800
 
-# see: https://esphome.io/components/time.html
+api:
+  encryption:
+    key: !secret encryption
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${friendly_name} Fallback Hotspot"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+ota:
+
+# see: https://esphome.io/components/time/
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -90,7 +106,7 @@ globals:
   - id: total_energy
     type: float
     restore_value: yes
-    initial_value: '0.0'
+    initial_value: "0.0"
 
 binary_sensor:
   - platform: status
@@ -221,5 +237,4 @@ switch:
     inverted: True
     id: relay4
     restore_mode: ${relay_restore_mode}
-
 ```

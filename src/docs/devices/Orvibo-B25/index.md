@@ -24,24 +24,14 @@ esphome:
 
 esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
-# Enabling the logging component
 logger:
-
-# Enable Home Assistant API
 api:
-
-# Enable the captive portal
-captive_portal:
+ota:
 
 # Device Specific Config
 
@@ -70,6 +60,15 @@ switch:
 status_led:
   # Display red flashing LED when connecting to Wifi
   pin:
+    number: GPIO12
+
+sensor:
+  - platform: wifi_signal
+    name: "B25 WiFi signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "B25 Uptime"
 
 output:
   # Blue LED, set for Off when switch = Off / On when switch = On

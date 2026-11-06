@@ -12,8 +12,6 @@ complete support for all the stuff used by the Multisensor.
 
 [Learn more video](https://www.youtube.com/embed/jpjfVc-9IrQ)
 
-![image](/bruh.png)
-
 ## Configuration example
 
 Thank you very much to [\@jackjohnsonuk](https://github.com/jackjohnsonuk) for providing this configuration file.

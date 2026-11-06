@@ -8,8 +8,8 @@ board: esp32
 
 ## GPIO Pinout
 
-| Pin    | Function  |
-| ------ | --------- |
+| Pin    | Function         |
+| ------ | ---------------- |
 | GPIO03 | RS485 adapter TX |
 | GPIO01 | RS485 adapter RX |
 
@@ -17,20 +17,21 @@ Note: you may need to reverse the RX/TX cabling depending on your platform.
 
 ## Connection
 
-Use a RS485 adapter (RS485 to TTL) like [this one](https://esphome.io/_images/rs485.jpg).
+Use a RS485 adapter (RS485 to TTL) like [this one](https://esphome.io/images/rs485.jpg).
 
 ## ESPHome configuration
 
-Available memory registries can be found [here](https://github.com/arendst/Tasmota/discussions/15541#discussion-4053434).
+Available memory registries can be found [in the Tasmota discussions](https://github.com/arendst/Tasmota/discussions/15541#discussion-4053434).
 
 ```yaml
 esphome:
   name: energy_meter
 
 esp32:
-  board: esp32doit-devkit-v1
-  
-# OTA flashing
+  variant: esp32
+
+api:
+
 ota:
   - platform: esphome
 
@@ -82,7 +83,7 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.1
-  
+
   # Current
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -96,7 +97,7 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.1
-  
+
   # Grid frequency
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -110,7 +111,7 @@ sensor:
     accuracy_decimals: 2
     filters:
       - multiply: 0.1
-  
+
   # Active power
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -122,7 +123,7 @@ sensor:
     unit_of_measurement: "W"
     value_type: U_WORD
     accuracy_decimals: 0
-  
+
   # Reactive power
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -134,7 +135,7 @@ sensor:
     unit_of_measurement: "var"
     value_type: U_WORD
     accuracy_decimals: 0
-  
+
   # Apparent power
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -146,7 +147,7 @@ sensor:
     unit_of_measurement: "VA"
     value_type: U_WORD
     accuracy_decimals: 0
-  
+
   # Power factor
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -160,7 +161,7 @@ sensor:
     accuracy_decimals: 3
     filters:
       - multiply: 0.001
-  
+
   # Active energy
   - platform: modbus_controller
     modbus_controller_id: orno_we_504
@@ -175,7 +176,7 @@ sensor:
     accuracy_decimals: 2
     filters:
       - multiply: 0.001
-  
+
   # Reactive energy
   - platform: modbus_controller
     modbus_controller_id: orno_we_504

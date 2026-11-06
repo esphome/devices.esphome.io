@@ -9,8 +9,8 @@ made-for-esphome: False
 difficulty: 5
 ---
 
-  ![alt text](/product.jpg "Product Image")
-  ![alt text](/ESP12F.jpg "ESP MCU Image")
+![alt text](./product.jpg "Product Image")
+![alt text](./ESP12F.jpg "ESP MCU Image")
 
 ## General Notes
 
@@ -35,7 +35,6 @@ substitutions:
   device_description: "Clean air good."
   time_timezone: "Europe/Amsterdam"
 
-
 esphome:
   name: $device_name
   friendly_name: $device_friendly_name
@@ -49,10 +48,11 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+# Enable status LED
+status_led:
+  pin:
+    number: GPIO2
+    inverted: true
 
 # Enabling the logging component
 logger:
@@ -63,7 +63,15 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  password: !secret ota_password
+
+# Configure WiFi
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
 captive_portal:
 
 # Enable status LED
@@ -124,7 +132,6 @@ output:
                         - fan.turn_on:
                             id: tuya_fan
                             speed: 2
-
 
 fan:
   - platform: speed

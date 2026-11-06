@@ -6,11 +6,10 @@ standard: global
 board: esp32
 ---
 
-
 ## GPIO Pinout
 
 | Pin    | Function            |
-| ------ | ------------------  |
+| ------ | ------------------- |
 | GPIO19 | Relay1              |
 | GPIO5  | Relay2              |
 | GPIO23 | LED1                |
@@ -33,26 +32,30 @@ esphome:
   name: KC868-ASR
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
-  
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: "Xqy9f8iJ49cr7o8IWE1sFnG9EAEnxHVYlGUQBdnKE6Q="
 
-# Enable the captive portal
+ota:
+  password: "d13799179d079d89758ad1a0fd1c4560"
+
+wifi:
+  ssid: KinCony
+  password: a12345678
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Asr Fallback Hotspot"
+    password: "KqbpeFnrzcWf"
+
 captive_portal:
 
 i2c:
@@ -60,7 +63,6 @@ i2c:
   scl: 27
   scan: true
   id: bus_a
-
 
 switch:
   - platform: gpio
@@ -70,14 +72,14 @@ switch:
   - platform: gpio
     pin: GPIO5
     name: "asr-relay2"
-  
+
   - platform: gpio
     pin: GPIO23
-    name: "asr-led1"  
-  
+    name: "asr-led1"
+
   - platform: gpio
     pin: GPIO22
-    name: "asr-led2"  
+    name: "asr-led2"
 
   - platform: gpio
     pin: GPIO18
@@ -90,12 +92,12 @@ binary_sensor:
       inverted: true
     name: "asr-button"
 
-dallas:
+one_wire:
   - pin: 32
     update_interval: 5s
 
 sensor:
-  - platform: dallas
+  - platform: dallas_temp
     address: 0x7b062162cfe98128
     name: "asr-t2"
 ```

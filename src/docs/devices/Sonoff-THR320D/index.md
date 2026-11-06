@@ -1,19 +1,21 @@
 ---
 title: Sonoff THR320D
 date-published: 2023-01-07
-type: plug
-standard: us
+type: relay
+standard: global
 board: esp32
+difficulty: 3
 ---
 
 ## Bootloop Workaround
 
 Some people experience a boot loop when trying to flash esphome directly.
-Here's a workaround: <https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868>
+Here's a workaround:
+[https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868](https://community.home-assistant.io/t/bootloop-workaround-for-flashing-sonoff-th-elite-thr316d-thr320d-and-maybe-others-with-esphome-for-the-first-time/498868)
 
 ## GPIO Pinout
 
-(Source: <https://templates.blakadder.com/sonoff_THR320D.html>)
+(Source: [https://templates.blakadder.com/sonoff_THR320D.html](https://templates.blakadder.com/sonoff_THR320D.html))
 Some GPIO are active-low, meaning they're "on" when they're pulled low. In ESPHome that's often called "inverted".
 The relays GPIO are active-high.
 
@@ -22,22 +24,26 @@ relay ON, and a pulse on pin 2 switches the relay OFF.
 These two pins should never be active at the same time, or the device will become dangerously hot in a few minutes.
 
 Note that until March 2024 there was an error in this page causing a safety issue:
-The code was considering the relays GPIO as being active-low, when they are actually active-high. So the two main relay pins were stay simultaneously active most of the time, making the device dangerously hot.
-If you copied the old version of the code from here, please remove the ```inverted: True``` line for the relays and update your devices as soon as possible.
+The code was considering the relays GPIO as being active-low, when they are actually active-high. So the two main relay
+pins were stay simultaneously active most of the time, making the device dangerously hot.
+If you copied the old version of the code from here, please remove the `inverted: True` line for the relays and update
+your devices as soon as possible.
 
-| Pin    | Function                                                                  |
-| ------ | ----------------------------------                                        |
-| GPIO0  | Push Button (HIGH = off, LOW = on)                                        |
-| GPIO4  | Small Relay (Dry Contact)                                                 |
-| GPIO19 | Large/Main Relay pin 1, pull high for relay ON                            |
-| GPIO22 | Large/Main Relay pin 2, pull high for relay OFF                           |
-| GPIO5  | Display (TM1621) Data                                                     |
-| GPIO17 | Display (TM1621) CS                                                       |
-| GPIO18 | Display (TM1621) Write                                                    |
-| GPIO23 | Display (TM1621) Read                                                     |
-| GPIO16 | Left LED (Red)                                                            |
-| GPIO15 | Middle LED (Blue)                                                         |
-| GPIO13 | Right LED (Green)                                                         |
+| Pin    | Function                                        |
+| ------ | ----------------------------------------------- |
+| GPIO0  | Push Button (HIGH = off, LOW = on)              |
+| GPIO4  | Small Relay (Dry Contact)                       |
+| GPIO5  | Display (TM1621) Data                           |
+| GPIO13 | Right LED (Green)                               |
+| GPIO15 | Middle LED (Blue)                               |
+| GPIO16 | Left LED (Red)                                  |
+| GPIO17 | Display (TM1621) CS                             |
+| GPIO18 | Display (TM1621) Write                          |
+| GPIO19 | Large/Main Relay pin 1, pull high for relay ON  |
+| GPIO22 | Large/Main Relay pin 2, pull high for relay OFF |
+| GPIO23 | Display (TM1621) Read                           |
+| GPIO25 | Pin 2 of the RJ-9 connector                     |
+| GPIO27 | Pin 1 of the RJ-9 connector                     |
 
 ## Basic Configuration
 
@@ -63,12 +69,15 @@ esphome:
   on_boot:
     - priority: 90
       then:
-      - switch.turn_on: ${name}_sensor_power
+        - switch.turn_on: ${name}_sensor_power
 
 esp32:
-  board: nodemcu-32s
-    
-# OTA flashing
+  variant: esp32
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
 ota:
   - platform: esphome
 
@@ -245,21 +254,17 @@ esphome:
   on_boot:
     - priority: 90
       then:
-      # supply the external sensor with 3v power by pulling this GPIO high
-      - output.turn_on: sensor_power
-      # make sure the relay is in a known state at startup
-      - switch.turn_off: main_relay
-      # Default to running the geyser in Home mode
-      - climate.control:
-          id: geyser_climate
-          preset: "Home"
+        # supply the external sensor with 3v power by pulling this GPIO high
+        - output.turn_on: sensor_power
+        # make sure the relay is in a known state at startup
+        - switch.turn_off: main_relay
+        # Default to running the geyser in Home mode
+        - climate.control:
+            id: geyser_climate
+            preset: "Home"
 
 esp32:
-  board: nodemcu-32s
-    
-# OTA flashing
-ota:
-  - platform: esphome
+  variant: esp32
 
 wifi: # Your Wifi network details
   
@@ -325,7 +330,7 @@ switch:
 
 output:
   # Ideally, these two relay GPIOs should be interlocked to prevent
-  # simultaneous operation. ESPhome currently does not support
+  # simultaneous operation. ESPHome currently does not support
   # interlocks at an output: level, or even at a button: level
   # BE CAREFUL!
   - platform: gpio
@@ -398,7 +403,7 @@ sensor:
   # because these only apply when the temperature ENTERS these ranges
   # If it REMAINS in the range, and climate is turned on manually, these
   # failsafes will not apply!
-  - platform: dallas
+  - platform: dallas_temp
     address: 0x1e11223344550028
     id: temp
     name: "Temperature"
@@ -454,23 +459,22 @@ climate:
     off_mode:
       - switch.turn_off: main_relay
     on_state:
-    - if:
-        condition:
-          lambda: |-
-            return id(geyser_climate).mode == CLIMATE_MODE_OFF;
-        then:
-          - logger.log: "Climate control OFF"
-          - light.turn_off: auto_led
-    - if:
-        condition:
-          lambda: |-
-            return id(geyser_climate).mode == CLIMATE_MODE_HEAT;
-        then:
-          - logger.log: "Climate control ON"
-          - light.turn_on: auto_led
+      - if:
+          condition:
+            lambda: |-
+              return id(geyser_climate).mode == CLIMATE_MODE_OFF;
+          then:
+            - logger.log: "Climate control OFF"
+            - light.turn_off: auto_led
+      - if:
+          condition:
+            lambda: |-
+              return id(geyser_climate).mode == CLIMATE_MODE_HEAT;
+          then:
+            - logger.log: "Climate control ON"
+            - light.turn_on: auto_led
 
-dallas:
+one_wire:
   pin: GPIO25
   update_interval: 10s
-
 ```

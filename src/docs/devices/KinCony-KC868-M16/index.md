@@ -35,27 +35,20 @@ esphome:
   name: KC868-M16
 
 esp32:
-  board: esp32dev
+  variant: esp32
   framework:
     type: arduino
-  
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+# Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: "D69bY/GXlmjYkovak6WIhgmbOH8vwyqvMxIHBriYoaY="
 
-# Enable the captive portal
-captive_portal:
+ota:
+  password: "9984b688b9646975bfd1b760a9c2df8b"
 
 # Example configuration entry
 ethernet:
@@ -78,28 +71,28 @@ sensor:
     pin: 35
     id: adc35
     update_interval: never
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     name: "m16--AI-1"
     pin: 36
     id: adc36
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     pin: 34
     name: "m16--AI-2"
     id: adc34
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: adc
     pin: 39
     name: "m16--AI-3"
     id: adc39
     update_interval: 15s
-    attenuation: 11db
+    attenuation: 12db
 
   - platform: cd74hc4067
     id: ai1

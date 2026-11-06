@@ -12,15 +12,15 @@ board: esp8266
 
 ## GPIO Pinout
 
-| Function   | GPIO-Pin |
-| ---------- | -------- |
-| Plug 1     | 5        |
-| Plug 2     | 12       |
-| Plug 3     | 13       |
-| Plug 4     | 4        |
-| Plug USB   | 14       |
-| LED        | 1        |
-| Button     | 3        |
+| Function | GPIO-Pin |
+| -------- | -------- |
+| Plug 1   | 5        |
+| Plug 2   | 12       |
+| Plug 3   | 13       |
+| Plug 4   | 4        |
+| Plug USB | 14       |
+| LED      | 1        |
+| Button   | 3        |
 
 ## Basic Configuration
 
@@ -35,20 +35,6 @@ esp8266:
 # OTA flashing
 ota:
   - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
-captive_portal:
 
 switch:
   # RELAYS
@@ -216,16 +202,16 @@ binary_sensor:
     id: powerstrip_button
     internal: true
     on_click:
-    - max_length: 2000ms # Short press toggles mainswitch
-      then:
-        - switch.toggle: powerstrip_switch_main
-    - min_length: 2001ms # Long press turns on all switches
-      max_length: 20000ms
-      then:
-        - switch.turn_on: powerstrip_switch_main
-        - switch.turn_on: powerstrip_switch_1
-        - switch.turn_on: powerstrip_switch_2
-        - switch.turn_on: powerstrip_switch_3
-        - switch.turn_on: powerstrip_switch_4
-        - switch.turn_on: powerstrip_switch_5
+      - max_length: 2000ms # Short press toggles mainswitch
+        then:
+          - switch.toggle: powerstrip_switch_main
+      - min_length: 2001ms # Long press turns on all switches
+        max_length: 20000ms
+        then:
+          - switch.turn_on: powerstrip_switch_main
+          - switch.turn_on: powerstrip_switch_1
+          - switch.turn_on: powerstrip_switch_2
+          - switch.turn_on: powerstrip_switch_3
+          - switch.turn_on: powerstrip_switch_4
+          - switch.turn_on: powerstrip_switch_5
 ```

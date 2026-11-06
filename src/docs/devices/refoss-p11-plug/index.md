@@ -10,30 +10,29 @@ board: esp8266
 
 ## GPIO Pinout
 
-| Pin    | Function                    |
-| ------ | --------------------------- |
-| GPIO00 | None                        |
-| GPIO01 | None                        |
-| GPIO02 | None                        |
-| GPIO03 | CSE7766 Rx                  |
-| GPIO04 | LedLinki                    |
-| GPIO05 | Button 1                    |
-| GPIO09 | None                        |
-| GPIO10 | None                        |
-| GPIO12 | Led_i 1                     |
-| GPIO13 | Relay 1                     |
-| GPIO14 | None                        |
-| GPIO15 | None                        |
-| GPIO16 | None                        |
-| GPIO17 | ADC Temp                    |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO00 | None       |
+| GPIO01 | None       |
+| GPIO02 | None       |
+| GPIO03 | CSE7766 Rx |
+| GPIO04 | LedLinki   |
+| GPIO05 | Button 1   |
+| GPIO09 | None       |
+| GPIO10 | None       |
+| GPIO12 | Led_i 1    |
+| GPIO13 | Relay 1    |
+| GPIO14 | None       |
+| GPIO15 | None       |
+| GPIO16 | None       |
+| GPIO17 | ADC Temp   |
 
 ## Configuration as relay with overpower and overtemperature protection
 
-This is the original device documentation page when it is flashed with Tasmota: https://templates.blakadder.com/refoss_P11.html
+This is the original device documentation page when it is flashed with Tasmota: [https://templates.blakadder.com/refoss_P11.html](https://templates.blakadder.com/refoss_P11.html)
 For accurate energy consumption measurements this device requires power monitoring calibration.
 
 ```yaml
-
 substitutions:
   devicename: "refossp11plug1"
   friendly_name: Refoss P11 Plug 1
@@ -68,7 +67,7 @@ captive_portal:
 # Enable the Web Server component 
 webserver:
 
-# Time used for daily KWh usage  
+# Time used for daily KWh usage
 time:
   - platform: homeassistant
     id: homeassistant_time
@@ -87,12 +86,19 @@ binary_sensor:
     on_press:
       then:
         - switch.toggle: relay_1
-# Uncomment and test if you would like your device to reset on long press
-#    on_click:
-#      min_length: 5000ms
-#      max_length: 10000ms
-#      then:
-#        - switch.turn_on: reset
+  # Uncomment and test if you would like your device to reset on long press
+  #    on_click:
+  #      min_length: 5000ms
+  #      max_length: 10000ms
+  #      then:
+  #        - switch.turn_on: reset
+  - platform: status
+    name: "${friendly_name} Status"
+
+text_sensor:
+  # Reports the ESPHome Version with compile date
+  - platform: version
+    name: ${friendly_name} ESPHome Version
 
 switch:
   # Set relays as switches
@@ -101,7 +107,7 @@ switch:
     pin: GPIO13
     icon: mdi:power-socket-fr
     name: "${friendly_name} Switch"
-  # Edit below line based on what default behaviour you want after power outage
+    # Edit below line based on what default behaviour you want after power outage
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       - switch.turn_on: sw_led1
@@ -123,7 +129,7 @@ uart:
   baud_rate: 4800
 
 sensor:
-  - platform: cse7766 # https://esphome.io/components/sensor/cse7766.html
+  - platform: cse7766 # https://esphome.io/components/sensor/cse7766/
     uart_id: cse7766_uart_bus
     current:
       name: "${friendly_name} Current"
@@ -139,27 +145,38 @@ sensor:
       id: "${devicename}Power"
       unit_of_measurement: W
       filters:
-      - calibrate_linear:
-        - 0.0 -> 1.0
-        - 51.0 -> 97.0
+        - calibrate_linear:
+            - 0.0 -> 1.0
+            - 51.0 -> 97.0
     voltage:
       name: "${friendly_name} Voltage"
       unit_of_measurement: V
       id: "${devicename}Voltage"
-# Uncomment and calibrate based on your device measurements
-#      filters:
-#      - calibrate_linear:
-#        - 0.0 -> 0.0
-#        - 127.0 -> 242.0
+  # Uncomment and calibrate based on your device measurements
+  #      filters:
+  #      - calibrate_linear:
+  #        - 0.0 -> 0.0
+  #        - 127.0 -> 242.0
 
   - platform: total_daily_energy
     name: "${friendly_name} Total Daily Energy"
     power_id: "${devicename}Power"
     filters:
-        # Multiplication factor from W to kW is 0.001
-        - multiply: 0.001
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
     unit_of_measurement: kWh
     icon: mdi:clock-alert
+
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+    icon: mdi:clock-outline
+    filters:
+      - lambda: return x / 60.0;
+    unit_of_measurement: minutes
+
+  - platform: wifi_signal
+    name: "${friendly_name} Wifi Signal"
+    update_interval: 60s
 
   - platform: adc
     name: ${friendly_name} Temperature

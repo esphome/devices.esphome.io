@@ -5,7 +5,7 @@ type: plug
 standard: eu
 board: esp8266
 ---
-  ![alt text](/BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
+  ![alt text](./BlitzWolf-BW-SHP8-Power-Monitoring-Wall-Outlet.jpg "Product Image")
 
 Model reference: BW-SHP8
 
@@ -38,9 +38,7 @@ substitutions:
   restore_mode: "ALWAYS_ON"
 
 esphome:
-  name: example-device
-  friendly_name: Example Device  
-  
+
 esp8266:
   board: esp8285
 

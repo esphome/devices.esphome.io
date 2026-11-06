@@ -7,7 +7,8 @@ board: bk72xx
 difficulty: 4
 ---
 
-![Milfra smart dimmer switch](Milfra-Dimmer-Front.jpg "Milfra dimmer front")![Milfra smart dimmer switch](Milfra-Dimmer-Back.jpg "Milfra dimmer back")
+![Milfra smart dimmer switch](Milfra-Dimmer-Front.jpg "Milfra dimmer
+front")![Milfra smart dimmer switch](Milfra-Dimmer-Back.jpg "Milfra dimmer back")
 
 ## Overall description
 
@@ -21,7 +22,8 @@ The device is using Tuya-compatible application structure with two main componen
 - application-specific MCU, responsible for controlling light output, and
 - a Tuya CBU module that contains application level logic.
   - external switch input GPIO is connected to secondary MCU,
-  - communication to dimming MCU is bidirectional, currently haven't determined what data the MCU is requesting from Tuya that causes an
+  - communication to dimming MCU is bidirectional, currently haven't determined what data the MCU is requesting from
+    Tuya that causes an
     unknown command 0x34 error
 
 ## Programming
@@ -30,7 +32,8 @@ First programming was done over USB-serial. The module needs disassembled (prett
 skills are required to attach USB-RS232 converter cables. Did not test if CloudCutter or other methods would work.
 
 Need to solder cables Rx, Tx, Gnd, Vcc (3V3) and CEN pin.
-Preferred flashing software is [ltchiptool](https://github.com/libretiny-eu/ltchiptool) from LibreTiny project. Start programming like:
+Preferred flashing software is [ltchiptool](https://github.com/libretiny-eu/ltchiptool) from LibreTiny project. Start
+programming like:
 
 ```bash
 ltchiptool flash write <firmware.uf2>

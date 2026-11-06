@@ -19,11 +19,11 @@ Color Temperature: 3000-6000K
 Brightness: 300 lumens
 Voltage: 110V~240V
 Power: 4.5W
-Base:  GU10
+Base: GU10
 
 ## Product Images
 
-![Athom GU10 Bulb](/Athom-GU10-Bulb.png "Athom GU10 Bulb")
+![Athom GU10 Bulb](./Athom-GU10-Bulb.png "Athom GU10 Bulb")
 
 ## GPIO Pinout
 
@@ -54,6 +54,8 @@ esphome:
 esp8266:
   board: esp8285
 
+api:
+
 # OTA flashing
 ota:
   - platform: esphome
@@ -66,8 +68,13 @@ wifi: # Your Wifi network details
 # Enabling the logging component
 logger:
 
-# Enable Home Assistant API
-api:
+web_server:
+  port: 80
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 # Enable the captive portal
 captive_portal:
@@ -104,7 +111,6 @@ output:
   - platform: esp8266_pwm
     id: white_output
     pin: GPIO5
-
 
 light:
   - platform: rgbww

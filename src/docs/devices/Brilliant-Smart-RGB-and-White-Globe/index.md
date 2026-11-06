@@ -26,6 +26,9 @@ esphome:
   name: "Brilliant Smart RGBW"
 
 esp8266:
+  board: esp01_1m
+
+esp8266:
   board: esp01_1m    
   
 # OTA flashing

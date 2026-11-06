@@ -8,11 +8,12 @@ board: esp8266
 
 Martin Jerry US-FC-01 Switch![image](MJ-usfc01.jpg)
 
-[Amazon Link](https://amzn.to/3Sb4rYI)
+[Amazon Link](https://www.amazon.com/dp/B0BFGL98K6)
 
 ## Notes
 
-The Martin Jerry US-FC-01 is a 4 speed fan control switch. It comes pre-flashed with Tasmota firmware and can easily be converted to ESPHome by uploading ESPHome firmware to the switch via Tasmota's web UI.
+The Martin Jerry US-FC-01 is a 4 speed fan control switch. It comes pre-flashed with Tasmota firmware and can easily be
+converted to ESPHome by uploading ESPHome firmware to the switch via Tasmota's web UI.
 
 ## GPIO Pinout
 

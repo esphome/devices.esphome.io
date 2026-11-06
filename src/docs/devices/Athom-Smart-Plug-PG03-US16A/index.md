@@ -7,28 +7,28 @@ board: esp8266
 ---
 
 ![alt text](athom_PG03-US16A.webp "Athom Smart Plug PG03-US16A")
-Manufacturer: <https://www.athom.tech/> (*discontinued*. New version:
+Manufacturer: [https://www.athom.tech/](https://www.athom.tech/) (_discontinued_. New version:
 [PG03V2-US16A](https://templates.blakadder.com/athom_PG03V2-US16A-TAS))
 Available with Tasmota pre-flashed.
 
 Pinout information thanks to
 
-- <https://templates.blakadder.com/athom_PG03-US16A.html>
+- [https://templates.blakadder.com/athom_PG03-US16A.html](https://templates.blakadder.com/athom_PG03-US16A.html)
 
 Sensor constants and reference ESPHome configuration from
 
-- <https://github.com/athom-tech/athom-configs/blob/main/athom-smart-plug.yaml>
+- [https://github.com/athom-tech/athom-configs/blob/main/athom-smart-plug.yaml](https://github.com/athom-tech/athom-configs/blob/main/athom-smart-plug.yaml)
 
 ## GPIO Pinout
 
-| Pin    | Function            |
-| ------ | ------------------- |
-| GPIO3  | Button              |
-| GPIO4  | BL0937 CF           |
-| GPIO5  | HLWBL CF1           |
-| GPIO12 | HLWBL SELi          |
-| GPIO13 | Blue LED            |
-| GPIO14 | Relay               |
+| Pin    | Function   |
+| ------ | ---------- |
+| GPIO3  | Button     |
+| GPIO4  | BL0937 CF  |
+| GPIO5  | HLWBL CF1  |
+| GPIO12 | HLWBL SELi |
+| GPIO13 | Blue LED   |
+| GPIO14 | Relay      |
 
 ## Basic Configuration
 
@@ -64,7 +64,19 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+
+# Enable logging
+logger:
+
+web_server:
+  port: 80
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
 captive_portal:
 
 # Enable the Web Server component 
@@ -110,7 +122,7 @@ sensor:
       name: "${friendly_name} Current"
       icon: mdi:lightning-bolt-circle
       filters:
-          - calibrate_linear:
+        - calibrate_linear:
             - 0.0000 -> 0.0110 # Relay off no load
             - 0.0097 -> 0.0260 # Relay on no load
             - 0.9270 -> 0.7570
@@ -119,8 +131,8 @@ sensor:
             - 5.4848 -> 4.4210
             - 8.4308 -> 6.8330
             - 9.9171 -> 7.9830
-          # Normalize for plug load
-          - lambda: if (x < 0.0260) return 0; else return (x - 0.0260);
+        # Normalize for plug load
+        - lambda: if (x < 0.0260) return 0; else return (x - 0.0260);
     voltage:
       name: "${friendly_name} Voltage"
       icon: mdi:lightning-bolt-circle
@@ -131,7 +143,7 @@ sensor:
       id: socket_my_power
       unit_of_measurement: W
       filters:
-          - calibrate_linear:
+        - calibrate_linear:
             - 0.0000 -> 0.5900 # Relay off no load
             - 0.0000 -> 1.5600 # Relay on no load
             - 198.5129 -> 87.8300
@@ -140,8 +152,8 @@ sensor:
             - 1067.0067 -> 460.1000
             - 1619.8098 -> 699.2000
             - 2043.0282 -> 885.0000
-          # Normalize for plug load
-          - lambda: if (x < 1.5600) return 0; else return (x - 1.5600);
+        # Normalize for plug load
+        - lambda: if (x < 1.5600) return 0; else return (x - 1.5600);
     change_mode_every: 1
     update_interval: 10s
 
@@ -154,6 +166,10 @@ sensor:
     restore: true
     filters:
       - multiply: 0.001
+
+  - platform: wifi_signal
+    name: "${friendly_name} Wifi Signal"
+    update_interval: 60s
 
 button:
   - platform: factory_reset

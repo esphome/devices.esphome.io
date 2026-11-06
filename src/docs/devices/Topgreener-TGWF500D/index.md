@@ -8,7 +8,7 @@ board: esp8266
 
 TOPGREENER TGWF500D 3-Way Smart Dimmer Switch![image](Topgreener-TGWF500D.png)
 
-[Amazon Link](https://amzn.to/2SA4lPl)
+[Amazon Link](https://www.amazon.com/dp/B07BSX9SDF)
 
 ## Notes
 
@@ -33,12 +33,16 @@ esphome:
   name: ${device_name}
   name_add_mac_suffix: true
 
-ESP8266:
-  board: esp01_1m  
-  
-# OTA flashing
-ota:
-  - platform: esphome
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  ap:
+    ssid: ${device_name}
+    password: !secret esphome_ap_password
 
 wifi: # Your Wifi network details
   

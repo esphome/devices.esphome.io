@@ -8,7 +8,7 @@ board: esp8266
 
 ## General Notes
 
-On older firmwares this bulb can [use tuya-convert to flash ESPHome](/guides/tuya-convert/).
+On older firmwares this bulb can [use tuya-convert to flash ESPHome](/devices/tuya-convert).
 
 ## GPIO Pinout
 

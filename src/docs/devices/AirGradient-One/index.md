@@ -32,7 +32,7 @@ esphome:
   name: "${devicename}"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
 
 # Disable logging
 # https://esphome.io/components/logger.html
@@ -54,8 +54,14 @@ api:
 # Enable the captive portal
 captive_portal:
 
-# Enable the Web Server component 
-webserver:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
+web_server:
+  port: 9926
+  version: 1
 
 # Create a switch for safe_mode in order to flash the device
 # Solution from this thread:

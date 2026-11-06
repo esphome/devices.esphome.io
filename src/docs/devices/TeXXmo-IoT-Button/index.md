@@ -19,19 +19,22 @@ board: esp8266
 
 ## Flashing Pinout
 
-| Pin Hole Shape | Purpose |
-| ------ | ----------------------- |
-| [ ] | 3V3 Input (do not connect if powering off of battery) |
-| ( ) | Txd |
-| ( ) | Rxd |
-| ( ) | GPIO0 (must pull to ground before flashing) |
-| ( ) | Gnd |
+| Pin Hole Shape | Purpose                                               |
+| -------------- | ----------------------------------------------------- |
+| [ ]            | 3V3 Input (do not connect if powering off of battery) |
+| ( )            | Txd                                                   |
+| ( )            | Rxd                                                   |
+| ( )            | GPIO0 (must pull to ground before flashing)           |
+| ( )            | Gnd                                                   |
 
 ## Basic Configuration
 
 ```yaml
 substitutions:
   name: iot_button_1
+  static_ip: <your ip address>
+  gateway: <your gateway>
+  subnet: <your subnet mask>
 
 globals:
   - id: message_sent
@@ -41,7 +44,6 @@ globals:
 
 esphome:
   name: ${name}
-
   on_boot:
     # Raise the power pin very early (pri 700) to keep the ESP awake
     # until we're done sending the event
@@ -49,26 +51,32 @@ esphome:
     then:
       - output.turn_on: power_pin
 
-ESP8266:
-  board: esp8285 
-   
-# OTA flashing
-ota:
-  - platform: esphome
+esp8266:
+  board: esp8285
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: ${gateway}
+    subnet: ${subnet}
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
+    ssid: "ESPHome_Button_1"
+    password: !secret ap_fallback_password
 
-# Enabling the logging component
-logger:
-
-# Enable Home Assistant API
-api:
-
-# Enable the captive portal
 captive_portal:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  password: !secret ha_api_password
 
 script:
   - id: send_event
@@ -87,6 +95,8 @@ script:
           id: message_sent
           value: "true"
       - delay: 0.5s
+
+logger:
 
 sensor:
   - platform: adc

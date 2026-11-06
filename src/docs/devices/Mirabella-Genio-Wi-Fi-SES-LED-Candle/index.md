@@ -10,7 +10,7 @@ board: esp8266
 
 This is for [Mirabella Genio Wi-Fi SES LED Candle](https://mirabellagenio.net.au/ses-led-candle).
 
-![Genio Wi-Fi SES LED Candle](/mirabella-genio-wi-fi-ses-led-candle.jpg "Genio Wi-Fi SES LED Candle")
+![Genio Wi-Fi SES LED Candle](./mirabella-genio-wi-fi-ses-led-candle.jpg "Genio Wi-Fi SES LED Candle")
 
 ## GPIO Pinout
 
@@ -30,6 +30,16 @@ esphome:
     priority: 100 # Highest priority, ensures light turns on without delay.
     then:
       - light.turn_on: light
+
+esp8266:
+  board: esp01_1m
+wifi:
+  ssid: "sid"
+  password: "wifi_password"
+  ap:
+    ssid: "mirabella1"
+    password: "ap_password"
+  domain: ".mydomain.com"
 
 esp8266:
   board: esp01_1m

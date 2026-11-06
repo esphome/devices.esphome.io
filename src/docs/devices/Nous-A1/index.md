@@ -13,7 +13,7 @@ Looks like device chip was replaced to non-flashable custom tasmota chip.
 
 ## Overview
 
-Previously this device was identical to the [Gosund SP111](/devices/gosund-sp111/).
+Previously this device was identical to the [Gosund SP111](/devices/Gosund-SP111/).
 
 ## Images
 

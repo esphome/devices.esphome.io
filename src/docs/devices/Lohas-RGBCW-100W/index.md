@@ -32,7 +32,7 @@ New versions with the same model do not have ESP chips in them, and can't be fla
 #
 # Basic Config
 # https://www.lohas-led.com/lohas-smart-led-bulb-a21-e26-100w-equivalent-14w-rgb-cool-white-dimmable-wifi-app-controlled-alexa-google-assistant-compatible-p0230-p0230.html
-# https://amzn.to/2P1Xugr
+# https://www.amazon.com/dp/B07P6M2FT3
 esphome:
   name: light_name
   includes:
@@ -41,6 +41,7 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  restore_from_flash: true
 
 substitutions:
   display_name: LightName

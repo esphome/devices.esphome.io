@@ -1,10 +1,11 @@
 ---
-title: ESP-01S-1-channel-relay
+title: ESP-01S 1 Channel Relay
 date-published: 2022-01-13
 type: relay
 standard: global
 board: esp8266
 ---
+![Product Image](./ESP-01S-1-Channel-Relay.jpg "Product Image")
 
 ## Product description
 
@@ -53,7 +54,19 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Heart Fallback Hotspot"
+    password: "f2MTBkrPhnmX"
+
 captive_portal:
 
 switch:

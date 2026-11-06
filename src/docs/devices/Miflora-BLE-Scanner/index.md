@@ -21,9 +21,18 @@ esphome:
   name: esp32_2
 
 esp32:
-  board: esp32dev
-  
-# OTA flashing
+  variant: esp32
+
+wifi:
+  ssid: "ssid"
+  password: "wifi_password"
+
+logger:
+  #level: INFO
+api:
+  encryption:
+    key: !secret encryption_key
+
 ota:
   - platform: esphome
 

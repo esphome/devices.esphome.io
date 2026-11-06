@@ -11,58 +11,46 @@ Generation 3 of Shelly Mini. With Relay, but no Powermeter.
 
 ## GPIO Pinout
 
-| Pin   | Function     |
-| ----- | ------------ |
-| GPI00 | LED          |
-| GPI01 | Button       |
-| GPI03 | NTC          |
-| GPI07 | Relay        |
-| GPI10 | Switch       |
+| Pin   | Function |
+| ----- | -------- |
+| GPI00 | LED      |
+| GPI01 | Button   |
+| GPI03 | NTC      |
+| GPI07 | Relay    |
+| GPI10 | Switch   |
 
 ## Serial Pinout
 
 The UART Pinout is the same as other Shelly Mini.
 
-| Pin      | Colour       |
-| -------- | ------------ |
-| Reset    | Brown        |
-| 3v3      | Red          |
-| RX       | Blue         |
-| TX       | Yellow       |
-| BootSEL  | Purple       |
-| GND      | Black        |
+| Pin     | Colour |
+| ------- | ------ |
+| Reset   | Brown  |
+| 3v3     | Red    |
+| RX      | Blue   |
+| TX      | Yellow |
+| BootSEL | Purple |
+| GND     | Black  |
 
 ![Shelly 1 Mini Gen3](../Shelly-1-Mini-Gen3/shelly_1_mini_gen3_pcb_a.png "Shelly 1 Mini Gen3")
 
 ## Basic Configuration
 
 ```yaml
-substitutions:
-  device_name: "sehlly-1-mini-gen3"
-  friendly_name : "Shelly 1 Mini Gen3"
-
 esphome:
-  name: ${device_name}
-  friendly_name: ${friendly_name}
+  name: "shelly-1-mini-gen3"
+  friendly_name: "Shelly 1 Mini Gen3"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  variant: esp32c3
   flash_size: 8MB
   framework:
     type: esp-idf
     version: recommended
     sdkconfig_options:
       COMPILER_OPTIMIZATION_SIZE: y
-    advanced:
-      ignore_efuse_mac_crc: false
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
   ap:
 
 # Enabling the logging component
@@ -71,8 +59,7 @@ logger:
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+ota:
 
 time:
   - platform: homeassistant
@@ -96,7 +83,7 @@ sensor:
   - platform: adc
     id: temp_analog_reading
     pin: GPIO3
-    attenuation: 11db
+    attenuation: 12db
 
 output:
   - platform: gpio

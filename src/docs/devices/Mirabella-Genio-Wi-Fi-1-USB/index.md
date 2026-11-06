@@ -9,7 +9,7 @@ board: esp8266
 Mirabella Genio Smart Plugs are a Tuya-based smart plugs
 sold by Bunnings and Kmart respectively in Australia.
 
-![mirabella-genio-smart](/brilliant-mirabella-genio-smart-plugs.jpg)
+![mirabella-genio-smart](./brilliant-mirabella-genio-smart-plugs.jpg)
 
 ## Basic Configuration
 

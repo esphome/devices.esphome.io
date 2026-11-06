@@ -30,7 +30,7 @@ control panel.
 
 ### Over-the-air
 
-It is often possible to use [tuya-convert](/guides/tuya-convert/) to flash the
+It is often possible to use [tuya-convert](/devices/tuya-convert) to flash the
 module over-the-air. Note that this applies to ESP8266-based modules; if your
 model shipped with a BK72xx-based module, other methods such as
 [tuya-cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter/) can
@@ -49,7 +49,7 @@ using [esptool](https://github.com/espressif/esptool/), or, in case your model
 shipped with a BK72xx, using
 [ltchiptool](https://github.com/libretiny-eu/ltchiptool).
 
-The dehumidifier can be easily disassembled using a Philips screwdriver.  The
+The dehumidifier can be easily disassembled using a Philips screwdriver. The
 Tuya module can be found on a separate daughterboard, connected using a JST
 connector to the mainboard, which provides the board with `+5V`, `GND`, as well
 as `RX`/`TX` pins for the UART connecting to the main MCU. The daughterboard

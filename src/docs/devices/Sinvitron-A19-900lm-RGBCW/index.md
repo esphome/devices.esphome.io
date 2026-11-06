@@ -6,14 +6,15 @@ standard: global
 board: esp8266
 ---
 
-Standard RGB warm and cold white bulb. Flashable via tuya-convert. [Purchased from Amazon, pack of 2.](https://amzn.to/3lVKCEp)
+Standard RGB warm and cold white bulb. Flashable via tuya-convert.
+[Purchased from Amazon, pack of 2.](https://www.amazon.com/dp/B07RSRX1YR)
 
 Generally don't power on both a white channel and the color channel at full brightness - this can overheat the bulb.
 
 ## Pictures
 
-![alt text](/sinvitron-outside.jpg "Outside of bulb")
-![alt text](/sinvitron-inside.jpg "Inside view")
+![alt text](./sinvitron-outside.jpg "Outside of bulb")
+![alt text](./sinvitron-inside.jpg "Inside view")
 
 ## GPIO Pinout
 
@@ -35,30 +36,31 @@ substitutions:
 esphome:
   name: ${device_name}
 
-ESP8266:
+esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on #we only have one WiFi AP so just use the first one that matches
+  ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
+    ssid: ${friendly_name}_AP
+    password: !secret wifi_password
 
-# Enabling the logging component
+# Enable logging
 logger:
   baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+# Enable OTA updates
+ota:
+  safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 output:
   - platform: esp8266_pwm
@@ -140,38 +142,40 @@ light:
 
 ## Split Configuration
 
-If you have multiple of these bulbs (likely since they come in packs), you may want to keep the shared code in one file and only put device specific information in files for each relay.
+If you have multiple of these bulbs (likely since they come in packs), you may want to keep the shared code in one file
+and only put device specific information in files for each relay.
 
 sinvitron-common.yaml:
 
 ```yaml
 esphome:
   name: ${device_name}
-  
-ESP8266:
+
+esp8266:
   board: esp01_1m
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: on #we only have one WiFi AP so just use the first one that matches
+  ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
+    ssid: ${friendly_name}_AP
+    password: !secret wifi_password
 
-# Enabling the logging component
+# Enable logging
 logger:
   baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable the captive portal
-captive_portal:
+# Enable OTA updates
+ota:
+  safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 output:
   - platform: esp8266_pwm

@@ -13,8 +13,8 @@ As of May 2022 these switches use a WB3S chip (BK7231T) and are no longer compat
 ## Notes
 
 - push button wall switch
-- bought here: <https://www.aliexpress.com/item/32996643708.html?spm=a2g0s.9042311.0.0.19a74c4dRi4rTg>
-- this dude shows how to flash it: <https://community.home-assistant.io/t/wifi-wall-switch-without-touch-1-2-or-3-gang/43075/38>
+- bought here: [https://www.aliexpress.com/item/32996643708.html?spm=a2g0s.9042311.0.0.19a74c4dRi4rTg](https://www.aliexpress.com/item/32996643708.html?spm=a2g0s.9042311.0.0.19a74c4dRi4rTg)
+- this dude shows how to flash it: [https://community.home-assistant.io/t/wifi-wall-switch-without-touch-1-2-or-3-gang/43075/38](https://community.home-assistant.io/t/wifi-wall-switch-without-touch-1-2-or-3-gang/43075/38)
 
 ## GPIO Pinout
 

@@ -25,6 +25,9 @@ esphome:
 
 esp8266:
   board: nodemcuv2
+
+esp8266:
+  board: nodemcuv2
     
 # OTA flashing
 ota:
@@ -47,13 +50,13 @@ captive_portal:
 sensor:
   - platform: pulse_meter
     pin: D8
-    unit_of_measurement: 'kW'
+    unit_of_measurement: "kW"
     name: "Active Power"
     internal_filter: 100ms
     accuracy_decimals: 3
     id: orno_we_520_active_power
     filters:
-      - multiply: 0.075  # 800 pulses/kW
+      - multiply: 0.075 # 800 pulses/kW
     total:
       name: "Active Energy"
       id: orno_we_520_power_active_energy
@@ -63,6 +66,6 @@ sensor:
         - multiply: 0.00125
 
   - platform: total_daily_energy
-    name: 'Daily Energy'
+    name: "Daily Energy"
     power_id: orno_we_520_active_power
 ```

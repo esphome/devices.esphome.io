@@ -45,12 +45,9 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 logger:
 
 # Enable Home Assistant API
@@ -122,12 +119,9 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 logger:
 
 # Enable Home Assistant API
@@ -197,12 +191,9 @@ esp8266:
 ota:
   - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
-  ap:
-
-# Enabling the logging component
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 logger:
 
 # Enable Home Assistant API

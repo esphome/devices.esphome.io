@@ -9,17 +9,21 @@ board: esp8266
 A simple remote control/monitor device for use with standard PCs.
 
 Essentially a proxy between the power switch and motherboard.
-Depending on the version, the module may also be wired between the power LED(s) to discern the power status (running/off/sleep) of the PC.
+Depending on the version, the module may also be wired between the power LED(s) to discern the power status
+(running/off/sleep) of the PC.
 
-The `WPCE` version (this device) determines the power status via the normal/aux 3v3 rails on the PCI-Express slot so it does not feature the power led connections.
+The `WPCE` version (this device) determines the power status via the normal/aux 3v3 rails on the PCI-Express slot so it
+does not feature the power led connections.
 
 ![Product Image](sinilink_XY-WPCE.webp "Product Image")
 
 ## Flashing
 
-The module uses `1mm` pitch headers which are considerably smaller and fussier to deal with relative to the `2.54mm` pitch headers that are more common.
+The module uses `1mm` pitch headers which are considerably smaller and fussier to deal with relative to the `2.54mm`
+pitch headers that are more common.
 You don't _have_ to solder wires to program, though.
-I was able to strip some **solid core** cat5 cables; the bare copper wire was _precisely_ the right size to fit inside of the hole.
+I was able to strip some **solid core** cat5 cables; the bare copper wire was _precisely_ the right size to fit inside
+of the hole.
 
 ![Product pinout](sinilink_XY-WPCE_pinout.webp "Product Pinout")
 
@@ -62,7 +66,9 @@ While not strictly necessary, you may wish to backup the flash content before ov
 
 The configuration below covers just the basics for getting the various GPIO pins configured / usable in ESPHome.
 Depending on your specific needs, more configuration will likely be needed.
-E.G.: most motherboards will interpret the power button being pressed for 5+ seconds to mean "shutdown _now_". Exposing `GPIO5` to Home Assistant _directly_ as a gpio switch may result in the PC powering off a few seconds after it's powered on.
+E.G.: most motherboards will interpret the power button being pressed for 5+ seconds to mean "shutdown _now_". Exposing
+`GPIO5` to Home Assistant _directly_ as a gpio switch may result in the PC powering off a few seconds after it's powered
+on.
 
 ```yaml
 substitutions:
@@ -73,6 +79,10 @@ substitutions:
 
 esphome:
   name: ${hostname}
+  # Necessary to prevent relay trigger on ESP restart / wifi loss
+  on_boot:
+    then:
+      - output.turn_off: out_relay
 
   # Shows up in UI
   comment: "Remote power button for ${friendly_name_short}."

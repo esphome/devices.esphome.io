@@ -21,20 +21,29 @@ board: esp8266
 | A0     | NTC                         |
 
 HLWBL CF1 pin (GPIO14 according to Tasmota template) does not appear to connected in my test and returns junk data.
-A0 might be hooked up to a NTC, I do not have the values needed to calibrate it to return proper data so I am not including it in my configuration.
+A0 might be hooked up to a NTC, I do not have the values needed to calibrate it to return proper data so I am not
+including it in my configuration.
 
 ## Configuration as relay with overpower protection
 
-When integration with home assistant exists, it will appear as a switch, 6 sensors (button state, power, voltage, current, wifi strength and total daily energy)
-When the `max_power` is exceeded, the relay will be switched off and a persistent notification will be created in home-assistant
+When integration with home assistant exists, it will appear as a switch, 6 sensors (button state, power, voltage,
+current, wifi strength and total daily energy)
+When the `max_power` is exceeded, the relay will be switched off and a persistent notification will be created in
+home-assistant
 
-Credit and thanks to
+Credit and thanks to the following resources:
 
-- https://templates.blakadder.com/shelly_plug_US.html for documenting the GPIO pins though I found some errors.
-- https://github.com/esphome/esphome-devices/blob/main/src/docs/devices/Shelly-Plug-S/index.md, much of this borrows from it.
-- https://www.reddit.com/r/homeautomation/comments/ps9iey/esphome_config_for_shelly_plug_us/, magic numbers for tuning sensors
-- https://devices.esphome.io/devices/Aoycocr-X10S-Plug/, identical looking device from another manufacturer
-- https://fccid.io/2ALAY-SHELLY, FCC documentation including several pictures of the circuts.
+- [Blakadder template][shelly-plug-us-blakadder] for documenting the GPIO pins (though I found some errors)
+- [Shelly Plug S config in this repo][shelly-plug-s-devices]
+- [Reddit tuning thread][shelly-plug-us-reddit] (magic numbers for tuning sensors)
+- [Aoycocr X10S device page][shelly-plug-us-aoycocr] for a similar device
+- [FCC documentation][shelly-plug-us-fcc] including pictures of the circuits
+
+[shelly-plug-us-blakadder]: https://templates.blakadder.com/shelly_plug_US.html
+[shelly-plug-s-devices]: https://devices.esphome.io/devices/Shelly-Plug-S/
+[shelly-plug-us-reddit]: https://www.reddit.com/r/homeautomation/comments/ps9iey/
+[shelly-plug-us-aoycocr]: https://devices.esphome.io/devices/Aoycocr-X10S-Plug/
+[shelly-plug-us-fcc]: https://fccid.io/2ALAY-SHELLY
 
 ```yaml
 substitutions:
@@ -46,13 +55,13 @@ substitutions:
   current_res: "0.00290"
   # Lower value gives lower voltage readout
   voltage_div: "940"
-  # Relay state on boot. Other options can be found here https://esphome.io/components/switch/gpio.html
+  # Relay state on boot. Other options can be found here https://esphome.io/components/switch/gpio/
   restore_mode: RESTORE_DEFAULT_ON
 
 esphome:
   name: ${devicename}
 
-ESP8266:
+esp8266:
   board: esp8285
       
 # OTA flashing
@@ -169,4 +178,3 @@ sensor:
       # Multiplication factor from W to kW is 0.001
       - multiply: 0.001
     unit_of_measurement: kWh
-```

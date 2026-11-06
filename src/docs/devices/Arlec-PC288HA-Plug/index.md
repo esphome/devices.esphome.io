@@ -26,13 +26,14 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${name}
-  
+
 esp8266:
   board: esp01_1m
 
-# OTA flashing
-ota:
-  - platform: esphome
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 wifi: # Your Wifi network details
   

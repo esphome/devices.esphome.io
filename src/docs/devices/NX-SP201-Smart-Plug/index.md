@@ -8,9 +8,15 @@ board: esp8266
 
 Dual outlet, dual relay socket with single channel power monitoring. Flashable via tuya-convert.
 
-Multiple versions of this socket exist. The module the 'blue ESP' pinout came from was [purchased from this Amazon link](https://amzn.to/3lYqj9A), but no guarantees that one purchased from that link is the same. Even more versions of the NX-SP201 outlet also exist, based on pinouts listed on other sites.
+Multiple versions of this socket exist. The module the 'blue ESP' pinout came from was
+[purchased from this Amazon link](https://www.amazon.com/dp/B074YGV2NK),
+but no guarantees that one purchased from that link is the same.
+Even more versions of the NX-SP201 outlet also exist, based on pinouts listed on other sites.
 
-Flashing the wrong pinout can brick the device! Enabling GPIO9 bricked the 'blue ESP' version of the plug (though GPIO10 also gave a warning, but did not brick the device). Though it is recoverable with UART/GPIO0 flashing, desoldering the module to access the ESP module's pins can damage it. Only enable pins that give the 'pin might already be used by the flash interface' warning (GPIO6-11) once you're sure that's the correct pin.
+Flashing the wrong pinout can brick the device! Enabling GPIO9 bricked the 'blue ESP' version of the plug (though GPIO10
+also gave a warning, but did not brick the device). Though it is recoverable with UART/GPIO0 flashing, desoldering the
+module to access the ESP module's pins can damage it. Only enable pins that give the 'pin might already be used by the
+flash interface' warning (GPIO6-11) once you're sure that's the correct pin.
 
 ## GPIO Pinout
 
@@ -27,11 +33,11 @@ Flashing the wrong pinout can brick the device! Enabling GPIO9 bricked the 'blue
 
 ## Pictures
 
-![alt text](/IMG_0642.jpg "Closed Front View")
-![alt text](/IMG_0643.jpg "Opened Full View")
-![alt text](/IMG_0644.jpg "Opened Top 8266 Chip")
-![alt text](/IMG_0645.jpg "Opened Bottom 8266 Chip")
-![alt text](/nx-sp201-blue.jpg "Opened, Blue ESP module")
+![alt text](./IMG_0642.JPG "Closed Front View")
+![alt text](./IMG_0643.JPG "Opened Full View")
+![alt text](./IMG_0644.JPG "Opened Top 8266 Chip")
+![alt text](./IMG_0645.JPG "Opened Bottom 8266 Chip")
+![alt text](./nx-sp201-blue.jpg "Opened, Blue ESP module")
 
 ## Basic Configuration
 
@@ -148,7 +154,8 @@ sensor:
 
 ## Split Configuration
 
-If you have multiple of these sockets (some come in packs), you may want to keep the shared code in one file and only put device specific information in files for each relay.
+If you have multiple of these sockets (some come in packs), you may want to keep the shared code in one file and only
+put device specific information in files for each relay.
 
 nx-sp201-common.yaml:
 

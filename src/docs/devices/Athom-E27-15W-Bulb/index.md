@@ -23,7 +23,7 @@ Base: E27
 
 ## Product Images
 
-![Athom E27 15W Bulb](/Athom-E27-15W-Bulb.png "Athom E27 15W Bulb")
+![Athom E27 15W Bulb](./Athom-E27-15W-Bulb.png "Athom E27 15W Bulb")
 
 ## GPIO Pinout
 
@@ -54,6 +54,8 @@ esphome:
 esp8266:
   board: esp8285
 
+api:
+
 # OTA flashing
 ota:
   - platform: esphome
@@ -66,8 +68,13 @@ wifi: # Your Wifi network details
 # Enabling the logging component
 logger:
 
-# Enable Home Assistant API
-api:
+web_server:
+  port: 80
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
 
 # Enable the captive portal
 captive_portal:

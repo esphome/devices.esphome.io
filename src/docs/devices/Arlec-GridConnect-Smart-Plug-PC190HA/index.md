@@ -7,13 +7,14 @@ board: esp8266
 ---
 
 Arlec Grid Connect products are a Tuya-based smart devices
-sold by Bunnings and Kmart respectively in Australia.  This configuration is valid for when the device has been converted to use an ESP8266 or is an older model that was sold with the ESP8266 from factory.
+sold by Bunnings and Kmart respectively in Australia.  This configuration is valid for when the device has been
+converted to use an ESP8266 or is an older model that was sold with the ESP8266 from factory.
 
 ![image](./PC190HA.png)
 
 ## Basic Configuration
 
-``` yaml
+```yaml
 substitutions:
   name: arlec_pc190ha
   friendly_name: Arlec Smart Plug
@@ -24,13 +25,9 @@ esphome:
 esp8266:
   board: esp01_1m
 
-# OTA flashing
-ota:
-  - platform: esphome
-
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
 
 # Enabling the logging component

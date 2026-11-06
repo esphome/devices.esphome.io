@@ -15,7 +15,7 @@ must be explicitly set if using a Home Assistant add-on for this, and
 you need to connect directly to that port instead of using the proxied
 port via Home Assistant).
 
-![image](/tuya_rgbw.jpg)
+![image](./tuya_rgbw.jpg)
 
 The configuration below shows an example that can be compiled to a
 binary firmware file that works correctly for this device, and that

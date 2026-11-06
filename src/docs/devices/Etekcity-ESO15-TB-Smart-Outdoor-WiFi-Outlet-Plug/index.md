@@ -16,7 +16,8 @@ Remove the four phillips head screws and remove the plastic clamshell.
 Then, remove a few more screws to remove the circuitry from the plastic enclosure.
 The Rx, Tx, 3.3v, and Ground solder pads will then be visible to use.
 GPIO0 (Pin 8) must be grounded on boot to place the device into boot loader mode.  
-GPIO0 also has a test pad which could be labeled "TI0" that is on the far right (looking at the board where test pads for power is on the left, GND near center, and TX/RX the right) side near the RX/TX test pads.
+GPIO0 also has a test pad which could be labeled "TI0" that is on the far right (looking at the board where test pads
+for power is on the left, GND near center, and TX/RX the right) side near the RX/TX test pads.
 
 ## GPIO Pinout
 

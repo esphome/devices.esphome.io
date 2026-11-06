@@ -6,14 +6,15 @@ standard: us
 board: esp8266
 ---
 
-Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://amzn.to/39iCxEM)
+Standard plug socket, with 2A USB port. Flashable via tuya-convert. [Purchased from Amazon.](https://www.amazon.com/dp/B074YGV2NK)
 
-At least two versions of this plug exist, but the only difference between the two is the pull-up on the pin for the button.
+At least two versions of this plug exist, but the only difference between the two is the pull-up on the pin for the
+button.
 
 ## Pictures
 
-![alt text](/zentec-outside.jpg "Outside of smart plug")
-![alt text](/zentec-inside.jpg "Inside view")
+![alt text](./zentec-outside.jpg "Outside of smart plug")
+![alt text](./zentec-inside.jpg "Inside view")
 
 ## GPIO Pinout
 
@@ -33,16 +34,17 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: on #we only have one WiFi AP so just use the first one that matches
   ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
     ssid: ${friendly_name}_AP
-    password: !secret wifipass
+    password: !secret wifi_password
 
 # Enable logging
 logger:
@@ -55,8 +57,9 @@ api:
 ota:
   safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 binary_sensor:
   - platform: gpio
@@ -97,23 +100,25 @@ switch:
 
 ## Split Configuration
 
-If you have multiple of these sockets (likely since they come in packs), you may want to keep the shared code in one file and only put device specific information in files for each relay.
+If you have multiple of these sockets (likely since they come in packs), you may want to keep the shared code in one
+file and only put device specific information in files for each relay.
 
 zentec-common.yaml:
 
 ```yaml
 esphome:
   name: ${device_name}
-  platform: ESP8266
+
+esp8266:
   board: esp01_1m
 
 wifi:
-  ssid: !secret wifissid
-  password: !secret wifipass
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   fast_connect: on #we only have one WiFi AP so just use the first one that matches
   ap: #since we listed an SSID above, this AP mode will only enable if no WiFi connection could be made
     ssid: ${friendly_name}_AP
-    password: !secret wifipass
+    password: !secret wifi_password
 
 # Enable logging
 logger:
@@ -126,8 +131,9 @@ api:
 ota:
   safe_mode: True
 
-# Enable the Web Server component 
-webserver:
+# Enable web server
+web_server:
+  port: 80
 
 binary_sensor:
   - platform: gpio

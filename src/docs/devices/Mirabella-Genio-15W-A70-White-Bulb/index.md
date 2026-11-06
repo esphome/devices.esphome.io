@@ -26,6 +26,16 @@ esphome:
 
 esp8266:
   board: esp01_1m
+wifi:
+  ssid: "sid"
+  password: "wifi_password"
+  ap:
+    ssid: "mirabella1"
+    password: "ap_password"
+  domain: ".mydomain.com"
+
+esp8266:
+  board: esp01_1m
   
 # OTA flashing
 ota:

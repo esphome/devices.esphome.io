@@ -30,19 +30,20 @@ substitutions:
 
 esphome:
   name: ${device_name}
-  
+
 esp8266:
   board: esp01_1m
   restore_from_flash: true
-    
-# OTA flashing
-ota:
-  - platform: esphome
 
-wifi: # Your Wifi network details
-  
-# Enable fallback hotspot in case wifi connection fails  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
+    ssid: "C168 Fallback Hotspot"
+    password: !secret wifi_password
+  fast_connect: true
 
 # Enabling the logging component
 logger:

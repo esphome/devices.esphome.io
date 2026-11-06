@@ -11,7 +11,7 @@ board: esp8266
 
 ## Flashing
 
-This plug can be converted using [tuya-convert to flash ESPHome](/guides/tuya-convert) (as of June 2020).
+This plug can be converted using [tuya-convert to flash ESPHome](/devices/tuya-convert) (as of June 2020).
 
 ## Temperature
 

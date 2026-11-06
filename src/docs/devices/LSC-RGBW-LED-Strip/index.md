@@ -12,7 +12,7 @@ As of July 2020 this device comes with a Tuya WB3S module, which is not compatib
 
 ## Notice
 
-- This light is flashable using <https://github.com/kueblc/tuya-convert>
+- This light is flashable using [https://github.com/kueblc/tuya-convert](https://github.com/kueblc/tuya-convert)
 - Not tested yet with tuya-cloudcutter
 
 ## Product Images
@@ -36,6 +36,9 @@ substitutions:
 
 esphome:
   name: ${device_name}
+
+esp8266:
+  board: esp01_1m
 
 esp8266:
   board: esp01_1m
