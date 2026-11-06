@@ -15,7 +15,7 @@ See the [Waveshare wiki](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-1.46B
 
 ## ESPHome Support
 
-This configuration requires ESPHome 2026.10.0 or newer.
+This configuration requires ESPHome 2026.11.0 or newer.
 
 ## Pin Mapping
 
