@@ -1,0 +1,133 @@
+substitutions:
+  name: petkit-feeder
+  friendly_name: Petkit Fresh Element Solo
+  device_description: "Petkit Fresh Element Solo Pet Feeder"
+  name_add_mac_suffix: "true"
+
+esphome:
+  name: $name
+  friendly_name: $friendly_name
+  name_add_mac_suffix: $name_add_mac_suffix
+  comment: $device_description
+  project:
+    name: n6rdv.petkit-fresh-element-solo
+    version: '1.1'
+  on_boot:
+    - light.turn_on:
+        id: led
+        effect: fast_blink
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+  baud_rate: 0
+
+wifi:
+  ap: {}
+
+output:
+  - id: led_output
+    platform: gpio
+    pin: GPIO5
+  - platform: ledc
+    pin: GPIO16
+    id: rtttl_output
+
+light:
+  - platform: binary
+    id: led
+    output: led_output
+    effects:
+      - strobe:
+          name: fast_blink
+          colors:
+            - state: true
+              duration: 125ms
+            - state: false
+              duration: 125ms
+    internal: true
+
+rtttl:
+  output: rtttl_output
+
+uart:
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  baud_rate: 9600
+
+interval:
+  - interval: 1s
+    then:
+      if:
+        condition:
+          wifi.connected:
+        then:
+          - light.turn_on:
+              id: led
+              effect: None
+        else:
+          - light.turn_on:
+              id: led
+              effect: fast_blink
+
+binary_sensor:
+  - id: manual_feed_button
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO34
+      inverted: true
+  - id: motor_sensor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO27
+      inverted: true
+  - id: feed_sensor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO14
+
+switch:
+  - id: enable_sensors
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO33
+    restore_mode: ALWAYS_ON
+    disabled_by_default: true
+
+  - id: enable_feeder_motor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO19
+    restore_mode: ALWAYS_OFF
+    disabled_by_default: true
+
+  - id: feed_forward
+    internal: true
+    interlock: &interlock_group [feed_forward, feed_reverse]
+    platform: gpio
+    pin:
+      number: GPIO18
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - switch.turn_on: enable_feeder_motor
+    on_turn_off:
+      then:
+        - switch.turn_off: enable_feeder_motor
+
+  - id: feed_reverse
+    internal: true
+    interlock: *interlock_group
+    platform: gpio
+    pin:
+      number: GPIO17
+    restore_mode: ALWAYS_OFF

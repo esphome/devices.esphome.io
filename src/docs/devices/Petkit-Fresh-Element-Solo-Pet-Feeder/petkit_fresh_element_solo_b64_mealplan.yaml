@@ -1,0 +1,390 @@
+substitutions:
+  name: petkit-feeder
+  friendly_name: Petkit Fresh Element Solo
+  device_description: "Petkit Fresh Element Solo Pet Feeder"
+  default_scoops: "1"
+  max_scoops: "6"
+  name_add_mac_suffix: "true"
+
+esphome:
+  name: $name
+  friendly_name: $friendly_name
+  name_add_mac_suffix: $name_add_mac_suffix
+  comment: $device_description
+  project:
+    name: n6rdv.petkit-fresh-element-solo
+    version: '1.1'
+  on_boot:
+    - light.turn_on:
+        id: led
+        effect: fast_blink
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+
+logger:
+  level: INFO
+  baud_rate: 0
+
+web_server:
+  port: 80
+
+
+globals:
+  - id: scoops_count
+    type: int
+  - id: max_scoops
+    type: int
+  - id: food_sensor_count
+    type: int
+  - id: last_food_sensor_count
+    type: int
+    initial_value: '0'
+    restore_value: true
+  - id: last_food_scoops_count
+    type: int
+    initial_value: '0'
+    restore_value: true
+
+script:
+  - id: play_rtttl
+    parameters:
+      song_str: string
+    then:
+      - if:
+          condition:
+            lambda: return !(id(mute_sounds).state);
+          then:
+            - rtttl.play:
+                rtttl: !lambda 'return song_str;'
+  - id: actuate_feeder
+    parameters:
+      scoops: int
+    then:
+      - if:
+          condition:
+            lambda: return scoops > 0;
+          then:
+            - logger.log:
+                level: INFO
+                format: "Serving %d scoops"
+                args: [scoops]
+            - lambda: |-
+                id(play_rtttl)->execute("two_shorts:d=4,o=5,b=100:16e6,16e6");
+                id(scoops_count) = 0;
+                id(food_sensor_count) = 0;
+                id(max_scoops) = scoops;
+            - switch.turn_on: feed_forward
+  - id: dispatch_feeder_food_dispensed_event
+    parameters:
+      event_message: string
+    then:
+      - homeassistant.event:
+          event: esphome.feeder_food_dispensed
+          data:
+            message: !lambda return event_message;
+  - id: dispatch_feeder_food_low_event
+    parameters:
+      event_message: string
+    then:
+      - homeassistant.event:
+          event: esphome.feeder_food_low
+          data:
+            message: !lambda return event_message;
+  - id: check_food_level
+    parameters:
+      food_dispensed: bool
+      play_sound: bool
+      send_event: bool
+    then:
+      lambda: |-
+        if (id(last_food_scoops_count) > 0 &&
+            id(last_food_sensor_count) / id(last_food_scoops_count) < id(low_food_threshold).state) {
+          if (play_sound) {
+            id(play_rtttl)->execute("siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e");
+          }
+          if (send_event) {
+            id(dispatch_feeder_food_low_event)->execute("${friendly_name} food level is low. Check the hopper.");
+          }
+          id(feeder_state).publish_state("Food level is low");
+          ESP_LOGI("main", "Food level is low");
+        } else if (food_dispensed) {
+          id(feeder_state).publish_state("Food dispensed");
+          id(play_rtttl)->execute("one_short:d=4,o=5,b=100:16e6");
+          if (id(last_food_scoops_count) == 1) {
+            id(dispatch_feeder_food_dispensed_event)->execute("${friendly_name} dispensed 1 scoop of food.");
+          } else {
+            id(dispatch_feeder_food_dispensed_event)->execute(
+                "${friendly_name} dispensed " + to_string(id(scoops_count)) + " scoops of food.");
+          }
+        }
+
+light:
+  - platform: binary
+    id: led
+    output: led_output
+    effects:
+      - strobe:
+          name: fast_blink
+          colors:
+            - state: true
+              duration: 125ms
+            - state: false
+              duration: 125ms
+    internal: true
+
+output:
+  - id: led_output
+    platform: gpio
+    pin: GPIO5
+  - platform: ledc
+    pin: GPIO16
+    id: rtttl_output
+
+rtttl:
+  output: rtttl_output
+
+interval:
+  - interval: 1s
+    then:
+      if:
+        condition:
+          wifi.connected:
+        then:
+          - light.turn_on:
+              id: led
+              effect: None
+        else:
+          - light.turn_on:
+              id: led
+              effect: fast_blink
+
+uart:
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  baud_rate: 9600
+
+number:
+  - platform: template
+    id: default_scoops
+    name: "Manual dispense scoops"
+    icon: mdi:cup
+    entity_category: config
+    min_value: 1
+    max_value: $max_scoops
+    initial_value: 1
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: low_food_threshold
+    # Minimum food quantity per scoop (specific to a particular dry food).
+    name: "Low food threshold"
+    icon: mdi:cup-outline
+    entity_category: config
+    min_value: 1
+    max_value: 10
+    initial_value: 5
+    optimistic: true
+    step: 1
+    restore_value: true
+    mode: slider
+text:
+  - platform: template
+    id: feed_schedule
+    name: "Feeding schedule"
+    icon: mdi:calendar-clock
+    entity_category: config
+    mode: text
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 252
+    # Base64 payload compatible with the "mealplan-card" Lovelace card
+    # (https://github.com/FredrikM97/mealplan-card) using any of its default
+    # profiles, e.g. manufacturer: Cleverio / model: PF100. Each schedule
+    # entry is 5 raw bytes, concatenated and base64-encoded:
+    #   [days, hour, minute, portion, enabled]
+    # `days` is a bitmask where bit0=Sunday, bit1=Saturday, bit2=Friday,
+    # bit3=Thursday, bit4=Wednesday, bit5=Tuesday, bit6=Monday (127 = every day).
+
+time:
+  - id: sntp_time
+    platform: sntp
+    on_time:
+      # Hourly
+      - hours: 7-22
+        minutes: 0
+        seconds: 0
+        then:
+          - lambda: |-
+              id(check_food_level)->execute(
+                  /* food_dispensed = */ false, /* play_sound = */ true, /* send_event = */ false);
+      # Every minute: check the feeding schedule stored in feed_schedule
+      - hours: '*'
+        minutes: '*'
+        seconds: 0
+        then:
+          - lambda: |-
+              auto now = id(sntp_time).now();
+              std::vector<uint8_t> schedule = esphome::base64_decode(id(feed_schedule).state);
+              // bit0=Sun, bit1=Sat, bit2=Fri, bit3=Thu, bit4=Wed, bit5=Tue, bit6=Mon
+              static const uint8_t DAY_BIT[8] = {0, 0, 6, 5, 4, 3, 2, 1};
+              uint8_t today_bit = DAY_BIT[now.day_of_week];
+              for (size_t i = 0; i + 5 <= schedule.size(); i += 5) {
+                uint8_t days = schedule[i];
+                uint8_t hour = schedule[i + 1];
+                uint8_t minute = schedule[i + 2];
+                uint8_t portion = schedule[i + 3];
+                uint8_t enabled = schedule[i + 4];
+                if (enabled && hour == now.hour && minute == now.minute && (days & (1 << today_bit))) {
+                  id(actuate_feeder)->execute((int) portion);
+                }
+              }
+
+binary_sensor:
+  - id: manual_feed_button
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO34
+      inverted: true
+    on_press:
+      then:
+        - lambda: id(actuate_feeder)->execute((int) id(default_scoops).state);
+  - id: motor_sensor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO27
+      inverted: true
+    on_press:
+      then:
+        - lambda: |-
+            id(scoops_count) += 1;
+            if (id(scoops_count) >= id(max_scoops)) {
+              id(feed_forward).turn_off();
+              id(last_food_sensor_count) = id(food_sensor_count);
+              id(last_food_scoops_count) = id(scoops_count);
+              id(check_food_level)->execute(
+                  /* food_dispensed = */ true, /* play_sound = */ true, /* send_event = */ true);
+            }
+        - logger.log:
+            level: INFO
+            format: "%d/%d scoops served"
+            args: [id(scoops_count), id(max_scoops)]
+
+  - id: feed_sensor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO14
+    on_press:
+      then:
+        - lambda: |-
+            id(food_sensor_count) += 1;
+
+text_sensor:
+  - platform: template
+    name: "State"
+    id: feeder_state
+    entity_category: diagnostic
+
+switch:
+  - id: enable_sensors
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO33
+    restore_mode: ALWAYS_ON
+    disabled_by_default: true
+
+  - id: enable_feeder_motor
+    internal: true
+    platform: gpio
+    pin:
+      number: GPIO19
+    restore_mode: ALWAYS_OFF
+    disabled_by_default: true
+
+  - id: feed_forward
+    internal: true
+    interlock: &interlock_group [feed_forward, feed_reverse]
+    platform: gpio
+    pin:
+      number: GPIO18
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - switch.turn_on: enable_feeder_motor
+    on_turn_off:
+      then:
+        - switch.turn_off: enable_feeder_motor
+
+  - id: feed_reverse
+    internal: true
+    interlock: *interlock_group
+    platform: gpio
+    pin:
+      number: GPIO17
+    restore_mode: ALWAYS_OFF
+
+  - id: mute_sounds
+    name: Mute sounds
+    icon: mdi:volume-off
+    optimistic: true
+    platform: template
+
+sensor:
+  - platform: wifi_signal
+    name: "Signal"
+    update_interval: 60s
+  - platform: template
+    id: dispensed_food_quantity
+    name: "Dispensed food quantity"
+    icon: mdi:cup
+    entity_category: diagnostic
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: |-
+      return id(last_food_sensor_count);
+  - platform: template
+    id: dispensed_food_scoops
+    name: "Dispensed food scoops"
+    icon: mdi:cup
+    entity_category: diagnostic
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: |-
+      return id(last_food_scoops_count);
+
+button:
+  - name: "Dispense food"
+    id: dispense_food
+    icon: mdi:food-turkey
+    platform: template
+    on_press:
+      - lambda: id(actuate_feeder)->execute((int) id(default_scoops).state);
+  - platform: restart
+    name: "Restart"
+    disabled_by_default: true
+
+ota:
+  - platform: esphome
+    id: ota_esphome_1
+
+wifi:
+  ssid: <YOUR SSID HERE>
+  password: ""
+  ap:
+    ssid: Petkit Fresh El Fallback Hotspot
+    password: ""
+captive_portal:
+
+api:
