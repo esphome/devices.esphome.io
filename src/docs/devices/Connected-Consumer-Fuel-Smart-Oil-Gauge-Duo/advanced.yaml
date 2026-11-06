@@ -141,11 +141,7 @@ switch:
     optimistic: true
     on_turn_on:
       then:
-        - script.stop: ultrasonic_loop
-        - switch.turn_off: ultrasonic_en
-        - output.turn_off: LED_pwm
-        - deep_sleep.enter:
-            id: my_deep_sleep
+        - script.execute: Sleep_Trigger
 
   - platform: template
     name: "Auto Sleep Disable"
