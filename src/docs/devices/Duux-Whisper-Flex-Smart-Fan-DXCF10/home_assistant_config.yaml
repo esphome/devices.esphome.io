@@ -21,6 +21,19 @@ logger:
   baud_rate: 0
   level: $log_level
 
+api:
+  encryption:
+    key: !secret device_name__encryption_key
+
+ota:
+  - platform: esphome
+    encryption:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap: {}
+
 uart:
   tx_pin: GPIO15
   rx_pin: GPIO13
