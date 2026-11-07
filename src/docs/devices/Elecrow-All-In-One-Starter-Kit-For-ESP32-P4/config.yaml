@@ -17,8 +17,3 @@ i2c:
   - id: sensor_i2c
     sda: GPIO18
     scl: GPIO19
-
-spi:
-  clk_pin: GPIO09
-  mosi_pin: GPIO11
-  miso_pin: GPIO10

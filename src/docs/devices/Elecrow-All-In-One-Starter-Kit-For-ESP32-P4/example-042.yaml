@@ -22,17 +22,21 @@ sx126x:
   tcxo_voltage: 1_8V
   tcxo_delay: 5ms
 
+packages:
+  hardware: !include config.yaml
+
 # Device 1
 esphome:
   name: device-1
 
 packet_transport:
-  binary_sensors:
-    - relay1_sensor
+  - platform: sx126x
+    binary_sensors:
+      - relay1_sensor
 
 switch:
   - platform: gpio
-    pin: GPIO6
+    pin: GPIO42
     id: relay1
     name: "Device 1 switch"
 

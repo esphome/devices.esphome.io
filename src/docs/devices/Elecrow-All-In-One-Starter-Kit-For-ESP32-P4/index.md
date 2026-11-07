@@ -304,6 +304,9 @@ Manual Lesson 12
 | :--- | :--- |
 | GPIO08 | DIN |
 
+The custom LED timings below are taken from the project configuration and have not been independently verified
+on hardware.
+
 ```yaml file=example-005.yaml
 ```
 
@@ -514,6 +517,9 @@ continuous-rotation speed.
 | GPIO18 | SDA (0x6b) |
 | GPIO19 | SCL (0x6b) |
 
+These IMU examples use the LSM6DS motion component in the ESPHome development version; it is not available
+in ESPHome 2026.3.3.
+
 ```yaml file=example-018.yaml
 ```
 
@@ -626,8 +632,7 @@ Manual Lesson 17
 
 **Description**: Capture audio using the I2S microphone.
 
-```yaml file=example-027.yaml
-```
+Use the microphone configuration above.
 
 #### 13. I2S Audio (Nsiway Tech) NS4168-L U9 NS4168-R U10
 
@@ -764,10 +769,7 @@ Manual Lesson 7
 ```yaml file=example-035.yaml
 ```
 
-Add the credentials to ESPHome's `secrets.yaml` file:
-
-```yaml file=example-036.yaml
-```
+Configure any required credentials in your own ESPHome configuration.
 
 #### ESP32-P4 Primary Header Interface
 
@@ -1166,6 +1168,8 @@ signals are shown separately using the confirmed J13/J16 header mapping.
 
 #### ESP32-H2 (Bluetooth, Thread, Zigbee)
 
+This standalone configuration targets the H2 module. Replace the OpenThread dataset placeholder with your own.
+
 ```yaml file=example-040.yaml
 ```
 
@@ -1278,18 +1282,9 @@ adapter-header mapping; it does not rename the module GPIOs.
 | GND | Right Pin 06 | GND | Module ground |
 | NC | Right Pin 07 | N/C | Not connected on module or header |
 
-#### YAML Example (AIO Expansion Header)
+#### ESPHome support
 
-This is an example of the external component configuration using the
-confirmed AIO host GPIO assignments shown above. The module GPIO labels are
-module-side names and are not ESP32-P4 GPIO numbers.
-
-> **Experimental external component:** the nRF24 component is hosted outside
-> ESPHome and is not pinned to a release or commit. Verify its current schema
-> before compiling this example.
-
-```yaml file=example-043.yaml
-```
+No verified ESPHome component is currently provided for this module.
 
 ##### Resources
 
@@ -1346,8 +1341,7 @@ The ESP32-P4 column uses the confirmed J13/J16 adapter-header mapping.
 
 #### YAML Example
 
-```yaml file=example-044.yaml
-```
+ESPHome configuration is not currently available for this module.
 
 ##### Resources
 
@@ -1475,8 +1469,7 @@ installing the module.
 
 #### YAML Example
 
-```yaml file=example-046.yaml
-```
+ESPHome configuration is not currently available for this module.
 
 #### Additional Links
 
@@ -1648,16 +1641,6 @@ the bootloader during flashing.
 ```yaml file=example-053.yaml
 ```
 
-### Complete AIO Project Configuration (Tested)
-
-This is the complete project configuration used to test the Elecrow AIO
-features. It is board-specific, but it is not a portable baseline: it depends
-on custom components and development branches listed in the YAML. Replace all
-`REPLACE_ME` values and review the external component sources before building.
-
-```yaml file=example-054.yaml
-```
-
 ### Voice Assistant Integration
 
 ```yaml file=example-055.yaml
@@ -1667,17 +1650,8 @@ on custom components and development branches listed in the YAML. Replace all
 
 ### Dashboard Example
 
-```yaml file=example-056.yaml
-```
-
-### Additional Links
-
-- **Product Information**: [Official Website](https://www.elecrow.com/bme688-air-quality-sensor-add-on-for-srowpanel-advance.html)
-- **EnSens Add-on firmware on GitHub**: [Github](https://github.com/Grovety/EnSens_Add-on)
-- **Android App on GitHub**: [Github](https://github.com/Grovety/EnSens_App)
-- **Example project for  CrowPanel Advance 3.5", and 2.8"**: [Github](https://github.com/Grovety/CrowPanel_MiniMeteo)
-- **nRF52833 Product Specification v1.5**: [PDF](https://docs.nordicsemi.com/bundle/nRF52833-PS/resource/nRF52833_PS_v1.5.pdf)
-- **BME 688 Datasheet**: [PDF](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme688-ds000.pdf)
+The Home Assistant configuration example is available in [example-056.yaml](./example-056.yaml).
+It belongs in Home Assistant, not in the ESPHome device configuration.
 
 ## Resources
 

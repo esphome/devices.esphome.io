@@ -13,7 +13,9 @@ speaker:
 
 switch:
   - platform: gpio
-    pin: GPIO6
+    pin:
+      number: GPIO6
+      inverted: true
     name: "Speaker Enable"
     id: speaker_enable
     restore_mode: ALWAYS_ON

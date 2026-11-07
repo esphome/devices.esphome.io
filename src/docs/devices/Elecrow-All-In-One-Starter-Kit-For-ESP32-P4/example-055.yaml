@@ -128,3 +128,13 @@ voice_assistant:
         format: "Voice assistant heard: %s"
         args:
           - x.c_str()
+
+# GPIO6 powers the audio rail when driven low.
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO6
+      inverted: true
+    id: speaker_enable
+    internal: true
+    restore_mode: ALWAYS_ON

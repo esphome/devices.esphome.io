@@ -1,10 +1,8 @@
-i2c:
-  sda: GPIO18
-  scl: GPIO19
-
-sensor:
+motion:
   # 8. IMU 6-DoF
   - platform: lsm6ds
+    id: imu
+    i2c_id: sensor_i2c
     address: 0x6B
     accel_x:
       name: "Accel X"

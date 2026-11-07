@@ -12,7 +12,7 @@ output:
     frequency: 50Hz
 
 interval:
-  - interval: 3s
+  - interval: 10s
     then:
       - servo.write:
           id: my_servo_v11

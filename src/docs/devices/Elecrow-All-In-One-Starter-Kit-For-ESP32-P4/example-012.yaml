@@ -1,13 +1,11 @@
 i2c:
-  - id: i2c_bus
-    sda: GPIO18
-    scl: GPIO19
+  - id: !extend sensor_i2c
     frequency: 400kHz
 
 touchscreen:
   - platform: gt911
     id: touch_panel
-    i2c_id: i2c_bus
+    i2c_id: sensor_i2c
     address: 0x5D  # GT911 backup address (IDF driver tries this first)
     reset_pin: GPIO40
     interrupt_pin:
@@ -45,6 +43,8 @@ display:
       number: GPIO05
       inverted: false
     rotation: 0
+    lambda: |-
+      it.print(0, 0, id(display_font), "Hello ESP32-P4!");
     #show_test_card: true
     auto_clear_enabled: false
     lanes: 2
@@ -101,11 +101,8 @@ switch:
     id: display_shlr
     internal: true
     restore_mode: RESTORE_DEFAULT_ON    # SHLR = 1
-    on_turn_on:
-      lambda: |-
-        it.print(0, 0, id(font), "Hello ESP32-P4!");
 
 font:
-  - file: "fonts/arial.ttf"
-    id: font
+  - file: "gfonts://Roboto"
+    id: display_font
     size: 20

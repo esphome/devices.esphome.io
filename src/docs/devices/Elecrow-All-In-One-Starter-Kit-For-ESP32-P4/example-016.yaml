@@ -9,7 +9,7 @@ output:
     frequency: 50Hz
 
 interval:
-  - interval: 2s
+  - interval: 11s
     then:
       # Forward direction at different speeds
       - servo.write:

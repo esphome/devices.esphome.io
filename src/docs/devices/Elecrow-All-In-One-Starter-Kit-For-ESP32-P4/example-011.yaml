@@ -1,13 +1,11 @@
 i2c:
-  - id: i2c_bus
-    sda: GPIO18
-    scl: GPIO19
+  - id: !extend sensor_i2c
     frequency: 400kHz
 
 touchscreen:
   - platform: gt911
     id: touch_panel
-    i2c_id: i2c_bus
+    i2c_id: sensor_i2c
     address: 0x5D  # GT911 backup address (IDF driver tries this first)
     reset_pin: GPIO40
     interrupt_pin:

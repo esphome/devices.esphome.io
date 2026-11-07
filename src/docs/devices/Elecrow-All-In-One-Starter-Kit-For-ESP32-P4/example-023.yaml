@@ -53,14 +53,17 @@ sensor:
 
 light:
   - platform: esp32_rmt_led_strip
-    chipset: WS2814
+    bit0_high: 400ns
+    bit0_low: 900ns
+    bit1_high: 600ns
+    bit1_low: 700ns
+    reset_low: 300us
     pin:
       number: GPIO8
     num_leds: 1
     name: "RGBW LED"
     id: rgb_leds
-    rgb_order: WRGB
+    rgb_order: RGB
     is_wrgb: true
-    color_interlock: true
     rmt_symbols: 192
     default_transition_length: 0s

@@ -11,3 +11,13 @@ speaker:
     dac_type: external
     i2s_dout_pin: GPIO23
     channel: stereo
+
+# GPIO6 powers the audio rail when driven low.
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO6
+      inverted: true
+    id: speaker_enable
+    internal: true
+    restore_mode: ALWAYS_ON

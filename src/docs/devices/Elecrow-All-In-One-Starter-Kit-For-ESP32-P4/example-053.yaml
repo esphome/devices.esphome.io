@@ -24,8 +24,6 @@ logger:
 
 # Home Assistant API
 api:
-  encryption:
-    key: REPLACE_ME
 
 # OTA Updates
 ota:

@@ -1,9 +1,7 @@
-i2c:
-  sda: GPIO18
-  scl: GPIO19
-
-sensor:
+motion:
   - platform: lsm6ds
+    id: imu
+    i2c_id: sensor_i2c
     address: 0x6B
     update_interval: 100ms
     accel_x:
@@ -18,5 +16,8 @@ sensor:
       name: "Gyro Y"
     gyro_z:
       name: "Gyro Z"
-    temperature:
-      name: "IMU Temperature"
+
+sensor:
+  - platform: lsm6ds
+    lsm6ds_id: imu
+    name: "IMU Temperature"
