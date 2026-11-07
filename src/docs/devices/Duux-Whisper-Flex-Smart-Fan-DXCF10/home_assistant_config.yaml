@@ -101,8 +101,8 @@ globals:
     initial_value: "2"
 
   # True while the public fan is being updated from the state reported by
-  # the Tuya MCU. The public fan's on_turn_on / on_turn_off triggers also
-  # fire on these updates, so they must not treat them as user requests.
+  # the Tuya MCU. The public fan's on_state trigger also fires on these
+  # updates, so it must not treat them as user requests.
   - id: syncing_from_mcu
     type: bool
     restore_value: false
@@ -197,58 +197,58 @@ fan:
     has_oscillating: true
     speed_count: 26
 
-    # Turning the fan ON from HA/ESPHome.
+    # Power requests from HA/ESPHome.
     #
-    # A newer ON request cancels a pending OFF request, so a late DP1=ON
-    # from the MCU is no longer answered with a forced OFF.
-    on_turn_on:
+    # on_turn_on / on_turn_off only fire on a state transition, so an explicit
+    # OFF while the public fan already shows OFF (or an ON while it shows ON)
+    # would be lost. on_state fires on every request instead. Updates coming
+    # from the Tuya MCU (sync_ha_fan) are skipped via syncing_from_mcu, so they
+    # never issue new commands.
+    #
+    # DP1 is always written explicitly: the cached DP1 value may not match the
+    # request while an earlier command is still in flight, and a normal
+    # fan.turn_on / fan.turn_off would then be suppressed as unchanged.
+    on_state:
       - if:
           condition:
             lambda: |-
               return !id(syncing_from_mcu);
           then:
-            - lambda: |-
-                if (id(waiting_for_off_response)) {
-                  ESP_LOGD(
-                    "smart_fan",
-                    "HA/ESPHome requested ON; cancelling pending OFF request"
-                  );
-                }
-                id(waiting_for_off_response) = false;
-                id(off_retries) = 0;
-            - script.stop: off_watchdog
-            - lambda: |-
-                id(tuya_component).force_set_boolean_datapoint_value(1, true);
-
-    # Turning the fan OFF from HA/ESPHome.
-    #
-    # Set the flag BEFORE sending the command to the Tuya fan. The response
-    # from the Tuya MCU is then examined by tuya.on_datapoint_update, and
-    # off_watchdog retries the OFF if no response arrives.
-    #
-    # This does not check duux_fan.state: after a quick ON then OFF, the MCU
-    # may not have acknowledged the ON yet, so duux_fan is still OFF and the
-    # OFF would be lost. DP1=OFF is written explicitly for the same reason,
-    # because a normal fan.turn_off would be suppressed while the cached DP1
-    # value is still OFF.
-    on_turn_off:
-      - if:
-          condition:
-            lambda: |-
-              return !id(syncing_from_mcu);
-          then:
-            - lambda: |-
-                id(waiting_for_off_response) = true;
-                id(off_retries) = 0;
-                ESP_LOGD(
-                  "smart_fan",
-                  "HA/ESPHome requested OFF; waiting for Tuya MCU response"
-                );
-
-            - script.execute: off_watchdog
-
-            - lambda: |-
-                id(tuya_component).force_set_boolean_datapoint_value(1, false);
+            - if:
+                condition:
+                  lambda: |-
+                    return id(ha_fan).state;
+                # ON: a newer ON request cancels a pending OFF request, so a
+                # late DP1=ON from the MCU is no longer answered with a
+                # forced OFF.
+                then:
+                  - lambda: |-
+                      if (id(waiting_for_off_response)) {
+                        ESP_LOGD(
+                          "smart_fan",
+                          "HA/ESPHome requested ON; cancelling pending OFF request"
+                        );
+                      }
+                      id(waiting_for_off_response) = false;
+                      id(off_retries) = 0;
+                  - script.stop: off_watchdog
+                  - lambda: |-
+                      id(tuya_component).force_set_boolean_datapoint_value(1, true);
+                # OFF: set the flag BEFORE sending the command. The response
+                # from the Tuya MCU is then examined by
+                # tuya.on_datapoint_update, and off_watchdog retries the OFF
+                # if no response arrives.
+                else:
+                  - lambda: |-
+                      id(waiting_for_off_response) = true;
+                      id(off_retries) = 0;
+                      ESP_LOGD(
+                        "smart_fan",
+                        "HA/ESPHome requested OFF; waiting for Tuya MCU response"
+                      );
+                  - script.execute: off_watchdog
+                  - lambda: |-
+                      id(tuya_component).force_set_boolean_datapoint_value(1, false);
 
     # Forward speed changes to the real Tuya fan.
     on_speed_set:
