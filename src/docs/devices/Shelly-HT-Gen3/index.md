@@ -91,13 +91,18 @@ scratch, data, 0x80, 0x7e0000, 0x10000,
 shelly, data, 0x88, 0x7f0000, 0x10000,
 ```
 
-Build the firmware with `esphome compile` and upload the resulting OTA binary with
-**ShellyOTA** (<https://github.com/oxynatOr/free-shelly-ota>).
+Build the firmware with `esphome compile`. ESPHome writes two files: `firmware.ota.bin` and `firmware.factory.bin`.
+Hand both to **ShellyOTA** (<https://github.com/oxynatOr/free-shelly-ota>), which builds a package from them
+(`build ... --esphome-factory firmware.factory.bin`) and sends it to the device. The factory image supplies ESPHome's
+bootloader. An OTA binary alone leaves Shelly's bootloader in place; it rolls the update back after three starts and
+later ESPHome updates do not take effect. The tool refuses such a package by default. The step-by-step commands are on
+the [HTG3 page](https://github.com/oxynatOr/free-shelly-ota/blob/main/docs/devices/HTG3.md) of the tool.
 
 > **Note:** The partition table of the device stays Shelly's. The CSV only makes ESPHome build
 > against the same layout. The table sits at `0xf000` on this device (Plug M Gen3: `0x10000`).
 
-After the first ESPHome flash, further updates work through the normal ESPHome OTA.
+After the first ESPHome flash, further updates work through the normal ESPHome OTA. Keep the settings of this page
+(partition table, `allow_partition_access: true`) in every later build.
 
 ### Flashing via UART
 
