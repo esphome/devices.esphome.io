@@ -126,8 +126,9 @@ binary_sensor:
         then:
           - switch.turn_off: button_lock
           # ignore the 2.5 s "long press" that would otherwise follow while the button is still held
-          - lambda: |-
-              id(gesture_suppress_until) = millis() + 6000;
+          - script.execute:
+              id: suppress_gesture
+              ms: 6000
           - script.execute:
               id: show_fx
               kind: 4
@@ -141,7 +142,7 @@ binary_sensor:
         then:
           - if:
               condition:
-                lambda: "return (int32_t)(id(gesture_suppress_until) - millis()) > 0;"
+                lambda: "return id(gesture_suppress);"
               then:
                 - logger.log:
                     level: DEBUG

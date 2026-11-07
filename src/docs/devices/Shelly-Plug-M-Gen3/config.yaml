@@ -6,7 +6,8 @@ substitutions:
   voltage_reference: "14033.01"
   current_reference: "252866.6"
   power_reference: "611.000"
-  energy_reference: "2653"
+  # Follows the power reference (the same formula ESPHome uses): power_reference * 3600000 / 419430.4
+  energy_reference: ${ ((power_reference | float) * 3600000 / 419430.4) | round(2) }
   update_interval_bl0942: 5sec
 
 esphome:
@@ -109,10 +110,23 @@ globals:
     type: bool
     restore_value: false
     initial_value: "false"
-  - id: gesture_suppress_until
-    type: uint32_t
+  # true while a button press must not be handled twice (set by plug-gestures.yaml / plug-protection.yaml)
+  - id: gesture_suppress
+    type: bool
     restore_value: false
-    initial_value: "0"
+    initial_value: "false"
+
+script:
+  # Ignore the next long-press handlers for `ms` milliseconds. A script with a delay (instead of a stored
+  # millis() deadline) never gets confused by the 32-bit millis() overflow after 24.9 days (signed compare) or 49.7 days (wrap).
+  - id: suppress_gesture
+    mode: restart
+    parameters:
+      ms: int
+    then:
+      - lambda: "id(gesture_suppress) = true;"
+      - delay: !lambda "return ms;"
+      - lambda: "id(gesture_suppress) = false;"
 
 binary_sensor:
   - platform: gpio

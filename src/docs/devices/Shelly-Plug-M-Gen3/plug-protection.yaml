@@ -10,6 +10,8 @@
 #
 # A latched fault is cleared by holding the button for 2.5 s (only if the plug has cooled down)
 # or by switching "Fault Lock" off in Home Assistant.
+# The hardware relay becomes internal; Home Assistant gets a front switch "Relay" (same name) whose actions
+# run for every command, so an OFF during the startup delay reliably cancels the pending restore.
 # Needs: api (Home Assistant notifications).
 # ---------------------------------------------------------------------------
 
@@ -101,6 +103,8 @@ esphome:
   on_boot:
     - priority: -100.0
       then:
+        # the front switch starts with the real (off) state of the hardware relay
+        - lambda: "id(relay_front).publish_state(id(relay).state);"
         - script.execute: boot_relay
   on_shutdown:
     - lambda: |-
@@ -148,6 +152,9 @@ script:
           then:
             - switch.turn_on: relay
       - lambda: |-
+          // remember what the relay really is now (also covers manual changes during the delay),
+          // then start the normal state tracking
+          id(relay_saved) = id(relay).state ? 1 : 0;
           id(boot_done) = true;
 
   # Latch a fault: remember the cause, lock the relay, notify Home Assistant.
@@ -204,12 +211,8 @@ script:
                 args: ["(unsigned) (millis() - id(ntc_last_ok))", "id(ntc_last_raw)"]
             - if:
                 condition:
-                  lambda: "return ${ntc_fault_trips};"
+                  lambda: "return !${ntc_fault_trips};"
                 then:
-                  - script.execute:
-                      id: trip
-                      reason: 4
-                else:
                   - homeassistant.action:
                       action: persistent_notification.create
                       data:
@@ -217,6 +220,15 @@ script:
                         message: >-
                           Temperature sensor fault - the over-temperature protection is not working.
                           The relay keeps its state.
+      # ntc_fault_trips: the relay stays locked as long as the sensor is bad, not only when the fault starts.
+      # Clearing "Fault Lock" while the sensor is still broken trips again at the next check.
+      - if:
+          condition:
+            lambda: "return ${ntc_fault_trips} && id(ntc_bad) && !id(fault_active);"
+          then:
+            - script.execute:
+                id: trip
+                reason: 4
       - if:
           condition:
             lambda: "return id(ntc_event) == 2 && id(fault_active) && id(fault_reason) == 4;"
@@ -233,8 +245,7 @@ binary_sensor:
           - if:
               condition:
                 lambda: |-
-                  return id(fault_active) && !id(button_locked) &&
-                         (int32_t)(id(gesture_suppress_until) - millis()) <= 0;
+                  return id(fault_active) && !id(button_locked) && !id(gesture_suppress);
               then:
                 - if:
                     condition:
@@ -244,8 +255,9 @@ binary_sensor:
                                id(ntc_temp).state < (float)(${max_temp});
                     then:
                       # keep plug-gestures.yaml from also handling this press (LED on/off)
-                      - lambda: |-
-                          id(gesture_suppress_until) = millis() + 1000;
+                      - script.execute:
+                          id: suppress_gesture
+                          ms: 1000
                       - switch.turn_off: fault_lock
                       - logger.log:
                           level: INFO
@@ -264,12 +276,15 @@ binary_sensor:
     lambda: "return id(ntc_bad);"
 
 switch:
-  # restore_mode DISABLED: the relay stays off until boot_relay decides (see above)
+  # restore_mode DISABLED: the relay stays off until boot_relay decides (see above).
+  # The hardware relay is hidden (internal); Home Assistant talks to the front switch "Relay" below.
   - id: !extend relay
+    internal: true
     restore_mode: DISABLED
     on_turn_on:
       - lambda: |-
           if (id(boot_done)) id(relay_saved) = 1;
+          id(relay_front).publish_state(true);
       - if:
           condition:
             switch.is_on: fault_lock
@@ -281,8 +296,33 @@ switch:
     on_turn_off:
       - lambda: |-
           if (id(boot_done)) id(relay_saved) = 0;
-          // an explicit OFF during the startup delay cancels the pending restore
+          // the relay went off by itself (button, fault lock): the pending restore is obsolete
           else id(boot_want) = false;
+          id(relay_front).publish_state(false);
+
+  # The switch Home Assistant sees. It exists because ESPHome drops a state change that does not change
+  # anything: an OFF command for a relay that is already off (startup delay) never reaches on_turn_off of
+  # the hardware relay. The actions of this switch run for every command, so the OFF can cancel the pending
+  # restore (boot_want), and the turn-on is refused while the fault lock is active.
+  - platform: template
+    id: relay_front
+    name: "Relay"
+    restore_mode: DISABLED
+    turn_on_action:
+      - if:
+          condition:
+            switch.is_on: fault_lock
+          then:
+            - logger.log:
+                level: WARN
+                format: "Relay turn-on blocked: fault lock active"
+          else:
+            - switch.turn_on: relay
+    turn_off_action:
+      - lambda: |-
+          // an explicit OFF during the startup delay cancels the pending restore
+          if (!id(boot_done)) id(boot_want) = false;
+      - switch.turn_off: relay
 
   # Latched fault. Switch it off in Home Assistant to acknowledge.
   - platform: template

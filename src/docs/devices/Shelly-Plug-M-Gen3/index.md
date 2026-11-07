@@ -161,7 +161,9 @@ Latched protection against over-current, over-power and over-temperature (switch
 Assistant), a temperature sensor watchdog (binary sensor **Temperature Sensor Fault**) and a staggered relay restart
 after a power loss. Clear a fault by holding the button for 2.5 s (only once the plug has cooled down) or by switching
 **Fault Lock** off. The limits (`max_current`, `max_power`, `max_temp`, ...) are substitutions at the top of the file;
-adjust them to your plug.
+adjust them to your plug. The package hides the hardware relay and adds a front switch with the same name **Relay**
+(the entity in Home Assistant stays the same). Its actions run for every command, so an OFF command during the startup
+delay cancels the pending restart, and a turn-on is refused while the fault lock is active.
 
 ```yaml file=plug-protection.yaml
 ```
