@@ -10,11 +10,11 @@ alias:
     slug: connex-connect-cc-p1003
 ---
 
-![CC-P1004 plug label and electrical ratings](plug-label.jpg)
+![CC-P1004 plug label and electrical ratings](plug-label.jpg "CC-P1004 plug label and electrical ratings")
 
-![CC-P1004 twin-pack packaging, front](packaging-front.jpg)
+![CC-P1004 twin-pack packaging, front](packaging-front.jpg "CC-P1004 twin-pack packaging, front")
 
-![CC-P1004 twin-pack packaging, back](packaging-back.jpg)
+![CC-P1004 twin-pack packaging, back](packaging-back.jpg "CC-P1004 twin-pack packaging, back")
 
 This is a South African Type M, 16 A smart plug with power monitoring, sometimes sold as a twin pack.
 [Manufacturer product page](https://connexconnect.com/product/smart-wifi-plug-3-pin-sa-round-16a/)
