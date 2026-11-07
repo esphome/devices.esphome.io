@@ -16,6 +16,7 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
 
 wifi:
+  ap:
 
 globals:
   - id: saved_plug_state
