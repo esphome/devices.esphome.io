@@ -225,11 +225,17 @@ fan:
     # Set the flag BEFORE sending the command to the Tuya fan. The response
     # from the Tuya MCU is then examined by tuya.on_datapoint_update, and
     # off_watchdog retries the OFF if no response arrives.
+    #
+    # This does not check duux_fan.state: after a quick ON then OFF, the MCU
+    # may not have acknowledged the ON yet, so duux_fan is still OFF and the
+    # OFF would be lost. DP1=OFF is written explicitly for the same reason,
+    # because a normal fan.turn_off would be suppressed while the cached DP1
+    # value is still OFF.
     on_turn_off:
       - if:
           condition:
             lambda: |-
-              return !id(syncing_from_mcu) && id(duux_fan).state;
+              return !id(syncing_from_mcu);
           then:
             - lambda: |-
                 id(waiting_for_off_response) = true;
@@ -241,8 +247,8 @@ fan:
 
             - script.execute: off_watchdog
 
-            - fan.turn_off:
-                id: duux_fan
+            - lambda: |-
+                id(tuya_component).force_set_boolean_datapoint_value(1, false);
 
     # Forward speed changes to the real Tuya fan.
     on_speed_set:
