@@ -1,8 +1,4 @@
-output:
-
-  - platform: gpio
-    pin: GPIO4
-    id: relay_output
+# Add-on for config.yaml: it drives config.yaml's relay output and BL0942 rather than declaring its own.
 
 switch:
 
@@ -23,7 +19,7 @@ switch:
               - lambda: "return isnan(id(temperature).state);"
               - binary_sensor.is_off: error_overtemp
         then:
-          - output.turn_on: relay_output
+          - output.turn_on: shelly_1pm_gen3_relay
           - binary_sensor.template.publish:
               id: error_overtemp
               state: OFF
@@ -39,7 +35,7 @@ switch:
               state: OFF
     turn_off_action:
       then:
-        - output.turn_off: relay_output
+        - output.turn_off: shelly_1pm_gen3_relay
         - switch.template.publish:
             id: relay
             state: OFF
@@ -81,50 +77,12 @@ binary_sensor:
 
 sensor:
 
-  - id: temperature
-    name: Device Temperature
-    platform: ntc
-    sensor: temperature_sensor_resistance
-    icon: mdi:thermometer
-    entity_category: diagnostic
-    unit_of_measurement: °C
-    accuracy_decimals: 1
-    calibration:
-      b_constant: 3350
-      reference_resistance: 10kOhm
-      reference_temperature: 25°C
-
-  - id: temperature_sensor_resistance
-    platform: resistance
-    sensor: temperature_sensor_voltage
-    configuration: DOWNSTREAM
-    resistor: 10kOhm
-
-  - id: temperature_sensor_voltage
-    platform: adc
-    pin: GPIO3
-    attenuation: 11db
-
-  - platform: bl0942
-    uart_id: bl0942_uart
-    line_frequency: 60Hz
+  # Poll the BL0942 from config.yaml every second so the overcurrent check reacts quickly.
+  - id: !extend bl0942_meter
     update_interval: 1s
-  # voltage_reference: # Recommend calibrating the voltage sensor for accurate power/energy readings.
-    current_reference: # Current sensor must be calibrated for the safety shutdown to respond correctly!
-    voltage:
-      name: Voltage
-      id: sensor_voltage
-      entity_category: diagnostic
-    current:
-      id: sensor_current
-    power:
-      name: Power
-      id: sensor_power
-    frequency:
-      name: Frequency
-      id: sensor_frequency
-      accuracy_decimals: 2
-      entity_category: diagnostic
+    # Calibrate before relying on this; see the BL0942 section above.
+    # voltage_reference: # Recommend calibrating the voltage sensor for accurate power/energy readings.
+    # current_reference: # Current sensor must be calibrated for the safety shutdown to respond correctly!
     energy:
       name: Energy
       id: sensor_energy

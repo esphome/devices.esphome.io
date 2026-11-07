@@ -1,4 +1,6 @@
 esphome:
+  name: shelly-1pm-gen3
+  friendly_name: Shelly 1PM Gen3
   platformio_options:
     board_build.mcu: esp32c3
     board_build.variant: esp32c3
@@ -65,12 +67,14 @@ sensor:
     platform: adc
     pin: GPIO3
     attenuation: 11db
-  - platform: bl0942
+  - id: bl0942_meter
+    platform: bl0942
     uart_id: bl0942_uart
     line_frequency: 60Hz
     voltage:
       name: Voltage
     current:
+      id: sensor_current
       name: Current
     power:
       name: Power

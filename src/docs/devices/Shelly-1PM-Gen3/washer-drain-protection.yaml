@@ -18,6 +18,15 @@ esphome:
 esp32:
   variant: esp32c3
 
+api:
+
+ota:
+  - platform: esphome
+
+# Add your own network's ssid and password; the fallback hotspot below comes up until it connects.
+wifi:
+  ap:
+
 # Newer ESP32 variants (including the C3) enable USB on the UART pins by
 # default unless we explicitly specify that we want to use UART0 for the
 # logger.

@@ -8,6 +8,10 @@ made-for-esphome: False
 difficulty: 2
 ---
 
+![Shelly 2PM Gen3 product photo](shelly-2pm-gen3.jpg "Shelly 2PM Gen3 product photo")
+
+Product image: [Shelly 2PM Gen3](https://www.shelly.com/products/shelly-2pm-gen3).
+
 Generation 3 of Shelly 2. With Powermeter. \
 Generation 3 configurations are not compatible with earlier Shelly 2 generation hardware. \
 General hardware info, including serial pinout is on the
@@ -29,15 +33,24 @@ General hardware info, including serial pinout is on the
 | GPIO18 | Switch 2     |
 | GPIO19 | Reset Button |
 
-![Shelly 2 PM Gen3](../Shelly-2-PM-Gen3/shelly_2_pm_gen3_pcb.jpeg "Shelly 2 PM Gen3")
+![Shelly 2 PM Gen3](shelly_2_pm_gen3_pcb.jpeg "Shelly 2 PM Gen3")
 
 ## Flashing
 
-No need to crack the case open. Shelly's own OTA updater will install ESPHome straight over the
-network — confirmed on two deployed 2 PM Gen3 units, no UART touched. Use
-[free-shelly-ota](https://github.com/oxynatOr/free-shelly-ota) to build and push the image, it
-handles the signature/checksum repackaging. OTA upgrades after that (ESPHome Web or
-`esphome upload`) work fine, same as any ESPHome device.
+Shelly's own OTA updater will install ESPHome over the network: no case-opening, no UART.
+[free-shelly-ota](https://github.com/oxynatOr/free-shelly-ota) builds and sends the package. Its
+[2PM Gen3 page](https://github.com/oxynatOr/free-shelly-ota/blob/main/docs/devices/S2PMG3.md) lists the partition table
+and `esp32:`/`ota:` settings your config needs before the tool will build it, and has a report of the tool converting
+one from Shelly firmware 1.4.99. Two more units (`S3SW-002P16EU`) have been converted from Shelly firmware 2.0.1 with
+scripts outside free-shelly-ota that build the same kind of package.
+
+Flash a config that has your own `wifi:` credentials, `api:` and `ota:` (see Basic Configuration below): the update
+wipes Shelly's Wi-Fi settings. Keep a serial adapter as your way back: once ESPHome's bootloader is on the device, only
+serial gets you back to Shelly firmware (pinout on the Shelly Knowledgebase page above). Later updates go over
+ESPHome's own OTA, same as any ESPHome device.
+
+The older [mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32) route is not an option here: that
+project is archived, does not list the 2PM Gen3, and does not support Shelly firmware 1.5 or later.
 
 ## Basic Configuration
 
@@ -57,4 +70,10 @@ pins is thanks to [the Tasmota community.][2]
 Add a captive portal on top if you want one for initial WiFi setup — not required, just convenient:
 
 ```yaml file=captive-portal.yaml
+```
+
+The thermal cutoff in `config.yaml` turns both relays off above `max_temp`. To also get a Home Assistant notification
+when it trips, add this (it needs `api:`):
+
+```yaml file=overheat-notification.yaml
 ```

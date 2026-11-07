@@ -95,12 +95,6 @@ sensor:
               - switch.turn_off:
                   id: shelly_relay_2
               - logger.log: "Switch turned off because temperature exceeded ${max_temp}°C"
-              - homeassistant.service:
-                  service: persistent_notification.create
-                  data:
-                    title: Message from ${device_name}
-                  data_template:
-                    message: Switch turned off because temperature exceeded ${max_temp}°C
 
     on_value_range:
       - above: ${max_temp}
