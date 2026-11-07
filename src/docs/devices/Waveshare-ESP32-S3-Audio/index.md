@@ -123,10 +123,11 @@ hardware-specific; add them as usual for your own network.
 ## Voice Assistant
 
 Add this to the configuration above for a voice assistant with on-device wake word detection. Note that
-`use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Wake word restart
-happens in `on_tts_stream_end` (after the speaker finishes playing TTS audio) rather than `on_end`, which avoids an
-I2S bus conflict where restarting the microphone in `on_end` would preempt the speaker. For a full-featured
-configuration with LED animations for each voice assistant state, see the
+`use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Voice assistant
+replies play through the media player rather than straight to the speaker, so a reply and a Home Assistant announcement
+queue instead of cutting each other off. The microphone and speaker share one I2S bus, so the wake word is stopped
+whenever something plays and restarted only once playback has finished. For a full-featured configuration with LED
+animations for each voice assistant state, see the
 [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
 ```yaml file=voice-assistant.yaml
