@@ -1,0 +1,151 @@
+esphome:
+  name: shelly-ht-gen3
+  friendly_name: "Shelly H&T Gen3"
+  on_boot:
+    priority: -200
+    then:
+      - if:
+          condition:
+            binary_sensor.is_off: batt_presence
+          then:
+            - deep_sleep.prevent: deep_sleep_ctrl
+  on_shutdown:
+    then:
+      - lambda: id(epd).power_off();
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: ESP32C3
+  flash_size: 8MB
+  partitions: csv/HTG3-stock.csv
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      COMPILER_OPTIMIZATION_SIZE: y
+      CONFIG_PARTITION_TABLE_OFFSET: "0xf000"
+    advanced:
+      enable_ota_rollback: false
+
+logger:
+wifi:
+
+external_components:
+  - source: github://oxynatOr/esphome-shelly_ht_gen3
+    components: [shelly_ht_display]
+    refresh: 5s
+  - source: github://oxynatOr/esphome-uc8119
+    components: [uc8119]
+    refresh: 5s
+
+deep_sleep:
+  id: deep_sleep_ctrl
+  run_duration: 20s
+  sleep_duration: 1min
+  wakeup_pin:
+    - pin:
+        number: GPIO0
+        mode:
+          input: true
+          pullup: true
+        inverted: true
+        allow_other_uses: true
+
+i2c:
+  sda: GPIO1
+  scl: GPIO3
+  scan: false
+  frequency: 100kHz
+
+sensor:
+  - platform: sht3xd
+    address: 0x44
+    temperature:
+      name: "Temperature"
+      id: temp_sensor
+      accuracy_decimals: 1
+    humidity:
+      name: "Humidity"
+      id: humi_sensor
+      accuracy_decimals: 0
+    update_interval: 10s
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    id: wifi_rssi
+    update_interval: 120s
+
+  - platform: adc
+    id: batt_adc
+    pin: GPIO4
+    attenuation: 12db
+    update_interval: never
+    internal: true
+    samples: 15
+
+# Layer 1: Generic UC8119 EPD segment display driver
+uc8119:
+  id: epd
+  address: 0x50
+  reset_pin: GPIO7
+  busy_pin: GPIO6
+  enable_pin: GPIO10
+  ghost_clear_interval: 8h
+  full_update_every: 360
+
+# Layer 2: Shelly-specific display logic
+shelly_ht_display:
+  id: display
+  display_id: epd
+  update_interval: 1sec
+  wifi_update_every: 20
+  font: siekoo
+  battery_adc_sensor: batt_adc
+  battery_presence_sensor: batt_presence
+  battery_power_enable: batt_power_en
+  battery_divider: 3
+  battery_full_voltage: 6.0
+  battery_empty_voltage: 4.0
+  battery_update_interval: 15sec
+  battery_voltage:
+    name: "Battery Voltage"
+  battery_percent:
+    name: "Battery Percent"
+  external_power:
+    name: "External Power"
+  temperature_sensor: temp_sensor
+  humidity_sensor: humi_sensor
+  wifi_signal_sensor: wifi_rssi
+  on_ready:
+    then:
+      - lambda: id(epd).power_off();
+      - deep_sleep.enter: deep_sleep_ctrl
+
+output:
+  - platform: gpio
+    id: batt_power_en
+    pin: GPIO18
+
+binary_sensor:
+  - platform: gpio
+    id: batt_presence
+    pin:
+      number: GPIO5
+      inverted: true
+    internal: true
+
+  - platform: gpio
+    name: "Button"
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+      allow_other_uses: true
+    filters:
+      - delayed_on_off: 50ms
+
+button:
+  - platform: restart
+    name: "Restart"

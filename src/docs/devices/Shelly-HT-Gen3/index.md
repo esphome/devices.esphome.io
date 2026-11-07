@@ -19,26 +19,26 @@ E-Paper segment display with 91 active segments, 10 digits and 13 icons.
 
 ## GPIO Pinout
 
-| GPIO | Function | Notes |
-|--------|----------------|-----------------------------------------------|
-| GPIO0 | Button | XTAL_32K_P, ext. pull-up, deep sleep wakeup |
-| GPIO1 | I2C SDA | Shared bus (SHT31 + UC8119), ext. pull-up |
-| GPIO2 | Power Rail ADC | Reads regulated 3.3V rail, not battery |
-| GPIO3 | I2C SCL | 100kHz, external pull-up on FPC |
-| GPIO4 | Battery ADC | Via voltage divider (÷3), GPIO18 enable |
-| GPIO5 | Battery Presence | HIGH when batteries are connected |
-| GPIO6 | UC8119 BUSY_N | LOW=busy, external pull-up on FPC |
-| GPIO7 | UC8119 RESET_N | Active LOW, 10ms pulse |
-| GPIO8 | USB Detect | HIGH=USB connected, LOW=battery |
-| GPIO10 | UC8119 Enable | Display power gate, HIGH=on |
-| GPIO18 | Batt Power En | Enables power-path for battery ADC |
+| GPIO   | Function         | Notes                                       |
+| ------ | ---------------- | ------------------------------------------- |
+| GPIO0  | Button           | XTAL_32K_P, ext. pull-up, deep sleep wakeup |
+| GPIO1  | I2C SDA          | Shared bus (SHT31 + UC8119), ext. pull-up   |
+| GPIO2  | Power Rail ADC   | Reads regulated 3.3V rail, not battery      |
+| GPIO3  | I2C SCL          | 100kHz, external pull-up on FPC             |
+| GPIO4  | Battery ADC      | Via voltage divider (÷3), GPIO18 enable     |
+| GPIO5  | Battery Presence | HIGH when batteries are connected           |
+| GPIO6  | UC8119 BUSY_N    | LOW=busy, external pull-up on FPC           |
+| GPIO7  | UC8119 RESET_N   | Active LOW, 10ms pulse                      |
+| GPIO8  | USB Detect       | HIGH=USB connected, LOW=battery             |
+| GPIO10 | UC8119 Enable    | Display power gate, HIGH=on                 |
+| GPIO18 | Batt Power En    | Enables power-path for battery ADC          |
 
 ## I2C Devices
 
-| Device | Address | Function |
-|--------|---------|--------------------------|
-| SHT31 | 0x44 | Temperature & Humidity |
-| UC8119 | 0x50 | E-Paper Segment Display |
+| Device | Address | Function                |
+| ------ | ------- | ----------------------- |
+| SHT31  | 0x44    | Temperature & Humidity  |
+| UC8119 | 0x50    | E-Paper Segment Display |
 
 ## Serial Pinout (PCB Test Pads)
 
@@ -47,21 +47,64 @@ E-Paper segment display with 91 active segments, 10 digits and 13 icons.
 The UART pads are bare test points on the PCB (no header installed).
 Use pogo pins, test clips, or solder temporary wires for flashing.
 
-| Pad | Function       |
-|-----|----------------|
-| 1   | NC             |
-| 2   | RXD            |
-| 3   | CHIP_EN        |
-| 4   | GND            |
-| 5   | TXD            |
-| 6   | VCC 3V3        |
-| 7   | BOOT / GPIO9   |
+| Pad | Function     |
+| --- | ------------ |
+| 1   | NC           |
+| 2   | RXD          |
+| 3   | CHIP_EN      |
+| 4   | GND          |
+| 5   | TXD          |
+| 6   | VCC 3V3      |
+| 7   | BOOT / GPIO9 |
 
 ## Flashing
 
-> **Note:** OTA flashing from the original Shelly firmware is **not possible**.
-> Shelly Gen3 verifies OTA images with an ECDSA signature using their private key.
-> The device must be flashed via UART using the PCB test pads.
+The device can be flashed in two ways:
+
+- **OTA from the Shelly stock firmware** using the **ShellyOTA** script (recommended, no soldering).
+- **UART** via the PCB test pads (needed for recovery or if OTA is not possible).
+
+### OTA from Shelly Stock Firmware
+
+Requirements:
+
+- Stock firmware **2.0.1** (tested). Other versions are untested.
+- Battery level of at least **35 %**, otherwise the update is refused.
+- The ESPHome build must use the Shelly **stock partition table**, so the image fits the
+  layout on the device. Save the CSV below as `csv/HTG3-stock.csv` next to your YAML.
+  The `partitions` and `CONFIG_PARTITION_TABLE_OFFSET` lines are already set in `config.yaml`.
+- `allow_partition_access: true` must be set in the `ota:` block
+  (see [Network, OTA and time](#network-ota-and-time) below).
+
+```csv
+# Shelly H&T Gen3 stock partition table (read from the official 2.0.1 package, partition-table.bin at 0xf000).
+# Only used so ESPHome builds against the same layout the device really has; the table in flash stays Shelly's.
+# NOTE: the partition table is at 0xf000 here (Plug M Gen3: 0x10000), so use CONFIG_PARTITION_TABLE_OFFSET: "0xf000".
+# Name,    Type, SubType, Offset,   Size,     Flags
+otadata, data, ota, 0x11000, 0x2000,
+nvs, data, nvs, 0x14000, 0xc000,
+app_0, app, ota_0, 0x20000, 0x280000,
+fs_0, data, spiffs, 0x2a0000, 0x100000,
+app_1, app, ota_1, 0x3a0000, 0x280000,
+fs_1, data, spiffs, 0x620000, 0x100000,
+scratch, data, 0x80, 0x7e0000, 0x10000,
+shelly, data, 0x88, 0x7f0000, 0x10000,
+```
+
+Build the firmware with `esphome compile`. ESPHome writes two files: `firmware.ota.bin` and `firmware.factory.bin`.
+Hand both to **ShellyOTA** (<https://github.com/oxynatOr/free-shelly-ota>), which builds a package from them
+(`build ... --esphome-factory firmware.factory.bin`) and sends it to the device. The factory image supplies ESPHome's
+bootloader. An OTA binary alone leaves Shelly's bootloader in place; it rolls the update back after three starts and
+later ESPHome updates do not take effect. The tool refuses such a package by default. The step-by-step commands are on
+the [HTG3 page](https://github.com/oxynatOr/free-shelly-ota/blob/main/docs/devices/HTG3.md) of the tool.
+
+> **Note:** The partition table of the device stays Shelly's. The CSV only makes ESPHome build
+> against the same layout. The table sits at `0xf000` on this device (Plug M Gen3: `0x10000`).
+
+After the first ESPHome flash, further updates work through the normal ESPHome OTA. Keep the settings of this page
+(partition table, `allow_partition_access: true`) in every later build.
+
+### Flashing via UART
 
 To enter download mode, short **pad 7 (GPIO9)** to **pad 4 (GND)** while powering on the device. Release after boot.
 
@@ -75,7 +118,7 @@ esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
   read_flash 0 0x800000 shelly-ht-gen3-backup.bin
 ```
 
-### Compile and Flash
+### Compile and Flash (UART)
 
 ```bash
 esphome compile shelly-ht-gen3.yaml
@@ -85,318 +128,29 @@ esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
 
 ## Basic Configuration (USB Powered)
 
-```yaml
-esphome:
-  name: shelly-ht-gen3
-  friendly_name: "Shelly H&T Gen3"
-
-esp32:
-  board: esp32-c3-devkitm-1
-  variant: ESP32C3
-  flash_size: 8MB
-  framework:
-    type: esp-idf
-    version: recommended
-    sdkconfig_options:
-      COMPILER_OPTIMIZATION_SIZE: y
-    advanced:
-      enable_ota_rollback: false
-
-logger:
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-api:
-ota:
-  - platform: esphome
-    on_begin:
-      - lambda: id(display).show_ota_begin();
-    on_progress:
-      - lambda: id(display).show_ota_progress(x);
-    on_end:
-      - lambda: id(display).show_ota_end();
-    on_error:
-      - lambda: id(display).show_ota_error();
-
-external_components:
-  - source: github://oxynatOr/esphome-shelly_ht_gen3
-    components: [shelly_ht_display]
-    refresh: 5s
-  - source: github://oxynatOr/esphome-uc8119
-    components: [uc8119]
-    refresh: 5s
-
-i2c:
-  sda: GPIO1
-  scl: GPIO3
-  scan: false
-  frequency: 100kHz
-
-sensor:
-  - platform: sht3xd
-    address: 0x44
-    temperature:
-      name: "Temperature"
-      id: temp_sensor
-      accuracy_decimals: 1
-    humidity:
-      name: "Humidity"
-      id: humi_sensor
-      accuracy_decimals: 0
-    update_interval: 60s
-
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    id: wifi_rssi
-    update_interval: 120s
-
-  - platform: adc
-    id: batt_adc
-    pin: GPIO4
-    attenuation: 12db
-    update_interval: never
-    internal: true
-    samples: 15
-
-time:
-  - platform: homeassistant
-    id: ha_time
-
-# Layer 1: Generic UC8119 EPD segment display driver
-uc8119:
-  id: epd
-  address: 0x50
-  reset_pin: GPIO7
-  busy_pin: GPIO6
-  enable_pin: GPIO10
-  ghost_clear_interval: 8h
-  full_update_every: 360
-
-# Layer 2: Shelly-specific display logic
-shelly_ht_display:
-  id: display
-  display_id: epd
-  update_interval: 1sec
-  wifi_update_every: 20
-  font: siekoo
-  battery_adc_sensor: batt_adc
-  battery_presence_sensor: batt_presence
-  battery_power_enable: batt_power_en
-  battery_divider: 3
-  battery_full_voltage: 6.0
-  battery_empty_voltage: 4.0
-  battery_update_interval: 15sec
-  battery_voltage:
-    name: "Battery Voltage"
-  battery_percent:
-    name: "Battery Percent"
-  external_power:
-    name: "External Power"
-  temperature_sensor: temp_sensor
-  humidity_sensor: humi_sensor
-  wifi_signal_sensor: wifi_rssi
-  time_id: ha_time
-
-output:
-  - platform: gpio
-    id: batt_power_en
-    pin: GPIO18
-
-binary_sensor:
-  - platform: gpio
-    id: batt_presence
-    pin:
-      number: GPIO5
-      inverted: true
-    internal: true
-
-  - platform: gpio
-    name: "Button"
-    pin:
-      number: GPIO0
-      mode:
-        input: true
-        pullup: true
-      inverted: true
-      allow_other_uses: true
-    filters:
-      - delayed_on_off: 50ms
-
-button:
-  - platform: restart
-    name: "Restart"
+```yaml file=config.yaml
 ```
 
 ## Battery Powered Configuration (Deep Sleep)
 
-```yaml
-esphome:
-  name: shelly-ht-gen3
-  friendly_name: "Shelly H&T Gen3"
-  on_boot:
-    priority: -200
-    then:
-      - if:
-          condition:
-            binary_sensor.is_off: batt_presence
-          then:
-            - deep_sleep.prevent: deep_sleep_ctrl
-  on_shutdown:
-    then:
-      - lambda: id(epd).power_off();
+Add the [network, OTA and time](#network-ota-and-time) settings below to this one as well.
 
-esp32:
-  board: esp32-c3-devkitm-1
-  variant: ESP32C3
-  flash_size: 8MB
-  framework:
-    type: esp-idf
-    version: recommended
-    sdkconfig_options:
-      COMPILER_OPTIMIZATION_SIZE: y
-    advanced:
-      enable_ota_rollback: false
+```yaml file=battery-deep-sleep.yaml
+```
 
-logger:
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-api:
-ota:
-  - platform: esphome
-    on_begin:
-      - lambda: id(display).show_ota_begin();
-    on_progress:
-      - lambda: id(display).show_ota_progress(x);
-    on_end:
-      - lambda: id(display).show_ota_end();
-    on_error:
-      - lambda: id(display).show_ota_error();
+## Network, OTA and time
 
-external_components:
-  - source: github://oxynatOr/esphome-shelly_ht_gen3
-    components: [shelly_ht_display]
-    refresh: 5s
-  - source: github://oxynatOr/esphome-uc8119
-    components: [uc8119]
-    refresh: 5s
+The two examples below only describe the hardware. Add this file to get the Home Assistant API, ESPHome OTA updates
+(including `allow_partition_access: true`, which the OTA flashing above needs) and the clock from Home Assistant.
+Include it with [packages](https://esphome.io/components/packages/) and add your own `wifi:` credentials and API
+encryption key:
 
-deep_sleep:
-  id: deep_sleep_ctrl
-  run_duration: 20s
-  sleep_duration: 1min
-  wakeup_pin:
-    - pin:
-        number: GPIO0
-        mode:
-          input: true
-          pullup: true
-        inverted: true
-        allow_other_uses: true
+```yaml file=network-ota-time.yaml
+```
 
-i2c:
-  sda: GPIO1
-  scl: GPIO3
-  scan: false
-  frequency: 100kHz
-
-sensor:
-  - platform: sht3xd
-    address: 0x44
-    temperature:
-      name: "Temperature"
-      id: temp_sensor
-      accuracy_decimals: 1
-    humidity:
-      name: "Humidity"
-      id: humi_sensor
-      accuracy_decimals: 0
-    update_interval: 10s
-
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    id: wifi_rssi
-    update_interval: 120s
-
-  - platform: adc
-    id: batt_adc
-    pin: GPIO4
-    attenuation: 12db
-    update_interval: never
-    internal: true
-    samples: 15
-
-time:
-  - platform: homeassistant
-    id: ha_time
-
-# Layer 1: Generic UC8119 EPD segment display driver
-uc8119:
-  id: epd
-  address: 0x50
-  reset_pin: GPIO7
-  busy_pin: GPIO6
-  enable_pin: GPIO10
-  ghost_clear_interval: 8h
-  full_update_every: 360
-
-# Layer 2: Shelly-specific display logic
-shelly_ht_display:
-  id: display
-  display_id: epd
-  update_interval: 1sec
-  wifi_update_every: 20
-  font: siekoo
-  battery_adc_sensor: batt_adc
-  battery_presence_sensor: batt_presence
-  battery_power_enable: batt_power_en
-  battery_divider: 3
-  battery_full_voltage: 6.0
-  battery_empty_voltage: 4.0
-  battery_update_interval: 15sec
-  battery_voltage:
-    name: "Battery Voltage"
-  battery_percent:
-    name: "Battery Percent"
-  external_power:
-    name: "External Power"
-  temperature_sensor: temp_sensor
-  humidity_sensor: humi_sensor
-  wifi_signal_sensor: wifi_rssi
-  time_id: ha_time
-  on_ready:
-    then:
-      - lambda: id(epd).power_off();
-      - deep_sleep.enter: deep_sleep_ctrl
-
-output:
-  - platform: gpio
-    id: batt_power_en
-    pin: GPIO18
-
-binary_sensor:
-  - platform: gpio
-    id: batt_presence
-    pin:
-      number: GPIO5
-      inverted: true
-    internal: true
-
-  - platform: gpio
-    name: "Button"
-    pin:
-      number: GPIO0
-      mode:
-        input: true
-        pullup: true
-      inverted: true
-      allow_other_uses: true
-    filters:
-      - delayed_on_off: 50ms
-
-button:
-  - platform: restart
-    name: "Restart"
+```yaml inline
+packages:
+  network: !include network-ota-time.yaml
 ```
 
 ## Display Layout
@@ -425,15 +179,15 @@ The UC8119 segment display has the following layout (all segments shown):
 
 **Zones:**
 
-| Zone | Digits | Function |
-|------|--------|----------|
-| Top left | T1 T2 : T3 T4 | Clock (HH:MM) |
-| Top right | Arrow + Battery | Arrow, 5-segment battery |
-| Center left | D1 D2 . D3 | Temperature (XX.X) |
-| Center right | UNIT | °C/°F (small digit + °) |
-| Icon row 1 | ❄ ♨ ❀ ☰ 📅 | Frost, Heat, Vent, ?, Cal |
-| Icon row 2 | Signal, BT, Globe | WiFi, Bluetooth, Globe |
-| Bottom right | H1 H2 % | Humidity (XX%) |
+| Zone         | Digits            | Function                  |
+| ------------ | ----------------- | ------------------------- |
+| Top left     | T1 T2 : T3 T4     | Clock (HH:MM)             |
+| Top right    | Arrow + Battery   | Arrow, 5-segment battery  |
+| Center left  | D1 D2 . D3        | Temperature (XX.X)        |
+| Center right | UNIT              | °C/°F (small digit + °)   |
+| Icon row 1   | ❄ ♨ ❀ ☰ 📅       | Frost, Heat, Vent, ?, Cal |
+| Icon row 2   | Signal, BT, Globe | WiFi, Bluetooth, Globe    |
+| Bottom right | H1 H2 %           | Humidity (XX%)            |
 
 ## Battery Measurement
 
@@ -463,9 +217,8 @@ next wake (no white flash).
 
 ## Known Limitations
 
-- **OTA from Shelly firmware not possible:** ECDSA signature
-  verification prevents flashing ESPHome OTA from stock firmware.
-  UART flashing required.
+- **OTA from Shelly firmware needs ShellyOTA:** Only tested with stock firmware 2.0.1
+  and the battery must be at least 35 %. UART flashing remains available as a fallback.
 - **Battery percentage accuracy:** The voltage-to-percentage mapping
   may need calibration for your battery chemistry and temperature.
   Default range (4.0V–6.0V) is for 4× AA alkaline batteries.
