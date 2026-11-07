@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="430" viewBox="0 0 1000 430">
+  <title>Brilliant Smart WiFi wall mounted switch UART mapping</title>
+  <desc>ESP8266 GPIO1 transmits to the Tuya MCU. GPIO3 receives from the Tuya MCU. The UART uses 9600 baud and serial logging is disabled. Logical connections, not a PCB layout.</desc>
+  <metadata>Original diagram based on the existing device configuration. License: GPL-3.0, as provided in the repository LICENSE file.</metadata>
+  <rect width="1000" height="430" fill="#ffffff"/>
+  <g font-family="Arial, sans-serif" fill="#182f42">
+    <text x="50" y="52" font-size="27" font-weight="700">Brilliant Smart WiFi Wall Mounted Light Switch</text>
+    <text x="50" y="88" font-size="20">Logical UART mapping / 9600 baud</text>
+    <g fill="#edf4f8" stroke="#47758c" stroke-width="2">
+      <rect x="50" y="128" width="300" height="206" rx="12"/>
+      <rect x="650" y="128" width="300" height="206" rx="12"/>
+    </g>
+    <g font-size="24" font-weight="700" text-anchor="middle">
+      <text x="200" y="174">ESP8266</text>
+      <text x="800" y="174">Tuya MCU</text>
+    </g>
+    <g font-size="22" text-anchor="middle">
+      <text x="200" y="229">GPIO1 / TX</text>
+      <text x="800" y="229">RX</text>
+      <text x="200" y="301">GPIO3 / RX</text>
+      <text x="800" y="301">TX</text>
+    </g>
+    <g stroke="#47758c" stroke-width="3" fill="none">
+      <path d="M350 222 H650 M638 214 L650 222 L638 230"/>
+      <path d="M650 294 H350 M362 286 L350 294 L362 302"/>
+    </g>
+    <text x="50" y="376" font-size="18">Serial logging disabled (logger baud_rate: 0).</text>
+    <text x="50" y="407" font-size="17" fill="#4a5d6b">Logical connections from the documented example; not a PCB layout or wiring schematic.</text>
+  </g>
+</svg>
