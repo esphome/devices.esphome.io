@@ -118,7 +118,8 @@ globals:
 
 script:
   # Ignore the next long-press handlers for `ms` milliseconds. A script with a delay (instead of a stored
-  # millis() deadline) never gets confused by the 32-bit millis() overflow after 24.9 days (signed compare) or 49.7 days (wrap).
+  # millis() deadline) is not confused by the 32-bit millis() overflow (a signed compare breaks after 24.9 days,
+  # the counter wraps after 49.7 days).
   - id: suppress_gesture
     mode: restart
     parameters:
