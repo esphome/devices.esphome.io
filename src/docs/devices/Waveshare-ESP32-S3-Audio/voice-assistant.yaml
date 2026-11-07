@@ -1,0 +1,82 @@
+# --- Media player ---
+# The media player is the only component that drives the speaker. Voice
+# assistant replies go through it too (voice_assistant.media_player below), so
+# a reply and a Home Assistant announcement queue one after the other instead
+# of each stopping the speaker under the other.
+media_player:
+  - platform: speaker
+    id: audio_player
+    name: "Audio Player"
+    announcement_pipeline:
+      speaker: spkr
+    on_announcement:
+      # Microphone and speaker share one I2S bus: free it for playback.
+      - micro_wake_word.stop:
+      - delay: 500ms
+      - wait_until:
+          not:
+            media_player.is_announcing:
+      - delay: 500ms
+      # During a voice assistant turn, on_end restarts the wake word instead.
+      - if:
+          condition:
+            not:
+              voice_assistant.is_running:
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start:
+
+# --- Wake word + voice assistant ---
+micro_wake_word:
+  id: mww
+  microphone: mic
+  vad:
+    model: github://esphome/micro-wake-word-models/models/v2/vad.json
+  models:
+    - okay_nabu
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone: mic
+  media_player: audio_player
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 2
+  volume_multiplier: 2.0
+
+  on_client_connected:
+    - delay: 2s
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  # on_end fires when the pipeline ends, which can be before the reply has
+  # played. The voice assistant keeps running until its own reply finishes
+  # (or right away when there is no spoken reply), so wait for that, then for
+  # any announcement queued behind it, before handing the bus back to the mic.
+  on_end:
+    - light.turn_off: rgb_ring
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - wait_until:
+        and:
+          - not:
+              media_player.is_announcing:
+          - not:
+              speaker.is_playing:
+    - delay: 500ms
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
+
+  on_error:
+    - wait_until:
+        and:
+          - not:
+              media_player.is_announcing:
+          - not:
+              speaker.is_playing:
+    - lambda: id(va).set_use_wake_word(false);
+    - micro_wake_word.start:
