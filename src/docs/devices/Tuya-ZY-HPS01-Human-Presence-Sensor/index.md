@@ -57,11 +57,7 @@ This variant will work by simply changing the illuminance sensor datapoint ID in
 ```yaml inline
 sensor:
   - platform: tuya
-    name: "Light Intensity"
-    id: light_intensity
+    ...
     sensor_datapoint: 11 # Used to be 103
-    unit_of_measurement: "lux"
-    icon: "mdi:brightness-5"
-    device_class: "illuminance"
-    state_class: "measurement"
+    ...
 ```
