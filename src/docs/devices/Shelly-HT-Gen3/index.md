@@ -123,10 +123,12 @@ esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
 ```bash
 esphome compile shelly-ht-gen3.yaml
 esptool.py --chip esp32c3 --port /dev/ttyUSB0 --baud 460800 \
-  write_flash 0x0 .esphome/build/shelly-ht-gen3/.pioenvs/shelly-ht-gen3/firmware-factory.bin
+  write_flash 0x0 .esphome/build/shelly-ht-gen3/.pioenvs/shelly-ht-gen3/firmware.factory.bin
 ```
 
 ## Basic Configuration (USB Powered)
+
+Add the [network, OTA and time](#network-ota-and-time) settings below to this one as well.
 
 ```yaml file=config.yaml
 ```
@@ -140,7 +142,7 @@ Add the [network, OTA and time](#network-ota-and-time) settings below to this on
 
 ## Network, OTA and time
 
-The two examples below only describe the hardware. Add this file to get the Home Assistant API, ESPHome OTA updates
+The two examples above only describe the hardware. Add this file to get the Home Assistant API, ESPHome OTA updates
 (including `allow_partition_access: true`, which the OTA flashing above needs) and the clock from Home Assistant.
 Include it with [packages](https://esphome.io/components/packages/) and add your own `wifi:` credentials and API
 encryption key:

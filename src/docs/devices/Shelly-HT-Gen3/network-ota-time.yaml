@@ -19,3 +19,8 @@ ota:
 
 time:
   - platform: homeassistant
+    id: ha_time
+
+# Show the Home Assistant clock in the T1-T4 zone of the display.
+shelly_ht_display:
+  time_id: ha_time
