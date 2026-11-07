@@ -1,0 +1,17 @@
+api:
+
+ota:
+  - platform: esphome
+
+captive_portal:
+
+sensor:
+  - platform: wifi_signal
+    name: ${device_name} Wifi Signal Strength
+    update_interval: 60s
+  - platform: uptime
+    name: ${device_name} Uptime
+
+switch:
+  - platform: restart
+    name: "${friendly_name} REBOOT"
