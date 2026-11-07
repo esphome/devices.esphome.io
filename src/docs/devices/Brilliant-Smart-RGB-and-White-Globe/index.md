@@ -11,9 +11,10 @@ board: esp8266
 This page covers the Brilliant Smart RGB and White Globe B22, Officeworks product code BL20877.
 The [archived Officeworks listing][officeworks] describes this model.
 
-![Brilliant BL20877 RGB and white B22 globe](brilliant-bl20877.jpg "Brilliant BL20877 RGB and white B22 globe")
+![Brilliant BL20877 GPIO mapping](brilliant-bl20877-gpio.png "Brilliant BL20877 GPIO mapping")
 
-Product photo: [Officeworks][officeworks-photo], as linked from the archived listing.
+Original GPIO diagram based on the pinout below, distributed under the repository's GPL-3.0 license.
+The [editable SVG source](brilliant-bl20877-gpio.svg) is included. This is a logical mapping, not a PCB layout.
 
 ## GPIO Pinout
 
@@ -38,4 +39,3 @@ Add your Wi-Fi credentials in your own configuration. This optional file enables
 ```
 
 [officeworks]: https://web.archive.org/web/20200930162316/https://www.officeworks.com.au/shop/officeworks/p/brilliant-smart-rgb-and-white-globe-b22-bl20877
-[officeworks-photo]: https://s3-ap-southeast-2.amazonaws.com/wc-prod-pim/JPEG_1000x1000/BL20877_brilliant_smart_rgb_and_white_globe_b22.jpg
