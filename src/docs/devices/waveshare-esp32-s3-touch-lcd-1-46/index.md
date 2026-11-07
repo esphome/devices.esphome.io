@@ -7,7 +7,7 @@ board: esp32
 difficulty: 2
 ---
 
-![Waveshare ESP32-S3-Touch-LCD-1.46 displaying the ESPHome logo](waveshare-lcd-1.46-touch.webp "Waveshare ESP32-S3-Touch-LCD-1.46 showing the ESPHome logo"))
+![Waveshare ESP32-S3-Touch-LCD-1.46 displaying the ESPHome logo](waveshare-lcd-1.46-touch.webp "Waveshare ESP32-S3-Touch-LCD-1.46 showing the ESPHome logo")
 
 The Waveshare ESP32-S3-Touch-LCD-1.46 has a 412×412 round LCD with an SPD2010 controller connected over
 quad SPI and an SPD2010 capacitive touchscreen connected over I²C.
