@@ -69,6 +69,14 @@ to device, so calibrate your own plug.
 A firmware that is flashed over the air from the stock Shelly firmware has to follow the stock flash layout.
 Otherwise the image installs, but the plug does not boot afterwards. The additional config below adds these settings:
 
+**Note: Shelly 2.2.0-beta2 has another layout.**
+The partition table in this folder (`PlugMG3-stock.csv`, app slots of `0x2a0000`) fits the stable Shelly firmware
+(1.8.x to 2.1.x). Shelly's `2.2.0-beta2` uses app slots of `0x300000`. For a plug on that beta use
+[`PlugMG3-beta-stock.csv`](https://github.com/oxynatOr/free-shelly-ota/blob/main/partitions/PlugMG3-beta-stock.csv)
+instead (profile `PlugMG3-beta`, see the
+[Free-Shelly-OTA page](https://github.com/oxynatOr/free-shelly-ota/blob/main/docs/devices/PlugMG3.md#beta-layout)).
+Mixing the two layouts leaves the plug unbootable.
+
 | Setting | Why |
 | ------- | --- |
 | `flash_size: 8MB` | The plug has 8 MB of flash. |
