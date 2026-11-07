@@ -11,7 +11,7 @@ board: esp8266
 The [Mirabella Genio Wi-Fi LED Strip Light][2] features a row of both RGB and cool white LEDs alternating between the
 two along the strip.
 
-[2]: https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-led-3-metre-strip-light/
+[2]: https://www.mirabella.com.au/products/i002579
 
 ![Genio Wi-Fi LED Strip Light](./Mirabella-Genio-WiFi-LED-Strip-Light.jpg "Genio Wi-Fi LED Strip Light")
 
@@ -36,66 +36,22 @@ unit OTA, you should update this page specify if it's still possible or not.
 
 ## Basic Configuration
 
-```yaml
-# Config for Mirabella Genio WiFi LED Strip Light
-# https://devices.esphome.io/devices/Mirabella-Genio-WiFi-LED-Strip-Light/
-esphome:
-
-esp8266:
-  board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "strip_light"
-    password: "ap_password"
-
-# Enable logging
-logger:
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret encryption_key
-
-ota:
-  password: "ota_password"
-
-output:
-  - platform: esp8266_pwm
-    id: output_red
-    pin: GPIO4
-  - platform: esp8266_pwm
-    id: output_green
-    pin: GPIO12
-  - platform: esp8266_pwm
-    id: output_blue
-    pin: GPIO14
-  - platform: esp8266_pwm
-    id: output_white
-    pin: GPIO5
-
-light:
-  - platform: rgbw
-    name: "Strip Light"
-    id: strip_light
-    red: output_red
-    green: output_green
-    blue: output_blue
-    white: output_white
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO0
-      mode: INPUT_PULLUP
-      inverted: true
-    name: "strip_light_pushbutton"
-    internal: true
-    on_press:
-      then:
-        - light.toggle: strip_light
+```yaml file=config.yaml
 ```
 
 [1]: ./Mirabella-Genio-WiFi-LED-Strip-Light_Teardown.jpg "Genio Wi-Fi LED Strip Light Teardown"
+
+## Optional features
+
+Download the selected YAML files into the same directory and include them as local packages alongside `config.yaml`.
+Add your Wi-Fi credentials in your own configuration.
+
+Home Assistant API and OTA updates:
+
+```yaml file=home-assistant.yaml
+```
+
+Toggle the strip with its physical button:
+
+```yaml file=button.yaml
+```
