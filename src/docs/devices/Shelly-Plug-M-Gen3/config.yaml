@@ -1,0 +1,174 @@
+substitutions:
+  name: shelly-plug-m-g3
+  friendly_name: Shelly Plug M Gen3
+
+  # BL0942 calibration, device specific
+  voltage_reference: "14033.01"
+  current_reference: "252866.6"
+  power_reference: "611.000"
+  energy_reference: "2653"
+  update_interval_bl0942: 5sec
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+wifi:
+  ap:
+
+logger:
+
+uart:
+  id: uart_0
+  tx_pin: GPIO4
+  rx_pin:
+    number: GPIO5
+    mode:
+      input: true
+      pullup: true
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+sensor:
+  - platform: bl0942
+    id: bl0942_1
+    uart_id: uart_0
+    update_interval: ${update_interval_bl0942}
+    voltage_reference: ${voltage_reference}
+    current_reference: ${current_reference}
+    power_reference: ${power_reference}
+    energy_reference: ${energy_reference}
+    voltage:
+      name: "Voltage"
+      id: bvoltage
+      icon: mdi:alpha-v-circle-outline
+      device_class: voltage
+      state_class: measurement
+      unit_of_measurement: "V"
+    current:
+      name: "Current"
+      id: bcurrent
+      icon: mdi:alpha-a-circle-outline
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+    power:
+      name: "Power"
+      unit_of_measurement: W
+      id: bpower
+      icon: mdi:transmission-tower
+      device_class: power
+      state_class: measurement
+    energy:
+      name: "Energy"
+      id: benergy
+      icon: mdi:lightning-bolt
+      device_class: energy
+      state_class: total_increasing
+    frequency:
+      name: "Frequency"
+      id: bfreq
+      accuracy_decimals: 2
+      icon: mdi:cosine-wave
+      device_class: frequency
+      state_class: measurement
+
+  - platform: ntc
+    id: ntc_temp
+    sensor: temp_resistance_reading
+    name: "Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    icon: "mdi:thermometer"
+    calibration:
+      b_constant: 3950
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+  - platform: adc
+    id: temp_analog_reading
+    pin: GPIO1
+    attenuation: 12db
+
+globals:
+  # Button state shared with the optional add-ons (plug-gestures.yaml sets them)
+  - id: button_locked
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: gesture_suppress_until
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+binary_sensor:
+  - platform: gpio
+    id: push_button
+    name: "Button"
+    pin:
+      number: GPIO7
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on_off: 5ms
+    on_multi_click:
+      # a single short press toggles the relay (unless the child lock of plug-gestures.yaml is on)
+      - timing:
+          - ON for at most 0.4s
+          - OFF for at least 0.35s
+        then:
+          - if:
+              condition:
+                lambda: "return !id(button_locked);"
+              then:
+                - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: GPIO0
+    restore_mode: RESTORE_DEFAULT_OFF
+
+output:
+  - platform: ledc
+    pin:
+      number: GPIO18
+      inverted: true
+    id: led_red
+    frequency: 1000Hz
+  - platform: ledc
+    pin:
+      number: GPIO10
+      inverted: true
+    id: led_green
+    frequency: 1000Hz
+  - platform: ledc
+    pin:
+      number: GPIO19
+      inverted: true
+    id: led_blue
+    frequency: 1000Hz
+
+light:
+  - platform: rgb
+    id: rgb_lights
+    name: "LED"
+    red: led_red
+    green: led_green
+    blue: led_blue

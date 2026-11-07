@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# plug-energy.yaml - optional Energy Today / Energy Total sensors.
+# Use it together with config.yaml. Needs a `time:` platform in your configuration.
+# ---------------------------------------------------------------------------
+
+substitutions:
+  totaldailyenergy_Name: "Energy Today"
+  totalenergy_Name: "Energy Total"
+
+sensor:
+  - platform: total_daily_energy
+    name: ${totaldailyenergy_Name}
+    id: daily_energy
+    power_id: bpower
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: "kWh"
+    state_class: total_increasing
+    icon: mdi:meter-electric
+    device_class: energy
+    accuracy_decimals: 3
+    restore: true
+
+  - platform: integration
+    name: ${totalenergy_Name}
+    state_class: total
+    accuracy_decimals: 3
+    id: total_energy
+    icon: mdi:meter-electric-outline
+    sensor: bpower
+    device_class: energy
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: "kWh"
+    time_unit: h
+    restore: true
