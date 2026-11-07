@@ -1,0 +1,63 @@
+esphome:
+  name: yamaha-rs232-adapter
+  friendly_name: Yamaha RS-232 Adapter
+  min_version: 2026.9.0
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+external_components:
+  - source: github://memphi2/ESPHome-Yamaha-Serial@v0.2.4
+    components: [yamaha_serial]
+    refresh: never
+
+uart:
+  id: uart_yamaha
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  rx_buffer_size: 512
+
+yamaha_serial:
+  id: yamaha
+  uart_id: uart_yamaha
+  model: RX-V1600
+  receiver_profile: rx_vx600_extended
+  poll_interval: never
+  diagnostics_interval: 60s
+  allow_raw_commands: false
+  volume:
+    min: -80
+    max: 0
+    step: 0.5
+
+media_player:
+  - platform: yamaha_serial
+    yamaha_serial_id: yamaha
+    receiver:
+      name: Receiver
+
+select:
+  - platform: yamaha_serial
+    yamaha_serial_id: yamaha
+    input_source:
+      name: Input
+    program:
+      name: DSP Program
+
+button:
+  - platform: yamaha_serial
+    yamaha_serial_id: yamaha
+    refresh:
+      name: Refresh
+
+binary_sensor:
+  - platform: yamaha_serial
+    yamaha_serial_id: yamaha
+    availability:
+      name: Receiver Connected
