@@ -69,9 +69,10 @@ The GT911 I2C address is set by the level of its interrupt line (PCA9557 IO1) wh
 
 ESPHome tries 0x5D first and falls back to 0x14 on its own, so the address does not need to be changed.
 
-If the log shows `Address: 0x14` together with `Calibration error`, the GT911 did not respond at either address. This
-points to a hardware problem rather than the address. On one of my units this turned out to be a touch fault that no
-configuration could fix. Reseating the touch ribbon cable is a good first check.
+If the log shows `Address: 0x14` together with `Calibration error`, the GT911 did not respond at either address. First
+make sure the D+ pull-up fix above is in place, because I2C timeouts can cause the same message. If it still appears,
+the cause is likely hardware: on one of my units it was a touch fault that no configuration could fix. Reseating the
+touch ribbon cable is a good first check.
 
 ## Pin Configuration
 
