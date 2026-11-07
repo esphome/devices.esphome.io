@@ -8,7 +8,12 @@ board: esp8266
 
 ## General Notes
 
-[https://www.officeworks.com.au/shop/officeworks/p/brilliant-smart-rgb-and-white-globe-b22-bl20877](https://www.officeworks.com.au/shop/officeworks/p/brilliant-smart-rgb-and-white-globe-b22-bl20877)
+This page covers the Brilliant Smart RGB and White Globe B22, Officeworks product code BL20877.
+The [archived Officeworks listing][officeworks] describes this model.
+
+![Brilliant BL20877 RGB and white B22 globe](brilliant-bl20877.jpg "Brilliant BL20877 RGB and white B22 globe")
+
+Product photo: [Officeworks][officeworks-photo], as linked from the archived listing.
 
 ## GPIO Pinout
 
@@ -21,57 +26,16 @@ board: esp8266
 
 ## Basic Configuration
 
-```yaml
-esphome:
-  name: "Brilliant Smart RGBW"
-
-esp8266:
-  board: esp01_1m
-
-wifi:
-  ssid: <YOUR_SSID>
-  password: <YOUR_WIFI_PASSPHRASE>
-
-api:
-
-logger:
-
-ota:
-
-sm16716:
-  data_pin: GPIO4
-  clock_pin: GPIO5
-  num_channels: 3
-  num_chips: 1
-
-output:
-  - platform: sm16716
-    id: output_red
-    channel: 2
-    power_supply: rgb_power
-  - platform: sm16716
-    id: output_green
-    channel: 1
-    power_supply: rgb_power
-  - platform: sm16716
-    id: output_blue
-    channel: 0
-    power_supply: rgb_power
-  - platform: esp8266_pwm
-    id: output_white
-    pin: GPIO12
-
-power_supply:
-  - id: rgb_power
-    pin: GPIO13
-
-light:
-  - platform: rgbw
-    name: "brilliant_smart_rgbw"
-    id: light_1
-    red: output_red
-    green: output_green
-    blue: output_blue
-    white: output_white
-    restore_mode: ALWAYS_ON
+```yaml file=config.yaml
 ```
+
+## Optional Home Assistant integration
+
+Download both YAML files into the same directory and include them as local packages in your ESPHome configuration.
+Add your Wi-Fi credentials in your own configuration. This optional file enables the Home Assistant API and OTA updates.
+
+```yaml file=home-assistant.yaml
+```
+
+[officeworks]: https://web.archive.org/web/20200930162316/https://www.officeworks.com.au/shop/officeworks/p/brilliant-smart-rgb-and-white-globe-b22-bl20877
+[officeworks-photo]: https://s3-ap-southeast-2.amazonaws.com/wc-prod-pim/JPEG_1000x1000/BL20877_brilliant_smart_rgb_and_white_globe_b22.jpg
