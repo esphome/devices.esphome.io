@@ -1,0 +1,140 @@
+esphome:
+  name: sonoff-powct
+  friendly_name: Sonoff POW Ring
+  on_boot:  # Set the initial state of the template switch to the actual relay state. This will NOT change the state.
+    priority: 250.0  # Wait until WiFi is connected to allow the sensor some time to settle
+    then:
+      - if:
+          condition:
+            lambda: "return id(v_sensor).state > 10;"
+          then:
+            - switch.turn_on: relay_1
+          else:
+            - switch.turn_off: relay_1
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+wifi:
+  # Enable fallback hotspot in case wifi connection fails
+  ap: {}
+
+# Needed by total_daily_energy to know when a day ends
+time:
+  - platform: sntp
+    id: sntp_time
+
+uart:
+  tx_pin: GPIO26
+  rx_pin: GPIO25
+  baud_rate: 38400
+  parity: EVEN
+  stop_bits: 1
+
+sensor:
+  - platform: cse7761
+    update_interval: 2s
+    # The default is "shunt", which would require dividing the measurements by M_PI
+    current_input: current_transformer
+    current_1:
+      name: Current
+      id: a_sensor
+      unit_of_measurement: "A"
+      accuracy_decimals: 3
+      icon: mdi:current-ac
+    voltage:
+      name: Voltage
+      id: v_sensor
+      unit_of_measurement: "V"
+      icon: mdi:sine-wave
+    active_power_1:
+      name: Power
+      id: w_sensor
+      icon: mdi:flash
+      on_value_range:
+        - above: 4.0
+          then:
+            - light.turn_on: switch_led
+        - below: 3.0
+          then:
+            - light.turn_off: switch_led
+
+  - platform: total_daily_energy
+    name: Total Daily Energy
+    power_id: w_sensor
+    id: kw_sensor
+    unit_of_measurement: "kWh"
+    state_class: total_increasing
+    device_class: energy
+    accuracy_decimals: 3
+    icon: mdi:lightning-bolt
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
+
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
+    id: esp32_temp
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO00
+    id: reset
+    internal: true
+    filters:
+      - invert:
+      - delayed_off: 10ms
+    on_click:
+      - max_length: 350ms  # short press to toggle the relay
+        then:
+          switch.toggle: relay_1
+
+display:
+  - platform: tm1621
+    id: tm1621_display
+    cs_pin: GPIO17
+    data_pin: GPIO05
+    read_pin: GPIO23
+    write_pin: GPIO18
+    lambda: |-
+      it.display_voltage(false);
+      it.display_kwh(true);
+      it.printf(0, "%.1f", id(kw_sensor).state);
+      it.printf(1, "%.1f", id(w_sensor).state);
+
+output:
+  - platform: ledc
+    id: led
+    pin:
+      number: GPIO13
+      inverted: true
+
+switch:
+  - platform: gpio
+    name: Relay
+    pin: GPIO21
+    id: relay_1
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - delay: 500ms
+      - light.turn_on: switch_led
+    on_turn_off:
+      - delay: 500ms
+      - light.turn_off: switch_led
+
+light:
+  - platform: monochromatic
+    id: switch_led
+    output: led
+    internal: true
+  - platform: status_led
+    id: wifi_status_led
+    internal: true
+    pin:
+      number: GPIO15
+      inverted: true
