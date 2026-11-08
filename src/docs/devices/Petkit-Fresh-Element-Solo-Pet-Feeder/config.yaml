@@ -1,0 +1,104 @@
+# Hardware-only base configuration for the Petkit Fresh Element Solo
+# (main board D4-2_1_MAIN_PCBA_V1.0, ESP32-WROOM-32D).
+# The feed button and the "Feed one portion" switch dispense one portion: the motor
+# stops on the rotation sensor, or after 10 s if no pulse arrives.
+esphome:
+  name: petkit-fresh-element-solo
+  friendly_name: Petkit Fresh Element Solo
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+
+wifi:
+  ap: {}
+
+script:
+  # Safety stop if the rotation sensor never reports a portion.
+  - id: motor_timeout
+    mode: restart
+    then:
+      - delay: 10s
+      - switch.turn_off: motor_forward
+
+output:
+  - platform: gpio
+    id: led_output
+    pin: GPIO5
+  - platform: ledc
+    id: buzzer_output
+    pin: GPIO16
+
+light:
+  - platform: binary
+    name: Status LED
+    output: led_output
+
+rtttl:
+  output: buzzer_output
+
+switch:
+  # Powers the rotation and food sensors.
+  - platform: gpio
+    id: enable_sensors
+    pin: GPIO33
+    restore_mode: ALWAYS_ON
+    internal: true
+
+  # Motor driver enable (nSleep).
+  - platform: gpio
+    id: motor_enable
+    pin: GPIO19
+    restore_mode: ALWAYS_OFF
+    internal: true
+
+  - platform: gpio
+    id: motor_forward
+    name: Feed one portion
+    icon: mdi:food-drumstick
+    pin: GPIO18
+    restore_mode: ALWAYS_OFF
+    interlock: [motor_forward, motor_reverse]
+    interlock_wait_time: 200ms
+    on_turn_on:
+      - switch.turn_on: motor_enable
+      - script.execute: motor_timeout
+    on_turn_off:
+      - switch.turn_off: motor_enable
+      - script.stop: motor_timeout
+
+  - platform: gpio
+    id: motor_reverse
+    pin: GPIO17
+    restore_mode: ALWAYS_OFF
+    interlock: [motor_forward, motor_reverse]
+    interlock_wait_time: 200ms
+    internal: true
+
+binary_sensor:
+  - platform: gpio
+    name: Feed button
+    pin:
+      number: GPIO34
+      inverted: true
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - switch.turn_on: motor_forward
+
+  # One pulse per portion: stop the motor.
+  - platform: gpio
+    name: Rotation sensor
+    pin:
+      number: GPIO27
+      inverted: true
+    on_press:
+      - switch.turn_off: motor_forward
+
+  - platform: gpio
+    name: Food sensor
+    pin:
+      number: GPIO14
