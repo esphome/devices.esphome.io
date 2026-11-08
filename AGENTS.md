@@ -49,8 +49,9 @@ Run `validate-devices` and `lint-frontmatter` before pushing any change under `s
 - A PR that can't merge into `main` gets the `has-conflicts` label and a failing "Merge conflicts" check run on its
   head commit until main is merged or rebased in; a clean PR gets a passing one. Every merge to `main` rechecks
   all open PRs and updates both.
-- Copilot reviews a PR when it opens, and again when a draft is marked ready for review, either by the author or by
-  the Made for ESPHome promotion (the review drafter often drafts a PR before that first review starts).
+- Copilot reviews a ready PR when it opens, on every push, and when a draft is marked ready for review, either by
+  the author or by the Made for ESPHome promotion (the review drafter often drafts a PR before that first review
+  starts). The workflows request it with the app token, so contributors without Copilot access get it too.
 - Only review and change what the diff touches; don't flag pre-existing problems on untouched pages. Validation
   scope differs from review scope, though. `validate-devices` and most of `validate-yaml` (YAML parsing, secrets
   and passwords, hardware-only `config.yaml`, first-`file=` ordering, missing `file=` targets) run on the whole
