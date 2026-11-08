@@ -39,11 +39,11 @@ globals:
   - id: last_food_sensor_count
     type: int
     initial_value: "0"
-    restore_value: True
+    restore_value: true
   - id: last_food_scoops_count
     type: int
     initial_value: "0"
-    restore_value: True
+    restore_value: true
 
 script:
   - id: play_rtttl
@@ -97,9 +97,10 @@ script:
       send_event: bool
     then:
       lambda: |-
-        if (id(last_food_scoops_count) > 0 && id(last_food_sensor_count) / id(last_food_scoops_count) < id(low_food_threshold).state) {
+        if (id(last_food_scoops_count) > 0 &&
+            id(last_food_sensor_count) / id(last_food_scoops_count) < id(low_food_threshold).state) {
           if (play_sound) {
-            id(play_rtttl)->execute("siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e");  
+            id(play_rtttl)->execute("siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e");
           }
           if (send_event) {
             id(dispatch_feeder_food_low_event)->execute("${friendly_name} food level is low. Check the hopper.");
@@ -112,7 +113,8 @@ script:
           if (id(last_food_scoops_count) == 1) {
             id(dispatch_feeder_food_dispensed_event)->execute("${friendly_name} dispensed 1 scoop of food.");
           } else {
-            id(dispatch_feeder_food_dispensed_event)->execute("${friendly_name} dispensed " + to_string(id(scoops_count)) + " scoops of food.");
+            id(dispatch_feeder_food_dispensed_event)->execute(
+                "${friendly_name} dispensed " + to_string(id(scoops_count)) + " scoops of food.");
           }
         }
 
@@ -124,11 +126,11 @@ light:
       - strobe:
           name: fast_blink
           colors:
-            - state: True
+            - state: true
               duration: 125ms
-            - state: False
+            - state: false
               duration: 125ms
-    internal: True
+    internal: true
 
 output:
   - id: led_output
@@ -511,7 +513,8 @@ time:
         seconds: 0
         then:
           - lambda: |-
-              id(check_food_level)->execute(/* food_dispensed = */ false, /* play_sound = */ true, /* send_event = */ false);
+              id(check_food_level)->execute(
+                  /* food_dispensed = */ false, /* play_sound = */ true, /* send_event = */ false);
       - hours: "*"
         minutes: 0
         seconds: 0
@@ -569,7 +572,8 @@ binary_sensor:
               id(feed_forward).turn_off();
               id(last_food_sensor_count) = id(food_sensor_count);
               id(last_food_scoops_count) = id(scoops_count);
-              id(check_food_level)->execute(/* food_dispensed = */ true, /* play_sound = */ true, /* send_event = */ true);
+              id(check_food_level)->execute(
+                  /* food_dispensed = */ true, /* play_sound = */ true, /* send_event = */ true);
             }
         - logger.log:
             level: INFO
