@@ -56,11 +56,22 @@ voice_assistant:
   # played. The voice assistant keeps running until its own reply finishes
   # (or right away when there is no spoken reply), so wait for that, then for
   # any announcement queued behind it, before handing the bus back to the mic.
+  # On ESPHome 2026.10.2 a RUN_END with no spoken reply that arrives while the
+  # microphone is shutting down can leave the assistant stuck in
+  # AWAITING_RESPONSE, so is_running never clears. Give it 10 seconds, then
+  # stop it to reset that state so the wake word always comes back.
   on_end:
     - light.turn_off: rgb_ring
     - wait_until:
-        not:
+        condition:
+          not:
+            voice_assistant.is_running:
+        timeout: 10s
+    - if:
+        condition:
           voice_assistant.is_running:
+        then:
+          - voice_assistant.stop:
     - wait_until:
         and:
           - not:
