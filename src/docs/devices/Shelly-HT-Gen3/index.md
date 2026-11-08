@@ -69,7 +69,7 @@ The device can be flashed in two ways:
 Requirements:
 
 - Stock firmware **2.0.1** (tested). Other versions are untested.
-- Battery level of at least **35 %**, otherwise the update is refused.
+- Battery level of at least **30 %**, otherwise the update is refused.
 - The ESPHome build must use the Shelly **stock partition table**, so the image fits the
   layout on the device. Save the CSV below as `csv/HTG3-stock.csv` next to your YAML.
   The `partitions` and `CONFIG_PARTITION_TABLE_OFFSET` lines are already set in `config.yaml`.
@@ -220,7 +220,7 @@ next wake (no white flash).
 ## Known Limitations
 
 - **OTA from Shelly firmware needs ShellyOTA:** Only tested with stock firmware 2.0.1
-  and the battery must be at least 35 %. UART flashing remains available as a fallback.
+  and the battery must be at least 30 %. UART flashing remains available as a fallback.
 - **Battery percentage accuracy:** The voltage-to-percentage mapping
   may need calibration for your battery chemistry and temperature.
   Default range (4.0V–6.0V) is for 4× AA alkaline batteries.
