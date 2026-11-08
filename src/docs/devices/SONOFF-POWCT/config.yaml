@@ -39,7 +39,7 @@ uart:
 sensor:
   - platform: cse7761
     update_interval: 2s
-    # The default is "shunt", which would require dividing the measurements by M_PI
+    # This device uses a current transformer; the default is "shunt"
     current_input: current_transformer
     current_1:
       name: Current

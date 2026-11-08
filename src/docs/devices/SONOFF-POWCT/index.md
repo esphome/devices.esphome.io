@@ -26,18 +26,10 @@ difficulty: 3
 
 Based on Sonoff POW Elite 20a (POWR320D) (Source: [https://devices.esphome.io/devices/Sonoff-POW-Elite-20a](https://devices.esphome.io/devices/Sonoff-POW-Elite-20a)).
 
-Set `current_input: current_transformer` on the `cse7761` platform (requires ESPHome 2026.11.0 or newer). The option
-defaults to `shunt`, which is meant for a shunt resistor: it sets the current input to 16x gain and uses a different
-scale factor, so readings come out about `M_PI` times too high. With `current_transformer` the chip uses 1x gain on the
-current input and the component applies the matching scale, so no filters are needed.
-
-On older ESPHome versions, which do not have the `current_input` option, remove it from the configuration and divide
-the current, power and energy measurements by the `M_PI` constant instead:
-
-```yaml inline
-filters:
-  - lambda: return x / M_PI;
-```
+This device measures current with a current transformer, so set `current_input: current_transformer` on the `cse7761`
+platform (ESPHome 2026.11 or newer). The default, `shunt`, is meant for shunt resistors: it sets the current input to
+16x gain and uses a different scale factor. With `current_transformer` the chip uses 1x gain and the component applies
+the matching scale.
 
 ```yaml file=config.yaml
 ```
