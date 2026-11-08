@@ -26,7 +26,11 @@ difficulty: 3
 
 Based on Sonoff POW Elite 20a (POWR320D) (Source: [https://devices.esphome.io/devices/Sonoff-POW-Elite-20a](https://devices.esphome.io/devices/Sonoff-POW-Elite-20a)).
 
-To get the correct current and power values, the measurement must be divided by the M_PI constant.
+Set `current_input: current_transformer` on the `cse7761` platform. The option defaults to `shunt`, which is meant for
+a shunt resistor: it sets the current input to 16x gain and uses a different scale factor, so readings come out about
+`M_PI` times too high. Earlier versions of this page worked around it by dividing current, power and energy by
+`M_PI`. With `current_transformer` the chip uses 1x gain on the current input and the component applies the matching
+scale, so no filters are needed and the readings match the previous workaround.
 
 ```yaml
 # Basic Config
@@ -78,15 +82,13 @@ uart:
 sensor:
   - platform: cse7761
     update_interval: 2s
+    current_input: current_transformer
     current_1:
       name: Current
       id: a_sensor
       unit_of_measurement: "A"
       accuracy_decimals: 3
       icon: mdi:current-ac
-      filters:
-        # Measurement divided by the M_PI constant
-        - lambda: return x / M_PI;
     voltage:
       name: Voltage
       id: v_sensor
@@ -95,9 +97,6 @@ sensor:
     active_power_1:
       name: Power
       id: w_sensor
-      filters:
-        # Measurement divided by the M_PI constant
-        - lambda: return x / M_PI;
       icon: mdi:flash
       on_value_range:
         - above: 4.0
