@@ -95,7 +95,7 @@ The factory binary is located at:
 
 ```bash
 esptool.py --chip esp32c6 --port /dev/ttyUSB0 --baud 460800 \
-  write_flash 0x0 firmware-factory.bin
+  write_flash 0x0 .esphome/build/shelly-powerstrip4-gen4/build/firmware.factory.bin
 ```
 
 ## Basic Configuration
