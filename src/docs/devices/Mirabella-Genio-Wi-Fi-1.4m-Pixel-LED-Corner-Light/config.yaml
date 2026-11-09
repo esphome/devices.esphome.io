@@ -5,3 +5,25 @@ esphome:
 
 rtl87xx:
   board: t103-v1.0
+
+# Buttons from the pinout table above. Not tested on a flashed unit yet,
+# so the pull-up/inverted settings may need flipping.
+binary_sensor:
+  - platform: gpio
+    name: Power Button
+    pin:
+      number: PA12
+      mode: INPUT_PULLUP
+      inverted: true
+  - platform: gpio
+    name: LED Button
+    pin:
+      number: PA05
+      mode: INPUT_PULLUP
+      inverted: true
+  - platform: gpio
+    name: Sound Button
+    pin:
+      number: PA00
+      mode: INPUT_PULLUP
+      inverted: true
