@@ -1,0 +1,33 @@
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+  - platform: total_daily_energy
+    name: Total Daily Energy
+    power_id: w_sensor
+    id: kw_sensor
+    unit_of_measurement: "kWh"
+    state_class: total_increasing
+    device_class: energy
+    accuracy_decimals: 3
+    icon: mdi:lightning-bolt
+    filters:
+      # Multiplication factor from W to kW is 0.001
+      - multiply: 0.001
+
+display:
+  # Replaces the lambda of the display in config.yaml, to show the energy beside the power
+  - id: !extend tm1621_display
+    lambda: |-
+      if (id(display_page)) {
+        it.display_voltage(true);
+        it.display_kwh(false);
+        it.printf(0, "%.1f", id(v_sensor).state);
+        it.printf(1, "%.1f", id(a_sensor).state);
+      } else {
+        it.display_voltage(false);
+        it.display_kwh(true);
+        it.printf(0, "%.1f", id(kw_sensor).state);
+        it.printf(1, "%.1f", id(w_sensor).state);
+      }
