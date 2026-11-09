@@ -17,6 +17,10 @@ so the config for the 3203632.1 leaves this one completely dark.
 How to recognise it: the controller PCB is marked `RGBMICIR_V1.0 2024.06.21` and it has a 3-pin
 connector to the strip (GND / DO / V+). The BK7231N is soldered directly on the board.
 
+![Controller board, front](controller-front.jpg "Controller board RGBMICIR_V1.0, front")
+
+![Controller board, back](controller-back.jpg "Back: RGBMICIR_V1.0 marking and the UART pads (1TX, 1RX, 3.3V, GND)")
+
 The strip has 25 segments of 20 cm. Each segment has two SM16703 chips: one for the RGB LEDs
 (even addresses) and one for the white LEDs (odd addresses), so 50 addresses in total.
 On the white chips, channel 1 is unused, channel 2 is warm white and channel 3 is cold white.
