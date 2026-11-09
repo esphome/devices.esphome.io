@@ -113,8 +113,12 @@ function freshCore() {
     setFailed(m: string) {
       (this._failed as string[]).push(m);
     },
+    setOutput(name: string, value: string) {
+      (this._outputs as Record<string, string>)[name] = value;
+    },
     _warned: [] as string[],
     _failed: [] as string[],
+    _outputs: {} as Record<string, string>,
   };
 }
 
@@ -773,6 +777,7 @@ type PullRequest = {
   node_id?: string;
   head?: { sha: string };
   labels?: { name: string }[];
+  user?: { type: string };
 };
 
 // Mock for the promote script. `pr` seeds pulls.get, `checks` seeds
@@ -785,6 +790,7 @@ function makePromoteGithub(
     events?: unknown[];
     removeError?: number;
     graphqlError?: string;
+    addLabelsError?: string;
   } = {}
 ) {
   const calls: Call[] = [];
@@ -819,6 +825,7 @@ function makePromoteGithub(
         listEvents,
         addLabels: async (args: unknown) => {
           calls.push({ method: "addLabels", args });
+          if (opts.addLabelsError) throw new Error(opts.addLabelsError);
           return { data: {} };
         },
         removeLabel: async (args: unknown) => {
@@ -838,7 +845,7 @@ function makePromoteGithub(
 
 function makePr(
   labelNames: string[],
-  extra: { state?: string; draft?: boolean } = {}
+  extra: { state?: string; draft?: boolean; authorType?: string } = {}
 ): PullRequest {
   return {
     number: 42,
@@ -847,6 +854,7 @@ function makePr(
     node_id: "PR_node",
     head: { sha: "sha1" },
     labels: labelNames.map((name) => ({ name })),
+    user: { type: extra.authorType ?? "User" },
   };
 }
 
@@ -891,25 +899,43 @@ test("promote: a green draft the bot created is marked ready for review", async 
     checks: [ga("completed", "success")],
     events: draftedBy("Bot"),
   });
-  await promoteScript({ github, context, core: freshCore() });
+  const core = freshCore();
+  await promoteScript({ github, context, core });
   const graphql = calls.filter((c) => c.method === "graphql");
   assert.equal(graphql.length, 1);
   const gql = graphql[0].args as { query: string; vars: { id: string } };
   assert.ok(gql.query.includes("markPullRequestReadyForReview"));
   assert.equal(gql.vars.id, "PR_node");
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
-  // Its ready_for_review event triggers no workflow, so promote asks Copilot.
-  assert.deepEqual(
-    calls.filter((c) => c.method === "requestReviewers").map((c) => c.args),
-    [
-      {
-        owner: "esphome",
-        repo: "esphome-devices",
-        pull_number: 42,
-        reviewers: ["copilot-pull-request-reviewer[bot]"],
-      },
-    ]
-  );
+  // Its ready_for_review event triggers no workflow, so the job asks Copilot.
+  assert.deepEqual(core._outputs, { "marked-ready": "42" });
+  assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
+});
+
+test("promote: a label write failing after the PR is marked ready keeps its Copilot handoff", async () => {
+  withPrNumber("42");
+  const { github } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+    addLabelsError: "HTTP 502",
+  });
+  const core = freshCore();
+  await assert.rejects(promoteScript({ github, context, core }), /HTTP 502/);
+  assert.deepEqual(core._outputs, { "marked-ready": "42" });
+});
+
+test("promote: a bot-authored draft is marked ready without a Copilot handoff", async () => {
+  withPrNumber("42");
+  const { github, calls } = makePromoteGithub({
+    pr: makePr([MFE], { draft: true, authorType: "Bot" }),
+    checks: [ga("completed", "success")],
+    events: draftedBy("Bot"),
+  });
+  const core = freshCore();
+  await promoteScript({ github, context, core });
+  assert.equal(calls.filter((c) => c.method === "graphql").length, 1);
+  assert.deepEqual(core._outputs, {});
 });
 
 test("promote: a draft a human created stays a draft", async () => {
@@ -1100,9 +1126,9 @@ test("promote: a failed ready-for-review mutation warns instead of throwing", as
   await promoteScript({ github, context, core });
   assert.equal(core._warned.length, 1);
   assert.ok(core._warned[0].includes("not a draft"));
-  // The label still goes on; the job that won the race requested the review.
+  // The label still goes on; the job that won the race requests the review.
   assert.equal(calls.filter((c) => c.method === "addLabels").length, 1);
-  assert.equal(calls.filter((c) => c.method === "requestReviewers").length, 0);
+  assert.deepEqual(core._outputs, {});
 });
 
 test("promote: a PR that moved past the run's commit is left alone", async () => {
