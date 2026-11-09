@@ -1,0 +1,112 @@
+# LSC Smart Connect RGBIC+CCTIC 5 m, revision 3203632.2
+# Controller PCB: RGBMICIR_V1.0 2024.06.21 (BK7231N), strip connector GND / DO / V+
+# 50 SM16703 addresses: even = RGB chips (25 segments of 20 cm), odd = white chips.
+# Strip byte order RBG. White chips: channel 1 unused, 2 (blue) = warm, 3 (green) = cold.
+esphome:
+  name: lsc-3203632-2
+  friendly_name: LSC LED strip
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+logger:
+
+wifi:
+  ap: {}
+
+# E1.31 (sACN) receiver, e.g. for HyperHDR or Hyperion: universe 1, 25 RGB pixels
+e131:
+  method: unicast
+
+# P22 switches 24 V to the strip
+power_supply:
+  - id: led_power
+    pin: P22
+
+light:
+  - platform: beken_spi_led_strip
+    id: strip
+    pin: P16
+    num_leds: 50
+    channel_colors: RBG
+    chipset: SM16703
+    power_supply: led_power
+    internal: true
+    default_transition_length: 0s
+
+  - platform: partition
+    id: rgb
+    name: "RGB"
+    # Linear output works better for ambilight (HyperHDR does its own gamma);
+    # with the default 2.8, dim colours almost disappear.
+    gamma_correct: 1.0
+    effects:
+      - e131:
+          name: "E1.31"
+          universe: 1
+          channels: RGB
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_fireworks:
+    segments:
+      - {id: strip, from: 0, to: 0}
+      - {id: strip, from: 2, to: 2}
+      - {id: strip, from: 4, to: 4}
+      - {id: strip, from: 6, to: 6}
+      - {id: strip, from: 8, to: 8}
+      - {id: strip, from: 10, to: 10}
+      - {id: strip, from: 12, to: 12}
+      - {id: strip, from: 14, to: 14}
+      - {id: strip, from: 16, to: 16}
+      - {id: strip, from: 18, to: 18}
+      - {id: strip, from: 20, to: 20}
+      - {id: strip, from: 22, to: 22}
+      - {id: strip, from: 24, to: 24}
+      - {id: strip, from: 26, to: 26}
+      - {id: strip, from: 28, to: 28}
+      - {id: strip, from: 30, to: 30}
+      - {id: strip, from: 32, to: 32}
+      - {id: strip, from: 34, to: 34}
+      - {id: strip, from: 36, to: 36}
+      - {id: strip, from: 38, to: 38}
+      - {id: strip, from: 40, to: 40}
+      - {id: strip, from: 42, to: 42}
+      - {id: strip, from: 44, to: 44}
+      - {id: strip, from: 46, to: 46}
+      - {id: strip, from: 48, to: 48}
+
+  # White chips as an RGB light: blue = warm white, green = cold white (red unused).
+  # See white-color-temperature.yaml for a proper colour temperature light on top of it.
+  - platform: partition
+    id: whites_raw
+    name: "White chips"
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    segments:
+      - {id: strip, from: 1, to: 1}
+      - {id: strip, from: 3, to: 3}
+      - {id: strip, from: 5, to: 5}
+      - {id: strip, from: 7, to: 7}
+      - {id: strip, from: 9, to: 9}
+      - {id: strip, from: 11, to: 11}
+      - {id: strip, from: 13, to: 13}
+      - {id: strip, from: 15, to: 15}
+      - {id: strip, from: 17, to: 17}
+      - {id: strip, from: 19, to: 19}
+      - {id: strip, from: 21, to: 21}
+      - {id: strip, from: 23, to: 23}
+      - {id: strip, from: 25, to: 25}
+      - {id: strip, from: 27, to: 27}
+      - {id: strip, from: 29, to: 29}
+      - {id: strip, from: 31, to: 31}
+      - {id: strip, from: 33, to: 33}
+      - {id: strip, from: 35, to: 35}
+      - {id: strip, from: 37, to: 37}
+      - {id: strip, from: 39, to: 39}
+      - {id: strip, from: 41, to: 41}
+      - {id: strip, from: 43, to: 43}
+      - {id: strip, from: 45, to: 45}
+      - {id: strip, from: 47, to: 47}
+      - {id: strip, from: 49, to: 49}
