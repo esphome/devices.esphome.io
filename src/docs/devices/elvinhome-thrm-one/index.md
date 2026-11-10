@@ -19,10 +19,8 @@ Ethernet port alongside the ESP32-C6's Wi-Fi 6 radio, and the 802.15.4 radio is 
 reconfigured for Zigbee or Thread.
 
 It acts as an OpenTherm master, replacing a thermostat or gateway to bring control fully into Home Assistant.
-It polls the boiler for flow and return water temperature, modulation level, water pressure, hot water temperature
-and the fault flags in the status word, and it writes back the central heating setpoint, the maximum CH setpoint,
-the modulation cap and the hot water setpoint. The bus is opto-isolated and the two OpenTherm terminals can be wired
-either way round.
+It uses ESPHome's OpenTherm component to poll the boiler's status, and configure heating setpoints.
+The bus is opto-isolated and the two OpenTherm terminals can be wired either way round.
 
 The wired water leak sensor can be placed under the boiler to report if water is detected. When an Ethernet cable is
 connected it takes priority, and it will fall back to WiFi if Ethernet is unavailable.
@@ -30,9 +28,9 @@ connected it takes priority, and it will fall back to WiFi if Ethernet is unavai
 The hardware is fully open source, under the CERN-OHL-S license. The source KiCad files can be found in the same
 repository as the ESPHome configuration, which is published under GPLv3.
 
-OpenTherm does not carry enough energy to run the board, so the THRM ONE needs external power; 5 V through the USB-C
+OpenTherm does not carry enough energy to run the board, so the THRM ONE needs 5 V through the USB-C
 port, or 5-28 V DC into the screw terminals. The case hangs on two screws or against the boiler casing through the
-integrated magnets in the base.
+integrated magnets in the base. It can be purchased without the case, should you wish to 3D print your own.
 
 Key hardware:
 
@@ -70,9 +68,7 @@ The device targets ESPHome 2026.10.0 or newer.
 | GPIO23 | W5500 chip select                       |
 | EN     | Chip enable, on the SOICbite header     |
 
-Unused GPIO are exposed on the bottom of the board through test pads. SOICbite is a debug header; there is a
-[SOICbite write-up](https://elvinhome.io/blog/articles-3/a-cheap-tiny-esp32-programmer-soicbite-40) on programming
-the ESP32-C6 through it.
+Unused GPIO are exposed on the bottom of the board through test pads. SOICbite is a debug header, more info [here](https://elvinhome.io/blog/articles-3/a-cheap-tiny-esp32-programmer-soicbite-40).
 
 ## Factory Configuration
 
