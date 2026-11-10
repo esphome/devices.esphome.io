@@ -192,7 +192,10 @@ Every item in [`.github/made-for-esphome-checklist.md`](.github/made-for-esphome
 - The user can take control in the ESPHome Builder:
   - `dashboard_import:` is present, and its `package_import_url` resolves to the config file (paths are
     case-sensitive).
-  - The `ota` `esphome` platform is present (`ota: [ { platform: esphome } ]`).
+  - The `ota` `esphome` platform is present (`ota: [ { platform: esphome } ]`). The one exception is signed
+    firmware with no network OTA endpoint: the config enables `esp32: framework: advanced: signed_ota_verification:`
+    and has `improv_serial:`, and the device must be flashable over USB with no keys and no disassembly (a reviewer
+    confirms that).
   - Serial flashing is not disabled.
   - OTA updates are provided through `update:` with `platform: http_request`, and its manifest and binaries are
     reachable.

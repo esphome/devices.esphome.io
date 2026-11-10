@@ -100,6 +100,9 @@ The device must allow users to "take control" via ESPHome Builder:
 
 - ✅ **`dashboard_import:` component** included to facilitate adoption, with a `package_import_url` that resolves to the config file (paths are case-sensitive)
 - ✅ **`ota.esphome` component** included for OTA updates
+  - Exception: devices with signed firmware and no network OTA endpoint may omit it if the configuration enables
+    `esp32: framework: advanced: signed_ota_verification:` and has `improv_serial:`, and the device can be
+    flashed over USB with no keys and no disassembly (confirm this by hand)
   - Example:
     ```yaml
     ota:

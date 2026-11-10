@@ -404,6 +404,67 @@ test("placeholderSecretsYaml keeps the compile step working", () => {
   assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
 });
 
+// ---------------------------------------------------------------------------
+// Signed firmware without network OTA (signed_ota_verification)
+// ---------------------------------------------------------------------------
+
+const OTA_ITEM = "ota: `- platform: esphome`";
+const otaRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === OTA_ITEM) as { status: string; detail: string };
+const { ota: _ota, ...NO_OTA_CFG } = GOOD_CFG;
+const signedEsp32 = {
+  ...GOOD_CFG.esp32,
+  framework: { type: "esp-idf", advanced: { signed_ota_verification: { signing_scheme: "rsa3072" } } },
+};
+const SIGNED_CFG = { ...NO_OTA_CFG, esp32: signedEsp32 };
+const { improv_serial: _is, ...SIGNED_NO_SERIAL_CFG } = SIGNED_CFG;
+const { improv_serial: _is2, ...NO_OTA_NO_SERIAL } = NO_OTA_CFG;
+
+const SERIAL_ITEM = "improv_serial (USB provisioning)";
+const serialRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === SERIAL_ITEM) as { status: string; detail: string };
+
+test("runChecklist: no esphome ota is accepted only for signed firmware", () => {
+  // Signed firmware: accepted pending a human check of USB flashing.
+  let checks = runChecklist(SIGNED_CFG, "", "Widget", "PASS");
+  let row = otaRow(checks);
+  assert.equal(row.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(row.detail.includes("no keys and no disassembly"));
+  assert.equal(serialRow(checks).status, "OK");
+  // Not signed: blocks, and the message names the alternative.
+  row = otaRow(runChecklist(NO_OTA_CFG, "", "Widget", "PASS"));
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("signed_ota_verification"));
+  // An esp32 block without framework/advanced, or with advanced lacking the key, is not signed.
+  for (const esp32 of [
+    { ...GOOD_CFG.esp32, framework: { type: "esp-idf" } },
+    { ...GOOD_CFG.esp32, framework: { advanced: { enable_ota_rollback: true } } },
+  ]) {
+    assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, esp32 }, "", "Widget", "PASS")).status, "MISSING");
+  }
+  // Having esphome OTA keeps passing.
+  assert.equal(otaRow(runChecklist(GOOD_CFG, "", "Widget", "PASS")).status, "OK");
+  // Entries that are not mappings are ignored.
+  assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, ota: ["x"] }, "", "Widget", "PASS")).status, "MISSING");
+
+  // Signed with no network OTA but no improv_serial: its own row fails, and explains why.
+  checks = runChecklist(SIGNED_NO_SERIAL_CFG, "", "Widget", "PASS");
+  const serial = serialRow(checks);
+  assert.equal(serial.status, "MISSING");
+  assert.ok(serial.detail.includes("a device with a USB port must have `improv_serial:`"));
+  assert.ok(!serial.detail.includes("flashed"));
+  const result = {
+    page: "p", url: "u", fenceMissing: false, fatalError: null, configOk: true,
+    configInconclusive: false, configError: null, compile: "PASS", compileLog: null, checks,
+  } as PageResult;
+  assert.equal(pageBlocks(result), true);
+
+  // Signed but with esphome OTA, or unsigned with no OTA: improv_serial stays a human check.
+  const { improv_serial: _x, ...noSerial } = GOOD_CFG;
+  assert.equal(serialRow(runChecklist({ ...noSerial, esp32: signedEsp32 }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  assert.equal(serialRow(runChecklist({ ...NO_OTA_NO_SERIAL, }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+});
+
 test("improv_ble is N/A when there is no wifi", () => {
   const cfg = { esphome: { name: "x" }, esp32: { board: "b" } };
   const checks = runChecklist(cfg, "", "x", "SKIPPED");

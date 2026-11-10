@@ -794,14 +794,26 @@ function runChecklist(
   // 4. improv_ble (when wifi present).
   checks.push(improvBleCheck(cfg, hasWifi));
 
-  // 5. improv_serial (needs USB port to be meaningful).
+  // 5. improv_serial (needs USB port to be meaningful). A device with signed
+  // firmware and no network OTA can only be updated over USB, so it has a USB
+  // port, and a USB port requires `improv_serial:`: absent there, this blocks.
   const improvSerial = cfg.improv_serial !== undefined;
+  const ota = cfg.ota;
+  const otaHasEsphome =
+    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
+  const framework = isObject(esp32) && isObject(esp32.framework) ? esp32.framework : null;
+  const advanced = framework && isObject(framework.advanced) ? framework.advanced : null;
+  const signedOta = advanced !== null && isObject(advanced.signed_ota_verification);
+  const needsUsb = signedOta && !otaHasEsphome;
   checks.push({
     item: "improv_serial (USB provisioning)",
-    status: improvSerial ? "OK" : "NEEDS-HUMAN-CHECK",
+    status: improvSerial ? "OK" : needsUsb ? "MISSING" : "NEEDS-HUMAN-CHECK",
     detail: improvSerial
       ? "`improv_serial:` present"
-      : "no `improv_serial:` block — required only if the device exposes a USB port; confirm the hardware",
+      : needsUsb
+        ? "no `improv_serial:` block - the firmware is signed and has no network OTA, so the device is updated " +
+          "over a USB port, and a device with a USB port must have `improv_serial:`"
+        : "no `improv_serial:` block — required only if the device exposes a USB port; confirm the hardware",
   });
 
   // 6. dashboard_import with package_import_url.
@@ -826,17 +838,39 @@ function runChecklist(
     });
   }
 
-  // 7. ota list contains `- platform: esphome`.
-  const ota = cfg.ota;
-  const otaHasEsphome =
-    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
-  checks.push({
-    item: "ota: `- platform: esphome`",
-    status: otaHasEsphome ? "OK" : "MISSING",
-    detail: otaHasEsphome
-      ? "OTA over the ESPHome protocol is enabled"
-      : "no `- platform: esphome` entry under `ota:` — required so users can push OTA updates",
-  });
+  // 7. ota list contains `- platform: esphome`. The exception is a factory
+  // config for a device with signed firmware: it enables
+  // `esp32: framework: advanced: signed_ota_verification:` and has no network
+  // OTA endpoint, so it is updated over USB. Taking control imports a package
+  // that carries the ESPHome OTA again. Whether USB flashing really needs no
+  // keys or disassembly cannot be read from the config, so that path asks for
+  // a human check (its `improv_serial:` is enforced by the row above).
+  const otaItem = "ota: `- platform: esphome`";
+  if (otaHasEsphome) {
+    checks.push({
+      item: otaItem,
+      status: "OK",
+      detail: "OTA over the ESPHome protocol is enabled",
+    });
+  } else if (signedOta) {
+    checks.push({
+      item: otaItem,
+      status: "NEEDS-HUMAN-CHECK",
+      detail:
+        "no `- platform: esphome` entry under `ota:`; the firmware is signed " +
+        "(`esp32: framework: advanced: signed_ota_verification:`). Accepted for signed firmware with no network OTA " +
+        "endpoint if the device can be flashed over USB with no keys and no disassembly - confirm that",
+    });
+  } else {
+    checks.push({
+      item: otaItem,
+      status: "MISSING",
+      detail:
+        "no `- platform: esphome` entry under `ota:` — required so users can push OTA updates " +
+        "(signed firmware with no network OTA can instead enable `esp32: framework: advanced: " +
+        "signed_ota_verification:`, and must then be flashable over USB)",
+    });
+  }
 
   // 8. update list contains `- platform: http_request`.
   const update = cfg.update;
