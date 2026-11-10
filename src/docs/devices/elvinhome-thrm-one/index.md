@@ -74,18 +74,18 @@ Unused GPIO are exposed on the bottom of the board through test pads. SOICbite i
 [SOICbite write-up](https://elvinhome.io/blog/articles-3/a-cheap-tiny-esp32-programmer-soicbite-40) on programming
 the ESP32-C6 through it.
 
-## Base Hardware Configuration
-
-This contains only the necessary parts for ESPHome to initialize the hardware. Use this as a base for your own configurations.
-
-```yaml url=https://codeberg.org/elvinhome/thrm-one/src/branch/main/esphome/core/base.yaml
-```
-
 ## Factory Configuration
 
 This is the configuration the device ships with, and contains all the necessary logic to set it up in Home Assistant.
 
 ```yaml url=https://codeberg.org/elvinhome/thrm-one/src/branch/main/esphome/thrm-one.yaml
+```
+
+## Base Hardware Configuration
+
+This contains only the necessary parts for ESPHome to initialize the hardware. Use this as a base for your own configurations.
+
+```yaml url=https://codeberg.org/elvinhome/thrm-one/src/branch/main/esphome/core/base.yaml
 ```
 
 ## Notes
