@@ -27,6 +27,7 @@ test("custom tags parse to tag-stamped strings", () => {
     ["a: !lambda |-\n  x;\n  y;\n", "!lambda x;\ny;"],
     ["a: !include common.yaml", "!include common.yaml"],
     ["a: !env HOME", "!env HOME"],
+    ["a: !env_var FW_ENV prod", "!env_var FW_ENV prod"],
     ["a: !extend dev", "!extend dev"],
     ["a: !remove", "!remove"],
   ];
