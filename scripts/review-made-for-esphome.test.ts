@@ -16,6 +16,7 @@ import * as yaml from "js-yaml";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as http from "node:http";
 import { execFileSync } from "node:child_process";
 
 import {
@@ -50,6 +51,11 @@ import {
   checkDashboardImport,
   checkAdoptedOta,
   reviewPage,
+  parseEsphomeVersion,
+  compareEsphomeVersions,
+  minVersionFromConfigError,
+  pickEsphomeRelease,
+  ensureEsphomeVersion,
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
@@ -1085,4 +1091,234 @@ test("buildReport escapes pipes/backslashes/newlines in checklist detail", () =>
   // leading, the two separators, trailing => 4 total delimiters).
   const unescaped = (row.match(/(?<!\\)\|/g) || []).length;
   assert.equal(unescaped, 4);
+});
+
+// ---------------------------------------------------------------------------
+// min_version handling
+// ---------------------------------------------------------------------------
+
+const V = (s: string) => parseEsphomeVersion(s)!;
+
+test("parseEsphomeVersion handles ESPHome and PyPI spellings", () => {
+  assert.deepEqual(V("2026.11.0"), { major: 2026, minor: 11, patch: 0, extra: "" });
+  assert.deepEqual(V("2026.11"), { major: 2026, minor: 11, patch: 0, extra: "" });
+  assert.deepEqual(V("2026.11.0b2"), { major: 2026, minor: 11, patch: 0, extra: "b2" });
+  assert.deepEqual(V("2026.11.0-dev"), { major: 2026, minor: 11, patch: 0, extra: "dev" });
+  assert.equal(parseEsphomeVersion("latest"), null);
+});
+
+test("compareEsphomeVersions orders like ESPHome (beta satisfies its own release)", () => {
+  assert.equal(compareEsphomeVersions(V("2026.10.2"), V("2026.11.0")), -1);
+  assert.equal(compareEsphomeVersions(V("2026.11.1"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.12.0"), V("2026.11.9")), 1);
+  assert.equal(compareEsphomeVersions(V("2027.1.0"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.11.0"), V("2026.11.0")), 0);
+  assert.equal(compareEsphomeVersions(V("2026.11.0b1"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.11.0"), V("2026.11.0b1")), -1);
+});
+
+test("minVersionFromConfigError reads ESPHome's too-old validation error", () => {
+  const msg = (v: string) => `Failed config\n\nesphome: None\n  \n  Your ESPHome version is too old. Please update to at least ${v}.\n`;
+  assert.equal(minVersionFromConfigError(msg("2026.11.0")), "2026.11.0");
+  assert.equal(minVersionFromConfigError(msg("2026.11.0-b2")), "2026.11.0-b2");
+  // Colour codes around the message are ignored.
+  assert.equal(minVersionFromConfigError("\x1b[31mYour ESPHome version is too old. Please update to at least 2026.11.0\x1b[0m"), "2026.11.0");
+  // Other config errors do not match.
+  assert.equal(minVersionFromConfigError("Component not found: bogus\n"), null);
+  assert.equal(minVersionFromConfigError(""), null);
+});
+
+test("pickEsphomeRelease prefers stable, falls back to the newest beta", () => {
+  const releases = ["2026.9.0", "2026.10.2", "2026.11.0b1", "2026.11.0b10", "2026.11.0b2", "2026.12.0b1", "2026.11.0rc1", "junk"];
+  // A stable release already satisfies the minimum: newest stable wins.
+  assert.equal(pickEsphomeRelease(V("2026.10.0"), releases), "2026.10.2");
+  // 2026.11.0 not out yet: newest beta of that release (numeric, so b10 > b2).
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), releases.filter((r) => r !== "2026.12.0b1")), "2026.11.0b10");
+  // A newer beta base beats an older base.
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), releases), "2026.12.0b1");
+  // Older base listed after the newest one does not displace it.
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), ["2026.12.0b1", "2026.11.0b4"]), "2026.12.0b1");
+  // Stable in a list where a later stable is older.
+  assert.equal(pickEsphomeRelease(V("2026.9.0"), ["2026.10.2", "2026.9.0"]), "2026.10.2");
+  // Nothing satisfies it.
+  assert.equal(pickEsphomeRelease(V("2027.1.0"), releases), null);
+});
+
+function fakeEsphome(version: string): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const bin = path.join(dir, "esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\necho "Version: ${version}"\n`, { mode: 0o755 });
+  return bin;
+}
+
+function pypiResponse(releases: Record<string, boolean>): Response {
+  const body: Record<string, { yanked: boolean }[]> = {};
+  for (const [name, yanked] of Object.entries(releases)) body[name] = [{ yanked }];
+  body["0.0.1"] = [];
+  return new Response(JSON.stringify({ releases: body }), { status: 200 });
+}
+
+test("ensureEsphomeVersion leaves a new-enough or unknown install alone", async () => {
+  const deps = {
+    fetcher: async () => { throw new Error("must not fetch"); },
+    install: () => { throw new Error("must not install"); },
+  };
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.10.0", deps), { ok: true });
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.11.0b1"), "2026.11.0", deps), { ok: true });
+  // Unparseable min_version: ESPHome reports it.
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "soon", deps), { ok: true });
+  // Binary that does not print a version.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const odd = path.join(dir, "esphome");
+  fs.writeFileSync(odd, "#!/bin/sh\necho hello\n", { mode: 0o755 });
+  assert.deepEqual(await ensureEsphomeVersion(odd, "2026.11.0", deps), { ok: true });
+  // Binary that does not exist / fails.
+  assert.deepEqual(await ensureEsphomeVersion(path.join(dir, "nope"), "2026.11.0", deps), { ok: true });
+});
+
+test("ensureEsphomeVersion installs the stable release when it is out", async () => {
+  const installed: string[] = [];
+  const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.10.2": false, "2026.11.0": false, "2026.11.0b1": false }),
+    install: (rel) => (installed.push(rel), { ok: true, output: "" }),
+  });
+  assert.deepEqual(r, { ok: true });
+  assert.deepEqual(installed, ["2026.11.0"]);
+});
+
+test("ensureEsphomeVersion falls back to a beta and skips yanked releases", async () => {
+  const installed: string[] = [];
+  const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.10.2": false, "2026.11.0b1": false, "2026.11.0b2": true }),
+    install: (rel) => (installed.push(rel), { ok: true, output: "" }),
+  });
+  assert.deepEqual(r, { ok: true });
+  assert.deepEqual(installed, ["2026.11.0b1"]);
+});
+
+test("ensureEsphomeVersion reports failures instead of throwing", async () => {
+  const bin = fakeEsphome("2026.10.2");
+  const install = () => { throw new Error("must not install"); };
+  // No release satisfies the minimum.
+  let r = await ensureEsphomeVersion(bin, "2099.1.0", { fetcher: async () => pypiResponse({ "2026.10.2": false }), install });
+  assert.equal(r.ok, false);
+  assert.ok(!r.ok && r.message.includes("newer than any ESPHome stable or beta release"));
+  // PyPI returns a payload without releases.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", {
+    fetcher: async () => new Response("{}", { status: 200 }),
+    install,
+  });
+  assert.equal(r.ok, false);
+  // PyPI HTTP error.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => new Response("", { status: 503 }), install });
+  assert.ok(!r.ok && r.message.includes("HTTP 503"));
+  // PyPI unreachable.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => { throw new Error("offline"); }, install });
+  assert.ok(!r.ok && r.message.includes("offline"));
+  // pip fails.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.11.0": false }),
+    install: () => ({ ok: false, output: "no network" }),
+  });
+  assert.ok(!r.ok && r.message.includes("installing esphome==2026.11.0") && r.message.includes("no network"));
+});
+
+test("ensureEsphomeVersion default deps hit PyPI and pip (stubbed endpoints)", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const log = path.join(dir, "pip.log");
+  const okPip = path.join(dir, "pip-ok");
+  const badPip = path.join(dir, "pip-bad");
+  fs.writeFileSync(okPip, `#!/bin/sh\necho "$@" > ${log}\n`, { mode: 0o755 });
+  fs.writeFileSync(badPip, "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  const server = http.createServer((_req, res) => {
+    res.end(JSON.stringify({ releases: { "2026.11.0b1": [{ yanked: false }] } }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = (server.address() as { port: number }).port;
+  const saved = { pip: process.env.MFE_PIP, url: process.env.MFE_PYPI_URL };
+  process.env.MFE_PYPI_URL = `http://127.0.0.1:${port}/`;
+  try {
+    process.env.MFE_PIP = okPip;
+    assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0"), { ok: true });
+    assert.equal(fs.readFileSync(log, "utf8").trim(), "install --upgrade esphome==2026.11.0b1");
+    process.env.MFE_PIP = badPip;
+    const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0");
+    assert.equal(r.ok, false);
+  } finally {
+    server.close();
+    if (saved.pip === undefined) delete process.env.MFE_PIP; else process.env.MFE_PIP = saved.pip;
+    if (saved.url === undefined) delete process.env.MFE_PYPI_URL; else process.env.MFE_PYPI_URL = saved.url;
+  }
+});
+
+test("reviewPage upgrades ESPHome when config fails on a too-old min_version", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-mv-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const marker = path.join(dir, "upgraded");
+  // Behaves like an ESPHome that is too old until the marker file exists.
+  const makeBin = (name: string, failure: string) => {
+    const bin = path.join(dir, name);
+    fs.writeFileSync(
+      bin,
+      `#!/bin/sh\nif [ -f ${marker} ]; then\ncat <<'EOF_YAML'\n${yaml.dump({ esphome: { name: "x" } })}EOF_YAML\nelse\necho "${failure}"\nexit 2\nfi\n`,
+      { mode: 0o755 }
+    );
+    return bin;
+  };
+  const oldBin = makeBin("old-esphome", "Your ESPHome version is too old. Please update to at least 2026.11.0.");
+  const brokenBin = makeBin("broken-esphome", "Component not found: bogus");
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const saved = { ota: process.env.MFE_OTA_MANIFEST, di: process.env.MFE_DASHBOARD_IMPORT_CHECK };
+  process.env.MFE_OTA_MANIFEST = "0";
+  process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+  try {
+    const seen: string[] = [];
+    const upgrade = async (_bin: string, min: string) => {
+      seen.push(min);
+      fs.writeFileSync(marker, "");
+      return { ok: true } as const;
+    };
+
+    // Too old: ensured with the minimum ESPHome asked for, then config runs again and passes.
+    let r = await reviewPage(page, dir, oldBin, false, upgrade);
+    assert.deepEqual(seen, ["2026.11.0"]);
+    assert.equal(r.configOk, true);
+    assert.equal(r.configInconclusive, false);
+
+    // Cannot be satisfied: inconclusive (not blocking), no second config run.
+    fs.rmSync(marker);
+    r = await reviewPage(page, dir, oldBin, false, async () => ({ ok: false, message: "not released" }));
+    assert.equal(r.configInconclusive, true);
+    assert.equal(r.configError, "not released");
+    assert.equal(r.configOk, null);
+    assert.equal(pageBlocks(r), false);
+
+    // An ordinary config failure never triggers an upgrade.
+    seen.length = 0;
+    r = await reviewPage(page, dir, brokenBin, false, upgrade);
+    assert.deepEqual(seen, []);
+    assert.equal(r.configOk, false);
+
+    // A config that already works never triggers one either.
+    fs.writeFileSync(marker, "");
+    r = await reviewPage(page, dir, oldBin, false, upgrade);
+    assert.deepEqual(seen, []);
+    assert.equal(r.configOk, true);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
+    if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
 });
