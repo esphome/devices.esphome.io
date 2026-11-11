@@ -731,16 +731,26 @@ function improvBleCheck(
 
 // The two facts the OTA rules turn on: whether the config enables the ESPHome
 // OTA platform, and whether its firmware is signed
-// (`esp32: framework: advanced: signed_ota_verification:`).
-function otaProfile(cfg: Record<string, unknown>): { esphomeOta: boolean; signedOta: boolean } {
+// (`esp32: framework: advanced: signed_ota_verification:`). `ota:` may be a
+// list or a single mapping. `incomingOta` is another platform that exposes an
+// HTTP firmware-upload endpoint (`web_server`), which rules out the "updated
+// over USB only" exception for signed firmware.
+interface OtaProfile {
+  esphomeOta: boolean;
+  signedOta: boolean;
+  incomingOta: boolean;
+}
+
+function otaProfile(cfg: Record<string, unknown>): OtaProfile {
   const ota = cfg.ota;
-  const esphomeOta =
-    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
+  const entries: unknown[] = Array.isArray(ota) ? ota : isObject(ota) ? [ota] : [];
+  const esphomeOta = entries.some((e) => isObject(e) && e.platform === "esphome");
+  const incomingOta = entries.some((e) => isObject(e) && e.platform === "web_server");
   const esp32 = cfg.esp32;
   const framework = isObject(esp32) && isObject(esp32.framework) ? esp32.framework : null;
   const advanced = framework && isObject(framework.advanced) ? framework.advanced : null;
   const signedOta = advanced !== null && isObject(advanced.signed_ota_verification);
-  return { esphomeOta, signedOta };
+  return { esphomeOta, signedOta, incomingOta };
 }
 
 function runChecklist(
@@ -815,8 +825,8 @@ function runChecklist(
   // firmware and no network OTA can only be updated over USB, so it has a USB
   // port, and a USB port requires `improv_serial:`: absent there, this blocks.
   const improvSerial = cfg.improv_serial !== undefined;
-  const { esphomeOta: otaHasEsphome, signedOta } = otaProfile(cfg);
-  const needsUsb = signedOta && !otaHasEsphome;
+  const { esphomeOta: otaHasEsphome, signedOta, incomingOta } = otaProfile(cfg);
+  const needsUsb = signedOta && !otaHasEsphome && !incomingOta;
   checks.push({
     item: "improv_serial (USB provisioning)",
     status: improvSerial ? "OK" : needsUsb ? "MISSING" : "NEEDS-HUMAN-CHECK",
@@ -863,6 +873,15 @@ function runChecklist(
       item: otaItem,
       status: "OK",
       detail: "OTA over the ESPHome protocol is enabled",
+    });
+  } else if (signedOta && incomingOta) {
+    checks.push({
+      item: otaItem,
+      status: "MISSING",
+      detail:
+        "no `- platform: esphome` entry under `ota:`; the signed-firmware exception does not apply because " +
+        "`- platform: web_server` exposes a network firmware-upload endpoint. Enable the ESPHome OTA, or remove " +
+        "the other platform",
     });
   } else if (signedOta) {
     checks.push({
@@ -1492,8 +1511,8 @@ async function checkAdoptedOta(
   fetcher: (url: string, signal: AbortSignal) => Promise<Response> = (url, signal) =>
     fetch(url, { signal, redirect: "follow" })
 ): Promise<CheckResult | null> {
-  const { esphomeOta, signedOta } = otaProfile(cfg);
-  if (esphomeOta || !signedOta) return null;
+  const { esphomeOta, signedOta, incomingOta } = otaProfile(cfg);
+  if (esphomeOta || !signedOta || incomingOta) return null;
   const di = cfg.dashboard_import;
   if (!isObject(di) || typeof di.package_import_url !== "string") return null;
   const parsed = parseImportShorthand(di.package_import_url);
@@ -1567,6 +1586,17 @@ async function checkAdoptedOta(
     };
   }
   if (isObject(imported) && otaProfile(imported).esphomeOta) {
+    // Only the raw file is read, so a package it includes could still fail to
+    // resolve and leave an unbuildable config: that is not OK on its own.
+    if (imported.packages !== undefined) {
+      return {
+        item,
+        status: "NEEDS-HUMAN-CHECK",
+        detail:
+          `the imported package (${url}) enables the ESPHome OTA, but it includes packages that were not ` +
+          "expanded - confirm they resolve and the adopted config builds",
+      };
+    }
     return { item, status: "OK", detail: `the imported package (${url}) enables the ESPHome OTA` };
   }
   // With no `packages:` nothing nested can supply it: that is definitive.

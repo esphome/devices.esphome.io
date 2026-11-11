@@ -433,6 +433,26 @@ const SERIAL_ITEM = "improv_serial (USB provisioning)";
 const serialRow = (checks: { item: string }[]) =>
   checks.find((c) => c.item === SERIAL_ITEM) as { status: string; detail: string };
 
+test("runChecklist: signed firmware with a web_server OTA endpoint gets no exception", () => {
+  const cfg = { ...SIGNED_CFG, ota: [{ platform: "web_server" }] };
+  const checks = runChecklist(cfg, "", "Widget", "PASS");
+  const row = otaRow(checks);
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("web_server"));
+  // Not USB-only, so improv_serial is no longer forced to block.
+  const { improv_serial: _x, ...noSerial } = cfg;
+  assert.equal(serialRow(runChecklist(noSerial, "", "Widget", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  // The single-mapping form of `ota:` is read the same way.
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "web_server" } }, "", "W", "PASS")).status, "MISSING");
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "esphome" } }, "", "W", "PASS")).status, "OK");
+});
+
+test("checkAdoptedOta skips signed firmware that has a web_server OTA endpoint", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  const cfg = { ...SIGNED_IMPORT_CFG, ota: [{ platform: "web_server" }] };
+  assert.equal(await checkAdoptedOta(cfg, UPSTREAM, never), null);
+});
+
 test("runChecklist: no esphome ota is accepted only for signed firmware", () => {
   // Signed firmware: accepted pending a human check of USB flashing.
   let checks = runChecklist(SIGNED_CFG, "", "Widget", "PASS");
@@ -499,6 +519,15 @@ test("checkAdoptedOta reads the imported package", async () => {
   let r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(withOta));
   assert.equal(r?.item, ADOPTED_ITEM);
   assert.equal(r?.status, "OK");
+
+  // The mapping form of `ota:` counts, as ESPHome accepts it.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("ota:\n  platform: esphome\n"));
+  assert.equal(r?.status, "OK");
+
+  // OTA present but the raw file includes packages that were not expanded: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(`${withOta}packages:\n  extra: !include missing.yaml\n`));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("were not expanded"));
 
   // Package without it directly but with nested packages: a human checks.
   r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("packages:\n  core: !include core.yaml\n"));

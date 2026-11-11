@@ -106,7 +106,7 @@ Key points:
   `ota.esphome` component, serial flashing not disabled, and OTA updates via the
   `update.http_request` component. Signed firmware with no network OTA may omit `ota.esphome` only when the config
   enables `esp32: framework: advanced: signed_ota_verification:` and has `improv_serial:`, and the device flashes
-  over USB with no keys or disassembly.
+  over USB with no keys or disassembly; the package that taking control imports must still contain `ota.esphome`.
 - No secrets (not even `!secret wifi_ssid` / `!secret wifi_password`), no passwords, no static
   IPs. The config must be valid and compile and run **without any user changes** after taking
   control. Every entity/component must have an `id`.
