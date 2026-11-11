@@ -60,7 +60,7 @@ wifi:
   
   ap: # Fallback Access Point provided by Dongle Max.
     ssid: "Dongle-M_ESPHome" # Name of the access point to create.
-    # password: "12345678"
+
   on_connect:
     - script.execute: update_status_led
   on_disconnect:
