@@ -46,7 +46,6 @@ logger:
 ota:
   - platform: esphome
     allow_partition_access: true
-    encryption:
 
 external_components:
   - source: github://SONOFF-Technologies/esphome-stream-server
