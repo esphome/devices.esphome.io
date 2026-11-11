@@ -1,6 +1,4 @@
 api:
-  encryption:
-    key: ""
 
 ota:
   - platform: esphome
