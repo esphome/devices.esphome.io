@@ -526,6 +526,13 @@ test("checkAdoptedOta fails an import that points back at the reviewed config", 
   const r = await checkAdoptedOta(cfg, UPSTREAM, async () => { throw new Error("must not fetch"); });
   assert.equal(r?.status, "MISSING");
   assert.ok(r?.detail.includes("points at the reviewed config itself"));
+  // A different or omitted ref can name another version of the file: fetch the adoption target instead.
+  const body = okBody(yaml.dump({ ota: [{ platform: "esphome" }] }));
+  for (const ref of ["@user-main", ""]) {
+    const withRef = { ...SIGNED_CFG, dashboard_import: { package_import_url: `github://owner/repo/factory.yaml${ref}` } };
+    const fetched = await checkAdoptedOta(withRef, UPSTREAM, body);
+    assert.equal(fetched?.status, "OK", ref);
+  }
   // A different file in the same repo is fetched instead.
   const other = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(yaml.dump({ ota: [{ platform: "esphome" }] })));
   assert.equal(other?.status, "OK");
@@ -547,7 +554,7 @@ test("reviewPage adds the adopted-OTA row for signed firmware", async () => {
   );
   const realFetch = globalThis.fetch;
   globalThis.fetch = (async (url: string) =>
-    String(url).includes("raw.githubusercontent.com")
+    new URL(String(url)).hostname === "raw.githubusercontent.com"
       ? new Response(yaml.dump({ ota: [{ platform: "esphome" }] }), { status: 200 })
       : new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
   const saved = process.env.MFE_OTA_MANIFEST;

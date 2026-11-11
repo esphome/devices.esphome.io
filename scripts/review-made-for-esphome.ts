@@ -1482,8 +1482,10 @@ async function checkDashboardImport(
 // `dashboard_import: package_import_url` and confirm it enables
 // `ota: - platform: esphome`. Only applies to that signed, no-ESPHome-OTA case.
 // An import that points back at the reviewed config itself has no such OTA by
-// definition; a package without it directly may still get it from a nested
-// package, which is left to a human.
+// definition (only when the refs are explicit and equal: a different or
+// omitted ref can name another version of the file, so that one is fetched); a
+// package without it directly may still get it from a nested package, which is
+// left to a human.
 async function checkAdoptedOta(
   cfg: Record<string, unknown>,
   upstream: UpstreamRef,
@@ -1503,7 +1505,9 @@ async function checkAdoptedOta(
     parsed.host === upstream.host &&
     parsed.owner.toLowerCase() === upstream.owner.toLowerCase() &&
     parsed.repo.toLowerCase() === upstream.repo.toLowerCase() &&
-    parsed.filename === upstream.filePath
+    parsed.filename === upstream.filePath &&
+    parsed.ref !== null &&
+    parsed.ref === upstream.ref
   ) {
     return {
       item,
