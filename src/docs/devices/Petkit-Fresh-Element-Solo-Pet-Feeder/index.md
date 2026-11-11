@@ -124,7 +124,7 @@ sensor with per-pulse and overall timeouts, and reports the result of each feed 
 
 ```yaml inline
 packages:
-  petkit_solo: github://Oinq/esphome-petkit-solo/petkit-solo.yaml@v0.1.0
+  petkit_solo: github://Oinq/esphome-petkit-solo/petkit-solo.yaml@v0.2.0
 ```
 
 ## Automation example
