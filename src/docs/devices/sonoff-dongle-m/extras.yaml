@@ -44,8 +44,6 @@ psram:
 logger:
 
 api:
-  encryption:
-    key: # Specify the encryption key. Leave empty to let ESPHome generate one
 
 ota:
   - platform: esphome
@@ -62,12 +60,10 @@ network:
 
 wifi:
   id: wifi_network
-
-  ssid: # Specify the WLAN that your Dongle Max should connect to.
-  password: # Specify the password of that WLAN.
+  
   ap: # Fallback Access Point provided by Dongle Max.
     ssid: "Dongle-M_ESPHome" # Name of the access point to create.
-    password: # Password for the access point. Leave empty for an open network.
+    password: "12345678"
   on_connect:
     - script.execute: update_status_led
   on_disconnect:
