@@ -60,7 +60,7 @@ audio — this is the single biggest time sink with this board family.
 | GPIO42 | Audio power rail (PA_EN, active LOW)                           |
 | GPIO45 | I2S DOUT (speaker, ES8311 DAC), strapping pin                 |
 | GPIO46 | Speaker amplifier enable (PA_CTRL, NS4150B), strapping pin     |
-| GPIO47 | I2C SDA (shared: ES8311 @0x18, SHTC3 @0x70, RTC @0x51)         |
+| GPIO47 | I2C SDA (shared: ES8311 @0x18, SHTC3 @0x70, RTC @0x51, touch @0x38) |
 | GPIO48 | I2C SCL                                                        |
 
 Pin map verified against Waveshare's own official ESP-IDF firmware
@@ -73,9 +73,11 @@ and harmless on this board.
 
 ## Basic Configuration
 
-Includes Wi-Fi, the shared I2C bus, the ES8311 mic/speaker audio path, the
-SHTC3 sensor, and the boot button. No `api:`/`ota:` yet — add your own (or
-see the Voice Assistant config below, which includes them).
+Includes the power rails, the shared I2C bus, the ES8311 mic/speaker audio
+path, the speaker amplifier enable, the SHTC3 sensor, and the boot button.
+It has no `wifi:`, `api:` or `ota:` — add your own (or see the Voice
+Assistant config below, which includes `api:`/`ota:`; it still needs your
+own `wifi:` block).
 
 ```yaml file=config.yaml
 ```
@@ -130,9 +132,27 @@ plausible-looking-but-wrong config:
 
   (no ES8311, no SHTC3, no RTC — and that ~11 s stall can itself cause a failed
   boot and an OTA rollback). `power_supply:` with `enable_on_boot: true` reports
-  `setup_priority::POWER` on an internal pin, which genuinely precedes `i2c:`.
-  With it, a cold boot enumerates `0x18` (ES8311), `0x38` (touch controller),
-  `0x51` (PCF85063 RTC) and `0x70` (SHTC3).
+  `setup_priority::POWER` on an internal pin, which genuinely precedes `i2c:`
+  (`esphome/components/power_supply/power_supply.cpp`; without
+  `enable_on_boot` it falls back to `IO`):
+
+  ```cpp
+  float PowerSupply::get_setup_priority() const {
+    if (this->pin_->is_internal() && this->enable_on_boot_)
+      return setup_priority::POWER;
+    return setup_priority::IO;
+  }
+  ```
+
+  With it, a cold boot enumerates `0x18` (ES8311), `0x38` (touch controller,
+  Touch variant only), `0x51` (PCF85063 RTC) and `0x70` (SHTC3).
+
+- **GPIO46 must be driven HIGH for any sound.** It is the NS4150B amplifier's
+  CTRL pin and an ESP32-S3 strapping pin with a default pull-down, so if
+  nothing drives it the amp stays in shutdown: playback "succeeds" in the logs
+  while the speaker is silent. Both configs drive it with a plain
+  `switch: platform: gpio` (`restore_mode: RESTORE_DEFAULT_ON`) — the amp is
+  not on a bus, so it doesn't need `power_supply`'s early priority.
 
 ## Voice Assistant Configuration
 
@@ -172,11 +192,22 @@ Key points:
     require `speaker:` and are rejected at config-validation time when
     using `media_player:` instead (which you need for HA-initiated
     playback, not just pipeline TTS) — use `media_player`'s hooks instead.
-  - `voice_assistant`'s `on_end` fires *before* the response actually plays,
-    so it must not touch the mic/bus; only `media_player`'s `on_idle`
-    (via `script.restart_mww`, which explicitly waits for
-    `media_player.is_announcing` and `speaker.is_playing` to clear) should
-    reacquire it.
+  - `voice_assistant`'s `on_end` fires at pipeline RUN_END, which can be
+    *before* the response has played, so it must not grab the bus directly.
+    But it still has to restart wake word: `micro_wake_word` stops itself
+    after a detection (`stop_after_detection` defaults to `true`), and a run
+    that produces no TTS playback never reaches `media_player`'s `on_idle`,
+    leaving the satellite deaf until it reconnects. So `on_end` first waits
+    for `voice_assistant.is_running` to clear (with a media player the
+    pipeline stays "running" until playback finishes), then calls the same
+    `script.restart_mww` as `on_idle`. That script waits for
+    `media_player.is_announcing` and `speaker.is_playing` to clear and only
+    starts `micro_wake_word` if it isn't already running.
+  - The speaker media player needs **two different speakers** for its
+    announcement and media pipelines — ESPHome rejects both pointing at the
+    same one ("The announcement and media pipelines cannot use the same
+    speaker"). The config uses a `mixer` with two `resampler` sources feeding
+    the single physical I2S speaker.
   - Adding an explicit `microphone.capture` / `microphone.stop_capture`
     anywhere creates a **second, independent** claim on the mic that
     `micro_wake_word.stop` cannot release. The mic then keeps the bus mutex

@@ -25,7 +25,8 @@ api:
 ota:
   - platform: esphome
 
-# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), and PCF85063 RTC (0x51).
+# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), PCF85063 RTC (0x51)
+# and, on the Touch variant only, the capacitive touch controller (0x38).
 i2c:
   sda: GPIO47
   scl: GPIO48
@@ -56,6 +57,7 @@ audio_dac:
     mic_gain: 24dB   # 30dB+ clipped into garbled STT in testing; 24dB was accurate.
 
 speaker:
+  # The physical speaker on the shared I2S bus.
   - platform: i2s_audio
     id: i2s_audio_speaker
     i2s_audio_id: i2s_shared
@@ -64,6 +66,21 @@ speaker:
     audio_dac: es8311_dac
     sample_rate: 16000
     bits_per_sample: 16bit
+  # The speaker media_player needs two DIFFERENT source speakers for its
+  # announcement and media pipelines (ESPHome rejects both pointing at one
+  # speaker), so mix two sources down onto the single physical speaker.
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: i2s_audio_speaker
+    source_speakers:
+      - id: media_in
+      - id: announce_in
+  - platform: resampler
+    id: media_src
+    output_speaker: media_in
+  - platform: resampler
+    id: announce_src
+    output_speaker: announce_in
 
 microphone:
   - platform: i2s_audio
@@ -103,17 +120,27 @@ power_supply:
     enable_on_boot: true
     keep_on_time: 0s
 
+# NS4150B speaker amplifier enable (PA_CTRL). Must be HIGH for any sound out.
+# An ordinary gpio switch is fine here: the amp is not on any bus, so it does
+# not need to be up before i2c, and this exposes it as a toggle in HA.
+switch:
+  - platform: gpio
+    id: amp_enable
+    name: "Speaker Amp"
+    pin: GPIO46
+    restore_mode: RESTORE_DEFAULT_ON
+
 media_player:
   - platform: speaker
     id: spk_player
     name: None
     announcement_pipeline:
-      speaker: i2s_audio_speaker
+      speaker: announce_src
       format: FLAC
       sample_rate: 16000
       num_channels: 1
     media_pipeline:
-      speaker: i2s_audio_speaker
+      speaker: media_src
       format: FLAC
       sample_rate: 16000
       num_channels: 1
@@ -159,12 +186,22 @@ voice_assistant:
     - micro_wake_word.stop:
   on_error:
     - micro_wake_word.start:
-  # on_end fires BEFORE the TTS response actually plays -- it must NOT touch
-  # the mic/bus here. media_player's on_idle (above) is the sole place that
-  # reacquires the bus, once the speaker has actually finished.
+  # micro_wake_word stops itself after a detection (stop_after_detection
+  # defaults to true), so every run must end with it restarted -- including
+  # runs that produce no TTS playback, where media_player on_idle never fires.
+  # on_end fires at RUN_END, which can be BEFORE the TTS response has played;
+  # with a media_player, voice_assistant stays "running" until that playback
+  # finishes. So wait for the pipeline to go idle, then hand over to the same
+  # script on_idle uses, which also waits for the speaker to release the bus.
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - script.execute: restart_mww
 
 script:
   - id: restart_mww
+    mode: restart   # on_idle and on_end can both call this; last one wins
     then:
       - wait_until:
           not:
@@ -174,7 +211,12 @@ script:
             speaker.is_playing:
               id: i2s_audio_speaker
       - delay: 100ms
-      - micro_wake_word.start:
+      - if:
+          condition:
+            not:
+              micro_wake_word.is_running:
+          then:
+            - micro_wake_word.start:
 
 sensor:
   - platform: shtcx

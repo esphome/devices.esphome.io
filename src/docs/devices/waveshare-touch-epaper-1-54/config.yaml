@@ -21,7 +21,8 @@ logger:
 
 # Add your own wifi: block with your credentials.
 
-# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), and PCF85063 RTC (0x51).
+# Shared by the ES8311 codec (0x18), SHTC3 sensor (0x70), PCF85063 RTC (0x51)
+# and, on the Touch variant only, the capacitive touch controller (0x38).
 i2c:
   sda: GPIO47
   scl: GPIO48
@@ -98,7 +99,13 @@ power_supply:
     pin: GPIO17               # battery power latch; harmless on USB power
     enable_on_boot: true
     keep_on_time: 0s
+
+# NS4150B speaker amplifier enable (PA_CTRL). Must be HIGH for any sound out.
+# An ordinary gpio switch is fine here: the amp is not on any bus, so it does
+# not need to be up before i2c, and this exposes it as a toggle in HA.
+switch:
   - platform: gpio
+    id: amp_enable
     name: "Speaker Amp"
     pin: GPIO46
     restore_mode: RESTORE_DEFAULT_ON
