@@ -67,7 +67,7 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { execFileSync } from "child_process";
+import { execFileSync, spawn } from "child_process";
 import { createHash } from "crypto";
 import { fileURLToPath } from "url";
 import matter from "gray-matter";
@@ -369,6 +369,7 @@ async function downloadRepo(
 ): Promise<string> {
   const url = archiveUrl(ref);
   const tarPath = path.join(workDir, "repo.tar.gz");
+  log(`  downloading ${ref.owner}/${ref.repo}@${ref.ref}`);
 
   let res: Response;
   try {
@@ -408,6 +409,7 @@ async function downloadRepo(
     await new Promise<void>((resolve) => out.end(() => resolve()));
   }
 
+  log(`  downloaded ${(received / 1e6).toFixed(1)} MB, extracting`);
   const extractDir = path.join(workDir, "extracted");
   fs.mkdirSync(extractDir, { recursive: true });
   try {
@@ -443,37 +445,133 @@ interface ExecResult {
   timedOut: boolean;
 }
 
-function runEsphome(
+const RUN_START = Date.now();
+
+// Elapsed-time prefix (mm:ss) so a live CI log shows where the time goes.
+function stamp(): string {
+  const secs = Math.floor((Date.now() - RUN_START) / 1000);
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return `[${mm}:${ss}]`;
+}
+
+function log(message: string): void {
+  console.log(`${stamp()} ${message}`);
+}
+
+interface SpawnOptions {
+  cwd?: string;
+  timeoutMs: number;
+  // Echo the child's output line by line as it arrives.
+  stream: boolean;
+  // Label for the periodic "still running" heartbeat, shown while the child is
+  // silent (a long compile step can go minutes without printing).
+  label: string;
+  // Override the heartbeat interval (tests only).
+  heartbeatMs?: number;
+}
+
+const HEARTBEAT_MS = 60000;
+
+// Run a command to completion, capturing its output and (optionally) echoing it
+// live so the CI step log shows progress instead of staying empty until exit.
+function runStreaming(
+  bin: string,
+  args: string[],
+  opts: SpawnOptions
+): Promise<ExecResult> {
+  return new Promise<ExecResult>((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    let timedOut = false;
+    let settled = false;
+    let lastOutput = Date.now();
+    const started = Date.now();
+
+    const child = spawn(bin, args, {
+      cwd: opts.cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const finish = (ok: boolean, extraErr: string): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(killTimer);
+      clearInterval(heartbeat);
+      flush();
+      resolve({ ok, stdout, stderr: stderr + extraErr, timedOut });
+    };
+
+    // Echo complete lines only; keep the partial tail until more arrives.
+    const pending: Record<"out" | "err", string> = { out: "", err: "" };
+    const echo = (which: "out" | "err", chunk: string): void => {
+      lastOutput = Date.now();
+      if (!opts.stream) return;
+      pending[which] += chunk;
+      const lines = pending[which].split(/\r?\n/);
+      pending[which] = lines.pop() ?? "";
+      for (const line of lines) {
+        if (line.length > 0) console.log(`    | ${line}`);
+      }
+    };
+    const flush = (): void => {
+      if (!opts.stream) return;
+      for (const which of ["out", "err"] as const) {
+        if (pending[which].length > 0) console.log(`    | ${pending[which]}`);
+        pending[which] = "";
+      }
+    };
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (d: string) => {
+      stdout += d;
+      echo("out", d);
+    });
+    child.stderr.on("data", (d: string) => {
+      stderr += d;
+      echo("err", d);
+    });
+
+    const killTimer = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGTERM");
+    }, opts.timeoutMs);
+    const beatMs = opts.heartbeatMs ?? HEARTBEAT_MS;
+    const heartbeat = setInterval(() => {
+      if (Date.now() - lastOutput >= beatMs) {
+        const secs = Math.round((Date.now() - started) / 1000);
+        log(`  ${opts.label} still running (${secs}s, no new output)`);
+        lastOutput = Date.now();
+      }
+    }, beatMs);
+
+    child.on("error", (err) => finish(false, err.message));
+    child.on("close", (code) => finish(code === 0 && !timedOut, ""));
+  });
+}
+
+async function runEsphome(
   bin: string,
   subcommand: "config" | "compile",
   configFile: string,
   cwd: string,
   timeoutMs: number
-): ExecResult {
-  try {
-    const stdout = execFileSync(bin, [subcommand, configFile], {
-      cwd,
-      encoding: "utf8",
-      timeout: timeoutMs,
-      maxBuffer: 64 * 1024 * 1024,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    return { ok: true, stdout, stderr: "", timedOut: false };
-  } catch (err) {
-    const e = err as NodeJS.ErrnoException & {
-      stdout?: string | Buffer;
-      stderr?: string | Buffer;
-      killed?: boolean;
-      signal?: string;
-    };
-    const timedOut = Boolean(e.killed) && e.signal === "SIGTERM";
-    return {
-      ok: false,
-      stdout: e.stdout ? e.stdout.toString() : "",
-      stderr: e.stderr ? e.stderr.toString() : e.message ?? "",
-      timedOut,
-    };
-  }
+): Promise<ExecResult> {
+  log(`  running \`esphome ${subcommand} ${configFile}\` (timeout ${Math.round(timeoutMs / 1000)}s)`);
+  const started = Date.now();
+  const res = await runStreaming(bin, [subcommand, configFile], {
+    cwd,
+    timeoutMs,
+    // `config` stdout is the whole expanded YAML; only `compile` is worth
+    // watching live. Config problems are printed in the report anyway.
+    stream: subcommand === "compile",
+    label: `esphome ${subcommand}`,
+  });
+  const secs = ((Date.now() - started) / 1000).toFixed(1);
+  const outcome = res.ok ? "ok" : res.timedOut ? "TIMED OUT" : "FAILED";
+  log(`  \`esphome ${subcommand}\` ${outcome} in ${secs}s`);
+  return res;
 }
 
 // `esphome config` redacts secret/password values by wrapping them in SGR
@@ -1708,22 +1806,18 @@ function pickEsphomeRelease(min: EsphomeVersion, releases: string[]): string | n
 
 interface EnsureDeps {
   fetcher: (url: string, timeoutMs: number) => Promise<Response>;
-  install: (release: string) => { ok: boolean; output: string };
+  install: (release: string) => Promise<{ ok: boolean; output: string }>;
 }
 
 const defaultEnsureDeps: EnsureDeps = {
   fetcher: (url, timeoutMs) => fetchWithTimeout(url, timeoutMs),
-  install: (release) => {
-    try {
-      const out = execFileSync(
-        process.env.MFE_PIP || "pip",
-        ["install", "--upgrade", `esphome==${release}`],
-        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 600000 }
-      );
-      return { ok: true, output: out };
-    } catch (err) {
-      return { ok: false, output: (err as Error).message };
-    }
+  install: async (release) => {
+    const res = await runStreaming(
+      process.env.MFE_PIP || "pip",
+      ["install", "--upgrade", `esphome==${release}`],
+      { timeoutMs: 600000, stream: true, label: "pip install" }
+    );
+    return { ok: res.ok, output: res.ok ? res.stdout : res.stderr || res.stdout };
   },
 };
 
@@ -1753,7 +1847,7 @@ async function ensureEsphomeVersion(
   // config step rather than guess.
   if (!installed || compareEsphomeVersions(installed, min) >= 0) return { ok: true };
 
-  console.log(
+  log(
     `  config needs ESPHome >= ${minVersion}; installed ${installed.major}.${installed.minor}.${installed.patch}${installed.extra}`
   );
   let release: string | null = null;
@@ -1784,8 +1878,8 @@ async function ensureEsphomeVersion(
         "release on PyPI, so the config cannot be checked yet",
     };
   }
-  console.log(`  installing esphome==${release}`);
-  const inst = deps.install(release);
+  log(`  installing esphome==${release}`);
+  const inst = await deps.install(release);
   if (!inst.ok) {
     return {
       ok: false,
@@ -1829,8 +1923,10 @@ async function reviewPage(
   }
   result.url = urlFence.urlAttr;
   const ghRef = parseUpstreamUrl(urlFence.urlAttr)!;
+  log(`1/8 config source: ${urlFence.urlAttr}`);
 
   // 2. Download the whole repo at the ref.
+  log("2/8 downloading the repository");
   const pageWork = fs.mkdtempSync(path.join(workRoot, "page-"));
   let repoRoot: string;
   try {
@@ -1847,6 +1943,7 @@ async function reviewPage(
     return result;
   }
   const configDir = path.dirname(configFile);
+  log(`  config file: ${ghRef.filePath}`);
 
   // 3. Placeholder secrets next to the config, so a config that references
   //    the Wi-Fi pair still expands and compiles. Referencing it is still a
@@ -1858,8 +1955,9 @@ async function reviewPage(
   );
 
   // 4. Expand + validate.
+  log("4/8 expanding the config (esphome config)");
   const configTimeout = Number(process.env.CONFIG_TIMEOUT_MS ?? 180000);
-  let cfgRun = runEsphome(
+  let cfgRun = await runEsphome(
     esphomeBin,
     "config",
     path.basename(configFile),
@@ -1878,7 +1976,7 @@ async function reviewPage(
       result.configError = ensured.message;
       return result;
     }
-    cfgRun = runEsphome(
+    cfgRun = await runEsphome(
       esphomeBin,
       "config",
       path.basename(configFile),
@@ -1905,6 +2003,7 @@ async function reviewPage(
     return result;
   }
   result.configOk = true;
+  log("  config expanded and valid");
 
   const expandedText = stripAnsi(cfgRun.stdout);
   let cfg: unknown;
@@ -1923,8 +2022,9 @@ async function reviewPage(
 
   // 5. Compile.
   if (doCompile) {
+    log("5/8 compiling (esphome compile) - output streams below");
     const compileTimeout = Number(process.env.COMPILE_TIMEOUT_MS ?? 1500000);
-    const compRun = runEsphome(
+    const compRun = await runEsphome(
       esphomeBin,
       "compile",
       path.basename(configFile),
@@ -1940,14 +2040,19 @@ async function reviewPage(
       result.compile = "FAIL";
       result.compileLog = tail(compRun.stdout + "\n" + compRun.stderr, 40);
     }
+    log(`  compile result: ${result.compile}`);
+  } else {
+    log("5/8 compile skipped");
   }
 
   // 6. Structural checklist.
+  log("6/8 running the structural checklist");
   result.checks = runChecklist(cfg, expandedText, title, result.compile);
 
   // 7. OTA update manifest + binary liveness (unless disabled). Additive
   // network checks over the http_request update source(s).
   if (process.env.MFE_OTA_MANIFEST !== "0") {
+    log("7/8 checking OTA update manifests and binaries");
     const otaRows = await checkUpdateManifests(cfg, chipFamilyFromConfig(cfg));
     result.checks.push(...otaRows);
   }
@@ -1955,11 +2060,13 @@ async function reviewPage(
   // 8. dashboard_import URL resolves (unless disabled). The raw path is
   // case-sensitive, so a wrong-case folder breaks "take control".
   if (process.env.MFE_DASHBOARD_IMPORT_CHECK !== "0") {
+    log("8/8 checking dashboard_import and adopted OTA");
     const importRow = await checkDashboardImport(cfg, ghRef, repoRoot);
     if (importRow) result.checks.push(importRow);
     const adoptedRow = await checkAdoptedOta(cfg, ghRef);
     if (adoptedRow) result.checks.push(adoptedRow);
   }
+  log("review of this page finished");
   return result;
 }
 
@@ -2300,6 +2407,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
+  runStreaming,
+  stamp,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,

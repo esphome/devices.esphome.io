@@ -52,6 +52,8 @@ import {
   checkDashboardImport,
   checkAdoptedOta,
   reviewPage,
+  runStreaming,
+  stamp,
   parseEsphomeVersion,
   compareEsphomeVersions,
   minVersionFromConfigError,
@@ -1405,5 +1407,151 @@ test("reviewPage upgrades ESPHome when config fails on a too-old min_version", a
     globalThis.fetch = realFetch;
     if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
     if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
+});
+
+// Run `fn` with console.log captured, returning the lines it printed.
+async function captureLog(fn: () => Promise<void>): Promise<string[]> {
+  const lines: string[] = [];
+  const real = console.log;
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    await fn();
+  } finally {
+    console.log = real;
+  }
+  return lines;
+}
+
+test("stamp is an mm:ss elapsed-time prefix", () => {
+  assert.match(stamp(), /^\[\d{2,}:\d{2}\]$/);
+});
+
+test("runStreaming captures output and echoes complete lines live", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'one\\n\\ntwo\\n'; printf 'err\\n' >&2; printf 'tail'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "test",
+    });
+  });
+  assert.equal(res?.ok, true);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "one\n\ntwo\ntail");
+  assert.equal(res?.stderr, "err\n");
+  // Blank lines are skipped, the unterminated tail is flushed on exit.
+  assert.deepEqual(lines.sort(), ["    | err", "    | one", "    | tail", "    | two"]);
+});
+
+test("runStreaming stays quiet when streaming is off and reports a non-zero exit", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "echo hidden; exit 3"], { timeoutMs: 10000, stream: false, label: "test" });
+  });
+  assert.deepEqual(lines, []);
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "hidden\n");
+});
+
+test("runStreaming reports a command that cannot be spawned", async () => {
+  const res = await runStreaming("/nonexistent/mfe-bin", [], { timeoutMs: 10000, stream: false, label: "test" });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /ENOENT/);
+});
+
+test("runStreaming kills a command at the timeout and prints a heartbeat while silent", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sleep", ["5"], { timeoutMs: 700, stream: true, label: "sleeper", heartbeatMs: 100 });
+  });
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, true);
+  assert.ok(lines.some((l) => /sleeper still running \(\d+s, no new output\)/.test(l)), lines.join("\n"));
+});
+
+test("reviewPage streams the compile and maps its outcome", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-compile-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(
+    bin,
+    `#!/bin/sh
+if [ "$1" = "config" ]; then
+cat <<'EOF_YAML'
+${yaml.dump({ esphome: { name: "x" } })}EOF_YAML
+exit 0
+fi
+echo "Compiling app"
+case "$MFE_TEST_COMPILE" in
+  pass) exit 0 ;;
+  fail) echo "boom" >&2; exit 1 ;;
+  hang) sleep 5 ;;
+esac
+`,
+    { mode: 0o755 }
+  );
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const names = ["MFE_OTA_MANIFEST", "MFE_DASHBOARD_IMPORT_CHECK", "MFE_TEST_COMPILE", "COMPILE_TIMEOUT_MS"] as const;
+  const saved = Object.fromEntries(names.map((n) => [n, process.env[n]]));
+  process.env.MFE_OTA_MANIFEST = "0";
+  process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+  try {
+    const run = async (mode: string): Promise<{ r: PageResult; lines: string[] }> => {
+      process.env.MFE_TEST_COMPILE = mode;
+      let r: PageResult | undefined;
+      const lines = await captureLog(async () => {
+        r = await reviewPage(page, dir, bin, true);
+      });
+      return { r: r as PageResult, lines };
+    };
+
+    let out = await run("pass");
+    assert.equal(out.r.compile, "PASS");
+    assert.ok(out.lines.includes("    | Compiling app"));
+    assert.ok(out.lines.some((l) => /compile result: PASS/.test(l)));
+    assert.ok(out.lines.some((l) => /`esphome compile` ok in/.test(l)));
+
+    out = await run("fail");
+    assert.equal(out.r.compile, "FAIL");
+    assert.match(out.r.compileLog ?? "", /boom/);
+    assert.ok(out.lines.some((l) => /`esphome compile` FAILED in/.test(l)));
+
+    process.env.COMPILE_TIMEOUT_MS = "300";
+    out = await run("hang");
+    assert.equal(out.r.compile, "INCONCLUSIVE");
+    assert.ok(out.lines.some((l) => /`esphome compile` TIMED OUT in/.test(l)));
+
+    // Compile off: the step is announced as skipped.
+    const skipped = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(skipped.some((l) => /compile skipped/.test(l)));
+
+    // OTA manifest check on (nothing to fetch for this config): the step is announced.
+    delete process.env.MFE_OTA_MANIFEST;
+    const withOta = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(withOta.some((l) => /7\/8 checking OTA update manifests/.test(l)));
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const n of names) {
+      if (saved[n] === undefined) delete process.env[n]; else process.env[n] = saved[n];
+    }
   }
 });
