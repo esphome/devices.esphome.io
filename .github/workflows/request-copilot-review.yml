@@ -1,15 +1,20 @@
 name: Request Copilot review
 
-# Requests a Copilot code review when a draft pull request is marked ready
-# for review. The ruleset only reviews on open, and the review drafter usually
-# drafts a PR (after its device checks fail) before that first review starts.
+# Requests a Copilot code review whenever a ready pull request is opened,
+# pushed to or marked ready for review. The ruleset reviews these too, but it
+# runs the review as the PR author (or whoever marked it ready), so a
+# contributor without Copilot access gets none. GITHUB_TOKEN requests are
+# accepted and then ignored, so this uses the app token.
 # Drafts the Made for ESPHome promotion marks ready use GITHUB_TOKEN, whose
-# events trigger no workflow, so mfe-promote.cjs requests the review itself.
+# events trigger no workflow, so made-for-esphome-pr.yml requests those.
 # Logic lives in .github/scripts/request-copilot-review.cjs.
 
 on:
   pull_request_target:
     types:
+      - opened
+      - reopened
+      - synchronize
       - ready_for_review
 
 permissions: {}
@@ -18,12 +23,15 @@ jobs:
   request:
     name: Request Copilot review
     runs-on: ubuntu-latest
+    # Bot PRs (Dependabot) get no app secret, and drafts are not reviewed.
+    if: >-
+      github.event.pull_request.user.type != 'Bot'
+      && !github.event.pull_request.draft
     permissions:
       contents: read  # to check out the script below
-      pull-requests: write  # request a reviewer
     steps:
       # Checks out the base repo (trusted) only to load the script below,
-      # never the PR's code - this job runs with a writable token.
+      # never the PR's code - this job holds the app token.
       - name: Checkout scripts
         uses: actions/checkout@v7.0.1
         with:
@@ -32,9 +40,17 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Request Copilot review
         uses: actions/github-script@v9.0.0
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const script = require('./.github/scripts/request-copilot-review.cjs');
             await script({ github, context, core });
