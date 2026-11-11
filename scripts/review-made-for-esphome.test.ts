@@ -1425,6 +1425,8 @@ async function captureLog(fn: () => Promise<void>): Promise<string[]> {
   return lines;
 }
 
+const LIMITS = { captureLimit: 1024 * 1024, keepTail: true };
+
 test("stamp is an mm:ss elapsed-time prefix", () => {
   assert.match(stamp(), /^\[\d{2,}:\d{2}\]$/);
 });
@@ -1436,6 +1438,7 @@ test("runStreaming captures output and echoes complete lines live", async () => 
       timeoutMs: 10000,
       stream: true,
       label: "test",
+      ...LIMITS,
     });
   });
   assert.equal(res?.ok, true);
@@ -1449,7 +1452,7 @@ test("runStreaming captures output and echoes complete lines live", async () => 
 test("runStreaming stays quiet when streaming is off and reports a non-zero exit", async () => {
   let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
   const lines = await captureLog(async () => {
-    res = await runStreaming("sh", ["-c", "echo hidden; exit 3"], { timeoutMs: 10000, stream: false, label: "test" });
+    res = await runStreaming("sh", ["-c", "echo hidden; exit 3"], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
   });
   assert.deepEqual(lines, []);
   assert.equal(res?.ok, false);
@@ -1458,7 +1461,7 @@ test("runStreaming stays quiet when streaming is off and reports a non-zero exit
 });
 
 test("runStreaming reports a command that cannot be spawned", async () => {
-  const res = await runStreaming("/nonexistent/mfe-bin", [], { timeoutMs: 10000, stream: false, label: "test" });
+  const res = await runStreaming("/nonexistent/mfe-bin", [], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
   assert.equal(res.ok, false);
   assert.match(res.stderr, /ENOENT/);
 });
@@ -1466,11 +1469,96 @@ test("runStreaming reports a command that cannot be spawned", async () => {
 test("runStreaming kills a command at the timeout and prints a heartbeat while silent", async () => {
   let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
   const lines = await captureLog(async () => {
-    res = await runStreaming("sleep", ["5"], { timeoutMs: 700, stream: true, label: "sleeper", heartbeatMs: 100 });
+    res = await runStreaming("sleep", ["5"], { timeoutMs: 700, stream: true, label: "sleeper", heartbeatMs: 100, ...LIMITS });
   });
   assert.equal(res?.ok, false);
   assert.equal(res?.timedOut, true);
   assert.ok(lines.some((l) => /sleeper still running \(\d+s, no new output\)/.test(l)), lines.join("\n"));
+});
+
+test("runStreaming echoes a line while the child is still running", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-live-"));
+  const release = path.join(dir, "release");
+  const real = console.log;
+  const lines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    const done = runStreaming(
+      "sh",
+      ["-c", `echo first; while [ ! -f ${release} ]; do sleep 0.05; done; echo last`],
+      { timeoutMs: 30000, stream: true, label: "live", ...LIMITS }
+    );
+    // The child cannot exit until released, so seeing "first" proves it was
+    // echoed before exit rather than buffered until the end.
+    const deadline = Date.now() + 10000;
+    while (!lines.includes("    | first") && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    assert.ok(lines.includes("    | first"), "first line was not echoed while the child ran");
+    assert.equal(lines.includes("    | last"), false);
+    fs.writeFileSync(release, "");
+    const res = await done;
+    assert.equal(res.ok, true);
+    assert.ok(lines.includes("    | last"));
+  } finally {
+    console.log = real;
+  }
+});
+
+test("runStreaming timeout takes down the whole process tree", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "sleep 30 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "tree",
+    graceMs: 20000,
+    ...LIMITS,
+  });
+  assert.equal(res.timedOut, true);
+  // Settled by the pipes closing after the group kill, not by the grace timer.
+  assert.ok(Date.now() - started < 10000);
+});
+
+test("runStreaming settles after the grace period when a descendant escapes the group", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 4 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "escape",
+    graceMs: 200,
+    ...LIMITS,
+  });
+  assert.equal(res.ok, false);
+  assert.equal(res.timedOut, true);
+  assert.ok(Date.now() - started < 3000, `took ${Date.now() - started}ms`);
+});
+
+test("runStreaming keeps only the tail when output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "i=0; while [ $i -lt 500 ]; do echo line$i; i=$((i+1)); done"], {
+    timeoutMs: 10000,
+    stream: false,
+    label: "tail",
+    captureLimit: 100,
+    keepTail: true,
+  });
+  assert.equal(res.ok, true);
+  assert.ok(res.stdout.length <= 100);
+  assert.ok(res.stdout.endsWith("line499\n"));
+});
+
+test("runStreaming fails and stops the child when whole output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 20000,
+    stream: false,
+    label: "overflow",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 200,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
 });
 
 test("reviewPage streams the compile and maps its outcome", async () => {

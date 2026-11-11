@@ -467,11 +467,31 @@ interface SpawnOptions {
   // Label for the periodic "still running" heartbeat, shown while the child is
   // silent (a long compile step can go minutes without printing).
   label: string;
-  // Override the heartbeat interval (tests only).
+  // Most characters of stdout and of stderr to keep in memory.
+  captureLimit: number;
+  // On reaching `captureLimit`: true drops the oldest output and keeps the
+  // tail (diagnostics only need the last lines); false kills the child and
+  // fails, because the caller needs the output whole (expanded config).
+  keepTail: boolean;
+  // Overrides for tests.
   heartbeatMs?: number;
+  graceMs?: number;
 }
 
 const HEARTBEAT_MS = 60000;
+// How long after SIGTERM before the child's whole process group is SIGKILLed
+// and the run is settled even if a descendant still holds the output pipes.
+const KILL_GRACE_MS = 5000;
+const CONFIG_CAPTURE_LIMIT = 64 * 1024 * 1024;
+const TAIL_CAPTURE_LIMIT = 1024 * 1024;
+
+function killGroup(pid: number, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    // The group is already gone.
+  }
+}
 
 // Run a command to completion, capturing its output and (optionally) echoing it
 // live so the CI step log shows progress instead of staying empty until exit.
@@ -484,19 +504,39 @@ function runStreaming(
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let overflowed = false;
     let settled = false;
     let lastOutput = Date.now();
+    let graceTimer: NodeJS.Timeout | undefined;
     const started = Date.now();
 
+    // Own process group, so a timeout can take down the whole tree (compiler
+    // and toolchain subprocesses), not just the direct child.
     const child = spawn(bin, args, {
       cwd: opts.cwd,
       stdio: ["ignore", "pipe", "pipe"],
+      detached: true,
     });
+
+    const terminate = (): void => {
+      if (child.pid === undefined) return;
+      killGroup(child.pid, "SIGTERM");
+      // `close` waits for every holder of the output pipes, so a descendant
+      // that survives SIGTERM must not be allowed to stall the review.
+      const pid = child.pid;
+      graceTimer = setTimeout(() => {
+        killGroup(pid, "SIGKILL");
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(false, "");
+      }, opts.graceMs ?? KILL_GRACE_MS);
+    };
 
     const finish = (ok: boolean, extraErr: string): void => {
       if (settled) return;
       settled = true;
       clearTimeout(killTimer);
+      clearTimeout(graceTimer);
       clearInterval(heartbeat);
       flush();
       resolve({ ok, stdout, stderr: stderr + extraErr, timedOut });
@@ -524,18 +564,30 @@ function runStreaming(
 
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (d: string) => {
-      stdout += d;
-      echo("out", d);
-    });
-    child.stderr.on("data", (d: string) => {
-      stderr += d;
-      echo("err", d);
-    });
+    // Append to a captured stream, honouring the capture limit. Returns false
+    // when the limit was hit in fail mode.
+    const capture = (current: string, chunk: string): string | null => {
+      const next = current + chunk;
+      if (next.length <= opts.captureLimit) return next;
+      return opts.keepTail ? next.slice(next.length - opts.captureLimit) : null;
+    };
+    const onData = (which: "out" | "err", d: string): void => {
+      const next = capture(which === "out" ? stdout : stderr, d);
+      if (next === null) {
+        overflowed = true;
+        terminate();
+        return;
+      }
+      if (which === "out") stdout = next;
+      else stderr = next;
+      echo(which, d);
+    };
+    child.stdout.on("data", (d: string) => onData("out", d));
+    child.stderr.on("data", (d: string) => onData("err", d));
 
     const killTimer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGTERM");
+      terminate();
     }, opts.timeoutMs);
     const beatMs = opts.heartbeatMs ?? HEARTBEAT_MS;
     const heartbeat = setInterval(() => {
@@ -547,7 +599,12 @@ function runStreaming(
     }, beatMs);
 
     child.on("error", (err) => finish(false, err.message));
-    child.on("close", (code) => finish(code === 0 && !timedOut, ""));
+    child.on("close", (code) =>
+      finish(
+        code === 0 && !timedOut && !overflowed,
+        overflowed ? `output exceeded ${opts.captureLimit} characters` : ""
+      )
+    );
   });
 }
 
@@ -567,6 +624,8 @@ async function runEsphome(
     // watching live. Config problems are printed in the report anyway.
     stream: subcommand === "compile",
     label: `esphome ${subcommand}`,
+    captureLimit: subcommand === "compile" ? TAIL_CAPTURE_LIMIT : CONFIG_CAPTURE_LIMIT,
+    keepTail: subcommand === "compile",
   });
   const secs = ((Date.now() - started) / 1000).toFixed(1);
   const outcome = res.ok ? "ok" : res.timedOut ? "TIMED OUT" : "FAILED";
@@ -1806,7 +1865,9 @@ function pickEsphomeRelease(min: EsphomeVersion, releases: string[]): string | n
 
 interface EnsureDeps {
   fetcher: (url: string, timeoutMs: number) => Promise<Response>;
-  install: (release: string) => Promise<{ ok: boolean; output: string }>;
+  install: (
+    release: string
+  ) => { ok: boolean; output: string } | Promise<{ ok: boolean; output: string }>;
 }
 
 const defaultEnsureDeps: EnsureDeps = {
@@ -1815,7 +1876,13 @@ const defaultEnsureDeps: EnsureDeps = {
     const res = await runStreaming(
       process.env.MFE_PIP || "pip",
       ["install", "--upgrade", `esphome==${release}`],
-      { timeoutMs: 600000, stream: true, label: "pip install" }
+      {
+        timeoutMs: 600000,
+        stream: true,
+        label: "pip install",
+        captureLimit: TAIL_CAPTURE_LIMIT,
+        keepTail: true,
+      }
     );
     return { ok: res.ok, output: res.ok ? res.stdout : res.stderr || res.stdout };
   },
