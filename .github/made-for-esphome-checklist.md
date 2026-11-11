@@ -15,7 +15,7 @@
       - Exception for devices with signed firmware and no network OTA endpoint: the configuration enables
         `esp32`.`framework`.`advanced`.`signed_ota_verification` and contains `improv_serial:`, and the device can
         be flashed over USB with no keys and no disassembly. The package that "taking control" imports must still
-        contain `ota`.`esphome`
+        contain `ota`.`esphome` (the automated review checks this)
     - [ ] Serial flashing is not disabled
     - [ ] There are no references to secrets in the configuration - not even
           `!secret wifi_ssid` / `!secret wifi_password`. Users provision their

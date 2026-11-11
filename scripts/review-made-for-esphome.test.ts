@@ -16,6 +16,7 @@ import * as yaml from "js-yaml";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { execFileSync } from "node:child_process";
 
 import {
   archiveUrl,
@@ -47,6 +48,7 @@ import {
   importRawUrl,
   findCaseInsensitivePath,
   checkDashboardImport,
+  checkAdoptedOta,
   reviewPage,
   type PageResult,
 } from "./review-made-for-esphome.ts";
@@ -463,6 +465,95 @@ test("runChecklist: no esphome ota is accepted only for signed firmware", () => 
   const { improv_serial: _x, ...noSerial } = GOOD_CFG;
   assert.equal(serialRow(runChecklist({ ...noSerial, esp32: signedEsp32 }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
   assert.equal(serialRow(runChecklist({ ...NO_OTA_NO_SERIAL, }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+});
+
+const ADOPTED_ITEM = "Adopted config has `ota: - platform: esphome`";
+const SIGNED_IMPORT_CFG = {
+  ...SIGNED_CFG,
+  dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+};
+const UPSTREAM = {
+  host: "github.com", scheme: "github", owner: "owner", repo: "repo", ref: "main", filePath: "factory.yaml",
+} as const;
+const okBody = (body: string) => async () => new Response(body, { status: 200 });
+
+test("checkAdoptedOta only applies to signed firmware without ESPHome OTA", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  // Has ESPHome OTA, or is not signed, or has no usable dashboard_import: nothing to check.
+  assert.equal(await checkAdoptedOta({ ...SIGNED_IMPORT_CFG, ota: [{ platform: "esphome" }] }, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...NO_OTA_CFG, dashboard_import: SIGNED_IMPORT_CFG.dashboard_import }, UPSTREAM, never), null);
+  const { dashboard_import: _di, ...signedNoImport } = SIGNED_CFG;
+  assert.equal(await checkAdoptedOta(signedNoImport, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...SIGNED_CFG, dashboard_import: { package_import_url: "nope" } }, UPSTREAM, never), null);
+});
+
+test("checkAdoptedOta reads the imported package", async () => {
+  const withOta = yaml.dump({ ota: [{ platform: "esphome", id: "o" }] });
+  let r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(withOta));
+  assert.equal(r?.item, ADOPTED_ITEM);
+  assert.equal(r?.status, "OK");
+
+  // Package without it directly: a human checks (it may come from a nested package).
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("wifi: {}\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("no `ota: - platform: esphome` found directly"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("- just\n- a list\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+
+  // Unreadable package.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("a: [unclosed\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("did not parse"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => new Response("", { status: 404 }));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("HTTP 404"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw new Error("boom"); });
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("boom"));
+});
+
+test("checkAdoptedOta fails an import that points back at the reviewed config", async () => {
+  const cfg = {
+    ...SIGNED_CFG,
+    dashboard_import: { package_import_url: "github://Owner/Repo/factory.yaml@main" },
+  };
+  const r = await checkAdoptedOta(cfg, UPSTREAM, async () => { throw new Error("must not fetch"); });
+  assert.equal(r?.status, "MISSING");
+  assert.ok(r?.detail.includes("points at the reviewed config itself"));
+  // A different file in the same repo is fetched instead.
+  const other = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  assert.equal(other?.status, "OK");
+});
+
+test("reviewPage adds the adopted-OTA row for signed firmware", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-adopt-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'EOF_YAML'\n${yaml.dump(SIGNED_IMPORT_CFG)}EOF_YAML\n`, { mode: 0o755 });
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (url: string) =>
+    String(url).includes("raw.githubusercontent.com")
+      ? new Response(yaml.dump({ ota: [{ platform: "esphome" }] }), { status: 200 })
+      : new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const saved = process.env.MFE_OTA_MANIFEST;
+  process.env.MFE_OTA_MANIFEST = "0";
+  try {
+    const r = await reviewPage(page, dir, bin, false);
+    const row = r.checks.find((c) => c.item === ADOPTED_ITEM);
+    assert.equal(row?.status, "OK", JSON.stringify(r.checks));
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved;
+  }
 });
 
 test("improv_ble is N/A when there is no wifi", () => {

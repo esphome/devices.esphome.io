@@ -726,6 +726,20 @@ function improvBleCheck(
   };
 }
 
+// The two facts the OTA rules turn on: whether the config enables the ESPHome
+// OTA platform, and whether its firmware is signed
+// (`esp32: framework: advanced: signed_ota_verification:`).
+function otaProfile(cfg: Record<string, unknown>): { esphomeOta: boolean; signedOta: boolean } {
+  const ota = cfg.ota;
+  const esphomeOta =
+    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
+  const esp32 = cfg.esp32;
+  const framework = isObject(esp32) && isObject(esp32.framework) ? esp32.framework : null;
+  const advanced = framework && isObject(framework.advanced) ? framework.advanced : null;
+  const signedOta = advanced !== null && isObject(advanced.signed_ota_verification);
+  return { esphomeOta, signedOta };
+}
+
 function runChecklist(
   cfg: Record<string, unknown>,
   expandedText: string,
@@ -798,12 +812,7 @@ function runChecklist(
   // firmware and no network OTA can only be updated over USB, so it has a USB
   // port, and a USB port requires `improv_serial:`: absent there, this blocks.
   const improvSerial = cfg.improv_serial !== undefined;
-  const ota = cfg.ota;
-  const otaHasEsphome =
-    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
-  const framework = isObject(esp32) && isObject(esp32.framework) ? esp32.framework : null;
-  const advanced = framework && isObject(framework.advanced) ? framework.advanced : null;
-  const signedOta = advanced !== null && isObject(advanced.signed_ota_verification);
+  const { esphomeOta: otaHasEsphome, signedOta } = otaProfile(cfg);
   const needsUsb = signedOta && !otaHasEsphome;
   checks.push({
     item: "improv_serial (USB provisioning)",
@@ -1465,6 +1474,81 @@ async function checkDashboardImport(
 // Per-page review
 // ---------------------------------------------------------------------------
 
+// Signed firmware with no ESPHome OTA is only acceptable because "taking
+// control" imports a package that has it again. Fetch the package named by
+// `dashboard_import: package_import_url` and confirm it enables
+// `ota: - platform: esphome`. Only applies to that signed, no-ESPHome-OTA case.
+// An import that points back at the reviewed config itself has no such OTA by
+// definition; a package without it directly may still get it from a nested
+// package, which is left to a human.
+async function checkAdoptedOta(
+  cfg: Record<string, unknown>,
+  upstream: UpstreamRef,
+  fetcher: (url: string) => Promise<Response> = (url) =>
+    fetchWithTimeout(url, Number(process.env.MANIFEST_TIMEOUT_MS ?? 30000))
+): Promise<CheckResult | null> {
+  const { esphomeOta, signedOta } = otaProfile(cfg);
+  if (esphomeOta || !signedOta) return null;
+  const di = cfg.dashboard_import;
+  if (!isObject(di) || typeof di.package_import_url !== "string") return null;
+  const parsed = parseImportShorthand(di.package_import_url);
+  if (!parsed) return null; // reported by the dashboard_import row
+  const item = "Adopted config has `ota: - platform: esphome`";
+  const url = importRawUrl(parsed);
+
+  if (
+    parsed.host === upstream.host &&
+    parsed.owner.toLowerCase() === upstream.owner.toLowerCase() &&
+    parsed.repo.toLowerCase() === upstream.repo.toLowerCase() &&
+    parsed.filename === upstream.filePath
+  ) {
+    return {
+      item,
+      status: "MISSING",
+      detail:
+        "`package_import_url` points at the reviewed config itself, which has no `ota: - platform: esphome`, so " +
+        "users who take control would have no way to update the device over the network. Import a package that " +
+        "enables it",
+    };
+  }
+
+  let text: string;
+  try {
+    const res = await fetcher(url);
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => {});
+      return { item, status: "NEEDS-HUMAN-CHECK", detail: `${url} returned HTTP ${res.status}` };
+    }
+    text = await res.text();
+  } catch (err) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `could not fetch ${url}: ${(err as Error).message}`,
+    };
+  }
+  let imported: unknown;
+  try {
+    imported = yaml.load(text, { schema: ESPHOME_SCHEMA });
+  } catch (err) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `${url} did not parse as yaml: ${(err as Error).message}`,
+    };
+  }
+  if (isObject(imported) && otaProfile(imported).esphomeOta) {
+    return { item, status: "OK", detail: `the imported package (${url}) enables the ESPHome OTA` };
+  }
+  return {
+    item,
+    status: "NEEDS-HUMAN-CHECK",
+    detail:
+      `no \`ota: - platform: esphome\` found directly in the imported package (${url}) - confirm it ` +
+      "comes from a package it includes, so users who take control can still update over the network",
+  };
+}
+
 async function reviewPage(
   pageAbs: string,
   workRoot: string,
@@ -1606,6 +1690,8 @@ async function reviewPage(
   if (process.env.MFE_DASHBOARD_IMPORT_CHECK !== "0") {
     const importRow = await checkDashboardImport(cfg, ghRef, repoRoot);
     if (importRow) result.checks.push(importRow);
+    const adoptedRow = await checkAdoptedOta(cfg, ghRef);
+    if (adoptedRow) result.checks.push(adoptedRow);
   }
   return result;
 }
@@ -1977,6 +2063,7 @@ export {
   importRawUrl,
   findCaseInsensitivePath,
   checkDashboardImport,
+  checkAdoptedOta,
   reviewPage,
 };
 export type { ImportShorthand, PageResult, CheckResult, CheckStatus, CompileOutcome };
