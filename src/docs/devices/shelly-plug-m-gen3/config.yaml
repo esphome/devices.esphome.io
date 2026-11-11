@@ -108,7 +108,19 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
     on_press:
-      - switch.toggle: switch_relay
+      then:
+        - if:
+            condition:
+              lambda: 'return (id(s_temperature).state < ${max_temp}) & (id(switch_relay).state = false);'
+            then:
+              - switch.turn_on: switch_relay
+            else:
+              - switch.turn_off: switch_relay
+              - script.execute:
+                  id: led_flash
+                  frequency: 2.0   # 2 Hz
+                  duty: 20.0       # 20 % on, 80 % off
+                  count: 10        # 10 flashes
 
 switch:
   - platform: gpio
@@ -126,3 +138,36 @@ output:
     pin: GPIO10
     inverted: true
     id: led_green
+
+script:
+  - id: led_flash
+    mode: restart
+    parameters:
+      frequency: float   # Hz
+      duty: float        # duty cycle in %, 0..100
+      count: int         # number of flashes, 0 = endless
+    then:
+      - if:
+          condition:
+            lambda: 'return frequency > 0.0f;'
+          then:
+            - if:
+                condition:
+                  lambda: 'return count > 0;'
+                then:
+                  - repeat:
+                      count: !lambda 'return count;'
+                      then:
+                        - output.turn_on: led_green
+                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * duty / 100.0f);'
+                        - output.turn_off: led_green
+                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * (100.0f - duty) / 100.0f);'
+                else:
+                  - while:
+                      condition:
+                        lambda: 'return true;'
+                      then:
+                        - output.turn_on: led_green
+                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * duty / 100.0f);'
+                        - output.turn_off: led_green
+                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * (100.0f - duty) / 100.0f);'
