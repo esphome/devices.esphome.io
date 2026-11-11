@@ -53,6 +53,9 @@
  *                        git detection — for local runs)
  *   MFE_REVIEW_REPORT    path to write the markdown report to (findings only)
  *   ESPHOME_BIN          esphome executable (default: "esphome")
+ *   MFE_PIP              pip used to upgrade ESPHome for a config's
+ *                        `esphome: min_version` (default: "pip")
+ *   MFE_PYPI_URL         PyPI JSON endpoint for esphome releases (tests)
  *   MFE_COMPILE          "0" to skip the compile step (config + checks only)
  *   MFE_OTA_MANIFEST     "0" to skip the OTA manifest/binary checks
  *   MFE_DASHBOARD_IMPORT_CHECK  "0" to skip the dashboard_import URL check
@@ -1431,11 +1434,189 @@ async function checkDashboardImport(
 // Per-page review
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// min_version handling
+// ---------------------------------------------------------------------------
+// A config may declare `esphome: min_version: 2026.11.0`, in the file itself or
+// in a package it includes. The workflow installs the latest stable ESPHome,
+// which is older than that while the release is still in beta. When
+// `esphome config` fails because of it, we pip-install the newest release that
+// satisfies the minimum (the stable release if it is out, otherwise the newest
+// beta) and run `esphome config` again. ESPHome orders `2026.11.0b1` after
+// `2026.11.0` (its `Version.extra` string compares greater than ""), so a beta
+// satisfies a `min_version` of its own release.
+
+interface EsphomeVersion {
+  major: number;
+  minor: number;
+  patch: number;
+  extra: string;
+}
+
+// Mirrors `Version.parse` in esphome/core/__init__.py; also accepts the PEP 440
+// spelling PyPI uses for betas (`2026.11.0b1`).
+function parseEsphomeVersion(value: string): EsphomeVersion | null {
+  const m = /^(\d+)\.(\d+)(?:\.(\d+))?[-.]?(\w*)$/.exec(value.trim());
+  if (!m) return null;
+  return {
+    major: Number(m[1]),
+    minor: Number(m[2]),
+    patch: Number(m[3] ?? 0),
+    extra: m[4] ?? "",
+  };
+}
+
+// Same ordering ESPHome applies when checking `min_version`: numeric
+// major/minor/patch, then the `extra` suffix as a plain string.
+function compareEsphomeVersions(a: EsphomeVersion, b: EsphomeVersion): number {
+  const parts: [number, number][] = [
+    [a.major, b.major],
+    [a.minor, b.minor],
+    [a.patch, b.patch],
+  ];
+  for (const [x, y] of parts) {
+    if (x !== y) return x < y ? -1 : 1;
+  }
+  if (a.extra === b.extra) return 0;
+  return a.extra < b.extra ? -1 : 1;
+}
+
+// The minimum ESPHome version a failed `esphome config` run asks for, from
+// ESPHome's own "Your ESPHome version is too old" validation error. Reading it
+// from the error covers a `min_version` anywhere in the config, including
+// packages the config pulls in (ESPHome prints beta minimums as `2026.11.0-b1`).
+function minVersionFromConfigError(output: string): string | null {
+  const m = /Your ESPHome version is too old\. Please update to at least (\d+\.\d+\.\d+(?:-\w+)?)/.exec(
+    stripAnsi(output)
+  );
+  return m ? m[1] : null;
+}
+
+// Newest PyPI release that satisfies `min`: the newest stable one, otherwise
+// the newest beta. Returns the release string exactly as PyPI spells it.
+function pickEsphomeRelease(min: EsphomeVersion, releases: string[]): string | null {
+  let bestStable: { raw: string; v: EsphomeVersion } | null = null;
+  let bestBeta: { raw: string; v: EsphomeVersion; n: number } | null = null;
+  for (const raw of releases) {
+    const v = parseEsphomeVersion(raw);
+    if (!v || compareEsphomeVersions(v, min) < 0) continue;
+    if (v.extra === "") {
+      if (!bestStable || compareEsphomeVersions(v, bestStable.v) > 0) {
+        bestStable = { raw, v };
+      }
+      continue;
+    }
+    const beta = /^b(\d+)$/.exec(v.extra);
+    if (!beta) continue; // rc, dev, post...: only stable and beta are installed
+    const n = Number(beta[1]);
+    if (!bestBeta) {
+      bestBeta = { raw, v, n };
+      continue;
+    }
+    const sameBase =
+      compareEsphomeVersions({ ...v, extra: "" }, { ...bestBeta.v, extra: "" });
+    if (sameBase > 0 || (sameBase === 0 && n > bestBeta.n)) {
+      bestBeta = { raw, v, n };
+    }
+  }
+  return bestStable?.raw ?? bestBeta?.raw ?? null;
+}
+
+interface EnsureDeps {
+  fetcher: (url: string, timeoutMs: number) => Promise<Response>;
+  install: (release: string) => { ok: boolean; output: string };
+}
+
+const defaultEnsureDeps: EnsureDeps = {
+  fetcher: (url, timeoutMs) => fetchWithTimeout(url, timeoutMs),
+  install: (release) => {
+    try {
+      const out = execFileSync(
+        process.env.MFE_PIP || "pip",
+        ["install", "--upgrade", `esphome==${release}`],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 600000 }
+      );
+      return { ok: true, output: out };
+    } catch (err) {
+      return { ok: false, output: (err as Error).message };
+    }
+  },
+};
+
+type EnsureResult = { ok: true } | { ok: false; message: string };
+
+// Make sure the ESPHome behind `bin` is at least `minVersion`, installing a
+// newer release (stable, else beta) when it is not.
+async function ensureEsphomeVersion(
+  bin: string,
+  minVersion: string,
+  deps: EnsureDeps = defaultEnsureDeps
+): Promise<EnsureResult> {
+  const min = parseEsphomeVersion(minVersion);
+  if (!min) return { ok: true }; // not a version: let `esphome config` report it
+  let installed: EsphomeVersion | null = null;
+  try {
+    const out = execFileSync(bin, ["version"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const m = /(\d+\.\d+\.\d+\w*)/.exec(out);
+    installed = m ? parseEsphomeVersion(m[1]) : null;
+  } catch {
+    installed = null;
+  }
+  // Cannot tell what is installed (not a real esphome): leave it to the
+  // config step rather than guess.
+  if (!installed || compareEsphomeVersions(installed, min) >= 0) return { ok: true };
+
+  console.log(
+    `  config needs ESPHome >= ${minVersion}; installed ${installed.major}.${installed.minor}.${installed.patch}${installed.extra}`
+  );
+  let release: string | null = null;
+  try {
+    const res = await deps.fetcher(
+      process.env.MFE_PYPI_URL || "https://pypi.org/pypi/esphome/json",
+      30000
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = (await res.json()) as {
+      releases?: Record<string, { yanked?: boolean }[]>;
+    };
+    const usable = Object.entries(body.releases ?? {})
+      .filter(([, files]) => files.some((f) => !f.yanked))
+      .map(([name]) => name);
+    release = pickEsphomeRelease(min, usable);
+  } catch (err) {
+    return {
+      ok: false,
+      message: `could not look up ESPHome releases on PyPI to satisfy \`min_version: ${minVersion}\`: ${(err as Error).message}`,
+    };
+  }
+  if (!release) {
+    return {
+      ok: false,
+      message:
+        `\`esphome: min_version: ${minVersion}\` is newer than any ESPHome stable or beta ` +
+        "release on PyPI, so the config cannot be checked yet",
+    };
+  }
+  console.log(`  installing esphome==${release}`);
+  const inst = deps.install(release);
+  if (!inst.ok) {
+    return {
+      ok: false,
+      message: `installing esphome==${release} for \`min_version: ${minVersion}\` failed: ${tail(inst.output, 5)}`,
+    };
+  }
+  return { ok: true };
+}
+
 async function reviewPage(
   pageAbs: string,
   workRoot: string,
   esphomeBin: string,
-  doCompile: boolean
+  doCompile: boolean,
+  ensureVersion: typeof ensureEsphomeVersion = ensureEsphomeVersion
 ): Promise<PageResult> {
   const rel = path.relative(process.cwd(), pageAbs);
   const content = fs.readFileSync(pageAbs, "utf8");
@@ -1494,13 +1675,33 @@ async function reviewPage(
 
   // 4. Expand + validate.
   const configTimeout = Number(process.env.CONFIG_TIMEOUT_MS ?? 180000);
-  const cfgRun = runEsphome(
+  let cfgRun = runEsphome(
     esphomeBin,
     "config",
     path.basename(configFile),
     configDir,
     configTimeout
   );
+  // A `min_version` newer than the installed ESPHome: install a release (stable,
+  // else beta) that satisfies it and expand again.
+  const needed = cfgRun.ok ? null : minVersionFromConfigError(cfgRun.stdout + "\n" + cfgRun.stderr);
+  if (needed) {
+    const ensured = await ensureVersion(esphomeBin, needed);
+    if (!ensured.ok) {
+      // Not a defect in the config as such (release not out, PyPI/pip blip):
+      // inconclusive, like a network failure, so it does not block the PR.
+      result.configInconclusive = true;
+      result.configError = ensured.message;
+      return result;
+    }
+    cfgRun = runEsphome(
+      esphomeBin,
+      "config",
+      path.basename(configFile),
+      configDir,
+      configTimeout
+    );
+  }
   if (!cfgRun.ok) {
     if (cfgRun.timedOut) {
       result.configInconclusive = true;
@@ -1944,5 +2145,10 @@ export {
   findCaseInsensitivePath,
   checkDashboardImport,
   reviewPage,
+  parseEsphomeVersion,
+  compareEsphomeVersions,
+  minVersionFromConfigError,
+  pickEsphomeRelease,
+  ensureEsphomeVersion,
 };
 export type { ImportShorthand, PageResult, CheckResult, CheckStatus, CompileOutcome };
