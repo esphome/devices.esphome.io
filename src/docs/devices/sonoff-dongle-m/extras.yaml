@@ -57,9 +57,9 @@ network:
 
 wifi:
   id: wifi_network
-  
-  ap: # Fallback Access Point provided by Dongle Max.
-    ssid: "Dongle-M_ESPHome" # Name of the access point to create.
+
+  ap:  # Fallback Access Point provided by Dongle Max.
+    ssid: "Dongle-M_ESPHome"  # Name of the access point to create.
 
   on_connect:
     - script.execute: update_status_led
