@@ -17,6 +17,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as http from "node:http";
+import type { AddressInfo } from "node:net";
 import { execFileSync } from "node:child_process";
 
 import {
@@ -499,12 +500,17 @@ test("checkAdoptedOta reads the imported package", async () => {
   assert.equal(r?.item, ADOPTED_ITEM);
   assert.equal(r?.status, "OK");
 
-  // Package without it directly: a human checks (it may come from a nested package).
-  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("wifi: {}\n"));
+  // Package without it directly but with nested packages: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("packages:\n  core: !include core.yaml\n"));
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
   assert.ok(r?.detail.includes("no `ota: - platform: esphome` found directly"));
-  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("- just\n- a list\n"));
-  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+
+  // No ota and no packages: nothing can supply it, definitively missing.
+  for (const body of ["wifi: {}\n", "- just\n- a list\n"]) {
+    r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(body));
+    assert.equal(r?.status, "MISSING", body);
+    assert.ok(r?.detail.includes("includes no packages"));
+  }
 
   // Unreadable package.
   r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("a: [unclosed\n"));
@@ -516,6 +522,49 @@ test("checkAdoptedOta reads the imported package", async () => {
   r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw new Error("boom"); });
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
   assert.ok(r?.detail.includes("boom"));
+});
+
+test("checkAdoptedOta stops waiting when the body read stalls", async () => {
+  const prev = process.env.MANIFEST_TIMEOUT_MS;
+  process.env.MANIFEST_TIMEOUT_MS = "50";
+  try {
+    let aborted = false;
+    const stalled = async (_url: string, signal: AbortSignal): Promise<Response> => {
+      signal.addEventListener("abort", () => { aborted = true; });
+      // Headers arrive, the body never does.
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    };
+    const r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, stalled);
+    assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+    assert.ok(r?.detail.includes("timed out after 50 ms"));
+    assert.ok(aborted);
+  } finally {
+    if (prev === undefined) delete process.env.MANIFEST_TIMEOUT_MS;
+    else process.env.MANIFEST_TIMEOUT_MS = prev;
+  }
+});
+
+test("checkAdoptedOta fetches with the default fetcher", async () => {
+  const server = http.createServer((_req, res) => res.end(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address() as AddressInfo;
+  try {
+    const cfg = {
+      ...SIGNED_CFG,
+      dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) =>
+      realFetch(`http://127.0.0.1:${port}/`, init)) as typeof fetch;
+    try {
+      const r = await checkAdoptedOta(cfg, UPSTREAM);
+      assert.equal(r?.status, "OK");
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  } finally {
+    server.close();
+  }
 });
 
 test("checkAdoptedOta fails an import that points back at the reviewed config", async () => {

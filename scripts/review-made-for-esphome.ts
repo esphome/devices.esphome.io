@@ -1484,13 +1484,13 @@ async function checkDashboardImport(
 // An import that points back at the reviewed config itself has no such OTA by
 // definition (only when the refs are explicit and equal: a different or
 // omitted ref can name another version of the file, so that one is fetched); a
-// package without it directly may still get it from a nested package, which is
-// left to a human.
+// package without it directly but with `packages:` may still get it from a
+// nested package, which is left to a human; without `packages:` it is missing.
 async function checkAdoptedOta(
   cfg: Record<string, unknown>,
   upstream: UpstreamRef,
-  fetcher: (url: string) => Promise<Response> = (url) =>
-    fetchWithTimeout(url, Number(process.env.MANIFEST_TIMEOUT_MS ?? 30000))
+  fetcher: (url: string, signal: AbortSignal) => Promise<Response> = (url, signal) =>
+    fetch(url, { signal, redirect: "follow" })
 ): Promise<CheckResult | null> {
   const { esphomeOta, signedOta } = otaProfile(cfg);
   if (esphomeOta || !signedOta) return null;
@@ -1519,20 +1519,42 @@ async function checkAdoptedOta(
     };
   }
 
+  // One deadline covers the request and the body read, so a server that sends
+  // headers and then stalls cannot hang the review.
+  const timeoutMs = Number(process.env.MANIFEST_TIMEOUT_MS ?? 30000);
+  const ctrl = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      ctrl.abort();
+      reject(new Error(`timed out after ${timeoutMs} ms`));
+    }, timeoutMs);
+  });
   let text: string;
   try {
-    const res = await fetcher(url);
-    if (!res.ok) {
-      await res.body?.cancel().catch(() => {});
-      return { item, status: "NEEDS-HUMAN-CHECK", detail: `${url} returned HTTP ${res.status}` };
+    const fetched = await Promise.race([
+      (async (): Promise<{ status: number; text: string | null }> => {
+        const res = await fetcher(url, ctrl.signal);
+        if (!res.ok) {
+          await res.body?.cancel().catch(() => {});
+          return { status: res.status, text: null };
+        }
+        return { status: res.status, text: await res.text() };
+      })(),
+      deadline,
+    ]);
+    if (fetched.text === null) {
+      return { item, status: "NEEDS-HUMAN-CHECK", detail: `${url} returned HTTP ${fetched.status}` };
     }
-    text = await res.text();
+    text = fetched.text;
   } catch (err) {
     return {
       item,
       status: "NEEDS-HUMAN-CHECK",
       detail: `could not fetch ${url}: ${(err as Error).message}`,
     };
+  } finally {
+    clearTimeout(timer);
   }
   let imported: unknown;
   try {
@@ -1546,6 +1568,16 @@ async function checkAdoptedOta(
   }
   if (isObject(imported) && otaProfile(imported).esphomeOta) {
     return { item, status: "OK", detail: `the imported package (${url}) enables the ESPHome OTA` };
+  }
+  // With no `packages:` nothing nested can supply it: that is definitive.
+  if (!isObject(imported) || imported.packages === undefined) {
+    return {
+      item,
+      status: "MISSING",
+      detail:
+        `the imported package (${url}) has no \`ota: - platform: esphome\` and includes no packages, so users ` +
+        "who take control would have no way to update the device over the network",
+    };
   }
   return {
     item,
