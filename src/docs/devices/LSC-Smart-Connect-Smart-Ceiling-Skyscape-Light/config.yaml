@@ -1,0 +1,211 @@
+esphome:
+  name: lsc-ceiling-skyscape-light
+  friendly_name: LSC Ceiling Skyscape Light
+
+bk72xx:
+  board: generic-bk7238-tuya
+
+logger:
+
+# The BK7238 module communicates with the original Tuya MCU over UART.
+# P10 = RX, P11 = TX.
+uart:
+  rx_pin: P10
+  tx_pin: P11
+  baud_rate: 9600
+
+tuya:
+  id: tuya_mcu
+
+# Main RGB + CCT light.
+# DP20 = Master power
+# DP22 = Brightness, 10-1000
+# DP23 = Colour temperature, 0-1000
+# DP24 = RGB colour, HHHHSSSSVVVV
+# DP21 = Operating mode: 0 effects, 2 white/CCT, 3 RGB
+# DP54 = RGB output enable
+# DP63 = White output enable
+light:
+  - platform: tuya
+    name: "Ceiling Light"
+    id: ceiling_light
+
+    switch_datapoint: 20
+
+    dimmer_datapoint: 22
+    min_value: 10
+    max_value: 1000
+
+    color_temperature_datapoint: 23
+    color_temperature_max_value: 1000
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 3000 K
+    color_temperature_invert: true
+
+    color_datapoint: 24
+    color_type: HSV
+    color_type_lowercase: true
+
+    color_interlock: true
+    default_transition_length: 0s
+
+    # Built-in Tuya MCU effects.
+    # DP21 = 0 selects the effect mode and DP64 selects the effect.
+    effects:
+      - lambda:
+          name: "Sunrise"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x01}
+              );
+            }
+
+      - lambda:
+          name: "Cloudy Blue Sky"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x03}
+              );
+            }
+
+      - lambda:
+          name: "Sunset"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x04}
+              );
+            }
+
+      - lambda:
+          name: "Afterglow"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x05}
+              );
+            }
+
+      - lambda:
+          name: "Tricolor"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x11}
+              );
+            }
+
+      - lambda:
+          name: "RGB Cycle High"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x12}
+              );
+            }
+
+      - lambda:
+          name: "RGB Cycle Low"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x14}
+              );
+            }
+
+      - lambda:
+          name: "Color Shift"
+          update_interval: 60s
+          lambda: |-
+            if (initial_run) {
+              id(tuya_mcu).set_boolean_datapoint_value(20, true);
+              id(tuya_mcu).set_enum_datapoint_value(21, 0);
+              id(tuya_mcu).force_set_raw_datapoint_value(
+                64, std::vector<uint8_t>{0x00, 0x15}
+              );
+            }
+
+    # Keep the Tuya MCU operating mode aligned with the RGB/CCT mode selected
+    # in Home Assistant. A normal light change also exits any active effect.
+    on_state:
+      - lambda: |-
+          static uint32_t last_effect = 0;
+          static uint32_t effect_started_at = 0;
+
+          uint32_t effect =
+            id(ceiling_light).get_current_effect_index();
+
+          if (effect != 0) {
+            if (effect != last_effect) {
+              last_effect = effect;
+              effect_started_at = millis();
+              return;
+            }
+
+            if ((millis() - effect_started_at) < 500) {
+              return;
+            }
+
+            auto call = id(ceiling_light).turn_on();
+            call.set_effect("None");
+            call.perform();
+            return;
+          }
+
+          last_effect = 0;
+
+          if (!id(ceiling_light).current_values.is_on())
+            return;
+
+          auto mode =
+            id(ceiling_light).current_values.get_color_mode();
+
+          if (mode == light::ColorMode::RGB) {
+            id(tuya_mcu).set_boolean_datapoint_value(54, true);
+            id(tuya_mcu).set_boolean_datapoint_value(63, false);
+            id(tuya_mcu).set_enum_datapoint_value(21, 3);
+          }
+
+          else if (
+            mode == light::ColorMode::COLOR_TEMPERATURE
+          ) {
+            id(tuya_mcu).set_boolean_datapoint_value(54, false);
+            id(tuya_mcu).set_boolean_datapoint_value(63, true);
+            id(tuya_mcu).set_enum_datapoint_value(21, 2);
+          }
+
+# DP26 is a countdown in seconds. Expose it in hours so 2 h and 4 h map to
+# the original remote's timer buttons (7200 and 14400 seconds).
+number:
+  - platform: tuya
+    name: "Off Timer"
+    number_datapoint: 26
+    min_value: 0
+    max_value: 4
+    step: 2
+    multiply: 3600
+    unit_of_measurement: "h"
+    mode: box
