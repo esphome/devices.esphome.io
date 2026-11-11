@@ -6,7 +6,7 @@ standard: eu
 board: esp32
 ---
 
-<!-- Describe the device here. See the front-matter table on the contributing page for valid options. -->
+https://www.shelly.com/de/products/shelly-plug-s-gen3
 
 ![Shelly Plug M Gen3](Doku.png "Shelly Plug M Gen3")
 
