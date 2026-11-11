@@ -729,6 +729,30 @@ function improvBleCheck(
   };
 }
 
+// The two facts the OTA rules turn on: whether the config enables the ESPHome
+// OTA platform, and whether its firmware is signed
+// (`esp32: framework: advanced: signed_ota_verification:`). `ota:` may be a
+// list or a single mapping. `incomingOta` is another platform that exposes an
+// HTTP firmware-upload endpoint (`web_server`), which rules out the "updated
+// over USB only" exception for signed firmware.
+interface OtaProfile {
+  esphomeOta: boolean;
+  signedOta: boolean;
+  incomingOta: boolean;
+}
+
+function otaProfile(cfg: Record<string, unknown>): OtaProfile {
+  const ota = cfg.ota;
+  const entries: unknown[] = Array.isArray(ota) ? ota : isObject(ota) ? [ota] : [];
+  const esphomeOta = entries.some((e) => isObject(e) && e.platform === "esphome");
+  const incomingOta = entries.some((e) => isObject(e) && e.platform === "web_server");
+  const esp32 = cfg.esp32;
+  const framework = isObject(esp32) && isObject(esp32.framework) ? esp32.framework : null;
+  const advanced = framework && isObject(framework.advanced) ? framework.advanced : null;
+  const signedOta = advanced !== null && isObject(advanced.signed_ota_verification);
+  return { esphomeOta, signedOta, incomingOta };
+}
+
 function runChecklist(
   cfg: Record<string, unknown>,
   expandedText: string,
@@ -797,14 +821,21 @@ function runChecklist(
   // 4. improv_ble (when wifi present).
   checks.push(improvBleCheck(cfg, hasWifi));
 
-  // 5. improv_serial (needs USB port to be meaningful).
+  // 5. improv_serial (needs USB port to be meaningful). A device with signed
+  // firmware and no network OTA can only be updated over USB, so it has a USB
+  // port, and a USB port requires `improv_serial:`: absent there, this blocks.
   const improvSerial = cfg.improv_serial !== undefined;
+  const { esphomeOta: otaHasEsphome, signedOta, incomingOta } = otaProfile(cfg);
+  const needsUsb = signedOta && !otaHasEsphome && !incomingOta;
   checks.push({
     item: "improv_serial (USB provisioning)",
-    status: improvSerial ? "OK" : "NEEDS-HUMAN-CHECK",
+    status: improvSerial ? "OK" : needsUsb ? "MISSING" : "NEEDS-HUMAN-CHECK",
     detail: improvSerial
       ? "`improv_serial:` present"
-      : "no `improv_serial:` block — required only if the device exposes a USB port; confirm the hardware",
+      : needsUsb
+        ? "no `improv_serial:` block - the firmware is signed and has no network OTA, so the device is updated " +
+          "over a USB port, and a device with a USB port must have `improv_serial:`"
+        : "no `improv_serial:` block — required only if the device exposes a USB port; confirm the hardware",
   });
 
   // 6. dashboard_import with package_import_url.
@@ -829,17 +860,48 @@ function runChecklist(
     });
   }
 
-  // 7. ota list contains `- platform: esphome`.
-  const ota = cfg.ota;
-  const otaHasEsphome =
-    Array.isArray(ota) && ota.some((e) => isObject(e) && e.platform === "esphome");
-  checks.push({
-    item: "ota: `- platform: esphome`",
-    status: otaHasEsphome ? "OK" : "MISSING",
-    detail: otaHasEsphome
-      ? "OTA over the ESPHome protocol is enabled"
-      : "no `- platform: esphome` entry under `ota:` — required so users can push OTA updates",
-  });
+  // 7. ota list contains `- platform: esphome`. The exception is a factory
+  // config for a device with signed firmware: it enables
+  // `esp32: framework: advanced: signed_ota_verification:` and has no network
+  // OTA endpoint, so it is updated over USB. Taking control imports a package
+  // that carries the ESPHome OTA again. Whether USB flashing really needs no
+  // keys or disassembly cannot be read from the config, so that path asks for
+  // a human check (its `improv_serial:` is enforced by the row above).
+  const otaItem = "ota: `- platform: esphome`";
+  if (otaHasEsphome) {
+    checks.push({
+      item: otaItem,
+      status: "OK",
+      detail: "OTA over the ESPHome protocol is enabled",
+    });
+  } else if (signedOta && incomingOta) {
+    checks.push({
+      item: otaItem,
+      status: "MISSING",
+      detail:
+        "no `- platform: esphome` entry under `ota:`; the signed-firmware exception does not apply because " +
+        "`- platform: web_server` exposes a network firmware-upload endpoint. Enable the ESPHome OTA, or remove " +
+        "the other platform",
+    });
+  } else if (signedOta) {
+    checks.push({
+      item: otaItem,
+      status: "NEEDS-HUMAN-CHECK",
+      detail:
+        "no `- platform: esphome` entry under `ota:`; the firmware is signed " +
+        "(`esp32: framework: advanced: signed_ota_verification:`). Accepted for signed firmware with no network OTA " +
+        "endpoint if the device can be flashed over USB with no keys and no disassembly - confirm that",
+    });
+  } else {
+    checks.push({
+      item: otaItem,
+      status: "MISSING",
+      detail:
+        "no `- platform: esphome` entry under `ota:` — required so users can push OTA updates " +
+        "(signed firmware with no network OTA can instead enable `esp32: framework: advanced: " +
+        "signed_ota_verification:`, and must then be flashable over USB)",
+    });
+  }
 
   // 8. update list contains `- platform: http_request`.
   const update = cfg.update;
@@ -1434,6 +1496,128 @@ async function checkDashboardImport(
 // Per-page review
 // ---------------------------------------------------------------------------
 
+// Signed firmware with no ESPHome OTA is only acceptable because "taking
+// control" imports a package that has it again. Fetch the package named by
+// `dashboard_import: package_import_url` and confirm it enables
+// `ota: - platform: esphome`. Only applies to that signed, no-ESPHome-OTA case.
+// An import that points back at the reviewed config itself has no such OTA by
+// definition (only when the refs are explicit and equal: a different or
+// omitted ref can name another version of the file, so that one is fetched); a
+// package without it directly but with `packages:` may still get it from a
+// nested package, which is left to a human; without `packages:` it is missing.
+async function checkAdoptedOta(
+  cfg: Record<string, unknown>,
+  upstream: UpstreamRef,
+  fetcher: (url: string, signal: AbortSignal) => Promise<Response> = (url, signal) =>
+    fetch(url, { signal, redirect: "follow" })
+): Promise<CheckResult | null> {
+  const { esphomeOta, signedOta, incomingOta } = otaProfile(cfg);
+  if (esphomeOta || !signedOta || incomingOta) return null;
+  const di = cfg.dashboard_import;
+  if (!isObject(di) || typeof di.package_import_url !== "string") return null;
+  const parsed = parseImportShorthand(di.package_import_url);
+  if (!parsed) return null; // reported by the dashboard_import row
+  const item = "Adopted config has `ota: - platform: esphome`";
+  const url = importRawUrl(parsed);
+
+  if (
+    parsed.host === upstream.host &&
+    parsed.owner.toLowerCase() === upstream.owner.toLowerCase() &&
+    parsed.repo.toLowerCase() === upstream.repo.toLowerCase() &&
+    parsed.filename === upstream.filePath &&
+    parsed.ref !== null &&
+    parsed.ref === upstream.ref
+  ) {
+    return {
+      item,
+      status: "MISSING",
+      detail:
+        "`package_import_url` points at the reviewed config itself, which has no `ota: - platform: esphome`, so " +
+        "users who take control would have no way to update the device over the network. Import a package that " +
+        "enables it",
+    };
+  }
+
+  // One deadline covers the request and the body read, so a server that sends
+  // headers and then stalls cannot hang the review.
+  const timeoutMs = Number(process.env.MANIFEST_TIMEOUT_MS ?? 30000);
+  const ctrl = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      ctrl.abort();
+      reject(new Error(`timed out after ${timeoutMs} ms`));
+    }, timeoutMs);
+  });
+  let text: string;
+  try {
+    const fetched = await Promise.race([
+      (async (): Promise<{ status: number; text: string | null }> => {
+        const res = await fetcher(url, ctrl.signal);
+        if (!res.ok) {
+          await res.body?.cancel().catch(() => {});
+          return { status: res.status, text: null };
+        }
+        return { status: res.status, text: await res.text() };
+      })(),
+      deadline,
+    ]);
+    if (fetched.text === null) {
+      return { item, status: "NEEDS-HUMAN-CHECK", detail: `${url} returned HTTP ${fetched.status}` };
+    }
+    text = fetched.text;
+  } catch (err) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `could not fetch ${url}: ${(err as Error).message}`,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+  let imported: unknown;
+  try {
+    imported = yaml.load(text, { schema: ESPHOME_SCHEMA });
+  } catch (err) {
+    return {
+      item,
+      status: "NEEDS-HUMAN-CHECK",
+      detail: `${url} did not parse as yaml: ${(err as Error).message}`,
+    };
+  }
+  if (isObject(imported) && otaProfile(imported).esphomeOta) {
+    // Only the raw file is read, so a package it includes could still fail to
+    // resolve and leave an unbuildable config: that is not OK on its own.
+    if (imported.packages !== undefined) {
+      return {
+        item,
+        status: "NEEDS-HUMAN-CHECK",
+        detail:
+          `the imported package (${url}) enables the ESPHome OTA, but it includes packages that were not ` +
+          "expanded - confirm they resolve and the adopted config builds",
+      };
+    }
+    return { item, status: "OK", detail: `the imported package (${url}) enables the ESPHome OTA` };
+  }
+  // With no `packages:` nothing nested can supply it: that is definitive.
+  if (!isObject(imported) || imported.packages === undefined) {
+    return {
+      item,
+      status: "MISSING",
+      detail:
+        `the imported package (${url}) has no \`ota: - platform: esphome\` and includes no packages, so users ` +
+        "who take control would have no way to update the device over the network",
+    };
+  }
+  return {
+    item,
+    status: "NEEDS-HUMAN-CHECK",
+    detail:
+      `no \`ota: - platform: esphome\` found directly in the imported package (${url}) - confirm it ` +
+      "comes from a package it includes, so users who take control can still update over the network",
+  };
+}
+
 // ---------------------------------------------------------------------------
 // min_version handling
 // ---------------------------------------------------------------------------
@@ -1773,6 +1957,8 @@ async function reviewPage(
   if (process.env.MFE_DASHBOARD_IMPORT_CHECK !== "0") {
     const importRow = await checkDashboardImport(cfg, ghRef, repoRoot);
     if (importRow) result.checks.push(importRow);
+    const adoptedRow = await checkAdoptedOta(cfg, ghRef);
+    if (adoptedRow) result.checks.push(adoptedRow);
   }
   return result;
 }
@@ -2144,6 +2330,7 @@ export {
   importRawUrl,
   findCaseInsensitivePath,
   checkDashboardImport,
+  checkAdoptedOta,
   reviewPage,
   parseEsphomeVersion,
   compareEsphomeVersions,

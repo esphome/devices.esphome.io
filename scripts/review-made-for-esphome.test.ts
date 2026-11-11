@@ -17,6 +17,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as http from "node:http";
+import type { AddressInfo } from "node:net";
 import { execFileSync } from "node:child_process";
 
 import {
@@ -49,6 +50,7 @@ import {
   importRawUrl,
   findCaseInsensitivePath,
   checkDashboardImport,
+  checkAdoptedOta,
   reviewPage,
   parseEsphomeVersion,
   compareEsphomeVersions,
@@ -409,6 +411,240 @@ test("placeholderSecretsYaml keeps the compile step working", () => {
     "a: !secret wifi_ssid\nb: !secret wifi_password"
   );
   assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
+});
+
+// ---------------------------------------------------------------------------
+// Signed firmware without network OTA (signed_ota_verification)
+// ---------------------------------------------------------------------------
+
+const OTA_ITEM = "ota: `- platform: esphome`";
+const otaRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === OTA_ITEM) as { status: string; detail: string };
+const { ota: _ota, ...NO_OTA_CFG } = GOOD_CFG;
+const signedEsp32 = {
+  ...GOOD_CFG.esp32,
+  framework: { type: "esp-idf", advanced: { signed_ota_verification: { signing_scheme: "rsa3072" } } },
+};
+const SIGNED_CFG = { ...NO_OTA_CFG, esp32: signedEsp32 };
+const { improv_serial: _is, ...SIGNED_NO_SERIAL_CFG } = SIGNED_CFG;
+const { improv_serial: _is2, ...NO_OTA_NO_SERIAL } = NO_OTA_CFG;
+
+const SERIAL_ITEM = "improv_serial (USB provisioning)";
+const serialRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === SERIAL_ITEM) as { status: string; detail: string };
+
+test("runChecklist: signed firmware with a web_server OTA endpoint gets no exception", () => {
+  const cfg = { ...SIGNED_CFG, ota: [{ platform: "web_server" }] };
+  const checks = runChecklist(cfg, "", "Widget", "PASS");
+  const row = otaRow(checks);
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("web_server"));
+  // Not USB-only, so improv_serial is no longer forced to block.
+  const { improv_serial: _x, ...noSerial } = cfg;
+  assert.equal(serialRow(runChecklist(noSerial, "", "Widget", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  // The single-mapping form of `ota:` is read the same way.
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "web_server" } }, "", "W", "PASS")).status, "MISSING");
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "esphome" } }, "", "W", "PASS")).status, "OK");
+});
+
+test("checkAdoptedOta skips signed firmware that has a web_server OTA endpoint", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  const cfg = { ...SIGNED_IMPORT_CFG, ota: [{ platform: "web_server" }] };
+  assert.equal(await checkAdoptedOta(cfg, UPSTREAM, never), null);
+});
+
+test("runChecklist: no esphome ota is accepted only for signed firmware", () => {
+  // Signed firmware: accepted pending a human check of USB flashing.
+  let checks = runChecklist(SIGNED_CFG, "", "Widget", "PASS");
+  let row = otaRow(checks);
+  assert.equal(row.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(row.detail.includes("no keys and no disassembly"));
+  assert.equal(serialRow(checks).status, "OK");
+  // Not signed: blocks, and the message names the alternative.
+  row = otaRow(runChecklist(NO_OTA_CFG, "", "Widget", "PASS"));
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("signed_ota_verification"));
+  // An esp32 block without framework/advanced, or with advanced lacking the key, is not signed.
+  for (const esp32 of [
+    { ...GOOD_CFG.esp32, framework: { type: "esp-idf" } },
+    { ...GOOD_CFG.esp32, framework: { advanced: { enable_ota_rollback: true } } },
+  ]) {
+    assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, esp32 }, "", "Widget", "PASS")).status, "MISSING");
+  }
+  // Having esphome OTA keeps passing.
+  assert.equal(otaRow(runChecklist(GOOD_CFG, "", "Widget", "PASS")).status, "OK");
+  // Entries that are not mappings are ignored.
+  assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, ota: ["x"] }, "", "Widget", "PASS")).status, "MISSING");
+
+  // Signed with no network OTA but no improv_serial: its own row fails, and explains why.
+  checks = runChecklist(SIGNED_NO_SERIAL_CFG, "", "Widget", "PASS");
+  const serial = serialRow(checks);
+  assert.equal(serial.status, "MISSING");
+  assert.ok(serial.detail.includes("a device with a USB port must have `improv_serial:`"));
+  assert.ok(!serial.detail.includes("flashed"));
+  const result = {
+    page: "p", url: "u", fenceMissing: false, fatalError: null, configOk: true,
+    configInconclusive: false, configError: null, compile: "PASS", compileLog: null, checks,
+  } as PageResult;
+  assert.equal(pageBlocks(result), true);
+
+  // Signed but with esphome OTA, or unsigned with no OTA: improv_serial stays a human check.
+  const { improv_serial: _x, ...noSerial } = GOOD_CFG;
+  assert.equal(serialRow(runChecklist({ ...noSerial, esp32: signedEsp32 }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  assert.equal(serialRow(runChecklist({ ...NO_OTA_NO_SERIAL, }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+});
+
+const ADOPTED_ITEM = "Adopted config has `ota: - platform: esphome`";
+const SIGNED_IMPORT_CFG = {
+  ...SIGNED_CFG,
+  dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+};
+const UPSTREAM = {
+  host: "github.com", scheme: "github", owner: "owner", repo: "repo", ref: "main", filePath: "factory.yaml",
+} as const;
+const okBody = (body: string) => async () => new Response(body, { status: 200 });
+
+test("checkAdoptedOta only applies to signed firmware without ESPHome OTA", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  // Has ESPHome OTA, or is not signed, or has no usable dashboard_import: nothing to check.
+  assert.equal(await checkAdoptedOta({ ...SIGNED_IMPORT_CFG, ota: [{ platform: "esphome" }] }, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...NO_OTA_CFG, dashboard_import: SIGNED_IMPORT_CFG.dashboard_import }, UPSTREAM, never), null);
+  const { dashboard_import: _di, ...signedNoImport } = SIGNED_CFG;
+  assert.equal(await checkAdoptedOta(signedNoImport, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...SIGNED_CFG, dashboard_import: { package_import_url: "nope" } }, UPSTREAM, never), null);
+});
+
+test("checkAdoptedOta reads the imported package", async () => {
+  const withOta = yaml.dump({ ota: [{ platform: "esphome", id: "o" }] });
+  let r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(withOta));
+  assert.equal(r?.item, ADOPTED_ITEM);
+  assert.equal(r?.status, "OK");
+
+  // The mapping form of `ota:` counts, as ESPHome accepts it.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("ota:\n  platform: esphome\n"));
+  assert.equal(r?.status, "OK");
+
+  // OTA present but the raw file includes packages that were not expanded: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(`${withOta}packages:\n  extra: !include missing.yaml\n`));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("were not expanded"));
+
+  // Package without it directly but with nested packages: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("packages:\n  core: !include core.yaml\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("no `ota: - platform: esphome` found directly"));
+
+  // No ota and no packages: nothing can supply it, definitively missing.
+  for (const body of ["wifi: {}\n", "- just\n- a list\n"]) {
+    r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(body));
+    assert.equal(r?.status, "MISSING", body);
+    assert.ok(r?.detail.includes("includes no packages"));
+  }
+
+  // Unreadable package.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("a: [unclosed\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("did not parse"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => new Response("", { status: 404 }));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("HTTP 404"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw new Error("boom"); });
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("boom"));
+});
+
+test("checkAdoptedOta stops waiting when the body read stalls", async () => {
+  const prev = process.env.MANIFEST_TIMEOUT_MS;
+  process.env.MANIFEST_TIMEOUT_MS = "50";
+  try {
+    let aborted = false;
+    const stalled = async (_url: string, signal: AbortSignal): Promise<Response> => {
+      signal.addEventListener("abort", () => { aborted = true; });
+      // Headers arrive, the body never does.
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    };
+    const r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, stalled);
+    assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+    assert.ok(r?.detail.includes("timed out after 50 ms"));
+    assert.ok(aborted);
+  } finally {
+    if (prev === undefined) delete process.env.MANIFEST_TIMEOUT_MS;
+    else process.env.MANIFEST_TIMEOUT_MS = prev;
+  }
+});
+
+test("checkAdoptedOta fetches with the default fetcher", async () => {
+  const server = http.createServer((_req, res) => res.end(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address() as AddressInfo;
+  try {
+    const cfg = {
+      ...SIGNED_CFG,
+      dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) =>
+      realFetch(`http://127.0.0.1:${port}/`, init)) as typeof fetch;
+    try {
+      const r = await checkAdoptedOta(cfg, UPSTREAM);
+      assert.equal(r?.status, "OK");
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test("checkAdoptedOta fails an import that points back at the reviewed config", async () => {
+  const cfg = {
+    ...SIGNED_CFG,
+    dashboard_import: { package_import_url: "github://Owner/Repo/factory.yaml@main" },
+  };
+  const r = await checkAdoptedOta(cfg, UPSTREAM, async () => { throw new Error("must not fetch"); });
+  assert.equal(r?.status, "MISSING");
+  assert.ok(r?.detail.includes("points at the reviewed config itself"));
+  // A different or omitted ref can name another version of the file: fetch the adoption target instead.
+  const body = okBody(yaml.dump({ ota: [{ platform: "esphome" }] }));
+  for (const ref of ["@user-main", ""]) {
+    const withRef = { ...SIGNED_CFG, dashboard_import: { package_import_url: `github://owner/repo/factory.yaml${ref}` } };
+    const fetched = await checkAdoptedOta(withRef, UPSTREAM, body);
+    assert.equal(fetched?.status, "OK", ref);
+  }
+  // A different file in the same repo is fetched instead.
+  const other = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  assert.equal(other?.status, "OK");
+});
+
+test("reviewPage adds the adopted-OTA row for signed firmware", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-adopt-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'EOF_YAML'\n${yaml.dump(SIGNED_IMPORT_CFG)}EOF_YAML\n`, { mode: 0o755 });
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (url: string) =>
+    new URL(String(url)).hostname === "raw.githubusercontent.com"
+      ? new Response(yaml.dump({ ota: [{ platform: "esphome" }] }), { status: 200 })
+      : new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const saved = process.env.MFE_OTA_MANIFEST;
+  process.env.MFE_OTA_MANIFEST = "0";
+  try {
+    const r = await reviewPage(page, dir, bin, false);
+    const row = r.checks.find((c) => c.item === ADOPTED_ITEM);
+    assert.equal(row?.status, "OK", JSON.stringify(r.checks));
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved;
+  }
 });
 
 test("improv_ble is N/A when there is no wifi", () => {
