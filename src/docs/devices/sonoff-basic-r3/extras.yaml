@@ -2,7 +2,6 @@ api:
 
 ota:
   - platform: esphome
-    encryption:
 
 wifi:
   # ssid: "Your_WiFi_SSID_Here"
