@@ -5,7 +5,6 @@ type: misc
 standard: global
 board: esp32
 difficulty: 2
-project-url: https://dongle.sonoff.tech/guide/dongle-m/running-esphome-firmware-on-dongle-m/
 ---
 
 ## Description
