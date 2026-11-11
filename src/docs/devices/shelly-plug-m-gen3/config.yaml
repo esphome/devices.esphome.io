@@ -25,6 +25,7 @@ sensor:
     unit_of_measurement: "°C"
     accuracy_decimals: 1
     icon: "mdi:thermometer"
+    id: s_temperature
     calibration:
       b_constant: 3350
       reference_resistance: 10kOhm
