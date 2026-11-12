@@ -9,12 +9,27 @@ difficulty: 1
 made-for-esphome: true
 ---
 
-![alt text](athom-plug-eu-v3.webp "Athom Smart Plug EU V3 - PG01V3-EU16A")
+![Athom Smart Plug EU V3](athom-plug-eu-v3.webp "Athom Smart Plug EU V3 - PG01V3-EU16A")
 
-Maker: [https://www.athom.tech/](https://www.athom.tech/)
-Product page: [https://www.athom.tech/blank-1/esp32-c3-eu-plug-for-esphome](https://www.athom.tech/blank-1/esp32-c3-eu-plug-for-esphome)
+Maker: [Athom](https://www.athom.tech/)
 
-Also on Aliexpress, available pre-flashed with ESPHome or Tasmota.
+Product page: [ESP32-C3 EU Plug Made for ESPHome](https://www.athom.tech/blank-1/esp32-c3-eu-plug-for-esphome)
+
+## Description
+
+The Athom Smart Plug EU V3 is a 16 A EU smart plug pre-installed with ESPHome for local control through Home
+Assistant. It provides relay control and energy monitoring without requiring a cloud service.
+
+## Features
+
+- ESP32-C3 with 4 MB flash
+- 2.4 GHz Wi-Fi and Bluetooth Low Energy proxy
+- Voltage, current, power, power factor, and energy monitoring
+- 16 A maximum load with over-current shutoff
+- Configurable power-on state
+- Local Home Assistant integration and managed OTA updates
+
+The manufacturer's configuration requires ESPHome 2026.6.0 or newer.
 
 ## GPIO Pinout
 
@@ -23,7 +38,7 @@ Also on Aliexpress, available pre-flashed with ESPHome or Tasmota.
 | GPIO20 | CSE7766 Rx |
 | GPIO3  | Button     |
 | GPIO5  | Relay      |
-| GPIO6  | Led        |
+| GPIO6  | Status LED |
 
 ## Configuration
 
