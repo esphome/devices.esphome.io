@@ -7,23 +7,29 @@
 // by `owner:branch` and then pinned to the exact head SHA and repository. When
 // one head is open against several bases, the default branch's PR wins, and
 // anything still ambiguous resolves to null.
+//
+// For `pull_request_review` runs GitHub reports the base repository as the
+// run's `head_repository`, not the fork. Those runs are matched on the branch
+// name plus the exact head SHA instead.
 
 async function findRunPullRequest({ github, context }) {
   const run = context.payload.workflow_run;
   const headRepo = run && run.head_repository;
   if (!headRepo || !headRepo.owner || !run.head_branch || !run.head_sha) return null;
+  const fromReview = run.event === "pull_request_review";
   const pulls = await github.paginate(github.rest.pulls.list, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     state: "open",
-    head: `${headRepo.owner.login}:${run.head_branch}`,
+    ...(fromReview ? {} : { head: `${headRepo.owner.login}:${run.head_branch}` }),
     per_page: 100,
   });
   const matches = pulls.filter(
     (pr) =>
       pr.head.sha === run.head_sha &&
+      pr.head.ref === run.head_branch &&
       pr.head.repo &&
-      pr.head.repo.full_name === headRepo.full_name
+      (fromReview || pr.head.repo.full_name === headRepo.full_name)
   );
   if (matches.length > 1) {
     const defaultBranch = context.payload.repository && context.payload.repository.default_branch;

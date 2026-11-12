@@ -22,10 +22,13 @@ jobs:
       pull-requests: read  # to find the run's pull request, its reviews and files
     steps:
       # Checks out the base repo (trusted) only to load the helper below,
-      # never the PR's code.
+      # never the PR's code. It goes in its own directory: a sparse checkout
+      # writes its settings into .git, and the PR checkout below would reuse
+      # that .git (and so stay sparse) if both shared the workspace root.
       - name: Checkout scripts
         uses: actions/checkout@v7.0.1
         with:
+          path: trusted
           sparse-checkout: |
             .github/scripts
           sparse-checkout-cone-mode: false
@@ -39,7 +42,7 @@ jobs:
         uses: actions/github-script@v9.0.0
         with:
           script: |
-            const { findRunPullRequest } = require('./.github/scripts/workflow-run-pr.cjs');
+            const { findRunPullRequest } = require('./trusted/.github/scripts/workflow-run-pr.cjs');
             core.setOutput('proceed', 'false');
             const pr = await findRunPullRequest({ github, context });
             if (!pr) {
@@ -50,7 +53,7 @@ jobs:
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner, repo, pull_number: pr.number, per_page: 100,
             });
-            const { maintainerApproves } = require('./.github/scripts/maintainer-approval.cjs');
+            const { maintainerApproves } = require('./trusted/.github/scripts/maintainer-approval.cjs');
             if (!maintainerApproves(reviews, pr.head.sha)) {
               core.info(`PR #${pr.number} has no maintainer approval of ${pr.head.sha}; nothing to do.`);
               return;
