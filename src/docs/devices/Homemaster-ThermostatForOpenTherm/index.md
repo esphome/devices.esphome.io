@@ -5,13 +5,13 @@ type: misc
 standard: global
 board: esp32
 project-url: https://github.com/isystemsautomation/homemaster-dev/tree/site/OpenthermThermostat
-made-for-esphome: True
+made-for-esphome: true
 difficulty: 1
 ---
 
 ## HomeMaster Thermostat for OpenTherm
 
-![HomeMaster Thermostat for OpenTherm](thermostat.jpg)
+![HomeMaster Thermostat for OpenTherm](thermostat.jpg "HomeMaster Thermostat for OpenTherm")
 
 ## Description
 
@@ -61,7 +61,10 @@ schematics), see:
 
 The device is low-voltage only. No mains terminals are present.
 
-**A mains power supply is not included.** The 24 V DC supply is provided by the installer: a DIN-rail unit in the distribution board or the boiler cabinet, or a module rated for installation inside a deep flush box. The device draws 50–100 mA and never more than 2.4 W.
+**A mains power supply is not included.** The 24 V DC supply is provided by
+the installer: a DIN-rail unit in the distribution board or the boiler
+cabinet, or a module rated for installation inside a deep flush box. The
+device draws 50–100 mA and never more than 2.4 W.
 
 ## Terminal Connections
 
@@ -134,7 +137,12 @@ Enclosure: Italtronic EYE BOX, ABS, white (RAL 9003).
 - Operating temperature: 0 … 40 °C, non-condensing
 - Two-part enclosure: wall base or plate fixed to the wall, body clipped on
 
-**Mounting.** The round base takes two screws straight into the wall at 58 mm centres. The rectangular plate screws onto a flush-mounting box and is drilled for both common spacings: **60 mm**, the round European device box with a Ø 68 mm bore, and **83.5 mm**, the Italian three-module box (503). What decides whether a box fits is the distance between its device screws, not the shape of the box.
+**Mounting.** The round base takes two screws straight into the wall at
+58 mm centres. The rectangular plate screws onto a flush-mounting box and is
+drilled for both common spacings: **60 mm**, the round European device box
+with a Ø 68 mm bore, and **83.5 mm**, the Italian three-module box (503).
+What decides whether a box fits is the distance between its device screws,
+not the shape of the box.
 
 ## Getting Started
 
