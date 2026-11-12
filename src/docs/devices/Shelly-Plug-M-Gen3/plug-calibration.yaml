@@ -13,6 +13,12 @@
 #
 # Usage: enter the value of a reference meter in "Cal Target ...", then press "Calibrate ...".
 # new reference = old reference * (displayed value / reference meter value)
+#
+# After a reference changes, the displayed value only follows with the next BL0942 reading. A calibration
+# before that would correct twice, so it is refused until a new reading has arrived.
+# Energy: the chip counts, ESPHome shows counter / energy reference. Changing the energy reference therefore
+# rescales the whole accumulated total at once (Home Assistant sees a jump; a smaller total counts as a reset
+# of total_increasing). Set it once during setup, not later.
 # ---------------------------------------------------------------------------
 
 esphome:
@@ -21,6 +27,28 @@ esphome:
     - priority: -100
       then:
         - script.execute: apply_references
+
+globals:
+  # Channels whose reference changed since their last reading (bit 1 voltage, 2 current, 4 power, 8 energy)
+  - id: cal_wait
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+sensor:
+  - id: !extend bl0942_1
+    voltage:
+      on_value:
+        - lambda: id(cal_wait) &= ~1;
+    current:
+      on_value:
+        - lambda: id(cal_wait) &= ~2;
+    power:
+      on_value:
+        - lambda: id(cal_wait) &= ~4;
+    energy:
+      on_value:
+        - lambda: id(cal_wait) &= ~8;
 
 number:
   - platform: template
@@ -36,7 +64,9 @@ number:
     entity_category: config
     icon: "mdi:alpha-v-circle-outline"
     on_value:
-      - lambda: id(bl0942_1).set_voltage_reference(x);
+      - lambda: |-
+          id(bl0942_1).set_voltage_reference(x);
+          id(cal_wait) |= 1;
 
   - platform: template
     name: "Cal Current Reference"
@@ -51,7 +81,9 @@ number:
     entity_category: config
     icon: "mdi:alpha-a-circle-outline"
     on_value:
-      - lambda: id(bl0942_1).set_current_reference(x);
+      - lambda: |-
+          id(bl0942_1).set_current_reference(x);
+          id(cal_wait) |= 2;
 
   - platform: template
     name: "Cal Power Reference"
@@ -66,7 +98,9 @@ number:
     entity_category: config
     icon: "mdi:transmission-tower"
     on_value:
-      - lambda: id(bl0942_1).set_power_reference(x);
+      - lambda: |-
+          id(bl0942_1).set_power_reference(x);
+          id(cal_wait) |= 4;
 
   - platform: template
     name: "Cal Energy Reference"
@@ -81,7 +115,9 @@ number:
     entity_category: config
     icon: "mdi:lightning-bolt"
     on_value:
-      - lambda: id(bl0942_1).set_energy_reference(x);
+      - lambda: |-
+          id(bl0942_1).set_energy_reference(x);
+          id(cal_wait) |= 8;
 
   # Maximum allowed deviation between displayed and measured value; larger deviations abort the calibration.
   - platform: template
@@ -171,17 +207,25 @@ script:
 
           float shown   = NAN;
           float old_ref = NAN;
+          int   bit     = 0;
 
           if (channel == "voltage") {
-            shown = id(bvoltage).state;  old_ref = id(cal_voltage_ref).state;
+            shown = id(bvoltage).state;  old_ref = id(cal_voltage_ref).state;  bit = 1;
           } else if (channel == "current") {
-            shown = id(bcurrent).state;  old_ref = id(cal_current_ref).state;
+            shown = id(bcurrent).state;  old_ref = id(cal_current_ref).state;  bit = 2;
           } else if (channel == "power") {
-            shown = id(bpower).state;    old_ref = id(cal_power_ref).state;
+            shown = id(bpower).state;    old_ref = id(cal_power_ref).state;    bit = 4;
           } else if (channel == "energy") {
-            shown = id(benergy).state;   old_ref = id(cal_energy_ref).state;
+            shown = id(benergy).state;   old_ref = id(cal_energy_ref).state;   bit = 8;
           } else {
             ESP_LOGW("cal", "Unknown channel '%s'", channel.c_str());
+            return;
+          }
+
+          // the displayed value still uses the old reference until the next reading
+          if (id(cal_wait) & bit) {
+            ESP_LOGW("cal", "Aborted: wait for a new '%s' reading after the last reference change",
+                     channel.c_str());
             return;
           }
 
@@ -204,6 +248,8 @@ script:
           ESP_LOGI("cal", "%s: shown %.3f vs measured %.3f (%+.2f%%) -> "
                           "ref %.3f => %.3f",
                    channel.c_str(), shown, measured, dev, old_ref, new_ref);
+          if (bit == 8)
+            ESP_LOGW("cal", "Energy: the accumulated total is rescaled with the new reference");
 
           // Go through the number's control path (not publish_state): it runs on_value,
           // which applies the reference, and stores the value in flash for restore_value.

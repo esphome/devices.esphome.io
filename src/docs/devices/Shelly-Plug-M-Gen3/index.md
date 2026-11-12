@@ -207,5 +207,8 @@ reference meter in **Cal Target Voltage/Current/Power** and press **Calibrate Vo
 reference is stored in flash; **Reset Calibration** returns to the values from the YAML. The calibration can also
 be started from Home Assistant with the action `esphome.<device>_calibrate`.
 
+A second calibration is refused until the next reading has arrived. Change **Cal Energy Reference** only during setup:
+it rescales the whole accumulated energy total at once.
+
 ```yaml file=plug-calibration.yaml
 ```
