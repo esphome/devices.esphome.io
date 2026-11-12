@@ -1,0 +1,62 @@
+substitutions:
+  name: shelly-multicolor-bulb-g3
+  friendly_name: Shelly Multicolor Bulb Gen3
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+wifi:
+  ap:
+
+logger:
+  hardware_uart: UART0
+
+# The LED driver is not part of ESPHome. This external component bit-bangs the two pins, so there is no i2c: block
+# (GPIO4 and GPIO5 belong to the driver).
+external_components:
+  - source: github://oxynatOr/esphome-kp18058@2e6d1beb956f16c679a617f33a24e5bbd57b5c03  # pinned commit
+    components: [kp18058]
+
+# Currents are the values the Shelly firmware writes: 9 mA for the colours, 27.5 mA for the white.
+kp18058:
+  id: led_driver
+  data_pin: GPIO4  # SDA
+  clock_pin: GPIO5  # SCL
+  rgb_current: 9
+  cw_current: 27.5
+  rgb_dimming: analog
+  chop_frequency: 4khz
+
+# Channel order, tested on the bulb: OUT1 blue, OUT2 red, OUT3 green, OUT4 warm white.
+# OUT5 is not used: it has no visible effect, although the Shelly firmware writes the same value to OUT4 and OUT5.
+output:
+  - platform: kp18058
+    id: out_b
+    channel: 1
+  - platform: kp18058
+    id: out_r
+    channel: 2
+  - platform: kp18058
+    id: out_g
+    channel: 3
+  - platform: kp18058
+    id: out_w4
+    channel: 4
+
+light:
+  - platform: rgbw
+    id: bulb
+    name: "Light"
+    red: out_r
+    green: out_g
+    blue: out_b
+    white: out_w4
+    color_interlock: true
