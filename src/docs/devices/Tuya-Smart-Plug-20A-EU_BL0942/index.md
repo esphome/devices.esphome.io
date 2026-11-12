@@ -12,7 +12,7 @@ difficulty: 3
 ![Tuya Smart Plug Aliexpress](Tuya_plug_aliexpress.png)
 
 The smart plug is using the Tuya T34 module design incorporating a BK7231N chip
-[T34 Datasheet](https://developer.tuya.com/docs/iot/t34-module-datasheet?id=Ka0l4h5zvg6j8)
+[T34 Datasheet](https://developer.tuya.com/en/docs/iot/t34-module-datasheet?id=Ka0l4h5zvg6j8)
 
 The power monitoring chip is the BL0942, which is not so often seen in Tuya products.
 It is connected using the UART feature to UART1.
