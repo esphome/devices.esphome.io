@@ -16,12 +16,13 @@ Pinouts and pictures are taken from [digiblur's website](https://digiblur.com/wi
 
 ## GPIO Pinout
 
-| Pin   | Function                    |
-| ----- | --------------------------- |
-| GPIO4 | Relay                       |
-| GPIO5 | Pin for 'Magic Switch Mode' |
-| GPIO6 | Blue LED                    |
-| GPIO9 | Button                      |
+| Pin    | Function                                         |
+| ------ | ------------------------------------------------ |
+| GPIO4  | Relay (pull-in)                                  |
+| GPIO5  | Pin for 'Magic Switch Mode'                      |
+| GPIO6  | Blue LED                                         |
+| GPIO9  | Button                                           |
+| GPIO10 | Relay hold (via 100 Ω resistor), see below       |
 
 ## PCB
 
@@ -115,3 +116,42 @@ status_led:
     number: GPIO6
     inverted: yes
 ```
+
+## Relay pull-and-hold (GPIO10)
+
+GPIO10 is connected to the relay drive circuit through a 100 Ω resistor. It works as a
+"pull-and-hold" circuit: GPIO4 pulls the relay in at full coil current, then GPIO10 alone
+holds it at reduced current. This lowers coil power and heat while the relay is on.
+
+To switch it on, set GPIO10 and GPIO4 HIGH, wait a short time, then set GPIO4 LOW. To
+switch it off, set both LOW. The configuration above (GPIO4 only) still works, but the coil
+then runs at full current the whole time.
+
+To use pull-and-hold, replace the `switch:` section above with:
+
+```yaml
+output:
+  - platform: gpio
+    id: relay_pull     # full-current pull-in
+    pin: GPIO4
+  - platform: gpio
+    id: relay_hold     # reduced-current hold via 100 Ω
+    pin: GPIO10
+
+switch:
+  - platform: template
+    name: Tomada
+    id: switch_1
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - output.turn_on: relay_hold
+      - output.turn_on: relay_pull
+      - delay: 150ms
+      - output.turn_off: relay_pull
+    turn_off_action:
+      - output.turn_off: relay_pull
+      - output.turn_off: relay_hold
+```
+
+The `button_1` and `magic_switch` actions keep working unchanged, because they toggle `switch_1`.
