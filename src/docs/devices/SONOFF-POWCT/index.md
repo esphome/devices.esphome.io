@@ -77,6 +77,7 @@ uart:
 
 sensor:
   - platform: cse7761
+    sonoff_model: POWCT
     update_interval: 2s
     current_1:
       name: Current
@@ -84,20 +85,18 @@ sensor:
       unit_of_measurement: "A"
       accuracy_decimals: 3
       icon: mdi:current-ac
-      filters:
-        # Measurement divided by the M_PI constant
-        - lambda: return x / M_PI;
     voltage:
       name: Voltage
       id: v_sensor
       unit_of_measurement: "V"
       icon: mdi:sine-wave
+    frequency:
+      name: Frequency
+      id: f_sensor
+      unit_of_measurement: "Hz"
     active_power_1:
       name: Power
       id: w_sensor
-      filters:
-        # Measurement divided by the M_PI constant
-        - lambda: return x / M_PI;
       icon: mdi:flash
       on_value_range:
         - above: 4.0
