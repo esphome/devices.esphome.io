@@ -11,9 +11,9 @@ project-url: https://github.com/Tysonpower/Tynet-HCPBridge
 
 ## Description
 
-The Tynet HCPBridge is a device that allows the control of Hörmann garage door motors via Home Assistant,
-available from the [Tynet.eu Shop](https://shop.tynet.eu).
-It ships with ESPHome pre-installed and uses the Hörmann Cover ESPHome component to provide a plug-and-play
+The Tynet HCPBridge is a device that allows the control of Hörmann garage door motors via Home Assistant.
+
+A DIY kit is available from the [Tynet.eu Shop](https://shop.tynet.eu), it ships with ESPHome pre-installed and uses the Hörmann Cover ESPHome component to provide a plug-and-play
 experience with minimal setup needed.
 
 Features:
