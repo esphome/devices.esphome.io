@@ -112,7 +112,7 @@ binary_sensor:
       then:
         - if:
             condition:
-              lambda: 'return (id(s_temperature).state < ${max_temp}) & (id(switch_relay).state = false);'
+              lambda: 'return (id(s_temperature).state < ${max_temp}) && (id(switch_relay).state == false);'
             then:
               - switch.turn_on: switch_relay
             else:
