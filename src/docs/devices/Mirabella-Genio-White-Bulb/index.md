@@ -34,23 +34,29 @@ wifi:
     password: "ap_password"
   domain: ".mydomain.com"
 
-# Enable logging
+esp8266:
+  board: esp01_1m
+
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: "ota_password"
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
-sensor:
-  - platform: wifi_signal
-    name: "Mirabella 1 WiFi Signal"
-    update_interval: 60s
+# Enable the Web Server component 
+webserver:
 
 switch:
   - platform: restart

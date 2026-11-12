@@ -23,12 +23,20 @@ esp8266:
 
 substitutions:
   plug_name: p1_01
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
 captive_portal:
 
 # Enable logging
@@ -39,11 +47,6 @@ logger:
   baud_rate: 0
   logs:
     adc: INFO
-
-# Enable Home Assistant API
-api:
-
-ota:
 
 time:
   - platform: homeassistant
@@ -60,9 +63,7 @@ uart:
   baud_rate: 4800
   
 sensor:
-  - platform: wifi_signal
-    name: "${plug_name} - WiFi Signal"
-    update_interval: 60s
+
   - platform: uptime
     name: "${plug_name} - Uptime"
     icon: mdi:clock-outline
@@ -149,10 +150,6 @@ binary_sensor:
       - switch.toggle: relay3
     filters:
       - delayed_off: 100ms
-
-text_sensor:
-  - platform: version
-    name: "${plug_name} - ESPHome Version"
 
 switch:
   - platform: gpio

@@ -54,14 +54,15 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: ${node_name}_AP
-    password: !secret wifi_password
-    ap_timeout: 3min
 
 api:
   encryption:

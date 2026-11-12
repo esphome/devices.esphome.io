@@ -66,9 +66,8 @@ substitutions:
   #voltage_div: "750"
   voltage_div: "720"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 sensor:
   - platform: wifi_signal

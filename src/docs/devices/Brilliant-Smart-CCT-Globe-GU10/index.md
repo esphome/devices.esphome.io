@@ -39,10 +39,7 @@ substitutions:
   device_id: brilliant_gu10_1
   friendly_name: "Brilliant GU10"
   device_description: Brilliant Smart CCT Globe GU10 (BL20887)
-  device_ip: x.x.x.x
-  gateway_ip: x.x.x.x
-  subnet_mask: 255.255.255.0
-  dns_ip: x.x.x.x
+
 
 esphome:
   name: ${device_name}

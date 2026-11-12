@@ -67,10 +67,27 @@ esphome:
 esp32:
   variant: esp32
 
-wifi:
-  ssid: 'home'
-  password: 'fileybay'
-  fast_connect: true
+esp32:
+  board: esp32dev   
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 globals:
   - id: ota_mode
@@ -104,12 +121,6 @@ mqtt:
               lambda: 'return !id(ota_mode);'
             then:
               - deep_sleep.enter: deep_sleep_1
-
-logger:
-  level: INFO
-
-ota:
-  password: *redacted*
 
 i2c:
   sda: 16

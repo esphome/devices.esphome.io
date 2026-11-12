@@ -52,17 +52,21 @@ api:
     key: !secret encryption_key
 
 ota:
-  password: "PASSWORD"
+  - platform: esphome
 
-wifi:
-  ssid: "WIFI_SSID"
-  password: "WIFI_PASSWORD"
-  power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "${name} Fallback"
-    password: "FALLBACK_PASSWD"
 
+# Enabling the logging component
 logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 status_led:
   pin:

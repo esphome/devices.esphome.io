@@ -72,7 +72,21 @@ api:
     key: !secret api_enc
 
 ota:
-  password: !secret ota_pwd
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 esp32_ble_tracker:
   scan_parameters:
@@ -128,10 +142,6 @@ sensor:
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
-
-  - platform: wifi_signal
-    name: $friendly_name Wifi RSSI
-    update_interval: 60s
 
   - platform: uptime
     id: uptime_sensor
@@ -271,19 +281,6 @@ switch:
     interlock: [relay_off]
   - platform: restart
     name: $friendly_name Restart
-
-text_sensor:
-  - platform: template
-    name: $friendly_name Uptime
-    id: uptime_human
-    icon: mdi:clock-start
-  - platform: wifi_info
-    ip_address:
-      name: $friendly_name IP
-    ssid:
-      name: $friendly_name SSID
-    bssid:
-      name: $friendly_name BSSID
 
 light:
   - platform: monochromatic

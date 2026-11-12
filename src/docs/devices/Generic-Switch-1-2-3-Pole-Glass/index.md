@@ -47,8 +47,6 @@ Wiring of switch
 
 ```yaml
 substitutions:
-  platform: ESP8266
-  board: esp01_1m
   device_name: esphome_dining_room_switch
   friendly_name: "Dining Room Switch"
   reboot_timeout_wifi: 900s
@@ -58,30 +56,32 @@ substitutions:
 #################################
 
 esphome:
-  platform: ${platform}
-  board: ${board}
   name: ${device_name}
-  esp8266_restore_from_flash: true
 
-wifi:
-  ssid: !secret wifi_iot_ssid
-  password: !secret wifi_iot_pwd
-  fast_connect: on
-  reboot_timeout: ${reboot_timeout_wifi}
-  output_power: ${output_power}
-  ap:
-    ssid: "AP_${friendly_name}"
-    password: !secret wifi_backup_pwd
-
-api:
-  reboot_timeout: ${reboot_timeout_api}
-
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+  
+# OTA flashing
 ota:
+  - platform: esphome
 
-web_server:
-  port: 80
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 #################################
 
@@ -179,8 +179,6 @@ light:
 
 ```yaml
 substitutions:
-  platform: ESP8266
-  board: esp01_1m
   device_name: esphome_dining_room_switch
   friendly_name: "Living Room Switch"
   reboot_timeout_wifi: 900s
@@ -190,30 +188,32 @@ substitutions:
 #################################
 
 esphome:
-  platform: ${platform}
-  board: ${board}
   name: ${device_name}
-  esp8266_restore_from_flash: true
 
-wifi:
-  ssid: !secret wifi_iot_ssid
-  password: !secret wifi_iot_pwd
-  fast_connect: on
-  reboot_timeout: ${reboot_timeout_wifi}
-  output_power: ${output_power}
-  ap:
-    ssid: "AP_${friendly_name}"
-    password: !secret wifi_backup_pwd
-
-api:
-  reboot_timeout: ${reboot_timeout_api}
-
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+  
+# OTA flashing
 ota:
+  - platform: esphome
 
-web_server:
-  port: 80
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 #################################
 

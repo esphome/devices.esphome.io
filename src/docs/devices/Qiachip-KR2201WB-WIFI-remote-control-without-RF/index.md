@@ -36,7 +36,17 @@ esphome:
 
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -56,15 +66,15 @@ wifi:
     ssid: ${friendly_name} Hotspot
     password: !secret ap_password
 
+# Enable the captive portal
 captive_portal:
 
 time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 debug:
   update_interval: 5s
@@ -100,30 +110,6 @@ sensor:
                 (minutes ? to_string(minutes) + "m " : "") +
                 (to_string(seconds) + "s")
               ).c_str();
-
-text_sensor:
-  - platform: libretiny
-    version:
-      name: ${friendly_name} LibreTiny Version
-      icon: mdi:cube-outline
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} IP address"
-    ssid:
-      name: "${friendly_name} connected SSID"
-    mac_address:
-      name: "${friendly_name} MAC WiFi address"
-
-  - platform: template
-    name: Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
-
-  - platform: debug
-    device:
-      name: Device Info
-    reset_reason:
-      name: Reset Reason
 
 light:
   - platform: status_led

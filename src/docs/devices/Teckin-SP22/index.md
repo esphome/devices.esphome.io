@@ -37,6 +37,7 @@ esp8266:
 # Enable logging
 logger:
 
+# Enable Home Assistant API
 api:
   encryption:
     key: !secret api_encryption_key
@@ -55,7 +56,11 @@ wifi:
     ssid: SP22_AP
     password: "Hotspot password here"
 
+# Enable the captive portal
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 switch:
   - id: relay

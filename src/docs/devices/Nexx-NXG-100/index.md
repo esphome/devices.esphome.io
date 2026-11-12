@@ -41,27 +41,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
+    
+# OTA flashing
 ota:
+  - platform: esphome
 
-wifi:
-  ssid: <SSID>
-  password: <Password>
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "Nxg100 Fallback Hotspot"
-    password: <FB Password>
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-web_server:
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 status_led:
   pin:
@@ -168,27 +168,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
+    
+# OTA flashing
 ota:
+  - platform: esphome
 
-wifi:
-  ssid: <SSID>
-  password: <Password>
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "Nxg100 Fallback Hotspot"
-    password: <FB Password>
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-web_server:
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 status_led:
   pin:
@@ -240,11 +240,6 @@ binary_sensor:
   - platform: status
     name: "Status"
     internal: true
-
-sensor:
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    update_interval: 60s
 
 switch:
   - platform: gpio

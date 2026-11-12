@@ -44,33 +44,23 @@ esphome:
 esp8266:
   board: esp01_1m
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret garage_ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: on
-  manual_ip:
-    # Set this to the IP of the device
-    static_ip: 192.168.1.83
-    gateway: 192.168.1.254
-    subnet: 255.255.255.0
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "${device_name}"
-    password: !secret ap_password
-
+# Enable the captive portal
 captive_portal:
 
 uart:
@@ -82,9 +72,7 @@ uart:
 tuya:
 
 sensor:
-  - platform: wifi_signal
-    name: ${device_name} Wifi Signal Strength
-    update_interval: 60s
+
   - platform: uptime
     name: ${device_name} Uptime
 

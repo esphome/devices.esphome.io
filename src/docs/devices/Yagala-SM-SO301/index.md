@@ -60,9 +60,8 @@ api:
   encryption:
     key: !secret api_encryption_key
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 text_sensor:
   - platform: wifi_info

@@ -31,13 +31,18 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
     ssid: SP10_AP
     password: !secret wifi_password
     channel: 1
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 ota:
 web_server:

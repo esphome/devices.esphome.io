@@ -46,14 +46,33 @@ what is actually required by the switch.
 ```yaml
 substitutions:
   comment: "(Blitzwolf SHP3) -- Device host: bw-shp3-01.local"
-  platform: ESP8266
-  board: esp01_1m
-  devicename: your_device_name
-  propername: "Your Friendly Name"
   current_res: "0.00221" # Random value. Requires power monitoring calibration
   voltage_div: "955" # Random value. Requires power monitoring calibration
+  
+esphome:
+  name: example-device
+  friendly_name: Example Device
 
-# Include your connection, API, etc. settings here
+esp8266:
+  board: esp01_1m
+         
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 sensor:
   # Reports the Current, Voltage, and Power used by the plugged-in device

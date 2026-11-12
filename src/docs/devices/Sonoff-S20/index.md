@@ -25,14 +25,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+    
+# OTA flashing
 ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Device Specific Config
 binary_sensor:
@@ -48,9 +58,6 @@ binary_sensor:
     name: "Sonoff S20 Status"
 
 sensor:
-  - platform: wifi_signal
-    name: "Sonoff S20 WiFi Signal"
-    update_interval: 60s
 
 switch:
   - platform: gpio

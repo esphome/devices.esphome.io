@@ -82,17 +82,27 @@ api:
   encryption:
     key: !secret api_encryption_key
 
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+      
+# OTA flashing
 ota:
-  password: !secret ota_password
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
 
-sensor:
-  - platform: uptime
-    name: ${device_name} Uptime
+# Enable the captive portal
+captive_portal:
 
   - platform: wifi_signal
     name: ${device_name} Wifi Signal

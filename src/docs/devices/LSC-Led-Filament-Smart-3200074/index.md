@@ -45,27 +45,26 @@ libretuya:
   framework:
     version: dev
 
-# Enable logging
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret enc_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
-  ap:
-    ssid: "Lsc-Light-Warm-01"
-    password: !secret ap_password
-
-#web_server:
+# web_server:
 #  port: 80
 
 sensor:

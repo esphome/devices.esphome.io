@@ -56,6 +56,28 @@ Note that while the battery ID is set to a value between 1 and 15 using
 the dip switches, the modbus address is 38+(ID). i.e. starts at 39.
 
 ```yaml title=.narada-npfc.yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+      
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 sensor:
   - platform: modbus_controller
     modbus_controller_id: ${modbus_controller_id}

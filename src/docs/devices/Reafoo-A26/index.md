@@ -35,6 +35,10 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -44,42 +48,23 @@ wifi:
     ssid: ${friendly_name}_AP
     password: !secret wifi_password
 
-# Enable logging
+# Enabling the logging component
 logger:
   baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
-# Enable web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   # Reports if this device is Connected or not
   - platform: status
     name: ${friendly_name} Status
-
-sensor:
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
-
-  # Reports how long the device has been powered (in minutes)
-  - platform: uptime
-    name: ${friendly_name} Uptime
-    filters:
-      - lambda: return x / 60.0;
-    unit_of_measurement: minutes
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 
 output:
   - platform: esp8266_pwm
@@ -177,6 +162,10 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -186,42 +175,23 @@ wifi:
     ssid: ${friendly_name}_AP
     password: !secret wifi_password
 
-# Enable logging
+# Enabling the logging component
 logger:
   baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
-# Enable web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   # Reports if this device is Connected or not
   - platform: status
     name: ${friendly_name} Status
-
-sensor:
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
-
-  # Reports how long the device has been powered (in minutes)
-  - platform: uptime
-    name: ${friendly_name} Uptime
-    filters:
-      - lambda: return x / 60.0;
-    unit_of_measurement: minutes
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 
 output:
   - platform: esp8266_pwm

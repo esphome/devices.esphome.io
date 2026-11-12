@@ -45,23 +45,14 @@ wifi:
     password: !secret wifi_password
   fast_connect: true
 
-  # Optional manual IP
-#  manual_ip:
-#    static_ip: 192.168.1.x
-#     255.255.255.0
-
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret otapass
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant

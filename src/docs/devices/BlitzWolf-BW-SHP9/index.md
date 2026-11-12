@@ -66,19 +66,25 @@ esphome:
 
 esp8266:
   board: esp8285
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
+# Enabling the logging component
 logger:
   baud_rate: 0
 
+# Enable Home Assistant API
 api:
 
-ota:
-  password: !secret otapw
+# Enable the captive portal
+captive_portal:
 
 # Button configuration
 binary_sensor:

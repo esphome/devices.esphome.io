@@ -34,12 +34,20 @@ esphome:
   name: ${device_name}
   friendly_name: "Arlec GLD381HA"
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  password: !secret ota_password
 
 ota:
   password: !secret ota_password

@@ -67,6 +67,9 @@ wifi:
 
 captive_portal:
 
+# Enable the Web Server component 
+webserver:
+
 dashboard_import:
   package_import_url: github://athom-tech/athom-configs/athom-smart-plug-v2.yaml
 
@@ -179,15 +182,6 @@ light:
     pin:
       inverted: true
       number: GPIO13
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Connected SSID"
-    mac_address:
-      name: "Mac Address"
 
 time:
   - platform: sntp

@@ -43,33 +43,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: on #we only have one WiFi AP so just use the first one that matches
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: $devicename
-    password: !secret esphome_backup_ap_password
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
   baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
-# Web server can be removed after enabling HA API
-web_server:
-  port: 80
-
-ota:
-  password: !secret ota_password
-
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # Enable time component for use by daily power sensor
 time:
@@ -77,18 +72,6 @@ time:
     id: homeassistant_time
 
 sensor:
-  # Reports how long the device has been powered (in minutes)
-  - platform: uptime
-    name: ${friendly_name} Uptime
-    filters:
-      - lambda: return x / 60.0;
-    unit_of_measurement: minutes
-
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal
-    update_interval: 60s
-
   # Reports the Current, Voltage, and Power used by the plugged-in device (not counting this plug's own usage of about 0.8W/0.019A, so subtract those when calibrating with this plugged into a Kill-A-Watt type meter)
   - platform: hlw8012
     sel_pin:
@@ -151,20 +134,6 @@ binary_sensor:
     name: ${friendly_name} Button # Name to make button visible in HA
     on_press:
       - switch.toggle: relay
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
-
-  # Reports detailed wifi info, can be commented out
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP Address
-    # ssid: # Some additional wifi info that is not normally needed
-    #   name: ${friendly_name} Connected SSID
-    # bssid:
-    #   name: ${friendly_name} Connected BSSID
 
 switch:
   # Relay itself

@@ -28,38 +28,29 @@ esphome:
 
 esp8266:
   board: esp8285
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-  manual_ip:
-    static_ip: !secret outdoor_ss42_ip
-    gateway: !secret house_gateway
-    subnet: 255.255.255.0
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret outdoor_ss42_ota
+# Enable the captive portal
+captive_portal:
 
 sensor:
-  - platform: wifi_signal
-    name: "Outdoor SS42 WiFi signal"
-    update_interval: 60s
 
   - platform: uptime
     name: "Outdoor SS42 uptime"
-
-text_sensor:
-  - platform: version
-    name: "Outdoor SS42 ESPHome version"
 
 switch:
   - platform: gpio

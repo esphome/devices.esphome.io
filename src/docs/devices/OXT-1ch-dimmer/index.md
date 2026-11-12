@@ -84,10 +84,25 @@ esphome:
 
 bk72xx:
   board: cb3s # Using original CB3S module by Tuya, can also be replaced with other pin-compatible
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Disable UART logging - we need UART to talk to dimming MCU
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 uart:
   tx_pin: GPIO11 # rx_pin is not required (not used)

@@ -56,6 +56,28 @@ Connection parameters:
 A translation from the numeric values of gear can be done using a template text sensor to show the cardinals textually:
 
 ```yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 uart:
   rx_pin: GPIOXX
   tx_pin: GPIOXX

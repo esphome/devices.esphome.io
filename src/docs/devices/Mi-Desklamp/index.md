@@ -18,50 +18,39 @@ esphome:
 esp8266:
   board: esp8285
 
-# Enable logging
+esp8266:
+  board: esp01_1m
+
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Mi-Desk-Lamp-1S Fallback Hotspot"
-    password: "4Kv4XJ2e9Bmt"
-
+# Enable the captive portal
 captive_portal:
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Sync time with Home Assistant
 time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Text sensors with general information
-text_sensor:
-  - platform: version
-    name: ${friendly_name} Version
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP Address
-
 sensor:
   # Uptime sensor
   - platform: uptime
     name: ${friendly_name} Uptime
-  # WiFi Signal sensor
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal
-    update_interval: 60s
   # Rotary
   - platform: rotary_encoder
     id: rotation

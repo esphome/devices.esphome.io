@@ -33,41 +33,28 @@ esphome:
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-web_server:
-
-captive_portal:
-
-mdns:
-
+# Enable Home Assistant API
 api:
-  password: ""
 
-ota:
-  password: ""
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
+# Enable the captive portal
+captive_portal:
 
 button:
   - platform: restart
     name: Restart
-
-debug:
-  update_interval: 30s
-
-text_sensor:
-  - platform: debug
-    reset_reason:
-      name: Reset Reason
-
-sensor:
-  - platform: uptime
-    name: Uptime
 
 bp1658cj:
   clock_pin: P9

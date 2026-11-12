@@ -78,18 +78,25 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ...
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
   baud_rate: 115200
 
+# Enable Home Assistant API
 api:
-  ...
 
-ota:
-  ...
+# Enable the captive portal
+captive_portal:
 
 output:
   - platform: gpio

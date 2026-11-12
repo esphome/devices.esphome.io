@@ -30,6 +30,7 @@ rtl87xx:
 # Enable logging
 logger:
 
+# Enable Home Assistant API
 api:
   encryption:
     key: !secret api_encryption_key
@@ -46,6 +47,7 @@ wifi:
     ssid: "SP23 AP"
     password: !secret ap_pass
 
+# Enable the captive portal
 captive_portal:
 
 switch:

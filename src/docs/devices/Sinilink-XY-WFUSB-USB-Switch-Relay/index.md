@@ -62,23 +62,24 @@ esphome:
 esp8266:
   board: esp01_1m
   restore_from_flash: True
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  fast_connect: True
-  power_save_mode: HIGH
-  ap:
-    ssid: "${friendly_name}"
-    ap_timeout: 3min
-
-captive_portal:
-
+# Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant
@@ -132,12 +133,6 @@ binary_sensor:
       inverted: True
     on_press:
       - switch.toggle: relay
-
-# WiFi Signal Sensor
-sensor:
-  - platform: wifi_signal
-    name: "WiFi Status"
-    update_interval: 60s
 
 # Restart button
 button:

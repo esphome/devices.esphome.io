@@ -56,22 +56,24 @@ esp32:
   variant: esp32
   framework:
     type: esp-idf
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
-  ap:
-    ssid: ${device_name}
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant
@@ -87,8 +89,7 @@ globals:
     restore_value: true
     initial_value: '0.0'
 
-
-    #### only needed for RGB LED to set up a while after boot #####
+#### only needed for RGB LED to set up a while after boot #####
 
 script:
   - id: set_rgb

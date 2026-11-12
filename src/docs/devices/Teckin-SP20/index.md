@@ -71,14 +71,14 @@ wifi:
 web_server:
   port: 80
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret espotapass
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: homeassistant
