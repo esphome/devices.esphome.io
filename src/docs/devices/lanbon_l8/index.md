@@ -49,13 +49,20 @@ difficulty: 2
 | GPIO32 | green    | unused          |
 | GPIO33 | blue     | unused          |
 
-### Relay (3-gang switch model)
+### Relay (L8-HS, 3-gang switch model)
 
 | Pin    | Function |
 | ------ | -------- |
 | GPIO12 | relay #1 |
 | GPIO14 | relay #2 |
 | GPIO27 | relay #3 |
+
+### Dimmer (L8-HD, 1-gang switch model)
+
+| Pin    | Function           |
+| ------ | ------------------ |
+| GPIO12 | Dimmer Tx          |
+| GPIO27 | Dimmer power relay |
 
 ### How To Flash
 
@@ -86,15 +93,25 @@ output:
   - platform: ledc
     pin: GPIO33
     id: moodBlue
-  - platform: gpio
+  - platform: gpio  ## -HS only
     pin: GPIO12
     id: relay_1
-  - platform: gpio
+  - platform: gpio  ## -HS only
     pin: GPIO14
     id: relay_2
   - platform: gpio
     pin: GPIO27
     id: relay_3
+
+uart:  ## -HD only
+  tx_pin:
+    number: GPIO12
+    inverted: false   # true for EU
+  id: dimmer_tx
+  baud_rate: 115200
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
 
 light:
   - platform: monochromatic
@@ -116,6 +133,12 @@ light:
   #  num_leds: 8
   #  chipset: ws2811
   #  name: "Mood Light"
+  - platform: lanbon_l8_hd ## -HD only
+    name: "Light"
+    id: local_dimmer
+    restore_mode: ALWAYS_OFF
+    gamma_correct: 0.0
+    enable_pin: relay_3
 
 spi:
   clk_pin: GPIO19
