@@ -3,11 +3,12 @@ title: ViragePlug KS-604S
 date-published: 2022-01-25
 type: plug
 standard: us
+board: esp8266
 ---
 
-[Virage Laboratories](https://www.viragelabs.com)
+Manufacturer: Virage Laboratories (seems to no longer exist)
 
-[KS-604S Outlet](https://www.viragelabs.com/product/virageplug/)![image](virage_labs_KS-604S.jpg)
+![image](virage_labs_KS-604S.jpg)
 
 ## General Notes
 
