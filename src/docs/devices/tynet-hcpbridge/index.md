@@ -47,3 +47,4 @@ in our GitHub Wiki or follow these instructions:
 
 ```yaml url=[https://github.com/Tysonpower/Tynet-HCPBridge/blob/main/hcpbridge_series4.yaml](https://github.com/Tysonpower/Tynet-HCPBridge/blob/main/hcpbridge_series4.yaml)
 # Paste a working ESPHome YAML configuration here
+```
