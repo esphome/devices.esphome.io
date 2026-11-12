@@ -1,0 +1,24 @@
+# Extra entities for the sensor-equipped build (model: AC0651).
+#
+# Merge the two sensors into the `sensor:` list config.yaml already has — do not
+# append a second top-level `sensor:` key, which would drop the base filter
+# sensors. config.yaml has no `switch:` block, so add that one as a new
+# top-level block.
+sensor:
+  - platform: philips
+    philips: purifier
+    id: philips_pm25
+    name: "PM2.5"
+    type: pm2_5
+  - platform: philips
+    philips: purifier
+    id: philips_allergen_index
+    name: "Allergen Index"
+    type: allergen_index
+
+switch:
+  - platform: philips
+    philips: purifier
+    id: philips_standby_sensor
+    name: "Standby Sensor Monitoring"
+    type: standby_sensor
