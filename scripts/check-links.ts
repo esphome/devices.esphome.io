@@ -29,10 +29,20 @@
  * CI and treated as explicit example/placeholder URLs. Links to GitHub's
  * `octocat` mascot account (github.com/octocat/...) are skipped for the
  * same reason - they are conventional placeholders, not real resources.
+ *
+ * Code is skipped too - fenced blocks and inline spans. A URL there is not
+ * a link: it renders as literal text nobody can click, so a dead one is
+ * not a broken link on the site. Device pages are mostly one large YAML
+ * config block, which carries two kinds of URL this checker can never
+ * usefully report - placeholders the reader substitutes
+ * (`resource: http://DEVICE_IP/json`) and vendor pages cited in a YAML
+ * comment above a copy-pasted config. Both are pinned to whatever the
+ * config author saw, and neither is a link the site offers a visitor.
  */
 
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 interface Location {
   file: string;
@@ -137,12 +147,47 @@ function selectFiles(): string[] {
   return changedMarkdownFiles();
 }
 
-function extractUrls(files: string[]): Map<string, Location[]> {
+// A fenced code block delimiter: three or more backticks or tildes, indented
+// by at most three spaces (CommonMark). The closing fence must use the same
+// character and be at least as long as the opening one, so ``` inside a ~~~
+// block - or a shorter run inside a longer fence - does not end it early.
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+// Inline code: `like this`, or ``like `this` `` when the content has a
+// backtick of its own. Stripped before matching so a URL in a code span is
+// treated the same as one in a fenced block.
+const INLINE_CODE = /(`+)[^`]*?\1/g;
+
+/**
+ * Strip the parts of a markdown line that render as code rather than a link.
+ *
+ * Only inline spans need per-line work; fenced blocks are handled by the
+ * caller, which has to track state across lines.
+ */
+function withoutInlineCode(line: string): string {
+  return line.replace(INLINE_CODE, "");
+}
+
+export function extractUrls(files: string[]): Map<string, Location[]> {
   const locations = new Map<string, Location[]>();
   for (const file of files) {
     const lines = readFileSync(file, "utf8").split("\n");
+    // The opening delimiter of the fence currently open, or null outside one.
+    let fence: string | null = null;
     lines.forEach((lineText, i) => {
-      for (const m of lineText.matchAll(URL_RE)) {
+      const delimiter = lineText.match(FENCE)?.[1];
+      if (delimiter) {
+        if (fence === null) {
+          fence = delimiter;
+        } else if (
+          delimiter[0] === fence[0] &&
+          delimiter.length >= fence.length
+        ) {
+          fence = null;
+        }
+        return;
+      }
+      if (fence !== null) return;
+      for (const m of withoutInlineCode(lineText).matchAll(URL_RE)) {
         const url = m[0].replace(TRAIL, "");
         if (SKIP.test(url)) continue;
         const arr = locations.get(url) ?? [];
@@ -290,4 +335,11 @@ async function main(): Promise<number> {
   return 0;
 }
 
-process.exit(await main());
+// Only run when invoked directly. The unit tests import `extractUrls`, and a
+// bare top-level call would run the whole checker on import.
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  process.exit(await main());
+}
