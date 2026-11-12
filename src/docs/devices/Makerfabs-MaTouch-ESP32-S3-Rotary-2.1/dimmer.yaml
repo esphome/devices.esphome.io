@@ -1,0 +1,82 @@
+# A one-light dimmer on top of the hardware configuration.
+#
+# The knob is bound to LVGL as an encoder input device, so the arc widget is
+# driven by rotation and the knob's press acts as LVGL's enter button. Nothing
+# here redefines the encoder or the button - both come from config.yaml.
+
+# Requires "Allow the device to perform Home Assistant actions" to be enabled
+# for this device in the ESPHome integration, or the dial will move on screen
+# and never change the light.
+substitutions:
+  light_entity: light.living_room
+
+api:
+
+script:
+  # Rate-limit what actually reaches Home Assistant. Sending on every detent
+  # floods the connection; sending only once the knob stops makes it feel dead.
+  - id: push_level
+    mode: restart
+    parameters:
+      level: int
+    then:
+      - delay: 250ms
+      # Zero is sent as a real turn_off. `brightness_pct: 0` on turn_on is
+      # ambiguous for some light platforms and can leave the light on.
+      - if:
+          condition:
+            lambda: "return level <= 0;"
+          then:
+            - homeassistant.action:
+                action: light.turn_off
+                data:
+                  entity_id: ${light_entity}
+          else:
+            - homeassistant.action:
+                action: light.turn_on
+                data:
+                  entity_id: ${light_entity}
+                  brightness_pct: !lambda "return level;"
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_level
+    size: 64
+
+lvgl:
+  displays: [round_display]
+  touchscreens: [touch]
+  encoders:
+    - group: dial
+      sensor: encoder
+      enter_button: knob_button
+  pages:
+    - id: main_page
+      bg_color: 0x000000
+      widgets:
+        - arc:
+            id: level_arc
+            group: dial
+            align: CENTER
+            width: 420
+            height: 420
+            min_value: 0
+            max_value: 100
+            value: 50
+            arc_width: 24
+            on_value:
+              - script.execute:
+                  id: push_level
+                  level: !lambda "return (int) x;"
+              - lvgl.label.update:
+                  id: level_label
+                  text: !lambda |-
+                    char buf[8];
+                    snprintf(buf, sizeof(buf), "%d%%", (int) x);
+                    return std::string(buf);
+        - label:
+            id: level_label
+            align: CENTER
+            text: "50%"
+            text_font: font_level
+            text_color: 0xFFFFFF
