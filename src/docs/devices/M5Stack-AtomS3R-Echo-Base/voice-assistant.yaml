@@ -1,0 +1,40 @@
+# Voice assistant layer for the AtomS3R + Atomic Echo Base. Add this to the
+# hardware configuration. Requires ESPHome 2026.7.3 or newer — see the note
+# about microWakeWord on older releases.
+
+# voice_assistant talks to Home Assistant over the native API, so the component
+# has to be present here.
+api:
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: i2s_mic
+  models:
+    - model: github://esphome/micro-wake-word-models/models/v2/hey_jarvis.json
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  microphone:
+    microphone: i2s_mic
+  media_player: echo_base_player
+  use_wake_word: false
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+
+  on_client_connected:
+    - micro_wake_word.start:
+
+  on_end:
+    - wait_until:
+        condition:
+          media_player.is_idle:
+            id: echo_base_player
+        timeout: 30s
+    - micro_wake_word.start:
+
+  on_error:
+    - micro_wake_word.start:

@@ -1,0 +1,112 @@
+substitutions:
+  name: atoms3r-echo-base
+  friendly_name: AtomS3R Echo Base
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.1.0
+
+esp32:
+  board: m5stack-atoms3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: INFO
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  # Fallback hotspot only — add your own ssid/password when you adopt this.
+  ap:
+
+# Two separate I2C buses. The AtomS3R's own peripherals sit on bsp_bus; the
+# Atomic Echo Base brings its own bus out on the base connector.
+i2c:
+  - id: bsp_bus
+    sda:
+      number: GPIO45
+      ignore_strapping_warning: true
+    scl:
+      number: GPIO0
+      ignore_strapping_warning: true
+    scan: true
+  - id: ext_bus
+    sda: GPIO38
+    scl: GPIO39
+    scan: true
+
+# GPIO expander on the Echo Base. The speaker amplifier enable line hangs off
+# this rather than off a native pin.
+pi4ioe5v6408:
+  - id: pi4ioe5v6408_hub
+    i2c_id: ext_bus
+    address: 0x43
+
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_lrclk_pin: GPIO6
+    i2s_bclk_pin: GPIO8
+    # No MCLK pin is wired on this base.
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: ext_bus
+    bits_per_sample: 16bit
+    sample_rate: 48000
+    use_microphone: false
+    use_mclk: false
+
+microphone:
+  - platform: i2s_audio
+    id: i2s_mic
+    i2s_din_pin: GPIO7
+    adc_type: external
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_speaker
+    i2s_dout_pin: GPIO5
+    dac_type: external
+    audio_dac: es8311_dac
+    sample_rate: 48000
+    channel: left
+
+switch:
+  # NS4150B amplifier enable, via the Echo Base GPIO expander.
+  - platform: gpio
+    name: Speaker Enable
+    icon: mdi:volume-high
+    restore_mode: RESTORE_DEFAULT_ON
+    pin:
+      pi4ioe5v6408: pi4ioe5v6408_hub
+      number: 0
+      mode:
+        output: true
+
+binary_sensor:
+  - platform: gpio
+    id: user_button
+    name: Button
+    pin:
+      number: GPIO41
+      mode: INPUT_PULLUP
+      inverted: true
+
+media_player:
+  - platform: speaker
+    id: echo_base_player
+    name: ${friendly_name}
+    announcement_pipeline:
+      speaker: i2s_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
