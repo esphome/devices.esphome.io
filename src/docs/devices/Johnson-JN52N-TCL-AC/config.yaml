@@ -1,0 +1,33 @@
+esphome:
+  name: ac-jn52n
+  friendly_name: "Johnson JN52N AC"
+
+esp8266:
+  board: esp01_1m
+
+# GPIO15 and GPIO13 are UART0, which is also the default logger output on the
+# ESP8266. The logger has to stay off the serial port or its output ends up on
+# the wire that talks to the indoor unit.
+logger:
+  baud_rate: 0
+
+external_components:
+  - source: github://gnacho/esphome-tcl-ac@main
+    components: [tcl_climate]
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+  parity: EVEN
+
+climate:
+  - platform: tcl_climate
+    id: tcl_custom_climate
+    uart_id: uart_bus
+    name: "Johnson JN52N"
+    icon: "mdi:fan"
+
+wifi:
+  ap:
