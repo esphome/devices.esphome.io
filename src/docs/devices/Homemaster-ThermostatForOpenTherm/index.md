@@ -153,11 +153,19 @@ not the shape of the box.
 3. Connect over Bluetooth, or over USB serial with a USB-C cable, and enter the
    Wi-Fi credentials.
 
+The provisioning window stays open for 15 minutes after power-on. If it has
+closed, power-cycle the thermostat to open it again.
+
 ### Taking control
 
-Open ESPHome Device Builder and click **Take control**. This imports the
-configuration and establishes your own API encryption key. Save that key before
-adding the device in Home Assistant.
+Do this inside the same 15-minute window. Open ESPHome Device Builder and click
+**Take control**. This imports the configuration and establishes your own API
+encryption key. Save that key before adding the device in Home Assistant.
+
+If the window has already closed — easy to miss during an installation, where
+the thermostat may sit powered for an hour before anyone opens a laptop — power
+off the thermostat and power it on again. The window reopens for another
+15 minutes.
 
 ## Firmware Updates
 
