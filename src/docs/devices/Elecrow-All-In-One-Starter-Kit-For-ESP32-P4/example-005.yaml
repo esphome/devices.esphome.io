@@ -1,0 +1,16 @@
+light:
+  - platform: esp32_rmt_led_strip
+    id: rgb_leds
+    name: "RGBW LED"
+    bit0_high: 400ns
+    bit0_low: 900ns
+    bit1_high: 600ns
+    bit1_low: 700ns
+    reset_low: 300us
+    pin:
+      number: GPIO8
+    num_leds: 1
+    rgb_order: RGB
+    is_wrgb: true
+    rmt_symbols: 192
+    default_transition_length: 0s

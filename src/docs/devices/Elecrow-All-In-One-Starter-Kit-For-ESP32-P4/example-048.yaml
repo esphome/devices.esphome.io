@@ -1,0 +1,4 @@
+i2c:
+  - id: !extend sensor_i2c
+    scan: true
+    frequency: 400kHz

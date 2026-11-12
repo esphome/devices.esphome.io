@@ -1,0 +1,12 @@
+i2s_audio:
+  - id: i2s_input
+    i2s_lrclk_pin: GPIO3
+
+microphone:
+  # 12. I2S Microphone
+  - platform: i2s_audio
+    id: mic_i2s
+    i2s_audio_id: i2s_input
+    i2s_din_pin: GPIO4
+    adc_type: external
+    pdm: true
