@@ -1,0 +1,55 @@
+# BASICS
+esphome:
+  name: hama-wifi-power-strip-00176574
+  friendly_name: "Hama WiFi Power Strip 00176574"
+esp8266:
+  board: esp01_1m
+  early_pin_init: false
+
+# WIFI: If connected, Button-LED lights up
+wifi:
+  on_connect:
+    - switch.turn_on: led
+  on_disconnect:
+    - switch.turn_off: led
+
+#  RELAYS: Control the power of the relays remotely
+switch:
+  - id: relay_1
+    name: "Relay 1"
+    platform: gpio
+    pin: 5
+  - id: relay_2
+    name: "Relay 2"
+    platform: gpio
+    pin: 4
+  - id: relay_3
+    name: "Relay 3"
+    platform: gpio
+    pin: 12
+  - id: relay_4
+    name: "Relay 4"
+    platform: gpio
+    pin: 13
+  - id: relay_usb
+    name: "Relay USB"
+    platform: gpio
+    pin: 14
+
+# LED: The one on the button
+  - id: led
+    platform: gpio
+    pin:
+      number: 1
+      inverted: true
+
+# BUTTON: Toggles USB-relay when pushed (Stock firmware behavior)
+binary_sensor:
+  - id: button
+    platform: gpio
+    pin:
+      number: 3
+      inverted: true
+    on_click:
+      then:
+        - switch.toggle: relay_usb
