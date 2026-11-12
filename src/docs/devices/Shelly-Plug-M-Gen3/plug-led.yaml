@@ -130,7 +130,9 @@ script:
           } else if (id(fault_active)) {
             // PRIO 1: fault latched - red breathing
             dim = false;
-            float p = (sinf(now * 0.004f) + 1.0f) / 2.0f;
+            // the phase comes from now modulo one period (an integer): now * 0.004f as a float gets coarse
+            // after hours of uptime and the breathing would turn jerky
+            float p = (sinf((now % 1571) * 0.004f) + 1.0f) / 2.0f;
             r = 0.12f + p * 0.47f;
           } else if (id(ntc_bad)) {
             // PRIO 2: temperature sensor fault (protection is blind) - magenta slow blink
@@ -142,13 +144,13 @@ script:
             if ((now / 250) % 2 == 0) { r = 1.0f; g = 0.47f; }
           } else if (!wifi_ok) {
             // PRIO 4: no Wi-Fi - red pulse
-            r = (sinf(now * 0.005f) + 1.0f) / 2.0f;
+            r = (sinf((now % 1257) * 0.005f) + 1.0f) / 2.0f;
           } else if (id(ota_running)) {
             // PRIO 4: OTA update - blue blink (checked before the API: its clients leave during an OTA)
             if ((now / 150) % 2 == 0) b = 1.0f; else b = 0.08f;
           } else if (!api_ok) {
             // PRIO 4: no API client - amber pulse
-            float pulse = (sinf(now * 0.003f) + 1.0f) / 2.0f;
+            float pulse = (sinf((now % 2094) * 0.003f) + 1.0f) / 2.0f;
             r = pulse * 0.9f;
             g = pulse * 0.24f;
           } else {
