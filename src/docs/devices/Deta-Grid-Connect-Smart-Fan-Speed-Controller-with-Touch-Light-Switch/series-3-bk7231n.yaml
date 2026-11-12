@@ -1,0 +1,125 @@
+substitutions:
+  device_name: deta-fan-controller
+  friendly_name: "Deta Smart Fan Speed Controller"
+
+#################################
+
+esphome:
+  name: ${device_name}
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+#################################
+status_led:
+  pin:
+    number: P22
+    inverted: true
+
+light:
+  - platform: binary
+    output: relay_light
+    id: light1
+    name: ${friendly_name} Light
+
+output:
+  - platform: gpio
+    id: relay_light
+    pin: P26
+  - platform: template
+    id: fan_speed
+    type: float
+    write_action:
+      - then:
+          - if:
+              condition:
+                lambda: return ((state > 0) && (state < .4));
+              then:
+                - switch.turn_on: relay_fan_1
+                - delay: 20ms
+                - switch.turn_off: relay_fan_2
+                - delay: 20ms
+                - switch.turn_off: relay_fan_3
+          - if:
+              condition:
+                lambda: return ((state > .4) && (state < .7));
+              then:
+                - switch.turn_on: relay_fan_1
+                - delay: 20ms
+                - switch.turn_on: relay_fan_2
+                - delay: 20ms
+                - switch.turn_off: relay_fan_3
+          - if:
+              condition:
+                lambda: return (state > .7);
+              then:
+                - switch.turn_on: relay_fan_1
+                - delay: 20ms
+                - switch.turn_on: relay_fan_2
+                - delay: 20ms
+                - switch.turn_on: relay_fan_3
+          - if:
+              condition:
+                lambda: return (state < 0.01);
+              then:
+                - switch.turn_off: relay_fan_1
+                - delay: 20ms
+                - switch.turn_off: relay_fan_2
+                - delay: 20ms
+                - switch.turn_off: relay_fan_3
+
+binary_sensor:
+  - platform: gpio
+    id: fan_light_sensor
+    pin:
+      number: P14
+      mode: INPUT
+      inverted: true
+    on_press:
+      - light.toggle: light1
+  - platform: gpio
+    id: fan_power_sensor
+    pin:
+      number: P20
+      mode: INPUT
+      inverted: true
+    on_press:
+      then:
+        # After a power cycle speed is 0, so plain toggle would do nothing
+        - if:
+            condition:
+              lambda: return !id(fan_1).state && id(fan_1).speed == 0;
+            then:
+              - fan.turn_on:
+                  id: fan_1
+                  speed: 1
+            else:
+              - fan.toggle: fan_1
+  - platform: gpio
+    id: fan_speed_sensor
+    pin:
+      number: P7
+      mode: INPUT
+      inverted: true
+    on_press:
+      - fan.cycle_speed:
+          id: fan_1
+          off_speed_cycle: false
+
+fan:
+  - platform: speed
+    id: fan_1
+    output: fan_speed
+    name: ${friendly_name} Fan Speed
+    speed_count: 3
+
+switch:
+  - platform: gpio
+    id: relay_fan_1
+    pin: P6
+  - platform: gpio
+    id: relay_fan_2
+    pin: P9
+  - platform: gpio
+    id: relay_fan_3
+    pin: P8
