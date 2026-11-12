@@ -7,6 +7,8 @@ board: esp32
 difficulty: 3
 ---
 
+![Sonoff POW Ring (POWCT)](pow-ring.webp "Sonoff POW Ring (POWCT)")
+
 ## GPIO Pinout
 
 | Pin    | Function                           |
