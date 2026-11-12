@@ -51,3 +51,12 @@ To use pull-and-hold, replace the `switch:` section of the basic configuration w
 ```
 
 The button and `magic_switch` actions keep working unchanged, because they toggle `switch_1`.
+
+
+## Bluetooth proxy
+
+The ESP32-C3 can also act as a Bluetooth proxy for Home Assistant. Add this to the
+basic configuration:
+
+```yaml file=bluetooth-proxy.yaml
+```
