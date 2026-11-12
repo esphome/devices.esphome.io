@@ -1,0 +1,115 @@
+esphome:
+  name: pir
+  friendly_name: PIR
+
+bk72xx:
+  board: cbu
+
+wifi:
+  power_save_mode: HIGH
+  output_power: 8.5dB
+  ap:
+
+sensor:
+  - platform: internal_temperature
+    id: bk_temp
+    name: "BK7231N Internal Temperature"
+    update_interval: 1h
+
+  - platform: adc
+    pin: P23
+    id: batt_v
+    name: "Battery Voltage"
+    samples: 10
+    update_interval: never
+    accuracy_decimals: 2
+    unit_of_measurement: V
+    filters:
+      - multiply: 1.91516709512 # voltage calibration
+    icon: "mdi:battery"
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 1h
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: P16
+      mode:
+        input: true
+        pulldown: false
+        pullup: false
+    name: "PIR Sensor"
+    device_class: motion
+    on_press:
+      - light.turn_on: led
+      - delay: 2s
+      - light.turn_off: led
+
+  - platform: gpio
+    id: button
+    name: "Button"
+    pin:
+      number: P20
+      mode:
+        input: true
+        pullup: false
+        pulldown: false
+      inverted: true
+
+text_sensor:
+  - platform: uptime
+    name: "Uptime"
+    id: uptime_sensor
+    entity_category: diagnostic
+    icon: mdi:clock-start
+    update_interval: 1h
+  - platform: libretiny
+    version:
+      id: libretiny_version
+      name: LibreTiny Version
+
+light:
+  - platform: status_led
+    id: led
+    name: "Status LED"
+    internal: true
+    pin: P26
+
+output:
+  - id: vr1a
+    platform: gpio
+    pin:
+      number: P14
+  - id: vr1b
+    platform: gpio
+    pin:
+      number: P1
+  - id: vr1c
+    platform: gpio
+    pin:
+      number: P0
+  - id: vr2a
+    platform: gpio
+    pin:
+      number: P24
+  - id: vr2b
+    platform: gpio
+    pin:
+      number: P7
+  - id: vr2c
+    platform: gpio
+    pin:
+      number: P8
+  - id: bat_vdiv
+    platform: gpio
+    pin: P17
+
+interval:
+  - interval: 1h
+    then:
+      - output.turn_on: bat_vdiv
+      - delay: 50ms
+      - component.update: batt_v
+      - output.turn_off: bat_vdiv
