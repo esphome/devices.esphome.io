@@ -12,6 +12,8 @@ RGB status LED).
 
 ![Shelly Plug M Gen3](../Shelly-Plug-M-Gen3/_Shelly-Plug-M-Gen3.png "Shelly Plug M Gen3")
 
+> **Warning:** Never open the plug or connect a serial adapter while it is connected to mains voltage.
+
 ## Flashing
 
 There are two ways to get ESPHome onto the plug.
@@ -24,7 +26,7 @@ the [OTA stock layout settings](#optional-ota-from-the-stock-firmware) and uploa
 
 ### Option 2: UART
 
-Open the plug and connect a USB-UART adapter.
+Open the plug and connect a 3.3 V USB-to-serial adapter. Power the plug only from the adapter.
 
 ![Pinout](../Shelly-Plug-M-Gen3/pins.jpg "UART pinout")
 

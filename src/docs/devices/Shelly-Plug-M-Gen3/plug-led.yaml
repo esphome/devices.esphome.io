@@ -186,6 +186,8 @@ script:
           auto call = id(rgb_lights).turn_on();
           call.set_transition_length(0);
           call.set_rgb(r, g, b);
+          call.set_publish(false);  // this runs every 50 ms: no state update to Home Assistant each time
+          call.set_save(false);
           call.perform();
 
 light:
