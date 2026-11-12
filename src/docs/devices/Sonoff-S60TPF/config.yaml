@@ -1,0 +1,59 @@
+substitutions:
+  device_name: sonoff-s60tpf
+  friendly_name: Sonoff S60TPF
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+status_led:
+  pin:
+    number: GPIO5
+    inverted: true
+
+switch:
+  - id: switch_1
+    platform: gpio
+    name: "Relay"
+    pin: GPIO4
+    restore_mode: ALWAYS_ON
+
+binary_sensor:
+  - platform: gpio
+    id: button_1
+    internal: true
+    pin:
+      number: GPIO9
+      inverted: true
+    on_press:
+      - switch.toggle: switch_1
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+
+sensor:
+  - platform: cse7766
+    current:
+      name: ${friendly_name} Current
+    voltage:
+      name: ${friendly_name} Voltage
+    power:
+      name: ${friendly_name} Power
+    energy:
+      name: ${friendly_name} Energy
+    apparent_power:
+      name: ${friendly_name} Apparent Power
+    reactive_power:
+      name: ${friendly_name} Reactive Power
+    power_factor:
+      name: ${friendly_name} Power Factor
+
+uart:
+  rx_pin: GPIO7
+  baud_rate: 4800
+  parity: EVEN
