@@ -1,0 +1,28 @@
+uart:
+  tx_pin: GPIO25
+  rx_pin: GPIO26
+  baud_rate: 4800
+  parity: NONE
+  stop_bits: 2
+
+sensor:
+  - platform: bl0939
+    update_interval: 21s
+    voltage:
+      name: "Voltage"
+    current_1:
+      name: "Current 1"
+      disabled_by_default: True
+    current_2:
+      name: "Current 2"
+      disabled_by_default: True
+    active_power_1:
+      name: "Power 1"
+    active_power_2:
+      name: "Power 2"
+    energy_1:
+      name: "Energy 1"
+    energy_2:
+      name: "Energy 2"
+    energy_total:
+      name: "Energy Total"

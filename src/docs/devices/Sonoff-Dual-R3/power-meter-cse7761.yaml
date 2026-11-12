@@ -1,0 +1,27 @@
+uart:
+  tx_pin: GPIO25
+  rx_pin: GPIO26
+  baud_rate: 38400
+  parity: EVEN
+  stop_bits: 1
+
+sensor:
+  - platform: cse7761
+    update_interval: 21s
+    voltage:
+      name: "Voltage"
+    current_1:
+      name: "Current 1"
+      disabled_by_default: True
+    current_2:
+      name: "Current 2"
+      disabled_by_default: True
+    # The board feeds the current into the CSE7761 reversed, so loads would read negative
+    active_power_1:
+      name: "Power 1"
+      filters:
+        - multiply: -1
+    active_power_2:
+      name: "Power 2"
+      filters:
+        - multiply: -1
