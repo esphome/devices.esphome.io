@@ -85,22 +85,8 @@ esptool.py --chip esp32c6 --port /dev/ttyUSB0 --baud 460800 \
 
 The [Basic Configuration](#basic-configuration) below only describes the hardware.
 Flashed as is, the strip never joins a network and can only be updated over UART again.
-Save it as `shelly-powerstrip4-gen4.yaml` and add Wi-Fi, the Home Assistant API and
-ESPHome OTA updates before compiling:
-
-```yaml
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-captive_portal:
-
-api:
-
-ota:
-  - platform: esphome
-```
+Save it as `shelly-powerstrip4-gen4.yaml` and add the
+[network and OTA components](#network-and-ota-updates) before compiling.
 
 ### Compile
 
@@ -128,4 +114,22 @@ esptool.py --chip esp32c6 --port /dev/ttyUSB0 --baud 460800 \
 > reversed polarity, hence the `-4.0`.
 
 ```yaml file=config.yaml
+```
+
+### Network and OTA updates
+
+Add these to your own copy so the strip can be set up and updated without UART.
+With no Wi-Fi credentials it starts a fallback hotspot whose captive portal asks for them;
+a `wifi:` `ssid` and `password` of your own work as well.
+
+```yaml inline
+wifi:
+  ap:
+
+captive_portal:
+
+api:
+
+ota:
+  - platform: esphome
 ```
