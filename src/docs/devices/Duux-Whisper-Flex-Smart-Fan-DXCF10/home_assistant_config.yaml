@@ -1,0 +1,324 @@
+substitutions:
+  devicename: "ventilator"
+  friendly: "Ventilator"
+# Define logging level: NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
+  log_level: "INFO"
+
+esphome:
+  name: $devicename
+  comment: "Duux Whisper Flex Smart Fan (DXCF10)"
+  friendly_name: $friendly
+  project:
+    name: "Duux.Whisper-Flex-Smart-Fan"
+    version: "1.1.0"
+
+esp8266:
+  board: esp07
+
+# Enable logging
+# baud_rate: 0 is required, because the Tuya UART (GPIO15/GPIO13) is the
+# swapped hardware UART0, which the logger would otherwise also use.
+# Logs remain available via the API and the web server.
+logger:
+  baud_rate: 0
+  level: $log_level
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ap: {}
+
+uart:
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+
+# Register the Tuya MCU connection
+tuya:
+  id: tuya_component
+
+  # Workaround for a Tuya MCU bug: once the display has dimmed, the first OFF
+  # command is ignored and the MCU reports DP1=ON again. While an OFF request
+  # from HA/ESPHome is pending, such a report is answered with another OFF,
+  # up to max_off_retries times.
+  on_datapoint_update:
+    - sensor_datapoint: 1
+      datapoint_type: bool
+      then:
+        - lambda: |-
+            if (!id(waiting_for_off_response)) {
+              return;
+            }
+
+            if (!x) {
+              ESP_LOGD("smart_fan", "Tuya MCU confirmed DP1=OFF");
+              id(waiting_for_off_response) = false;
+              id(off_retries) = 0;
+              id(off_watchdog).stop();
+              return;
+            }
+
+            if (id(off_retries) < id(max_off_retries)) {
+              id(off_retries) += 1;
+              ESP_LOGD(
+                "smart_fan",
+                "Tuya MCU reported DP1=ON after OFF command; retrying OFF (%d/%d)",
+                id(off_retries), id(max_off_retries)
+              );
+              id(tuya_component).force_set_boolean_datapoint_value(1, false);
+            } else {
+              ESP_LOGW(
+                "smart_fan",
+                "Tuya MCU still reports DP1=ON after %d OFF retries; giving up",
+                id(max_off_retries)
+              );
+              id(waiting_for_off_response) = false;
+              id(off_retries) = 0;
+              id(off_watchdog).stop();
+              id(sync_ha_fan).execute();
+            }
+
+globals:
+  # True only while an OFF request from the ESPHome/HA fan entity is pending.
+  - id: waiting_for_off_response
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+  # Number of OFF retries already sent for the pending OFF request.
+  - id: off_retries
+    type: int
+    restore_value: false
+    initial_value: "0"
+
+  # Upper bound for OFF retries per OFF request.
+  - id: max_off_retries
+    type: int
+    restore_value: false
+    initial_value: "2"
+
+  # True while the public fan is being updated from the state reported by
+  # the Tuya MCU. The public fan's on_state trigger also fires on these
+  # updates, so it must not treat them as user requests.
+  - id: syncing_from_mcu
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+script:
+  # Copies the last state reported by the Tuya MCU to the public fan.
+  - id: sync_ha_fan
+    mode: queued
+    then:
+      - lambda: |-
+          id(syncing_from_mcu) = true;
+          if (!id(waiting_for_off_response)) {
+            id(ha_fan).state = id(duux_fan).state;
+          }
+          id(ha_fan).speed = id(duux_fan).speed;
+          id(ha_fan).oscillating = id(duux_fan).oscillating;
+          id(ha_fan).publish_state();
+          id(syncing_from_mcu) = false;
+
+  # Runs while an OFF request is pending. If the Tuya MCU does not answer
+  # within 3 seconds, OFF is sent again (bounded by max_off_retries). If it
+  # still does not answer, the request is dropped and the public fan is set
+  # back to the last state reported by the MCU, so HA does not show OFF
+  # while the fan is still running.
+  - id: off_watchdog
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: |-
+              return id(waiting_for_off_response);
+          then:
+            - delay: 3s
+            - lambda: |-
+                if (!id(waiting_for_off_response)) {
+                  return;
+                }
+
+                if (id(off_retries) < id(max_off_retries)) {
+                  id(off_retries) += 1;
+                  ESP_LOGD(
+                    "smart_fan",
+                    "No DP1 response from Tuya MCU after OFF command; retrying OFF (%d/%d)",
+                    id(off_retries), id(max_off_retries)
+                  );
+                  id(tuya_component).force_set_boolean_datapoint_value(1, false);
+                } else {
+                  ESP_LOGW(
+                    "smart_fan",
+                    "No DP1 response from Tuya MCU after %d OFF retries; giving up",
+                    id(max_off_retries)
+                  );
+                  id(waiting_for_off_response) = false;
+                  id(off_retries) = 0;
+                  id(sync_ha_fan).execute();
+                }
+
+fan:
+  # ---------------------------------------------------------------------------
+  # Internal Tuya fan
+  #
+  # This is the actual interface to the Tuya MCU.
+  # It is hidden from Home Assistant. The template fan below is the public
+  # interface.
+  # ---------------------------------------------------------------------------
+  - platform: "tuya"
+    id: duux_fan
+    name: None
+    internal: true
+    # Do not change the fan state on ESP reboot/OTA; the MCU keeps its state.
+    restore_mode: NO_RESTORE
+    switch_datapoint: 1
+    speed_datapoint: 3
+    speed_count: 26
+    oscillation_datapoint: 4
+
+    # Keep the public template fan synchronized with the actual state
+    # reported by the Tuya MCU.
+    on_state:
+      - script.execute: sync_ha_fan
+
+  # ---------------------------------------------------------------------------
+  # Public fan entity
+  #
+  # This is the fan exposed to Home Assistant / ESPHome.
+  # ---------------------------------------------------------------------------
+  - platform: template
+    id: ha_fan
+    name: "Fan"
+    restore_mode: NO_RESTORE
+    has_oscillating: true
+    speed_count: 26
+
+    # Power requests from HA/ESPHome.
+    #
+    # on_turn_on / on_turn_off only fire on a state transition, so an explicit
+    # OFF while the public fan already shows OFF (or an ON while it shows ON)
+    # would be lost. on_state fires on every request instead. Updates coming
+    # from the Tuya MCU (sync_ha_fan) are skipped via syncing_from_mcu, so they
+    # never issue new commands.
+    #
+    # DP1 is always written explicitly: the cached DP1 value may not match the
+    # request while an earlier command is still in flight, and a normal
+    # fan.turn_on / fan.turn_off would then be suppressed as unchanged.
+    on_state:
+      - if:
+          condition:
+            lambda: |-
+              return !id(syncing_from_mcu);
+          then:
+            - if:
+                condition:
+                  lambda: |-
+                    return id(ha_fan).state;
+                # ON: a newer ON request cancels a pending OFF request, so a
+                # late DP1=ON from the MCU is no longer answered with a
+                # forced OFF.
+                then:
+                  - lambda: |-
+                      if (id(waiting_for_off_response)) {
+                        ESP_LOGD(
+                          "smart_fan",
+                          "HA/ESPHome requested ON; cancelling pending OFF request"
+                        );
+                      }
+                      id(waiting_for_off_response) = false;
+                      id(off_retries) = 0;
+                  - script.stop: off_watchdog
+                  - lambda: |-
+                      id(tuya_component).force_set_boolean_datapoint_value(1, true);
+                # OFF: set the flag BEFORE sending the command. The response
+                # from the Tuya MCU is then examined by
+                # tuya.on_datapoint_update, and off_watchdog retries the OFF
+                # if no response arrives.
+                else:
+                  - lambda: |-
+                      id(waiting_for_off_response) = true;
+                      id(off_retries) = 0;
+                      ESP_LOGD(
+                        "smart_fan",
+                        "HA/ESPHome requested OFF; waiting for Tuya MCU response"
+                      );
+                  - script.execute: off_watchdog
+                  - lambda: |-
+                      id(tuya_component).force_set_boolean_datapoint_value(1, false);
+
+    # Forward speed changes to the real Tuya fan.
+    on_speed_set:
+      - lambda: |-
+          id(duux_fan).make_call()
+            .set_speed(x)
+            .perform();
+
+    # Forward oscillation changes to the real Tuya fan.
+    on_oscillating_set:
+      - lambda: |-
+          id(duux_fan).make_call()
+            .set_oscillating(x)
+            .perform();
+
+switch:
+  # Reads its state directly from the Tuya select, so changes made on the
+  # device or via the remote are reflected as well.
+  - platform: template
+    name: "Oscillate vertically"
+    icon: mdi:arrow-up-down
+    lambda: |-
+      auto idx = id(vertically).active_index();
+      return idx.has_value() && *idx == 1;  // index 1 = "on"
+
+    turn_on_action:
+      - select.set:
+          id: vertically
+          option: "on"
+
+    turn_off_action:
+      - select.set:
+          id: vertically
+          option: "off"
+
+select:
+  - platform: "tuya"
+    id: "vertically"
+    internal: true
+    enum_datapoint: 5
+    optimistic: true
+    options:
+      0: "off"
+      1: "on"
+
+  - platform: "tuya"
+    name: "Mode"
+    enum_datapoint: 2
+    optimistic: true
+    options:
+      0: "Manual Mode"
+      1: "Natural Mode"
+      2: "Sleep Mode"
+
+  - platform: "tuya"
+    name: "Timer"
+    icon: mdi:fan-clock
+    enum_datapoint: 6
+    optimistic: true
+    options:
+      0: "off"
+      1: "1h"
+      2: "2h"
+      3: "3h"
+      4: "4h"
+      5: "5h"
+      6: "6h"
+      7: "7h"
+      8: "8h"
+      9: "9h"
+      10: "10h"
+      11: "11h"
+      12: "12h"
