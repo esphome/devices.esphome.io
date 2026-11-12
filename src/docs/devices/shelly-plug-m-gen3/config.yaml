@@ -64,10 +64,13 @@ sensor:
       id: bpower
       icon: mdi:transmission-tower
       device_class: power
-      on_value_range:
-        - above: ${max_power}
-          then:
-            - switch.turn_off: switch_relay
+      on_value:
+        then:
+          - if:
+              condition:
+                lambda: 'return x > ${max_power};'
+              then:
+                - switch.turn_off: switch_relay
     energy:
       name: "Energy"
       id: benergy
@@ -130,6 +133,7 @@ switch:
     id: switch_relay
     restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
+      - script.stop: led_flash
       - output.turn_on: led_green
     on_turn_off:
       - output.turn_off: led_green

@@ -14,6 +14,9 @@ has a relay, a button and two status LEDs.
 
 ![Shelly Plug M Gen3](Doku.png "Shelly Plug M Gen3")
 
+Disconnect the plug from mains before opening it or connecting a serial adapter. Never connect mains power while
+an adapter is attached. For flashing, use a 3.3 V supply and 3.3 V UART logic.
+
 To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
 ## GPIO Pinout
