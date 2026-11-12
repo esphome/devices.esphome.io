@@ -6,7 +6,11 @@ standard: eu
 board: esp32
 ---
 
-[Product Link](https://www.shelly.com/de/products/shelly-plug-s-gen3)
+The Shelly Plug M Gen3 is a Wi-Fi and Bluetooth smart plug with power
+monitoring, based on an ESP32. It uses a BL0942 energy metering chip and
+has a relay, a button and two status LEDs.
+
+[Product Link](https://www.shelly.com/de/products/shelly-plug-m-gen3-white)
 
 ![Shelly Plug M Gen3](Doku.png "Shelly Plug M Gen3")
 
@@ -14,15 +18,15 @@ To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
 ## GPIO Pinout
 
-| Pin   | Function  |
-| ----- | --------- |
-| GPIO1 | NTC       |
-| GPIO5 | BL0942 TX |
-| GPIO4 | BL0942 RX |
-| GPIO19 | Blue LED |
-| GPIO10 | Green LED|
-| GPIO7 | Button    |
-| GPIO0 | Relay     |
+| Pin    | Function  |
+| ------ | --------- |
+| GPIO1  | NTC       |
+| GPIO5  | BL0942 TX |
+| GPIO4  | BL0942 RX |
+| GPIO19 | Blue LED  |
+| GPIO10 | Green LED |
+| GPIO7  | Button    |
+| GPIO0  | Relay     |
 
 ## Basic Configuration
 
