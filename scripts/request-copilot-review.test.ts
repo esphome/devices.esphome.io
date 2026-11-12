@@ -15,10 +15,14 @@ const REPO = { owner: "esphome", repo: "devices.esphome.io" };
 
 const OLD = "2020-01-01T00:00:00Z";
 const LATER = "2020-01-01T00:05:00Z";
-const copilotRequest = (id: number, actorType: string, createdAt = LATER) => ({
+// The account the workflow's token belongs to.
+const REQUESTER = "esphome-review-bot";
+// "ours" is a request filed by REQUESTER; anything else stands for the ruleset
+// or a maintainer.
+const copilotRequest = (id: number, by: "ours" | "other", createdAt = LATER) => ({
   id,
   event: "review_requested",
-  actor: { login: actorType === "Bot" ? "esphome[bot]" : "someone", type: actorType },
+  actor: { login: by === "ours" ? REQUESTER : "someone", type: "User" },
   requested_reviewer: { login: "Copilot" },
   created_at: createdAt,
 });
@@ -37,12 +41,13 @@ function makeGithub(
     before?: unknown[];
     after?: unknown[];
     timelineError?: "before" | "after";
+    whoamiStatus?: number;
   } = {}
 ) {
   const calls: Record<string, unknown>[] = [];
   const reads = [
     { name: "before", events: opts.before ?? [] },
-    { name: "after", events: opts.after ?? [copilotRequest(1, "Bot")] },
+    { name: "after", events: opts.after ?? [copilotRequest(1, "ours")] },
   ];
   const listEventsForTimeline = () => {};
   return {
@@ -56,6 +61,14 @@ function makeGithub(
         return read.events;
       },
       rest: {
+        users: {
+          getAuthenticated: async () => {
+            if (opts.whoamiStatus) {
+              throw Object.assign(new Error("Bad credentials"), { status: opts.whoamiStatus });
+            }
+            return { data: { login: REQUESTER } };
+          },
+        },
         issues: { listEventsForTimeline },
         pulls: {
           requestReviewers: async (args: Record<string, unknown>) => {
@@ -71,10 +84,16 @@ function makeGithub(
 function makeCore() {
   const warnings: string[] = [];
   const infos: string[] = [];
+  const failures: string[] = [];
   return {
     warnings,
     infos,
-    core: { info: (m: string) => void infos.push(m), warning: (m: string) => void warnings.push(m) },
+    failures,
+    core: {
+      info: (m: string) => void infos.push(m),
+      warning: (m: string) => void warnings.push(m),
+      setFailed: (m: string) => void failures.push(m),
+    },
   };
 }
 
@@ -113,16 +132,16 @@ test("an accepted request GitHub never recorded warns", async () => {
   assert.match(warnings[0], /recorded none/);
 });
 
-test("a ruleset request filed under a user does not confirm ours", async () => {
-  const after = [copilotRequest(1, "User"), copilotReview(2, LATER)];
+test("a request filed by another account does not confirm ours", async () => {
+  const after = [copilotRequest(1, "other"), copilotReview(2, LATER)];
   const { github } = makeGithub({ after });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
   assert.match(warnings[0], /recorded none/);
 });
 
-test("a bot request already on the timeline does not confirm this one", async () => {
-  const earlier = [copilotRequest(1, "Bot", OLD), copilotReview(2, LATER)];
+test("an earlier request by the same account does not confirm this one", async () => {
+  const earlier = [copilotRequest(1, "ours", OLD), copilotReview(2, LATER)];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
@@ -130,7 +149,7 @@ test("a bot request already on the timeline does not confirm this one", async ()
 });
 
 test("a Copilot review still pending is logged, not warned", async () => {
-  const earlier = [copilotReview(1, OLD), copilotRequest(2, "User")];
+  const earlier = [copilotReview(1, OLD), copilotRequest(2, "other")];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, infos, warnings } = makeCore();
   await copilot({ github, context: prContext(), core });
@@ -140,7 +159,7 @@ test("a Copilot review still pending is logged, not warned", async () => {
 
 test("a Copilot request that was removed is not pending", async () => {
   const earlier = [
-    copilotRequest(1, "User"),
+    copilotRequest(1, "other"),
     { id: 2, event: "review_request_removed", requested_reviewer: { login: "Copilot" }, created_at: LATER },
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
@@ -151,7 +170,7 @@ test("a Copilot request that was removed is not pending", async () => {
 
 test("a completed review under the bot account login ends the pending request", async () => {
   const earlier = [
-    copilotRequest(1, "User", OLD),
+    copilotRequest(1, "other", OLD),
     { id: 2, event: "reviewed", user: { login: "copilot-pull-request-reviewer[bot]" }, submitted_at: LATER },
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
@@ -177,6 +196,24 @@ test("a failed baseline read still requests the review, unconfirmed", async () =
   assert.match(warnings[0], /goes unconfirmed: secondary rate limit/);
 });
 
+test("a rejected token fails the run so it gets rotated", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 401 });
+  const { core, failures } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 0);
+  assert.match(failures[0], /COPILOT_REVIEW_TOKEN was rejected/);
+});
+
+test("a failed account lookup still requests the review, unconfirmed", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 502 });
+  const { core, warnings, failures } = makeCore();
+  await copilot({ github, context: prContext(), core });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(failures, []);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Could not identify the requesting account/);
+});
+
 test("the exported helper takes a PR number", async () => {
   const { github, calls } = makeGithub();
   const { core } = makeCore();
@@ -196,4 +233,36 @@ test("the list helper requests a review on each marked-ready PR", async () => {
   const { core } = makeCore();
   await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
   assert.deepEqual(calls, [8, 10]);
+});
+
+test("a promotion batch looks up the requesting account once", async () => {
+  let lookups = 0;
+  const requested: number[] = [];
+  const github = {
+    paginate: async () => [],
+    rest: {
+      users: {
+        getAuthenticated: async () => {
+          lookups += 1;
+          return { data: { login: REQUESTER } };
+        },
+      },
+      issues: { listEventsForTimeline: () => {} },
+      pulls: {
+        requestReviewers: async (args: { pull_number: number }) => void requested.push(args.pull_number),
+      },
+    },
+  };
+  const { core } = makeCore();
+  await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
+  assert.equal(lookups, 1);
+  assert.deepEqual(requested, [8, 10]);
+});
+
+test("a rejected token stops a promotion batch after one failure", async () => {
+  const { github, calls } = makeGithub({ whoamiStatus: 401 });
+  const { core, failures } = makeCore();
+  await copilot.requestCopilotReviews({ github, core, ...REPO, prNumbers: "8,10" });
+  assert.equal(calls.length, 0);
+  assert.equal(failures.length, 1);
 });

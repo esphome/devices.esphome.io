@@ -15,9 +15,9 @@ const RUN = {
   head_branch: "add-device",
   head_repository: { full_name: "fork/devices", owner: { login: "fork" } },
 };
-const pr = (number: number, sha: string, repo: string, base = "main") => ({
+const pr = (number: number, sha: string, repo: string, base = "main", ref = "add-device") => ({
   number,
-  head: { sha, repo: { full_name: repo } },
+  head: { sha, ref, repo: { full_name: repo } },
   base: { ref: base },
 });
 
@@ -66,4 +66,39 @@ test("prefers the default-branch PR when one head is open against several bases"
 test("resolves to null when several PRs match and none targets the default branch", async () => {
   const { r } = await call([pr(5, "abc", "fork/devices", "a"), pr(6, "abc", "fork/devices", "b")]);
   assert.equal(r, null);
+});
+
+const REVIEW_RUN = {
+  ...RUN,
+  event: "pull_request_review",
+  head_repository: { full_name: "esphome/devices", owner: { login: "esphome" } },
+};
+
+test("a review run resolves a fork PR without a head filter", async () => {
+  const { r, seen } = await call([pr(5, "abc", "fork/devices")], REVIEW_RUN);
+  assert.equal((r as { number: number }).number, 5);
+  assert.equal("head" in seen[0], false);
+});
+
+for (const [name, pulls] of [
+  ["a different head commit", [pr(5, "newer", "fork/devices")]],
+  ["a different branch name", [pr(5, "abc", "fork/devices", "main", "other-branch")]],
+  ["a PR with no head repository", [{ ...pr(5, "abc", "fork/devices"), head: { sha: "abc", ref: "add-device", repo: null } }]],
+] as const) {
+  test(`a review run resolves to null for ${name}`, async () => {
+    assert.equal((await call([...pulls], REVIEW_RUN)).r, null);
+  });
+}
+
+test("a review run prefers the default-branch PR when several match", async () => {
+  const { r } = await call(
+    [pr(5, "abc", "fork/devices", "next"), pr(6, "abc", "fork/devices")],
+    REVIEW_RUN,
+  );
+  assert.equal((r as { number: number }).number, 6);
+});
+
+test("a non-review run keeps the head filter", async () => {
+  const { seen } = await call([], { ...RUN, event: "pull_request" });
+  assert.equal(seen[0].head, "fork:add-device");
 });
