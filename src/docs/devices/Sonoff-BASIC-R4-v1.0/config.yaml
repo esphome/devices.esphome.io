@@ -11,11 +11,7 @@ esp32:
       CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
 
-web_server:
-
 logger:
-
-captive_portal:
 
 wifi:
   ap:
@@ -32,15 +28,6 @@ magic_switch:
   pin: 5
   on_switch:
     - switch.toggle: switch_1
-
-esp32_ble_tracker:
-  scan_parameters:
-    active: true
-    interval: 1100ms
-    window: 1100ms
-
-bluetooth_proxy:
-  active: true
 
 binary_sensor:
   - platform: gpio
