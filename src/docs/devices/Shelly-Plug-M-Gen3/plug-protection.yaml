@@ -78,11 +78,6 @@ globals:
     type: int
     restore_value: true
     initial_value: "-1"
-  # set just before a software reboot, so the next boot skips the delay
-  - id: clean_reboot
-    type: bool
-    restore_value: true
-    initial_value: "false"
   - id: boot_done
     type: bool
     restore_value: false
@@ -104,10 +99,8 @@ esphome:
         - lambda: "id(relay_front).publish_state(id(relay).state);"
         - script.execute: boot_relay
   on_shutdown:
-    - lambda: |-
-        // software reboot (OTA, safe mode ...): next boot restores without delay
-        id(clean_reboot) = true;
-        global_preferences->sync();
+    # write the saved relay state to flash before a software reboot (OTA, safe mode ...)
+    - lambda: "global_preferences->sync();"
 
 interval:
   # Temperature sensor watchdog
@@ -133,14 +126,14 @@ script:
           else if (m == "RESTORE_INVERTED_DEFAULT_OFF") want = (saved == 0);
           id(boot_want) = want;
           // 2. delay: none after a software reboot, random min..max seconds after power loss
+          // (the reset reason tells them apart without storing anything in flash)
           uint32_t d = 0;
-          if (!id(clean_reboot)) {
+          if (esp_reset_reason() != ESP_RST_SW) {
             const uint32_t lo = (uint32_t)(${startup_delay_min}) * 1000;
             uint32_t hi = (uint32_t)(${startup_delay_max}) * 1000;
             if (hi < lo) hi = lo;
             d = lo + ((hi > lo) ? (random_uint32() % (hi - lo + 1)) : 0);
           }
-          id(clean_reboot) = false;
           id(boot_delay_ms) = d;
       - delay: !lambda "return id(boot_delay_ms);"
       - if:
