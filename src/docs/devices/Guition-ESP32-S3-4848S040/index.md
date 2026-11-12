@@ -23,6 +23,10 @@ difficulty: 2
 
 Avalible on [AliExpress](https://www.aliexpress.com/item/3256806115962222.html) at various vendors. Can be purchased
 with or without the relay module, which does not fit into a standard EU round 60mm box.
+Wall mounting plates for the relayless version to be used easily in EU are available for 3D printing:
+[example1](https://www.printables.com/model/1440541-guition-esp32-s3-4848s040-eu-wall-mount)
+[example2](https://www.printables.com/model/1388933-guition-esp32s3-4-display-eu-wall-mount)
+[example3](https://www.printables.com/model/1257111-guition-4-esp32-s3-lvgl).
 
 ![Connector pinout](./guition-esp32-s3-4848s040-connector.jpg "Connector pinout")
 
