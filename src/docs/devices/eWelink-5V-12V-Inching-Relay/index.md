@@ -13,6 +13,9 @@ difficulty: 4
 - Has a red LED attached to the relay output that cannot be controlled independently
 - Has a button for RF pairing, but the unit tested had no RF radio meaning it's a useless button
 
+> [!IMPORTANT]
+> Newer boards are not based on an ESP MCU anymore, but on Bouffalo MCUs, e.g., a BL602, and have a different label, e.g., `EWL-B04`. You cannot use ESPHome, but could use OpenBeken and configure MQTT to integrate with Home Assistant. See [this thread](https://www.elektroda.com/rtvforum/topic3889041.html) for a comprehensive discussion on the topic.
+
 ## Product Images
 
 ![device](./device.png "Device")
