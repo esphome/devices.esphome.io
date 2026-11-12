@@ -1,0 +1,73 @@
+substitutions:
+  devicename: fan_switch
+  friendly_name: Fan Switch
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# Tuya CB3S-FT module
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: RX1
+  tx_pin: TX1
+  baud_rate: 115200
+
+tuya:
+
+sensor:
+  - platform: wifi_signal
+    name: $friendly_name Wifi Signal
+    update_interval: 60s
+
+  - platform: uptime
+    name: $friendly_name uptime
+
+light:
+  - platform: tuya
+    name: $friendly_name Light
+    switch_datapoint: 101
+    dimmer_datapoint: 6
+    min_value: 10
+    max_value: 1000
+
+fan:
+  - platform: tuya
+    name: Fan
+    switch_datapoint: 1
+    speed_datapoint: 3
+    speed_count: 4
+
+select:
+  - platform: tuya
+    enum_datapoint: 106
+    name: Dimming Curve
+    entity_category: CONFIG
+    optimistic: true
+    options:
+      0: Low
+      1: Mid
+      2: High
+
+number:
+  - platform: tuya
+    number_datapoint: 105
+    name: Dimmer Floor
+    entity_category: CONFIG
+    min_value: 10
+    max_value: 1000
+    step: 10
+  # 0 - indicator on when light/fan off, 1 - indicator on when light/fan on
+  - platform: tuya
+    number_datapoint: 108
+    name: Indicator Mode
+    entity_category: CONFIG
+    min_value: 0
+    max_value: 1
+    step: 1
