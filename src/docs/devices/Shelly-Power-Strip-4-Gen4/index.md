@@ -81,6 +81,27 @@ esptool.py --chip esp32c6 --port /dev/ttyUSB0 --baud 460800 \
   read_flash 0 0x800000 shelly-powerstrip4-gen4-backup.bin
 ```
 
+### Prepare the configuration
+
+The [Basic Configuration](#basic-configuration) below only describes the hardware.
+Flashed as is, the strip never joins a network and can only be updated over UART again.
+Save it as `shelly-powerstrip4-gen4.yaml` and add Wi-Fi, the Home Assistant API and
+ESPHome OTA updates before compiling:
+
+```yaml
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+
+captive_portal:
+
+api:
+
+ota:
+  - platform: esphome
+```
+
 ### Compile
 
 ```bash
