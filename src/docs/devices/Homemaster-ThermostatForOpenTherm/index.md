@@ -203,7 +203,7 @@ SCHEDULE (comfort and eco windows), SYSTEM (network, sensors, diagnostics).
 | Comfort Temperature, Eco Temperature | number |
 | Boost Offset, Room Hysteresis, Room Sensor Offset | number (config) |
 | Curve Cold/Warm Outside, Curve Cold/Warm Flow, Fixed Flow Setpoint | number (config) |
-| Boiler DHW Setpoint, Boiler Max CH Setpoint | number |
+| Boiler CH Setpoint, Boiler DHW Setpoint, Boiler Max CH Setpoint | number |
 | Room Temperature Input, Room Humidity Input, Outside Temperature Input | number (config, written from Home Assistant) |
 | UTC Offset | number (config) |
 | Outside Temperature Source, Room Temperature Source, Summer Time | select (config) |
