@@ -1,0 +1,33 @@
+substitutions:
+  device_name: led_strip
+  device_description: CCT LED Strip.
+  friendly_name: CCT LED strip
+
+esphome:
+  name: ${device_name}
+  comment: ${device_description}
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  baud_rate: 0 #Disable UART logging
+
+# Device Specific Config
+
+light:
+  - platform: cwww
+    name: "CCT Lights"
+    cold_white: cold_white_channel
+    warm_white: warm_white_channel
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+
+output:
+  - platform: esp8266_pwm
+    id: warm_white_channel
+    pin: GPIO13
+  - platform: esp8266_pwm
+    id: cold_white_channel
+    pin: GPIO5
