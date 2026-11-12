@@ -476,12 +476,16 @@ interface SpawnOptions {
   // Overrides for tests.
   heartbeatMs?: number;
   graceMs?: number;
+  maxLineChars?: number;
 }
 
 const HEARTBEAT_MS = 60000;
 // How long after SIGTERM before the child's whole process group is SIGKILLed
 // and the run is settled even if a descendant still holds the output pipes.
 const KILL_GRACE_MS = 5000;
+// Longest unterminated line held back while streaming; beyond this it is
+// echoed as-is so newline-free output cannot grow the buffer without bound.
+const MAX_LINE_CHARS = 64 * 1024;
 const CONFIG_CAPTURE_LIMIT = 64 * 1024 * 1024;
 const TAIL_CAPTURE_LIMIT = 1024 * 1024;
 
@@ -548,10 +552,16 @@ function runStreaming(
       lastOutput = Date.now();
       if (!opts.stream) return;
       pending[which] += chunk;
-      const lines = pending[which].split(/\r?\n/);
+      // Carriage returns end a line too, so progress bars that redraw in
+      // place do not pile up into one ever-growing "line".
+      const lines = pending[which].split(/\r\n|\r|\n/);
       pending[which] = lines.pop() ?? "";
       for (const line of lines) {
         if (line.length > 0) console.log(`    | ${line}`);
+      }
+      if (pending[which].length > (opts.maxLineChars ?? MAX_LINE_CHARS)) {
+        console.log(`    | ${pending[which]}`);
+        pending[which] = "";
       }
     };
     const flush = (): void => {

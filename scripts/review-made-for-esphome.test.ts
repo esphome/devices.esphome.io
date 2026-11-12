@@ -1476,6 +1476,23 @@ test("runStreaming kills a command at the timeout and prints a heartbeat while s
   assert.ok(lines.some((l) => /sleeper still running \(\d+s, no new output\)/.test(l)), lines.join("\n"));
 });
 
+test("runStreaming bounds the pending line buffer and splits on carriage returns", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'a\\rb\\rc'; printf 'xxxxxxxxxxxx'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "cr",
+      maxLineChars: 5,
+      ...LIMITS,
+    });
+  });
+  assert.equal(res?.ok, true);
+  // "a" and "b" end at carriage returns; the unterminated rest exceeds the
+  // 5 character bound and is echoed instead of being held back.
+  assert.deepEqual(lines, ["    | a", "    | b", "    | cxxxxxxxxxxxx"]);
+});
+
 test("runStreaming echoes a line while the child is still running", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-live-"));
   const release = path.join(dir, "release");
