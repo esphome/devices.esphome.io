@@ -1,0 +1,260 @@
+# Zone control and front-panel application for the TY-W-8L.
+# Merge this file into config.yaml (or pull it in with packages: / !include) before compiling.
+
+globals:
+  - id: selected_zone
+    type: int
+    initial_value: "-1"
+  - id: all_zones_mode
+    type: int
+    initial_value: "0"
+  - id: last_button_time
+    type: uint32_t
+    initial_value: "0"
+
+# The panel LEDs always mirror what the controller is doing: solid for an open
+# valve, blinking for a zone that is being selected, blinking all for the
+# all-zones preview. Repainting on every tick also restores the valve display
+# after the selection modes are cleared.
+interval:
+  - interval: 500ms
+    then:
+      - lambda: |
+          auto leds = {id(led_1), id(led_2), id(led_3), id(led_4),
+                       id(led_5), id(led_6), id(led_7), id(led_8)};
+
+          if ((id(selected_zone) >= 0 || id(all_zones_mode) != 0) &&
+              (millis() - id(last_button_time)) > 8000) {
+            id(cancel_selection)->execute();
+          }
+
+          static bool blink_state = false;
+          blink_state = !blink_state;
+
+          bool zone_preview = id(selected_zone) >= 0 && id(all_zones_mode) == 0;
+          bool all_preview = id(all_zones_mode) != 0;
+
+          size_t i = 0;
+          for (auto *led : leds) {
+            auto *valve = id(irrigador).valve_switch(i);
+            bool valve_on = valve != nullptr && valve->state;
+            if (all_preview || (zone_preview && static_cast<int>(i) == id(selected_zone))) {
+              if (blink_state) {
+                led->turn_on();
+              } else {
+                led->turn_off();
+              }
+            } else if (valve_on) {
+              led->turn_on();
+            } else {
+              led->turn_off();
+            }
+            i++;
+          }
+
+script:
+  - id: beep_3_times
+    then:
+      - output.turn_on: buzzer
+      - delay: 80ms
+      - output.turn_off: buzzer
+      - delay: 80ms
+      - output.turn_on: buzzer
+      - delay: 80ms
+      - output.turn_off: buzzer
+      - delay: 80ms
+      - output.turn_on: buzzer
+      - delay: 80ms
+      - output.turn_off: buzzer
+
+  - id: cancel_selection
+    then:
+      - lambda: |
+          id(selected_zone) = -1;
+          id(all_zones_mode) = 0;
+
+  # start_single_valve() opens the valve for its configured duration without
+  # touching the per-zone enable switches, which are config entities with a
+  # restored state and belong to the user, not to the panel.
+  - id: activate_zone
+    parameters:
+      zone: int
+    then:
+      - lambda: |
+          id(irrigador).start_single_valve(static_cast<size_t>(zone));
+          id(selected_zone) = -1;
+          id(all_zones_mode) = 0;
+
+  # start_full_cycle() runs the cycle over the enabled zones and enables every
+  # zone when none is enabled, so it works on a freshly flashed board too.
+  - id: activate_all_zones
+    then:
+      - lambda: |
+          id(irrigador).start_full_cycle();
+          id(selected_zone) = -1;
+          id(all_zones_mode) = 0;
+
+  - id: stop_all_zones
+    then:
+      - lambda: |
+          id(irrigador).shutdown();
+          id(selected_zone) = -1;
+          id(all_zones_mode) = 0;
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: P6
+      inverted: true
+    name: "Button UP (P6)"
+    internal: true
+    on_multi_click:
+      - timing:
+          - ON for at least 4s
+        then:
+          - output.turn_on: buzzer
+          - delay: 100ms
+          - output.turn_off: buzzer
+          - lambda: |
+              id(all_zones_mode) = 1;
+              id(selected_zone) = -1;
+              id(last_button_time) = millis();
+      - timing:
+          - ON for at most 3999ms
+        then:
+          - output.turn_on: buzzer
+          - delay: 100ms
+          - output.turn_off: buzzer
+          - lambda: |
+              int current = id(selected_zone);
+              if (current < 0) {
+                auto active = id(irrigador).active_valve();
+                current = active.has_value() ? static_cast<int>(active.value()) : -1;
+              }
+              id(selected_zone) = (current + 1) % 8;
+              id(all_zones_mode) = 0;
+              id(last_button_time) = millis();
+
+  - platform: gpio
+    pin:
+      number: P7
+      inverted: true
+    name: "Button DOWN (P7)"
+    internal: true
+    on_multi_click:
+      - timing:
+          - ON for at least 4s
+        then:
+          - output.turn_on: buzzer
+          - delay: 100ms
+          - output.turn_off: buzzer
+          - lambda: |
+              id(all_zones_mode) = 2;
+              id(selected_zone) = -1;
+              id(last_button_time) = millis();
+      - timing:
+          - ON for at most 3999ms
+        then:
+          - output.turn_on: buzzer
+          - delay: 100ms
+          - output.turn_off: buzzer
+          - lambda: |
+              int current = id(selected_zone);
+              if (current < 0) {
+                auto active = id(irrigador).active_valve();
+                current = active.has_value() ? static_cast<int>(active.value()) : 8;
+              }
+              id(selected_zone) = (current + 7) % 8;
+              id(all_zones_mode) = 0;
+              id(last_button_time) = millis();
+
+  - platform: gpio
+    pin:
+      number: P8
+      inverted: true
+    name: "Button SET (P8)"
+    internal: true
+    on_press:
+      then:
+        - output.turn_on: buzzer
+        - delay: 100ms
+        - output.turn_off: buzzer
+        - lambda: |
+            if (id(all_zones_mode) == 1) {
+              id(activate_all_zones)->execute();
+              id(beep_3_times)->execute();
+            } else if (id(all_zones_mode) == 2) {
+              id(stop_all_zones)->execute();
+              id(beep_3_times)->execute();
+            } else if (id(selected_zone) >= 0) {
+              auto active = id(irrigador).active_valve();
+              if (active.has_value() && static_cast<int>(active.value()) == id(selected_zone)) {
+                id(irrigador).shutdown();
+                id(selected_zone) = -1;
+              } else {
+                id(activate_zone)->execute(id(selected_zone));
+              }
+            }
+
+sprinkler:
+  - id: irrigador
+    main_switch: "Irrigation"
+    auto_advance_switch: "Auto Advance"
+    valve_overlap: 5s
+    valves:
+      - valve_switch: "Zone 1"
+        enable_switch: "Enable Zone 1"
+        run_duration_number:
+          name: "Zone 1 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_1
+      - valve_switch: "Zone 2"
+        enable_switch: "Enable Zone 2"
+        run_duration_number:
+          name: "Zone 2 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_2
+      - valve_switch: "Zone 3"
+        enable_switch: "Enable Zone 3"
+        run_duration_number:
+          name: "Zone 3 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_3
+      - valve_switch: "Zone 4"
+        enable_switch: "Enable Zone 4"
+        run_duration_number:
+          name: "Zone 4 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_4
+      - valve_switch: "Zone 5"
+        enable_switch: "Enable Zone 5"
+        run_duration_number:
+          name: "Zone 5 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_5
+      - valve_switch: "Zone 6"
+        enable_switch: "Enable Zone 6"
+        run_duration_number:
+          name: "Zone 6 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_6
+      - valve_switch: "Zone 7"
+        enable_switch: "Enable Zone 7"
+        run_duration_number:
+          name: "Zone 7 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_7
+      - valve_switch: "Zone 8"
+        enable_switch: "Enable Zone 8"
+        run_duration_number:
+          name: "Zone 8 Duration"
+          initial_value: 5
+          unit_of_measurement: min
+        valve_switch_id: valve_8
