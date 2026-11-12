@@ -34,10 +34,7 @@ substitutions:
   update_interval_protect_adc: 1s
 
 globals:
-  - id: fault_active
-    type: bool
-    restore_value: false
-    initial_value: "false"
+  # fault_active (a latched fault) is defined in config.yaml, so the button can check it
 
   # Cause of the latched fault: 0=none, 1=temperature, 2=current, 3=power, 4=sensor
   - id: fault_reason

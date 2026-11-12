@@ -69,6 +69,10 @@ sensor:
       icon: mdi:transmission-tower
       device_class: power
       state_class: measurement
+      filters:
+        # idle noise can read slightly below 0 W; keeps the energy sensors from going negative
+        - clamp:
+            min_value: 0
     energy:
       name: "Energy"
       id: benergy
@@ -107,6 +111,12 @@ sensor:
 globals:
   # Button state shared with the optional add-ons (plug-gestures.yaml sets them)
   - id: button_locked
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  # A latched fault (set by plug-protection.yaml; stays false without it). The button checks it before it
+  # touches the relay, so a press cannot energize the output while the fault lock is active.
+  - id: fault_active
     type: bool
     restore_value: false
     initial_value: "false"
@@ -149,7 +159,7 @@ binary_sensor:
         then:
           - if:
               condition:
-                lambda: "return !id(button_locked);"
+                lambda: "return !id(button_locked) && !id(fault_active);"
               then:
                 - switch.toggle: relay
 
