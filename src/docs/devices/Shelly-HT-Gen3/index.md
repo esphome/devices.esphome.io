@@ -71,25 +71,11 @@ Requirements:
 - Stock firmware **2.0.1** (tested). Other versions are untested.
 - Battery level of at least **30 %**, otherwise the update is refused.
 - The ESPHome build must use the Shelly **stock partition table**, so the image fits the
-  layout on the device. Save the CSV below as `csv/HTG3-stock.csv` next to your YAML.
+  layout on the device. Copy `csv/HTG3-stock.csv` from this device's folder in the repository
+  next to your YAML, keeping the `csv/` subfolder.
   The `partitions` and `CONFIG_PARTITION_TABLE_OFFSET` lines are already set in `config.yaml`.
 - `allow_partition_access: true` must be set in the `ota:` block
   (see [Network, OTA and time](#network-ota-and-time) below).
-
-```csv
-# Shelly H&T Gen3 stock partition table (read from the official 2.0.1 package, partition-table.bin at 0xf000).
-# Only used so ESPHome builds against the same layout the device really has; the table in flash stays Shelly's.
-# NOTE: the partition table is at 0xf000 here (Plug M Gen3: 0x10000), so use CONFIG_PARTITION_TABLE_OFFSET: "0xf000".
-# Name,    Type, SubType, Offset,   Size,     Flags
-otadata, data, ota, 0x11000, 0x2000,
-nvs, data, nvs, 0x14000, 0xc000,
-app_0, app, ota_0, 0x20000, 0x280000,
-fs_0, data, spiffs, 0x2a0000, 0x100000,
-app_1, app, ota_1, 0x3a0000, 0x280000,
-fs_1, data, spiffs, 0x620000, 0x100000,
-scratch, data, 0x80, 0x7e0000, 0x10000,
-shelly, data, 0x88, 0x7f0000, 0x10000,
-```
 
 Build the firmware with `esphome compile`. ESPHome writes two files: `firmware.ota.bin` and `firmware.factory.bin`.
 Hand both to **ShellyOTA** (<https://github.com/oxynatOr/free-shelly-ota>), which builds a package from them
