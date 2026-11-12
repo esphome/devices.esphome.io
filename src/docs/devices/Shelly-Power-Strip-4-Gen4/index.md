@@ -122,14 +122,5 @@ Add these to your own copy so the strip can be set up and updated without UART.
 With no Wi-Fi credentials it starts a fallback hotspot whose captive portal asks for them;
 a `wifi:` `ssid` and `password` of your own work as well.
 
-```yaml inline
-wifi:
-  ap:
-
-captive_portal:
-
-api:
-
-ota:
-  - platform: esphome
+```yaml file=network.yaml
 ```
