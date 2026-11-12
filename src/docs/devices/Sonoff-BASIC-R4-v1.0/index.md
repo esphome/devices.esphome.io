@@ -45,7 +45,8 @@ To switch it on, set GPIO10 and GPIO4 HIGH, wait a short time, then set GPIO4 LO
 switch it off, set both LOW. The basic configuration (GPIO4 only) still works, but the coil
 then runs at full current the whole time.
 
-To use pull-and-hold, replace the `switch:` section of the basic configuration with:
+The complete configuration below uses pull-and-hold instead of the basic configuration.
+The button and magic switch toggle the relay the same way.
 
 ```yaml file=relay-pull-hold.yaml
 ```
