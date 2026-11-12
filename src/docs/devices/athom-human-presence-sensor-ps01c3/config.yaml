@@ -1,0 +1,187 @@
+substitutions:
+  name: "athom-presence-sensor-v3"
+  friendly_name: "Athom Presence Sensor"
+  room: ""
+  device_description: "athom esp32-c3 mmwave radar human presence sensor"
+  project_name: "Athom Technology.Athom PS01C3 Presence Sensor"
+  project_version: "v4.0.3"
+  timezone: ""
+  sntp_update_interval: 6h
+  sntp_server_1: "0.pool.ntp.org"
+  sntp_server_2: "1.pool.ntp.org"
+  sntp_server_3: "2.pool.ntp.org"
+  log_level: "DEBUG"
+  ipv6_enable: "false"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  comment: "${device_description}"
+  area: "${room}"
+  name_add_mac_suffix: true
+  min_version: 2026.8.0
+  project:
+    name: "${project_name}"
+    version: "${project_version}"
+  platformio_options:
+    board_build.flash_mode: dio
+
+esp32:
+  board: esp32-c3-devkitm-1
+  flash_size: 4MB
+  variant: ESP32C3
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: y
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+preferences:
+  flash_write_interval: 1min
+
+logger:
+  level: ${log_level}
+  hardware_uart: UART0
+  baud_rate: 115200
+
+mdns:
+  disabled: false
+
+network:
+  enable_ipv6: ${ipv6_enable}
+
+wifi:
+  ap: {}
+
+esp32_improv:
+  authorizer: none
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: led
+    pin: GPIO2
+    disabled_by_default: true
+    entity_category: config
+
+i2c:
+  sda: GPIO18
+  scl: GPIO19
+  scan: true
+
+uart:
+  tx_pin: GPIO8
+  rx_pin: GPIO5
+  baud_rate: 115200
+
+binary_sensor:
+  - platform: status
+    name: "Status"
+    entity_category: diagnostic
+
+  - platform: gpio
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Button"
+    disabled_by_default: true
+    id: reset_button
+    filters:
+      - delayed_on_off: 20ms
+
+  - platform: gpio
+    pin:
+      number: GPIO3
+      mode:
+        input: true
+        pullup: true
+    name: "Pir Sensor"
+    id: pir
+    filters:
+      - delayed_on: 50ms
+      - delayed_off: 10s
+    device_class: motion
+
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode:
+        input: true
+        pullup: true
+    name: "mmWave Sensor"
+    id: mmwave
+    filters:
+      - delayed_on: 50ms
+    device_class: motion
+
+sensor:
+  - platform: uptime
+    name: "Uptime Sensor"
+    id: uptime_sensor
+    type:
+      timestamp
+    entity_category: "diagnostic"
+
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: copy
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    entity_category: "diagnostic"
+    device_class: ""
+
+  - platform: bh1750
+    name: "Light Sensor"
+    id: "light_sensor"
+    address: 0x23
+    update_interval: 5s
+
+button:
+  - platform: factory_reset
+    name: Restart with Factory Default Settings
+    id: Reset
+    entity_category: config
+    internal: true
+
+  - platform: restart
+    name: Restart_esp
+    id: restart_esp
+    entity_category: config
+    internal: true
+
+  - platform: safe_mode
+    name: "Safe Mode"
+    internal: false
+    entity_category: config
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      entity_category: diagnostic
+    mac_address:
+      name: "Mac Address"
+      entity_category: diagnostic
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "${timezone}"
+    update_interval: ${sntp_update_interval}
+    servers:
+      - "${sntp_server_1}"
+      - "${sntp_server_2}"
+      - "${sntp_server_3}"
