@@ -1,0 +1,22 @@
+output:
+  - platform: gpio
+    id: relay_pull # full-current pull-in
+    pin: GPIO4
+  - platform: gpio
+    id: relay_hold # reduced-current hold via 100 Ω
+    pin: GPIO10
+
+switch:
+  - platform: template
+    name: Relay
+    id: switch_1
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - output.turn_on: relay_hold
+      - output.turn_on: relay_pull
+      - delay: 150ms
+      - output.turn_off: relay_pull
+    turn_off_action:
+      - output.turn_off: relay_pull
+      - output.turn_off: relay_hold
