@@ -1552,6 +1552,49 @@ test("runStreaming settles after the grace period when a descendant escapes the 
   assert.ok(Date.now() - started < 3000, `took ${Date.now() - started}ms`);
 });
 
+test("runStreaming sweeps a SIGTERM-ignoring descendant when the direct child exits first", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-sweep-"));
+  const pidFile = path.join(dir, "pid");
+  // The descendant ignores SIGTERM and has its output redirected, so the pipes
+  // close as soon as the direct child dies and the run settles before the grace
+  // period; only the final group sweep can stop it.
+  const res = await runStreaming(
+    "sh",
+    ["-c", `sh -c 'trap "" TERM; echo $$ > ${pidFile}; exec sleep 20' >/dev/null 2>&1 & sleep 30`],
+    { timeoutMs: 500, stream: false, label: "sweep", graceMs: 20000, ...LIMITS }
+  );
+  assert.equal(res.timedOut, true);
+  const pid = Number(fs.readFileSync(pidFile, "utf8"));
+  const alive = (): boolean => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const deadline = Date.now() + 5000;
+  while (alive() && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  assert.equal(alive(), false, "descendant survived the run");
+});
+
+test("runStreaming arms only one grace timer when a timeout follows an overflow", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 3 & yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "double",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 500,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
+  assert.ok(Date.now() - started < 2500);
+});
+
 test("runStreaming keeps only the tail when output exceeds the limit", async () => {
   const res = await runStreaming("sh", ["-c", "i=0; while [ $i -lt 500 ]; do echo line$i; i=$((i+1)); done"], {
     timeoutMs: 10000,

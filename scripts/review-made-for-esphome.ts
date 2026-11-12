@@ -509,6 +509,7 @@ function runStreaming(
     let stderr = "";
     let timedOut = false;
     let overflowed = false;
+    let terminating = false;
     let settled = false;
     let lastOutput = Date.now();
     let graceTimer: NodeJS.Timeout | undefined;
@@ -522,14 +523,15 @@ function runStreaming(
       detached: true,
     });
 
+    // Idempotent: a timeout after an overflow (or the reverse) must not arm a
+    // second grace timer.
     const terminate = (): void => {
-      if (child.pid === undefined) return;
+      if (terminating || child.pid === undefined) return;
+      terminating = true;
       killGroup(child.pid, "SIGTERM");
       // `close` waits for every holder of the output pipes, so a descendant
       // that survives SIGTERM must not be allowed to stall the review.
-      const pid = child.pid;
       graceTimer = setTimeout(() => {
-        killGroup(pid, "SIGKILL");
         child.stdout.destroy();
         child.stderr.destroy();
         finish(false, "");
@@ -542,8 +544,19 @@ function runStreaming(
       clearTimeout(killTimer);
       clearTimeout(graceTimer);
       clearInterval(heartbeat);
+      // An aborted run may leave descendants that ignored SIGTERM (the direct
+      // child exiting can settle it before the grace period): sweep the group.
+      if (terminating && child.pid !== undefined) killGroup(child.pid, "SIGKILL");
       flush();
-      resolve({ ok, stdout, stderr: stderr + extraErr, timedOut });
+      resolve({
+        ok: ok && !timedOut && !overflowed,
+        stdout,
+        stderr:
+          stderr +
+          extraErr +
+          (overflowed ? `output exceeded ${opts.captureLimit} characters` : ""),
+        timedOut,
+      });
     };
 
     // Echo complete lines only; keep the partial tail until more arrives.
@@ -582,6 +595,7 @@ function runStreaming(
       return opts.keepTail ? next.slice(next.length - opts.captureLimit) : null;
     };
     const onData = (which: "out" | "err", d: string): void => {
+      if (overflowed) return;
       const next = capture(which === "out" ? stdout : stderr, d);
       if (next === null) {
         overflowed = true;
@@ -609,12 +623,7 @@ function runStreaming(
     }, beatMs);
 
     child.on("error", (err) => finish(false, err.message));
-    child.on("close", (code) =>
-      finish(
-        code === 0 && !timedOut && !overflowed,
-        overflowed ? `output exceeded ${opts.captureLimit} characters` : ""
-      )
-    );
+    child.on("close", (code) => finish(code === 0, ""));
   });
 }
 
