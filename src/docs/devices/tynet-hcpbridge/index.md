@@ -32,12 +32,12 @@ Features:
 
 ## Setup
 
-Follow our detailed 
-[Quickstart Guide](https://github.com/Tysonpower/Tynet-HCPBridge/wiki/Quickstart-ESPHome-based-Firmware) 
-in our GitHub Wiki or follow these instructions:
+Follow our detailed
+ [Quickstart Guide](https://github.com/Tysonpower/Tynet-HCPBridge/wiki/Quickstart-ESPHome-based-Firmware)
+ in our GitHub Wiki or follow these instructions:
 
 1. Power the HCPBridge via USB-C.
-2. Connect it to your local Wi-Fi via the hotspot it opens, using Improv via Bluetooth (Home Assistant app), 
+2. Connect it to your local Wi-Fi via the hotspot it opens, using Improv via Bluetooth (Home Assistant app),
    or using Improv via USB.
 3. Adopt it in Home Assistant once configured and connected to your Wi-Fi.
 4. Disconnect the USB-C cable and connect to your Hörmann motor's BUS port via the provided RJ12 cable.
