@@ -45,10 +45,10 @@ binary_sensor:
 # Relay pull-and-hold: GPIO4 pulls the relay in, GPIO10 holds it
 output:
   - platform: gpio
-    id: relay_pull # full-current pull-in
+    id: relay_pull  # full-current pull-in
     pin: GPIO4
   - platform: gpio
-    id: relay_hold # reduced-current hold via 100 Ω
+    id: relay_hold  # reduced-current hold via 100 Ω
     pin: GPIO10
 
 switch:
