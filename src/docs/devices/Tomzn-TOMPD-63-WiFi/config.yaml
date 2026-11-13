@@ -1,0 +1,40 @@
+esphome:
+  name: medidor-din-2
+  friendly_name: medidor-din-2
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+# Disable logging
+logger:
+  baud_rate: 0
+
+uart:
+  baud_rate: 9600
+  id: uart_tuya
+  rx_pin: RX1
+  tx_pin: TX1
+
+tuya:
+  uart_id: uart_tuya
+
+switch:
+  - platform: tuya
+    switch_datapoint: 16
+    name: "On"
+
+sensor:
+  - platform: tuya
+    name: "Total Energy"
+    sensor_datapoint: 1
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 2
+    icon: "mdi:lightning-bolt"
+    filters:
+      - multiply: 0.01
+  - platform: tuya
+    name: "Leakage Current"
+    sensor_datapoint: 15
+    unit_of_measurement: "mA"
+    accuracy_decimals: 0
+    icon: "mdi:flash-alert"
