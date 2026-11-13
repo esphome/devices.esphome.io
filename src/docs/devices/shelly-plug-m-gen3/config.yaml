@@ -120,11 +120,6 @@ binary_sensor:
               - switch.turn_on: switch_relay
             else:
               - switch.turn_off: switch_relay
-              - script.execute:
-                  id: led_flash
-                  frequency: 2.0   # 2 Hz
-                  duty: 20.0       # 20 % on, 80 % off
-                  count: 10        # 10 flashes
 
 switch:
   - platform: gpio
@@ -133,7 +128,6 @@ switch:
     id: switch_relay
     restore_mode: RESTORE_DEFAULT_ON
     on_turn_on:
-      - script.stop: led_flash
       - output.turn_on: led_green
     on_turn_off:
       - output.turn_off: led_green
