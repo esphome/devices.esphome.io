@@ -3,7 +3,7 @@ title: 8 Solid-State Relay Outputs (SMD4) - IoTextra SSR Small
 date-published: 2026-11-13
 type: misc
 standard: global
-board: esp32
+board: esp32, rp2040
 difficulty: 2
 project-url: https://makethingshappy.io/products/iotextra-ssr-small
 ---
