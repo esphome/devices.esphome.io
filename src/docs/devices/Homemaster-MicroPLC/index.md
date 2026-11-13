@@ -195,9 +195,10 @@ Requires ESPHome 2026.7.0 or newer.
 | ESP Uptime Human, ESPHome Version, ESP IP Address | text_sensor (diagnostic) |
 | Firmware Update | update |
 
-The RS-485 bus is exposed as the UART `uart_modbus`. Add your own
-`modbus_controller:` blocks to it after taking control, to integrate HomeMaster
-expansion modules or any other Modbus RTU device.
+The RS-485 bus is exposed as the UART `uart_modbus`. After taking control, add a
+`modbus:` hub with `uart_id: uart_modbus` and its own `id`, then reference that ID
+from your `modbus_controller:` entries using `modbus_id` to integrate HomeMaster
+expansion modules or other Modbus RTU devices.
 
 ## Configuration
 
