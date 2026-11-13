@@ -3,7 +3,7 @@ title: 4 Digital Inputs + 2 NPN Digital Outputs + 2 SPST Relays - IoTextra Octal
 date-published: 2026-11-05
 type: misc
 standard: global
-board: esp32
+board: esp32, rp2040
 difficulty: 2
 project-url: https://makethingshappy.io/products/iotextra-octal
 ---
