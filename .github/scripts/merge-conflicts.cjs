@@ -188,12 +188,19 @@ module.exports = async ({ github, context, core, sleep = (ms) => new Promise((r)
   // failing check only ever demotes).
   const repromote = context.eventName === "push" || context.payload.action === "edited";
   const pace = makePacer(sleep);
+  // Written as each PR is marked ready, so a sweep that fails or is cancelled
+  // later still hands it to the workflow's app-token Copilot request.
+  const markedReady = [];
+  const onMarkedReady = (number) => {
+    markedReady.push(number);
+    core.setOutput("marked-ready", markedReady.join(","));
+  };
   for (const pull of settled) {
     const changed = await check({ github, core, owner, repo, pace, defaultBranch }, pull);
     const conflict = pull.mergeable === "CONFLICTING";
     if (changed && (repromote || conflict) && hasLabel(pull, MFE_LABEL)) {
       await pace();
-      await promote({ github, core, owner, repo, prNumber: pull.number });
+      await promote({ github, core, owner, repo, prNumber: pull.number, onMarkedReady });
     }
   }
   for (const pull of unknown) {

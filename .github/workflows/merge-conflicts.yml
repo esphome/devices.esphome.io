@@ -57,8 +57,29 @@ jobs:
           persist-credentials: false
 
       - name: Sync has-conflicts label and check
+        id: sync
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/merge-conflicts.cjs');
             await script({ github, context, core });
+
+      # A promotion marks drafts ready with GITHUB_TOKEN, whose event starts no
+      # workflow, so ask Copilot here with the review bot's token. This also
+      # runs after a failed or cancelled sweep, for the PRs it promoted before
+      # stopping.
+      - name: Request Copilot reviews
+        if: ${{ always() && steps.sync.outputs.marked-ready }}
+        uses: actions/github-script@v9.0.0
+        env:
+          PR_NUMBERS: ${{ steps.sync.outputs.marked-ready }}
+        with:
+          github-token: ${{ secrets.COPILOT_REVIEW_TOKEN }}
+          script: |
+            const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReviews({
+              github,
+              core,
+              ...context.repo,
+              prNumbers: process.env.PR_NUMBERS,
+            });

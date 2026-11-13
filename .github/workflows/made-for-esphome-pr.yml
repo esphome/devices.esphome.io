@@ -135,12 +135,33 @@ jobs:
       # GITHUB_TOKEN rather than the app token: it needs `checks: read`, and
       # workflow_run already runs in the base-repo context.
       - name: Promote the pull request when checks pass
+        id: promote
         if: steps.download.outcome == 'success'
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
             await script({ github, context, core });
+
+      # The promotion's ready_for_review event starts no workflow, so ask
+      # Copilot here, with the review bot's token (only an account with a
+      # Copilot seat gets a review for every author).
+      # This also runs when the promotion failed after marking the PR ready.
+      - name: Request Copilot review
+        if: ${{ always() && steps.promote.outputs.marked-ready }}
+        uses: actions/github-script@v9.0.0
+        env:
+          PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
+        with:
+          github-token: ${{ secrets.COPILOT_REVIEW_TOKEN }}
+          script: |
+            const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReviews({
+              github,
+              core,
+              ...context.repo,
+              prNumbers: process.env.PR_NUMBERS,
+            });
 
   promote:
     name: Promote when CI settles last
@@ -181,9 +202,30 @@ jobs:
           path: artifact
 
       - name: Promote the pull request when checks pass
+        id: promote
         if: steps.download.outcome == 'success'
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const script = require('./.github/scripts/mfe-promote.cjs');
             await script({ github, context, core });
+
+      # The promotion's ready_for_review event starts no workflow, so ask
+      # Copilot here, with the review bot's token (only an account with a
+      # Copilot seat gets a review for every author).
+      # This also runs when the promotion failed after marking the PR ready.
+      - name: Request Copilot review
+        if: ${{ always() && steps.promote.outputs.marked-ready }}
+        uses: actions/github-script@v9.0.0
+        env:
+          PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
+        with:
+          github-token: ${{ secrets.COPILOT_REVIEW_TOKEN }}
+          script: |
+            const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
+            await requestCopilotReviews({
+              github,
+              core,
+              ...context.repo,
+              prNumbers: process.env.PR_NUMBERS,
+            });
