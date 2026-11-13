@@ -26,9 +26,6 @@ logger:
   level: INFO
   baud_rate: 0
 
-web_server:
-  port: 80
-
 globals:
   - id: scoops_count
     type: int
