@@ -18,15 +18,30 @@ media_player:
             media_player.is_announcing:
       - delay: 500ms
       # During a voice assistant turn, on_end restarts the wake word instead.
+      - script.execute: restart_wake_word
+
+# --- Wake word + voice assistant ---
+# Every delayed wake word restart below ends here. The handlers wait, but
+# something else can start in the meantime (an announcement that arrives while
+# one is still settling, a new assistant turn), and the microphone must not
+# take the shared I2S bus back while the speaker is being used. So the idle
+# check runs again at the moment of the restart, not only before the wait.
+script:
+  - id: restart_wake_word
+    then:
       - if:
           condition:
-            not:
-              voice_assistant.is_running:
+            and:
+              - not:
+                  voice_assistant.is_running:
+              - not:
+                  media_player.is_announcing:
+              - not:
+                  speaker.is_playing:
           then:
             - lambda: id(va).set_use_wake_word(false);
             - micro_wake_word.start:
 
-# --- Wake word + voice assistant ---
 micro_wake_word:
   id: mww
   microphone: mic
@@ -49,8 +64,7 @@ voice_assistant:
 
   on_client_connected:
     - delay: 2s
-    - lambda: id(va).set_use_wake_word(false);
-    - micro_wake_word.start:
+    - script.execute: restart_wake_word
 
   # on_end fires when the pipeline ends, which can be before the reply has
   # played. The voice assistant keeps running until its own reply finishes
@@ -72,8 +86,7 @@ voice_assistant:
           - not:
               speaker.is_playing:
     - delay: 500ms
-    - lambda: id(va).set_use_wake_word(false);
-    - micro_wake_word.start:
+    - script.execute: restart_wake_word
 
   on_error:
     - wait_until:
@@ -86,5 +99,4 @@ voice_assistant:
           - not:
               speaker.is_playing:
     - delay: 500ms
-    - lambda: id(va).set_use_wake_word(false);
-    - micro_wake_word.start:
+    - script.execute: restart_wake_word

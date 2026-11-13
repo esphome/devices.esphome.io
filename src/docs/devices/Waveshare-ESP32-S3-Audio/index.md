@@ -126,7 +126,8 @@ Add this to the configuration above for a voice assistant with on-device wake wo
 `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Voice assistant
 replies play through the media player rather than straight to the speaker, so a reply and a Home Assistant announcement
 queue instead of cutting each other off. The microphone and speaker share one I2S bus, so the wake word is stopped
-whenever something plays and restarted only once playback has finished. For a full-featured configuration with LED
+whenever something plays and restarted only once playback has finished, with the idle check repeated right before
+the restart. For a full-featured configuration with LED
 animations for each voice assistant state, see the
 [project repository](https://github.com/jensenbox/waveshare-esp32-s3-audio).
 
