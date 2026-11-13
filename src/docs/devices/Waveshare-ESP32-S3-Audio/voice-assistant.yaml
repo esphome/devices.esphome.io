@@ -77,10 +77,14 @@ voice_assistant:
 
   on_error:
     - wait_until:
+        not:
+          voice_assistant.is_running:
+    - wait_until:
         and:
           - not:
               media_player.is_announcing:
           - not:
               speaker.is_playing:
+    - delay: 500ms
     - lambda: id(va).set_use_wake_word(false);
     - micro_wake_word.start:
