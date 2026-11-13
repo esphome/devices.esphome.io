@@ -1,0 +1,27 @@
+esphome:
+  name: "esp32-p4-m3-dev"
+
+esp32:
+  variant: esp32p4
+  flash_size: 16MB
+  # Default 400MHz caused cold-boot bricking after a full power cycle on the
+  # tested board. 360MHz was stable.
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+# The onboard ESP32-C6 coprocessor on SDIO. The ESP32-P4 has no radio of its
+# own, so Wi-Fi and Bluetooth both go through it.
+esp32_hosted:
+  active_high: true
+  variant: ESP32C6
+  reset_pin: GPIO54
+  cmd_pin: GPIO19
+  clk_pin: GPIO18
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
