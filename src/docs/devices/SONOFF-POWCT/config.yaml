@@ -1,0 +1,141 @@
+esphome:
+  name: sonoff-powct
+  friendly_name: Sonoff POW Ring
+  on_boot:  # Set the initial state of the relay switch to the actual relay state. This will NOT change the state.
+    priority: 250.0  # Wait until WiFi is connected to allow the sensor some time to settle
+    then:
+      - if:
+          condition:
+            lambda: "return id(v_sensor).state > 10;"
+          then:
+            - switch.turn_on: relay_1
+          else:
+            - switch.turn_off: relay_1
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+logger:
+
+wifi:
+  ap:
+
+uart:
+  tx_pin: GPIO26
+  rx_pin: GPIO25
+  baud_rate: 38400
+  parity: EVEN
+  stop_bits: 1
+
+globals:
+  # Which info the display shows: true for voltage and current, false for power
+  - id: display_page
+    type: bool
+    initial_value: "false"
+
+sensor:
+  - platform: cse7761
+    update_interval: 2s
+    current_1:
+      name: Current
+      id: a_sensor
+      unit_of_measurement: "A"
+      accuracy_decimals: 3
+      icon: mdi:current-ac
+      filters:
+        # Measurement divided by the M_PI constant
+        - lambda: return x / M_PI;
+    voltage:
+      name: Voltage
+      id: v_sensor
+      unit_of_measurement: "V"
+      icon: mdi:sine-wave
+    active_power_1:
+      name: Power
+      id: w_sensor
+      filters:
+        # Measurement divided by the M_PI constant
+        - lambda: return x / M_PI;
+      icon: mdi:flash
+      on_value_range:
+        - above: 4.0
+          then:
+            - light.turn_on: switch_led
+        - below: 3.0
+          then:
+            - light.turn_off: switch_led
+
+  - platform: internal_temperature
+    name: ESP32 Internal Temp
+    id: esp32_temp
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO00
+    id: reset
+    internal: true
+    filters:
+      - invert:
+      - delayed_off: 10ms
+    on_click:
+      - max_length: 350ms  # short press to toggle the relay
+        then:
+          switch.toggle: relay_1
+      - min_length: 360ms  # long press to cycle display info
+        max_length: 3s
+        then:
+          - globals.set:
+              id: display_page
+              value: "!id(display_page)"
+
+display:
+  - platform: tm1621
+    id: tm1621_display
+    cs_pin: GPIO17
+    data_pin: GPIO05
+    read_pin: GPIO23
+    write_pin: GPIO18
+    lambda: |-
+      if (id(display_page)) {
+        it.display_voltage(true);
+        it.display_kwh(false);
+        it.printf(0, "%.1f", id(v_sensor).state);
+        it.printf(1, "%.1f", id(a_sensor).state);
+      } else {
+        it.display_voltage(false);
+        it.display_kwh(false);
+        it.print(0, "");  // the driver keeps each row until it is written again
+        it.printf(1, "%.1f", id(w_sensor).state);
+      }
+
+output:
+  - platform: ledc
+    id: led
+    pin: GPIO13  # Status LED, lit when high
+
+switch:
+  - platform: gpio
+    name: Relay
+    pin: GPIO21
+    id: relay_1
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - delay: 500ms
+      - light.turn_on: switch_led
+    on_turn_off:
+      - delay: 500ms
+      - light.turn_off: switch_led
+
+light:
+  - platform: monochromatic
+    id: switch_led
+    output: led
+    internal: true
+  - platform: status_led
+    id: wifi_status_led
+    internal: true
+    pin:
+      number: GPIO15
+      inverted: true
