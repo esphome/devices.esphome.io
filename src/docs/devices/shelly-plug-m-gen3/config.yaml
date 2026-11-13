@@ -143,36 +143,3 @@ output:
     pin: GPIO10
     inverted: true
     id: led_green
-
-script:
-  - id: led_flash
-    mode: restart
-    parameters:
-      frequency: float   # Hz
-      duty: float        # duty cycle in %, 0..100
-      count: int         # number of flashes, 0 = endless
-    then:
-      - if:
-          condition:
-            lambda: 'return frequency > 0.0f;'
-          then:
-            - if:
-                condition:
-                  lambda: 'return count > 0;'
-                then:
-                  - repeat:
-                      count: !lambda 'return count;'
-                      then:
-                        - output.turn_on: led_green
-                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * duty / 100.0f);'
-                        - output.turn_off: led_green
-                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * (100.0f - duty) / 100.0f);'
-                else:
-                  - while:
-                      condition:
-                        lambda: 'return true;'
-                      then:
-                        - output.turn_on: led_green
-                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * duty / 100.0f);'
-                        - output.turn_off: led_green
-                        - delay: !lambda 'return (uint32_t)(1000.0f / frequency * (100.0f - duty) / 100.0f);'
