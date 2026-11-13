@@ -1,0 +1,15 @@
+binary_sensor:
+  - id: !extend left_button
+    on_press:
+      - switch.toggle: relay_a
+  # Right button
+  - id: !extend right_button
+    on_press:
+      - switch.toggle: relay_b
+
+switch:
+  - id: !extend relay_b
+    on_turn_on:
+      - output.turn_on: led
+    on_turn_off:
+      - output.turn_off: led

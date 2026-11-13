@@ -1,0 +1,104 @@
+substitutions:
+  devicename: "deta-double-powerpoint-usb"
+  friendlyname: Deta Powerpoint USB
+  friendlyname_left: Powerpoint Left
+  friendlyname_right: Powerpoint Right
+  deviceid: deta-double-powerpoint-usb
+  devicemodel: Deta Grid Connect 6920HA Series 2
+
+esphome:
+  name: ${devicename}
+
+bk72xx:
+  board: generic-bk7231t-qfn32-tuya
+
+wifi:
+  ap: {}
+logger:
+
+sensor:
+  - platform: wifi_signal
+    name: ${friendlyname} Wifi Signal Strength
+    update_interval: 60s
+  - platform: uptime
+    name: ${friendlyname} Uptime
+  - platform: cse7766
+    current:
+      name: "${friendlyname} Current"
+      icon: mdi:current-ac
+      filters:
+        - multiply: 4.867
+        - throttle_average: 30s
+    voltage:
+      name: "${friendlyname} Voltage"
+      icon: mdi:flash
+      filters:
+        - multiply: 1.905
+        - throttle_average: 30s
+    power:
+      name: "${friendlyname} Power"
+      icon: mdi:gauge
+      id: powerpoint_wattage
+      filters:
+        - throttle_average: 30s
+    energy:
+      name: "${friendlyname} Energy"
+      icon: mdi:gauge
+      id: powerpoint_energy
+      filters:
+        - throttle: 30s
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: ${friendlyname} IP
+    ssid:
+      name: ${friendlyname} SSID
+    bssid:
+      name: ${friendlyname} BSSID
+    mac_address:
+      name: ${friendlyname} Mac
+  - platform: version
+    name: ${friendlyname} ESPHome Version
+
+uart:
+  rx_pin: P10
+  baud_rate: 4800
+  parity: EVEN
+
+output:
+  - platform: gpio
+    pin: P8
+    inverted: false
+    id: led
+
+binary_sensor:
+  # Left button
+  - platform: gpio
+    device_class: power
+    pin:
+      number: P7
+      mode: INPUT
+      inverted: true
+    name: "${friendlyname} Left Button"
+    id: left_button
+  - platform: gpio
+    device_class: power
+    pin:
+      number: P24
+      mode: INPUT
+      inverted: true
+    name: "${friendlyname} Right Button"
+    id: right_button
+switch:
+  - platform: gpio
+    pin: P6
+    name: "${friendlyname_left}"
+    restore_mode: ALWAYS_OFF
+    id: relay_a
+    icon: mdi:power-socket-au
+  - platform: gpio
+    pin: P26
+    name: "${friendlyname_right}"
+    restore_mode: ALWAYS_OFF
+    id: relay_b
+    icon: mdi:power-socket-au
