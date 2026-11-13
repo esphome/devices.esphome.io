@@ -1,0 +1,15 @@
+# Reports whether the device plugged into the relay is running, based on its power consumption.
+binary_sensor:
+  - platform: template
+    name: Subordinate Device
+    id: subordinate_device_on
+    lambda: |-
+      if (isnan(id(w_sensor).state)) {
+        return {};
+      } else if (id(w_sensor).state > 4) {
+        // Running
+        return true;
+      } else {
+        // Not running
+        return false;
+      }
