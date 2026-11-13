@@ -37,7 +37,8 @@ Pinouts and pictures are taken from [digiblur's website](https://digiblur.com/wi
 
 ## Relay pull-and-hold (GPIO10)
 
-GPIO10 is connected to the relay drive circuit through a 100 Ω resistor. It works as a
+GPIO10 drives a second transistor (Q2, with a series base resistor and a pull-down to GND).
+Q2 feeds the relay coil through a 100 Ω resistor (R20, marked "101"). It works as a
 "pull-and-hold" circuit: GPIO4 pulls the relay in at full coil current, then GPIO10 alone
 holds it at reduced current. This lowers coil power and heat while the relay is on.
 
