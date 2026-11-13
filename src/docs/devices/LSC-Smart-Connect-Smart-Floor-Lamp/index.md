@@ -18,7 +18,7 @@ This guide applies to the **LSC Smart Connect Smart Floor Lamp** sold by **Actio
 | Product | Smart Floor Lamp |
 | Article number | [**3221699**](https://www.action.com/de-de/p/3221699/lsc-smart-connect-smarte-rgb-stehleuchte/) |
 
-![Bottom of the lamp](3221699.png)
+![Bottom of the lamp](3221699.png "Product Picture")
 
 The lamp features two independently controllable lighting zones. The main light section is an
 **addressable LED strip**, allowing animations and individually controlled LEDs. The illuminated
@@ -30,24 +30,24 @@ The device can be flashed using **LTChipTool** and a **3.3 V USB-to-UART adapter
 
 1. Turn the lamp upside down.
 
-   ![Bottom of the lamp](bottom.jpg)
+   ![Bottom of the lamp](bottom.jpg "Bottom of the Lamp")
 
 2. Carefully remove the large foam pad from the bottom of the base.
 
 3. Remove the three screws underneath the foam pad.
 
-   ![Screw locations](screws.jpg)
+   ![Screw locations](screws.jpg "Screw locations")
 
 4. Carefully open the base to access the PCB.
 
 5. Disconnect the connector between the base and the PCB. Hold the connector itself instead of
    pulling on the wires.
 
-   ![Opened base](connector.jpg)
+   ![Opened base](connector.jpg "Base Led Connector")
 
 6. Connect the USB-to-UART adapter to the programming pads.
 
-   ![Programming pads](points.jpg)
+   ![Programming pads](points.jpg "Test Points")
 
    | USB-to-UART | Lamp |
    |-------------|------|
