@@ -3,7 +3,7 @@ title: 4 Digital Inputs + 4 NPN Digital Outputs - IoTextra Octal2
 date-published: 2026-11-13
 type: misc
 standard: global
-board: esp32
+board: esp32, rp2040
 difficulty: 2
 project-url: https://makethingshappy.io/products/iotextra-octal2
 ---
