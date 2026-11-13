@@ -106,6 +106,7 @@ display:
       } else {
         it.display_voltage(false);
         it.display_kwh(false);
+        it.print(0, "");  // the driver keeps each row until it is written again
         it.printf(1, "%.1f", id(w_sensor).state);
       }
 
