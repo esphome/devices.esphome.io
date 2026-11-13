@@ -3,7 +3,7 @@ title: 4 SPDT Relays - IoTextra Relay2
 date-published: 2026-11-13
 type: misc
 standard: global
-board: esp32
+board: esp32, rp2040
 difficulty: 2
 project-url: https://makethingshappy.io/products/iotextra-relay2
 ---
