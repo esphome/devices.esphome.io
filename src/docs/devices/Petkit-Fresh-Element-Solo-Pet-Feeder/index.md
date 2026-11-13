@@ -129,34 +129,20 @@ packages:
 
 ## Automation example
 
+The scheduled-feeding example fires Home Assistant events (`esphome.feeder_food_low` and
+`esphome.feeder_food_dispensed`, see [scheduled-feeding.yaml](scheduled-feeding.yaml)). This excerpt of a Home
+Assistant automation turns the low-food event into a notification; build the rest of the automation to suit your setup.
+
 ```yaml inline
-alias: Pet feeder notifications
-description: ""
 trigger:
   - platform: event
     event_type: esphome.feeder_food_low
-    id: food_low
-  - platform: event
-    event_type: esphome.feeder_food_dispensed
-    id: food_dispensed
-condition: []
 action:
-  - if:
-      - condition: trigger
-        id:
-          - food_low
-    then:
-      - service: notify.notify
-        metadata: {}
-        data:
-          message: "{{ trigger.event.data.message }}"
-      - service: notify.persistent_notification
-        metadata: {}
-        data:
-          message: "{{ trigger.event.data.message }}"
-mode: single
+  - service: notify.notify
+    data:
+      message: "{{ trigger.event.data.message }}"
 ```
 
 _Note: currently, `esphome.feeder_food_dispensed event` is ignored to not spam the users with multiple notifications
-about food being dispensed multiple times a day. Only `esphome.feeder_food_low` will result in persistent notification
-in Home Assistant and mobile app notifications._
+about food being dispensed multiple times a day. Only `esphome.feeder_food_low` is meant to result in a notification
+in Home Assistant and on the mobile app._
