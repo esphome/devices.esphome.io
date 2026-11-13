@@ -7,9 +7,13 @@ board: esp8266
 difficulty: 5
 ---
 
+![Arlec UC552HA bar light](uc552ha.jpg "Arlec UC552HA bar light")
+
+Product image: [Arlec UC552HA](https://www.arlec.com.au/products/arlec-white-12w-87cm-grid-connect-smart-linkable-cct-bar-light).
+
 The `Arlec Grid Connect Smart 87cm Linkable CCT Bar Light` is part of the
 [Grid Connect ecosystem](https://grid-connect.com.au/) sold at Bunnings in Australia and uses the
-Tuya [CBLC9](https://developer.tuya.com/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) module.
+Tuya [CBLC9](https://developer.tuya.com/en/docs/iot/cblc9-module-datasheet?id=Ka42cqnj9r0i5) module.
 This module is a variant of the BK7231 family and must be re-flashed or replaced with an ESP8266
 series module which fits inside the housing.
 
@@ -37,50 +41,7 @@ the 3.3V, GND, P8 and P7 pads.
 
 ## Configuration
 
-```yaml
-esphome:
-  name: "Arlec UC552HA"
+The example contains the device hardware settings. Add your Wi-Fi, API and OTA configuration separately.
 
-esp8266:
-  board: esp8285
-  esp8266_restore_from_flash: true
-
-logger:
-  baud_rate: 0
-
-captive_portal:
-
-api:
-  encryption:
-    key: !secret api_key
-
-ota:
-  platform: esphome
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "Arlec UC552HA"
-    password: !secret wifi_ap_password
-
-output:
-  - platform: esp8266_pwm
-    id: cct_out
-    pin: GPIO5
-    inverted: true
-  - platform: esp8266_pwm
-    id: dimmer_out
-    pin: GPIO13
-    inverted: false
-
-light:
-  - platform: color_temperature
-    name: "Light"
-    brightness: dimmer_out
-    color_temperature: cct_out
-    cold_white_color_temperature: 6600 K
-    warm_white_color_temperature: 3000 K
-    restore_mode: RESTORE_DEFAULT_OFF
+```yaml file=config.yaml
 ```
