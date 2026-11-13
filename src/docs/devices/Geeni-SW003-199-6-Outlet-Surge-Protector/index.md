@@ -34,7 +34,7 @@ difficulty: 4
 
 This device has 6 outlets, and a combined blue led button. The button toggles all pins when pressed.
 
-The device is based on the [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076). The device
+The device is based on the [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076). The device
 couldn't be converted with tuya-cloudcutter and required serial flashing.
 
 The CB3S is soldered onto the main board, but is easily accessible and pins are exposed. The device can easily be be
@@ -45,7 +45,7 @@ used before flashing.
 
 ## Serial flashing
 
-The official [Tuya CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a
+The official [Tuya CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076) documentation contains a
 diagram with the position of each pin on the module. The module has multiple UARTs, UART1 is the one used for flashing.
 
 | Pin | Function |
@@ -74,68 +74,7 @@ disconnect RST/CEN to let the chip boot into the flashing program.
 
 ## Basic Configuration
 
-```yaml
-esphome:
-  name: geeni-powerstrip
+The example contains the device hardware settings. Add your Wi-Fi, API and OTA configuration separately.
 
-bk72xx:
-  board: cb3s
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-logger:
-
-api:
-
-ota:
-
-switch:
-  - platform: gpio
-    id: switch_1
-    name: Outlet 1
-    pin: P6
-  - platform: gpio
-    id: switch_2
-    name: Outlet 2
-    pin: P24
-  - platform: gpio
-    id: switch_3
-    name: Outlet 3
-    pin: P26
-  - platform: gpio
-    id: switch_4
-    name: Outlet 4
-    pin: P8
-  - platform: gpio
-    id: switch_5
-    name: Outlet 5
-    pin: P7
-  - platform: gpio
-    id: switch_6
-    name: Outlet 6
-    pin: P9
-
-binary_sensor:
-  - platform: gpio
-    id: binary_switch_all
-    pin:
-      number: P23
-      inverted: true
-      mode: INPUT_PULLUP
-    on_press:
-      then:
-        - switch.toggle: switch_1
-        - switch.toggle: switch_2
-        - switch.toggle: switch_3
-        - switch.toggle: switch_4
-        - switch.toggle: switch_5
-        - switch.toggle: switch_6
-
-status_led:
-  pin:
-    number: P14
-    inverted: true
+```yaml file=config.yaml
 ```
