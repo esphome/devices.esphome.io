@@ -17,7 +17,7 @@ The receiver keeps its original firmware; only the ESP is flashed. No cloud serv
 Both board configurations below target an RX-V1600 and provide a media player for power, volume and mute, separate input
 and DSP program selects, a status-refresh button and a connection indicator. They do not stream audio to the receiver.
 Source and sound-mode selection inside a single Home Assistant media player can use the project's optional
-[companion integration](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.2.4/docs/home_assistant_companion.md).
+[companion integration](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.3.1/docs/home_assistant_companion.md).
 
 ## Hardware
 
@@ -58,12 +58,12 @@ The UART uses **9600 baud, 8 data bits, no parity and 1 stop bit**. Some receive
 asserted before responding. Neither example drives RTS/CTS from the ESP. Use an appropriate RS-232-side handshake
 connection for the receiver and converter; never connect RS-232 handshake pins directly to ESP GPIO or 3V3.
 
-See the project's [wiring notes](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.2.4/docs/wiring.md)
+See the project's [wiring notes](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.3.1/docs/wiring.md)
 for handshake troubleshooting. No modification inside the receiver is required.
 
 ## Configuration
 
-Requires ESPHome **2026.9.0 or newer**. The external component is pinned to the published `v0.2.4` release.
+Requires ESPHome **2026.9.0 or newer**. The external component is pinned to the published `v0.3.1` release.
 Review its release notes before changing that version.
 
 Choose **one** board configuration; do not merge the ESP32 and ESP8266 examples.
@@ -95,12 +95,12 @@ Both examples limit software volume commands to 0 dB. This is not a limiter for 
 ## Compatibility And Validation
 
 The project is beta software. This page describes an RX-V1600 configuration, not a claim that every Yamaha receiver or
-every function has been tested. Release `v0.2.4` also provides x500, x700 and x800 family profiles; select the appropriate
+every function has been tested. Release `v0.3.1` also provides x500, x700, x800 and RX-V1900 profiles; select the appropriate
 profile rather than applying RX-V1600 settings to a different model.
-Consult the project's [model matrix](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.2.4/docs/supported_models.md)
+Consult the project's [model matrix](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.3.1/docs/supported_models.md)
 for implemented mappings and hardware-validation limitations.
 
-The project's [full ESP8266 example](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.2.4/examples/yamaha_rx_v_full.yaml)
+The project's [full ESP8266 example](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.3.1/examples/yamaha_rx_v_full.yaml)
 includes additional receiver controls. ESP8266 has less flash and RAM available than ESP32; adding entities changes the
 resource requirements, so check build size before installing a larger configuration.
 
@@ -116,5 +116,5 @@ Remove Wi-Fi credentials, API encryption keys and other secrets from any configu
 - **Only some functions work:** compare with the model matrix and try a manual Refresh before enabling periodic polling.
 
 Further diagnostic steps are in the project's
-[troubleshooting guide](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.2.4/docs/troubleshooting.md).
+[troubleshooting guide](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.3.1/docs/troubleshooting.md).
 The adapter is a community project, not a Yamaha product or an official ESPHome component.

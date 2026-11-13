@@ -12,7 +12,7 @@ logger:
   baud_rate: 0
 
 external_components:
-  - source: github://memphi2/ESPHome-Yamaha-Serial@v0.2.4
+  - source: github://memphi2/ESPHome-Yamaha-Serial@v0.3.1
     components: [yamaha_serial]
     refresh: never
 
