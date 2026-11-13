@@ -1,0 +1,96 @@
+substitutions:
+  name: respeaker-lite
+  friendly_name: ReSpeaker Lite
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: INFO
+
+wifi:
+  # Fallback hotspot only — add your own ssid/password when you adopt this.
+  ap:
+
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+  frequency: 400kHz
+
+audio_dac:
+  - platform: aic3204
+    id: codec
+    address: 0x18
+
+# Two logical I2S buses share one physical set of pins. The XMOS DSP on this
+# board is the I2S clock master, so the microphone bus is the primary and the
+# speaker bus rides its clocks as a secondary. Both must therefore run at the
+# same sample rate and bit depth.
+i2s_audio:
+  - id: i2s_input
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+  - id: i2s_output
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+
+microphone:
+  - platform: i2s_audio
+    id: respeaker_mic
+    i2s_audio_id: i2s_input
+    i2s_din_pin: GPIO44
+    adc_type: external
+    pdm: false
+    sample_rate: 16000
+    bits_per_sample: 32bit
+    channel: left
+
+speaker:
+  - platform: i2s_audio
+    id: respeaker_speaker
+    i2s_audio_id: i2s_output
+    i2s_dout_pin: GPIO43
+    i2s_mode: secondary
+    dac_type: external
+    audio_dac: codec
+    sample_rate: 16000
+    bits_per_sample: 32bit
+    channel: stereo
+    buffer_duration: 100ms
+    timeout: 500ms
+
+media_player:
+  - platform: speaker
+    id: respeaker_player
+    name: ${friendly_name}
+    announcement_pipeline:
+      speaker: respeaker_speaker
+      format: FLAC
+      num_channels: 2
+      sample_rate: 16000
