@@ -1,0 +1,66 @@
+esphome:
+  name: device-name
+  friendly_name: Friendly Device Name
+
+esp8266:
+  board: esp8285
+  early_pin_init: false  # Required to ensure the power does not trip out after OTA or reboot
+
+wifi:
+  ap: {}
+
+logger:
+  baud_rate: 0
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO1
+    name: button
+    id: button
+    device_class: window
+    on_press:
+      then:
+        - switch.toggle: relay
+
+switch:
+  - platform: gpio
+    pin: GPIO13
+    name: "Power Switch"
+    id: relay
+    restore_mode: ALWAYS_ON  # Change as per your needs
+    icon: mdi:power-socket-au
+    on_turn_on:
+      then:
+        - output.turn_on: button_led
+    on_turn_off:
+      then:
+        - output.turn_off: button_led
+  - platform: restart
+    name: "Restart"
+
+output:
+  - platform: gpio
+    id: button_led
+    pin: GPIO14
+
+sensor:
+  - platform: hlw8012
+    voltage_divider: 1540  # Verified using CCI Power-Mate
+    current_resistor: 0.00102  # Verified using CCI Power-Mate
+    model: BL0937
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO4
+    cf1_pin: GPIO5
+    current:
+      name: "Current"
+      filters:
+        - multiply: 0.902  # Verified using CCI Power-Mate
+    voltage:
+      name: "Voltage"
+    power:
+      name: "Power"
+    energy:
+      name: "Energy"
+    update_interval: 5s

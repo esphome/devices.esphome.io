@@ -1,0 +1,80 @@
+substitutions:
+  devicename: smartplug
+  friendly_name: t102-v1.1-2
+  device_description: Digitaling 20A Power Monitor RTL8710BX t102-v1.1
+  current_res: "0.001"  # Power monitoring calibration https://esphome.io/components/sensor/hlw8012/
+  voltage_div: "1600"  # Power monitoring calibration
+
+esphome:
+  name: ${devicename}
+  friendly_name: ${friendly_name}
+  comment: ${device_description}
+
+rtl87xx:
+  board: wr2  # actually t102-v1.1 but https://github.com/libretiny-eu/libretiny/issues/247
+
+# Enable logging
+
+logger:
+
+wifi:
+  ap: {}
+
+binary_sensor:
+  # Button on the front is pressed and then toggle relay
+  - platform: gpio
+    device_class: power
+    pin:
+      number: PA18
+      mode: INPUT_PULLUP
+      inverted: true
+    name: Button
+    on_press:
+      - switch.toggle: relay
+      - switch.toggle: statusled
+
+text_sensor:
+  # Reports the ESPHome Version with compile date
+  - platform: version
+    name: ESPHome Version
+  - platform: libretiny
+    version:
+      name: LibreTiny Version
+
+switch:
+  # Relay itself
+  - platform: gpio
+    name: Relay
+    pin: PA15
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: gpio
+    name: statusled
+    pin: PA05
+    id: statusled
+    restore_mode: RESTORE_DEFAULT_OFF
+    inverted: true
+
+# bootloop fix: https://github.com/libretiny-eu/libretiny/issues/155#issuecomment-1826470433
+# https://esphome.io/components/sensor/hlw8012.html
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: PA14
+      inverted: true
+    cf_pin: PA00
+    cf1_pin: PA12
+    current:
+      name: "Current"
+    voltage:
+      name: "Voltage"
+    power:
+      name: "Power"
+      id: power
+    update_interval: 1s
+    initial_mode: CURRENT
+    change_mode_every: 8
+    current_resistor: ${current_res}
+    voltage_divider: ${voltage_div}
