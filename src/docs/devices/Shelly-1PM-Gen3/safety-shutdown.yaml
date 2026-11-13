@@ -1,0 +1,92 @@
+# Add-on for config.yaml: it drives config.yaml's relay output and BL0942 rather than declaring its own.
+
+switch:
+
+  # Use a template switch to allow for checking fault conditions before switching on the relay output.
+  - platform: template
+    id: relay
+    name: Relay
+    device_class: outlet
+    restore_mode: ALWAYS_ON
+    turn_on_action:
+      if:
+        any:
+          - sensor.in_range:
+              id: temperature
+              below: 75.0
+          # Temperature sensor is unknown for several seconds on boot. Allow the relay to switch on anyway.
+          - and:
+              - lambda: "return isnan(id(temperature).state);"
+              - binary_sensor.is_off: error_overtemp
+        then:
+          - output.turn_on: shelly_1pm_gen3_relay
+          - binary_sensor.template.publish:
+              id: error_overtemp
+              state: OFF
+          - binary_sensor.template.publish:
+              id: error_overpower
+              state: OFF
+          - switch.template.publish:
+              id: relay
+              state: ON
+        else:
+          - switch.template.publish:
+              id: relay
+              state: OFF
+    turn_off_action:
+      then:
+        - output.turn_off: shelly_1pm_gen3_relay
+        - switch.template.publish:
+            id: relay
+            state: OFF
+
+binary_sensor:
+
+  - id: error_overtemp
+    name: Overheating
+    device_class: problem
+    entity_category: diagnostic
+    platform: template
+    condition:
+      any:
+        - binary_sensor.is_on: error_overtemp # Latch ON
+        - sensor.in_range:
+            id: temperature
+            above: 75.0
+    on_press:
+      then:
+        - switch.turn_off: relay
+
+  - id: error_overpower
+    name: Overpowering
+    device_class: problem
+    entity_category: diagnostic
+    platform: template
+    condition:
+      any:
+        - binary_sensor.is_on: error_overpower # Latch ON
+        - for:
+            time: 1s
+            condition:
+              sensor.in_range:
+                id: sensor_current
+                above: 16  # This is model specific!
+    on_press:
+      then:
+        - switch.turn_off: relay
+
+sensor:
+
+  # Poll the BL0942 from config.yaml every second so the overcurrent check reacts quickly.
+  - id: !extend bl0942_meter
+    update_interval: 1s
+    # Calibrate before relying on this; see the BL0942 section above.
+    # voltage_reference: # Recommend calibrating the voltage sensor for accurate power/energy readings.
+    # current_reference: # Current sensor must be calibrated for the safety shutdown to respond correctly!
+    energy:
+      name: Energy
+      id: sensor_energy
+      entity_category: diagnostic
+      device_class: energy
+      state_class: total_increasing
+      accuracy_decimals: 3
