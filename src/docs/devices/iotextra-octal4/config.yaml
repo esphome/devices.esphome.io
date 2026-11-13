@@ -1,0 +1,46 @@
+# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-octal4-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+# IoTextra Octal4 3.02 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
+# Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/Octal4/v.3.02/host-map.yaml
+# Inputs DI1..DI4: ISO1211, active-high on the HOST line (input active = 1)
+# Relays K1..K4 (terminals RS1..RS4): active-low on the HOST line (relay on = 0)
+# Requires SB6 closed (HOST AP4 -> K1). With SB5 closed AP4 is TCA9534 INT: K1 will not work.
+esphome:
+  name: octal4-iotsmart-s3
+  project:
+    name: makethingshappy.iotextra-octal4-v3-02-iotsmart-esp32s3-v2-01-gpio
+    version: "1.01"
+
+esp32:
+  variant: esp32s3
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+# Waveshare ESP32-S3-Tiny on IoTsmart ESP32-S3: 4MB flash, 2MB PSRAM
+psram:
+  mode: quad
+
+logger:
+wifi:
+  ap: {}
+
+# HOST I2C: IoTsmart ESP32-S3 2.01 SDA=GPIO16, SCL=GPIO15 (onboard EEPROM 0x54-0x57 on the same bus)
+i2c:
+  id: host_i2c
+  sda: GPIO16
+  scl: GPIO15
+  scan: true
+
+binary_sensor:
+  - {platform: gpio, id: di1, name: "DI1", pin: {number: GPIO8}}    # AP0
+  - {platform: gpio, id: di2, name: "DI2", pin: {number: GPIO9}}    # AP1
+  - {platform: gpio, id: di3, name: "DI3", pin: {number: GPIO10}}   # AP2
+  - {platform: gpio, id: di4, name: "DI4", pin: {number: GPIO11}}   # AP3
+
+switch:
+  # AP4 via SB6, RS1
+  - {platform: gpio, id: k1, name: "K1", pin: {number: GPIO4, inverted: true}, restore_mode: ALWAYS_OFF}
+  - {platform: gpio, id: k2, name: "K2", pin: {number: GPIO5, inverted: true}, restore_mode: ALWAYS_OFF}   # AP5, RS2
+  - {platform: gpio, id: k3, name: "K3", pin: {number: GPIO6, inverted: true}, restore_mode: ALWAYS_OFF}   # AP6, RS3
+  - {platform: gpio, id: k4, name: "K4", pin: {number: GPIO7, inverted: true}, restore_mode: ALWAYS_OFF}   # AP7, RS4
