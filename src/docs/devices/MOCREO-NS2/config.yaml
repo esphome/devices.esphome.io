@@ -1,0 +1,78 @@
+esphome:
+  name: mocreo-ns2
+  friendly_name: MOCREO NS2
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+logger:
+  baud_rate: 0
+
+i2c:
+  sda: GPIO2
+  scl: GPIO1
+  scan: true
+
+spi:
+  clk_pin: GPIO6
+  mosi_pin: GPIO7
+
+sensor:
+  - platform: sht4x
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      name: "Temperature"
+      id: ns2_temp
+    humidity:
+      name: "Humidity"
+      id: ns2_hum
+  - platform: internal_temperature
+    name: "ESP Temperature"
+    id: esp_temp
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO9
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Button"
+    id: button
+    filters:
+      - delayed_on_off: 20ms
+
+output:
+  - platform: ledc
+    pin: GPIO3
+    id: backlight_pwm
+    frequency: 1000Hz
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Backlight"
+    id: backlight
+    restore_mode: RESTORE_DEFAULT_ON
+
+display:
+  - platform: mipi_spi
+    id: ns2_screen
+    model: ST7789V
+    dimensions:
+      width: 240
+      height: 240
+      offset_width: 0
+      offset_height: 0
+    cs_pin: GPIO5
+    dc_pin: GPIO4
+    reset_pin: GPIO8
+    data_rate: 10MHz
+    invert_colors: true
+    buffer_size: 25%
+    show_test_card: true
