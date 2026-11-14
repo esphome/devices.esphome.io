@@ -15,7 +15,8 @@ variant carries a Sensirion SHT40 in an external probe that plugs into a second 
 ESP32-C3 with 4 MB of embedded flash, and flash encryption and secure boot are both off, so it can be flashed over
 USB with no disassembly.
 
-This page covers the probe variant with board revision `NS2_V2.1`.
+This page covers the probe variant with board revision `NS2_V2.1`, sold on
+[Amazon](https://www.amazon.com/dp/B0FP4KZKPG).
 
 ## Hardware
 
