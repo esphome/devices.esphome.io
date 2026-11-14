@@ -8,7 +8,7 @@ difficulty: 2
 project-url: https://github.com/chunckus-aurelius/MOCREO-NS2-ESPhome
 ---
 
-![MOCREO NS2 board (NS2_V2.1)](board.jpg "MOCREO NS2 board (NS2_V2.1)")
+![MOCREO NS2 running ESPHome](device.jpg "MOCREO NS2 running ESPHome")
 
 The MOCREO NS2 is a direct Wi-Fi temperature and humidity monitor with a 240x240 colour IPS screen. The probe
 variant carries a Sensirion SHT40 in an external probe that plugs into a second USB-C socket. Inside is a bare
@@ -19,6 +19,8 @@ This page covers the probe variant with board revision `NS2_V2.1`, sold on
 [Amazon](https://www.amazon.com/dp/B0FP4KZKPG).
 
 ## Hardware
+
+![MOCREO NS2 board (NS2_V2.1)](board.jpg "MOCREO NS2 board (NS2_V2.1)")
 
 | Part    | Detail                                                                           |
 | ------- | -------------------------------------------------------------------------------- |
