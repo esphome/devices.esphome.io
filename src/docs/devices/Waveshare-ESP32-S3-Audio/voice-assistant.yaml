@@ -1,8 +1,11 @@
 # --- Media player ---
 # The media player is the only component that drives the speaker. Voice
-# assistant replies go through it too (voice_assistant.media_player below), so
-# a reply and a Home Assistant announcement queue one after the other instead
-# of each stopping the speaker under the other.
+# assistant replies go through it too (voice_assistant.media_player below).
+# Replies and Home Assistant announcements share one announcement pipeline and
+# do NOT queue: ESPHome starts a new announcement immediately and drops the
+# one that is playing. What this config does is keep the wake word, and so
+# new voice requests, off while something is playing (below), so the device
+# itself never starts a request on top of an announcement.
 media_player:
   - platform: speaker
     id: audio_player
@@ -50,8 +53,17 @@ micro_wake_word:
   models:
     - okay_nabu
   on_wake_word_detected:
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
+    # A detection already in flight when an announcement starts must not
+    # start a reply that would replace the announcement.
+    - if:
+        condition:
+          not:
+            media_player.is_announcing:
+        then:
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
+        else:
+          - script.execute: restart_wake_word
 
 voice_assistant:
   id: va
