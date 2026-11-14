@@ -75,5 +75,9 @@ This is the hardware definition only. The display shows ESPHome's test card unti
 A complete config with a temperature and humidity dashboard, °F/°C switching and backlight steps on the button,
 and a screen rotation select is in the [project repository](https://github.com/chunckus-aurelius/MOCREO-NS2-ESPhome).
 
+![MOCREO NS2 dashboard render](screen-mockup.png "MOCREO NS2 dashboard render")
+
+Dashboard layout (render). Left to right: a °F reading, a warm °C reading, and no probe connected.
+
 ```yaml url=https://github.com/chunckus-aurelius/MOCREO-NS2-ESPhome/blob/83fe6bf137c09f24c4203b19775c91ccb661b36c/esphome/mocreo-ns2.yaml
 ```
