@@ -30,13 +30,6 @@ sensor:
       b_constant: 3350
       reference_resistance: 10kOhm
       reference_temperature: 298.15K
-    on_value:
-      then:
-        - if:
-            condition:
-              lambda: 'return x > ${max_temp};'
-            then:
-              - switch.turn_off: switch_relay
   - platform: resistance
     id: temp_resistance_reading
     sensor: temp_analog_reading
@@ -64,13 +57,6 @@ sensor:
       id: bpower
       icon: mdi:transmission-tower
       device_class: power
-      on_value:
-        then:
-          - if:
-              condition:
-                lambda: 'return x > ${max_power};'
-              then:
-                - switch.turn_off: switch_relay
     energy:
       name: "Energy"
       id: benergy
@@ -113,13 +99,7 @@ binary_sensor:
       - delayed_on: 10ms
     on_press:
       then:
-        - if:
-            condition:
-              lambda: 'return (id(s_temperature).state < ${max_temp}) && (id(switch_relay).state == false);'
-            then:
-              - switch.turn_on: switch_relay
-            else:
-              - switch.turn_off: switch_relay
+        - switch.toggle: switch_relay
 
 switch:
   - platform: gpio

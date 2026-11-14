@@ -35,6 +35,3 @@ To enter bootloader mode, Boot needs to be pulled down (connected to ground).
 
 ```yaml file=config.yaml
 ```
-
-```yaml file=led_flash.yaml
-```
