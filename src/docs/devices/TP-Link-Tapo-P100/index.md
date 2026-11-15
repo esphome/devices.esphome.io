@@ -9,7 +9,8 @@ alias:
   - TP-Link-Tapo-P100EU
 ---
 
-TP-Link Tapo P100 is a simple smart plug, without power monitoring.
+[TP-Link Tapo P100](https://www.tapo.com/en/product/tapo-p100-smart-plug/v1/1-pack)
+is a simple smart plug, without power monitoring.
 
 ![Tapo P100 UK](tapo-p100-uk.jpg "Tapo P100 UK")
 
@@ -27,7 +28,7 @@ which lights Orange when PA10 is low and PA9 is high, and Green
 when PA10 is high, and PA9 is low. No light is emitted if both GPIOs
 are the same level.
 
-This pinout is identical for both the EU and UK variant.
+This pinout is identical for both the EU and UK variants.
 
 ## Test Pads and Flashing
 
