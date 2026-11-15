@@ -21,6 +21,10 @@ Flashing the TYWE1S with ESPHome plus the community
 modes (cool/heat/dry/fan/auto), presets (eco/sleep/boost), fan speeds, motorized vertical and
 horizontal swing, beep on/off and ambient temperature.
 
+The same board and protocol have also been reported working on a **Rovsun 20 SEER2** (see
+[issue #1](https://github.com/gnacho/esphome-tcl-ac/issues/1)), so other units built around the same
+TCL indoor board should work with this configuration as well.
+
 ## Product Images
 
 ![Johnson JN52N datasheet](datasheet.jpg "Johnson JN52N datasheet")
