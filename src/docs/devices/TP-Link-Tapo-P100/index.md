@@ -4,6 +4,8 @@ date-published: 2025-12-28
 type: plug
 standard: eu
 board: rtl87xx
+alias:
+  - TP-Link-Tapo-P100EU
 ---
 
 TP-Link Tapo P100 is a simple smart plug, without power monitoring.
