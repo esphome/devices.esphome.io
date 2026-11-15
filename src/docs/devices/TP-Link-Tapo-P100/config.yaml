@@ -1,0 +1,64 @@
+esphome:
+  name: tapo_p100
+  friendly_name: Tapo P100
+
+rtl87xx:
+  board: generic-rtl8720cf-2mb-992k
+
+  # this non-standard framework was required at time of writing
+  # for OTA support. Be careful about changing this, as you may
+  # need to open the plug and flash via serial if you make a mistake
+  framework:
+    version: 0.0.0
+    source: https://github.com/prokoma/libretiny#ambz2-fix
+#    loglevel: VERBOSE
+
+output:
+  - platform: gpio
+    id: relay_output
+    pin: PA8
+
+  # NB: The LED is an orange/green bi-colour LED, which
+  # lights up depending on which terminal is positive w.r.t
+  # the other. if PA9 is high, and PA10 is low, the orange LED
+  # illuminates, while if PA10 is high and PA9 is low, the
+  # green LED illuminates
+
+  - platform: gpio
+    id: output_orange_led
+    pin: PA9
+
+  - platform: gpio
+    id: output_green_led
+    pin: PA10
+
+switch:
+  - platform: output
+    id: relay
+    name: Relay
+    output: relay_output
+    on_turn_on:
+      then:
+        - light.turn_on: green_led
+    on_turn_off:
+      then:
+        - light.turn_off: green_led
+
+binary_sensor:
+  - platform: gpio
+    id: button_
+    pin:
+      number: PA17
+      inverted: true
+    on_press:
+      then:
+        - switch.toggle: relay
+
+light:
+  - platform: status_led
+    id: orange_led
+    output: output_orange_led
+
+  - platform: binary
+    id: green_led
+    output: output_green_led
