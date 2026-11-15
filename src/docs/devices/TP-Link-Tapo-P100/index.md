@@ -1,14 +1,17 @@
 ---
-title: TP-Link Tapo P100 (EU)
+title: TP-Link Tapo P100
 date-published: 2025-12-28
 type: plug
-standard: eu
+standard: eu, uk
 board: rtl87xx
+difficulty: 4
 alias:
   - TP-Link-Tapo-P100EU
 ---
 
 TP-Link Tapo P100 is a simple smart plug, without power monitoring.
+
+![Tapo P100 UK](tapo-p100-uk.jpg "Tapo P100 UK")
 
 ## GPIO Pinout
 
@@ -23,6 +26,26 @@ Note that the Orange and Green LEDs are actually a single bi-colour LED,
 which lights Orange when PA10 is low and PA9 is high, and Green
 when PA10 is high, and PA9 is low. No light is emitted if both GPIOs
 are the same level.
+
+This pinout is identical for both the EU and UK variant.
+
+## Test Pads and Flashing
+
+The EU variant has labelled test pads on the top layer of the PCB, and there is no need to remove the PCB from the
+housing.
+
+The UK variant has test pads on the bottom layer of the PCB.
+The mains prongs must be desoldered, allowing the PCB to be removed from the housing to access the underside.
+The board and prongs have a lot of thermal mass, so you'll need a decent soldering iron.
+
+![Tapo P100 UK test pads](tapo-p100-uk-test-pads.jpg "Tapo P100 UK test pads")
+
+> **Note:** I can't remember if TX/RX are swapped here or not. Try swapping if it doesn't work!
+
+For both variants, GPIO0 must be pulled to 3.3V to enter flashing mode. The UART logic levels are also 3.3V.
+
+During flashing, you can power the board on either the 3.3V rail or the 5V rail.
+**DO NOT** flash while the board is connected to mains power.
 
 ## Basic Configuration
 
