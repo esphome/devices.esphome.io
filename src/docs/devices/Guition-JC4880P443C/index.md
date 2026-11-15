@@ -8,7 +8,9 @@ difficulty: 2
 made-for-esphome: false
 ---
 
-An ESP32-P4 based [dev-board](https://www.displaysmodule.com/sale-53740484-jc4880p443c-i-w-esp32p4-c6-multifunctional-touch-development-platform-4-3-inch-high-definition-ips-d.html) with the following features:
+An ESP32-P4 based
+[dev-board](https://www.displaysmodule.com/sale-53740484-jc4880p443c-i-w-esp32p4-c6-multifunctional-touch-development-platform-4-3-inch-high-definition-ips-d.html)
+with the following features:
 
 - 4.3" TFT touchscreen
 - WiFi 6 via a ESP32-C6 co-processor
