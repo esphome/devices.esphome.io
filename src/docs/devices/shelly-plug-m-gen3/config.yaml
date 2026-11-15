@@ -2,8 +2,6 @@ substitutions:
   devicename: shelly_plugm_gen3_01
   board: freenove_esp32_s3_wroom
   friendlyName: Washing Machine
-  max_power: "3000"
-  max_temp: "70.0"
 
 esphome:
   name: ${devicename}
@@ -17,6 +15,9 @@ esp32:
     version: recommended
     sdkconfig_options:
       COMPILER_OPTIMIZATION_SIZE: y
+
+logger:
+  hardware_uart: UART0
 
 sensor:
   - platform: ntc
