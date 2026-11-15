@@ -5,32 +5,25 @@ esphome:
 rtl87xx:
   board: generic-rtl8720cf-2mb-992k
 
-  # this non-standard framework was required at time of writing
-  # for OTA support. Be careful about changing this, as you may
-  # need to open the plug and flash via serial if you make a mistake
-  framework:
-    version: 0.0.0
-    source: https://github.com/prokoma/libretiny#ambz2-fix
-#    loglevel: VERBOSE
-
 output:
   - platform: gpio
     id: relay_output
     pin: PA8
 
-  # NB: The LED is an orange/green bi-colour LED, which
-  # lights up depending on which terminal is positive w.r.t
-  # the other. if PA9 is high, and PA10 is low, the orange LED
-  # illuminates, while if PA10 is high and PA9 is low, the
-  # green LED illuminates
+  # Red/green LED with a common anode: each colour lights when its pin is low.
+  # EU boards have a different LED, see the device page.
 
   - platform: gpio
-    id: output_orange_led
-    pin: PA9
+    id: output_red_led
+    pin:
+      number: PA9
+      inverted: true
 
   - platform: gpio
     id: output_green_led
-    pin: PA10
+    pin:
+      number: PA10
+      inverted: true
 
 switch:
   - platform: output
@@ -56,8 +49,8 @@ binary_sensor:
 
 light:
   - platform: status_led
-    id: orange_led
-    output: output_orange_led
+    id: red_led
+    output: output_red_led
 
   - platform: binary
     id: green_led

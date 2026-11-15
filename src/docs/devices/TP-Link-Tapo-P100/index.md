@@ -16,19 +16,16 @@ is a simple smart plug, without power monitoring.
 
 ## GPIO Pinout
 
-| Pin  | Function                   |
-|------|----------------------------|
-| PA17 | Push Button                |
-| PA08 | Relay                      |
-| PA09 | Orange LED                 |
-| PA10 | Green LED                  |
+| Pin  | EU                                   | UK                |
+| ---- | ------------------------------------ | ----------------- |
+| PA17 | Push Button                          | Push Button       |
+| PA08 | Relay                                | Relay             |
+| PA09 | Orange LED Anode, Green LED Cathode  | Red LED Cathode   |
+| PA10 | Green LED Anode, Orange LED Cathode  | Green LED Cathode |
 
-Note that the Orange and Green LEDs are actually a single bi-colour LED,
-which lights Orange when PA10 is low and PA9 is high, and Green
-when PA10 is high, and PA9 is low. No light is emitted if both GPIOs
-are the same level.
+The EU variant has a 2-pin *orange*/green bi-colour LED, whereas the UK variant has a 3-pin *red*/green bi-colour LED:
 
-This pinout is identical for both the EU and UK variants.
+![Tapo P100 EU and UK LED circuits](tapo-p100-led.png "Tapo P100 EU and UK LED circuits")
 
 ## Test Pads and Flashing
 
@@ -53,10 +50,16 @@ During flashing, you can power the board on either the 3.3V rail or the 5V rail.
 ```yaml file=config.yaml
 ```
 
-## Advanced Configuration
+This configuration is compatible with both EU and UK models, although the LED will behave counterintuitively on the EU model
+(see Advanced Configuration for a fix):
 
-In order to properly support the bi-colour LED, some lambda magic can
-be employed. The problem is that if the Green LED is used to indicate
+- For the UK version, status=red, relay-on=green, and both at the same time produces orange.
+- For the EU version, status=green, relay-on=orange, and both at the same time will turn the LED **off**.
+
+## Advanced Configuration (EU only)
+
+Firstly, we re-define the LED GPIOs so that status is orange and relay is green.
+The remaining problem is that if the Green LED is used to indicate
 relay state, and the Status LED flashes, the result is that the Green LED
 flashes off and on, rather than any Orange LED being visible. The approach
 taken is to use a template output as an intermediary for the status output,
@@ -65,26 +68,5 @@ as this is the only way to add a trigger/lambda.
 This results in the Orange LED taking priority over the Green LED, and
 being visibly Orange when active.
 
-```yaml inline
-output:
-# The orange LED can be used as a status LED at the same time
-# as the green LED is used to indicate the state of the relay
-# by turning off the green output whenever the status output
-# turns on. Unfortunately, the only way to add a trigger to an
-# output is via a template output's write_action, so this is
-# what we do.
-
-  - platform: gpio
-    id: internal_output_orange_led
-    pin: PA9
-
-  - platform: template
-    id: output_orange_led
-    type: binary
-    write_action:
-      - lambda: |-
-          bool green = id(green_led)->current_values.is_on();
-          if (green) green ^= state;
-          id(output_green_led)->set_state(green);
-          id(internal_output_orange_led)->set_state(state);
+```yaml file=advanced-configuration.yaml
 ```

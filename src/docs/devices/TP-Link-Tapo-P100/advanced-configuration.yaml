@@ -1,0 +1,37 @@
+# Tailored for EU variant. Layered on top of config.yaml.
+
+output:
+  # The orange LED can be used as a status LED at the same time
+  # as the green LED is used to indicate the state of the relay
+  # by turning off the green output whenever the status output
+  # turns on. Unfortunately, the only way to add a trigger to an
+  # output is via a template output's write_action, so this is
+  # what we do.
+
+  - id: !remove output_red_led
+
+  - id: !extend output_green_led
+    pin:
+      number: PA10
+      inverted: false
+
+  - platform: gpio
+    id: internal_output_orange_led
+    pin: PA9
+
+  - platform: template
+    id: output_orange_led
+    type: binary
+    write_action:
+      - lambda: |-
+          bool green = id(green_led)->current_values.is_on();
+          if (green) green ^= state;
+          id(output_green_led)->set_state(green);
+          id(internal_output_orange_led)->set_state(state);
+
+light:
+  - id: !remove red_led
+
+  - platform: status_led
+    id: orange_led
+    output: output_orange_led
