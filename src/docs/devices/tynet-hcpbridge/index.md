@@ -53,7 +53,6 @@ Follow our detailed
 | GPIO17 | UART TX  |
 | GPIO18 | UART RX  |
 
-
 ## Configuration
 
 ```yaml url=https://github.com/Tysonpower/Tynet-HCPBridge/blob/main/hcpbridge_series4_factory.yaml
