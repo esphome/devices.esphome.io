@@ -44,8 +44,18 @@ Follow our detailed
 4. Disconnect the USB-C cable and connect to your Hörmann motor's BUS port via the provided RJ12 cable.
 5. Execute a BUS scan on your garage motor (see user manual).
 
+## Pinout
+
+| Pin    | Function |
+| ------ | -------- |
+| GPIO5  | I2C SCL  |
+| GPIO6  | I2C SDA  |
+| GPIO17 | UART TX  |
+| GPIO18 | UART RX  |
+
+
 ## Configuration
 
-```yaml url=https://github.com/Tysonpower/Tynet-HCPBridge/blob/main/hcpbridge_series4.yaml
+```yaml url=https://github.com/Tysonpower/Tynet-HCPBridge/blob/main/hcpbridge_series4_factory.yaml
 # Paste a working ESPHome YAML configuration here
 ```
