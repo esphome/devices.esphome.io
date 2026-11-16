@@ -1,6 +1,6 @@
 ---
 title: "Tynet HCPBridge"
-date-published: 2026-11-12
+date-published: 2026-11-16
 type: misc
 standard: global
 board: esp32
