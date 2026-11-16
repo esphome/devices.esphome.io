@@ -5,7 +5,6 @@ type: dimmer
 standard: global
 board: esp32
 project-url: https://github.com/PrawilnyAlo/esphome-sonoff-minidim
-made-for-esphome: False
 difficulty: 5
 ---
 
