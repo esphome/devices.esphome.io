@@ -43,7 +43,7 @@ Follow our detailed
    or using Improv via USB.
 3. Adopt it in Home Assistant once configured and connected to your Wi-Fi.
 4. Disconnect the USB-C cable and connect to your Hörmann motor's BUS port via the provided RJ12 cable.
-5. Execute a BUS scan on your garage motor (see user manual).
+5. Execute a BUS scan on your garage motor (see user manual of your motor).
 
 ## Pinout
 
