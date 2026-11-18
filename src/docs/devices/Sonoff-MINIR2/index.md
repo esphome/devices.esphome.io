@@ -12,6 +12,8 @@ The Mini V2.0 PCB uses an ESP8285N08 with 1 MiB of integrated flash.
 It shares its relay and switch GPIO assignments with the [original Sonoff Mini Relay](/devices/sonoff-mini-relay/),
 but has a different board layout.
 
+![Sonoff MINIR2](sonoff-minir2.webp "Sonoff MINIR2")
+
 ## GPIO mapping
 
 | GPIO   | Function                    |
