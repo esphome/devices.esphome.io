@@ -95,6 +95,8 @@ esp32_ble_tracker:
     window: 160ms
     active: true
 
+api:
+
 bluetooth_proxy:
   active: true
 
