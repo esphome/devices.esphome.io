@@ -16,6 +16,9 @@ import * as yaml from "js-yaml";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as http from "node:http";
+import type { AddressInfo } from "node:net";
+import { execFileSync } from "node:child_process";
 
 import {
   archiveUrl,
@@ -47,7 +50,15 @@ import {
   importRawUrl,
   findCaseInsensitivePath,
   checkDashboardImport,
+  checkAdoptedOta,
   reviewPage,
+  runStreaming,
+  stamp,
+  parseEsphomeVersion,
+  compareEsphomeVersions,
+  minVersionFromConfigError,
+  pickEsphomeRelease,
+  ensureEsphomeVersion,
   type PageResult,
 } from "./review-made-for-esphome.ts";
 
@@ -402,6 +413,240 @@ test("placeholderSecretsYaml keeps the compile step working", () => {
     "a: !secret wifi_ssid\nb: !secret wifi_password"
   );
   assert.deepEqual([...flagged].sort(), Object.keys(parsed).sort());
+});
+
+// ---------------------------------------------------------------------------
+// Signed firmware without network OTA (signed_ota_verification)
+// ---------------------------------------------------------------------------
+
+const OTA_ITEM = "ota: `- platform: esphome`";
+const otaRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === OTA_ITEM) as { status: string; detail: string };
+const { ota: _ota, ...NO_OTA_CFG } = GOOD_CFG;
+const signedEsp32 = {
+  ...GOOD_CFG.esp32,
+  framework: { type: "esp-idf", advanced: { signed_ota_verification: { signing_scheme: "rsa3072" } } },
+};
+const SIGNED_CFG = { ...NO_OTA_CFG, esp32: signedEsp32 };
+const { improv_serial: _is, ...SIGNED_NO_SERIAL_CFG } = SIGNED_CFG;
+const { improv_serial: _is2, ...NO_OTA_NO_SERIAL } = NO_OTA_CFG;
+
+const SERIAL_ITEM = "improv_serial (USB provisioning)";
+const serialRow = (checks: { item: string }[]) =>
+  checks.find((c) => c.item === SERIAL_ITEM) as { status: string; detail: string };
+
+test("runChecklist: signed firmware with a web_server OTA endpoint gets no exception", () => {
+  const cfg = { ...SIGNED_CFG, ota: [{ platform: "web_server" }] };
+  const checks = runChecklist(cfg, "", "Widget", "PASS");
+  const row = otaRow(checks);
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("web_server"));
+  // Not USB-only, so improv_serial is no longer forced to block.
+  const { improv_serial: _x, ...noSerial } = cfg;
+  assert.equal(serialRow(runChecklist(noSerial, "", "Widget", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  // The single-mapping form of `ota:` is read the same way.
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "web_server" } }, "", "W", "PASS")).status, "MISSING");
+  assert.equal(otaRow(runChecklist({ ...SIGNED_CFG, ota: { platform: "esphome" } }, "", "W", "PASS")).status, "OK");
+});
+
+test("checkAdoptedOta skips signed firmware that has a web_server OTA endpoint", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  const cfg = { ...SIGNED_IMPORT_CFG, ota: [{ platform: "web_server" }] };
+  assert.equal(await checkAdoptedOta(cfg, UPSTREAM, never), null);
+});
+
+test("runChecklist: no esphome ota is accepted only for signed firmware", () => {
+  // Signed firmware: accepted pending a human check of USB flashing.
+  let checks = runChecklist(SIGNED_CFG, "", "Widget", "PASS");
+  let row = otaRow(checks);
+  assert.equal(row.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(row.detail.includes("no keys and no disassembly"));
+  assert.equal(serialRow(checks).status, "OK");
+  // Not signed: blocks, and the message names the alternative.
+  row = otaRow(runChecklist(NO_OTA_CFG, "", "Widget", "PASS"));
+  assert.equal(row.status, "MISSING");
+  assert.ok(row.detail.includes("signed_ota_verification"));
+  // An esp32 block without framework/advanced, or with advanced lacking the key, is not signed.
+  for (const esp32 of [
+    { ...GOOD_CFG.esp32, framework: { type: "esp-idf" } },
+    { ...GOOD_CFG.esp32, framework: { advanced: { enable_ota_rollback: true } } },
+  ]) {
+    assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, esp32 }, "", "Widget", "PASS")).status, "MISSING");
+  }
+  // Having esphome OTA keeps passing.
+  assert.equal(otaRow(runChecklist(GOOD_CFG, "", "Widget", "PASS")).status, "OK");
+  // Entries that are not mappings are ignored.
+  assert.equal(otaRow(runChecklist({ ...NO_OTA_CFG, ota: ["x"] }, "", "Widget", "PASS")).status, "MISSING");
+
+  // Signed with no network OTA but no improv_serial: its own row fails, and explains why.
+  checks = runChecklist(SIGNED_NO_SERIAL_CFG, "", "Widget", "PASS");
+  const serial = serialRow(checks);
+  assert.equal(serial.status, "MISSING");
+  assert.ok(serial.detail.includes("a device with a USB port must have `improv_serial:`"));
+  assert.ok(!serial.detail.includes("flashed"));
+  const result = {
+    page: "p", url: "u", fenceMissing: false, fatalError: null, configOk: true,
+    configInconclusive: false, configError: null, compile: "PASS", compileLog: null, checks,
+  } as PageResult;
+  assert.equal(pageBlocks(result), true);
+
+  // Signed but with esphome OTA, or unsigned with no OTA: improv_serial stays a human check.
+  const { improv_serial: _x, ...noSerial } = GOOD_CFG;
+  assert.equal(serialRow(runChecklist({ ...noSerial, esp32: signedEsp32 }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+  assert.equal(serialRow(runChecklist({ ...NO_OTA_NO_SERIAL, }, "", "W", "PASS")).status, "NEEDS-HUMAN-CHECK");
+});
+
+const ADOPTED_ITEM = "Adopted config has `ota: - platform: esphome`";
+const SIGNED_IMPORT_CFG = {
+  ...SIGNED_CFG,
+  dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+};
+const UPSTREAM = {
+  host: "github.com", scheme: "github", owner: "owner", repo: "repo", ref: "main", filePath: "factory.yaml",
+} as const;
+const okBody = (body: string) => async () => new Response(body, { status: 200 });
+
+test("checkAdoptedOta only applies to signed firmware without ESPHome OTA", async () => {
+  const never = async () => { throw new Error("must not fetch"); };
+  // Has ESPHome OTA, or is not signed, or has no usable dashboard_import: nothing to check.
+  assert.equal(await checkAdoptedOta({ ...SIGNED_IMPORT_CFG, ota: [{ platform: "esphome" }] }, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...NO_OTA_CFG, dashboard_import: SIGNED_IMPORT_CFG.dashboard_import }, UPSTREAM, never), null);
+  const { dashboard_import: _di, ...signedNoImport } = SIGNED_CFG;
+  assert.equal(await checkAdoptedOta(signedNoImport, UPSTREAM, never), null);
+  assert.equal(await checkAdoptedOta({ ...SIGNED_CFG, dashboard_import: { package_import_url: "nope" } }, UPSTREAM, never), null);
+});
+
+test("checkAdoptedOta reads the imported package", async () => {
+  const withOta = yaml.dump({ ota: [{ platform: "esphome", id: "o" }] });
+  let r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(withOta));
+  assert.equal(r?.item, ADOPTED_ITEM);
+  assert.equal(r?.status, "OK");
+
+  // The mapping form of `ota:` counts, as ESPHome accepts it.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("ota:\n  platform: esphome\n"));
+  assert.equal(r?.status, "OK");
+
+  // OTA present but the raw file includes packages that were not expanded: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(`${withOta}packages:\n  extra: !include missing.yaml\n`));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("were not expanded"));
+
+  // Package without it directly but with nested packages: a human checks.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("packages:\n  core: !include core.yaml\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("no `ota: - platform: esphome` found directly"));
+
+  // No ota and no packages: nothing can supply it, definitively missing.
+  for (const body of ["wifi: {}\n", "- just\n- a list\n"]) {
+    r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(body));
+    assert.equal(r?.status, "MISSING", body);
+    assert.ok(r?.detail.includes("includes no packages"));
+  }
+
+  // Unreadable package.
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody("a: [unclosed\n"));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("did not parse"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => new Response("", { status: 404 }));
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("HTTP 404"));
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw new Error("boom"); });
+  assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+  assert.ok(r?.detail.includes("boom"));
+});
+
+test("checkAdoptedOta stops waiting when the body read stalls", async () => {
+  const prev = process.env.MANIFEST_TIMEOUT_MS;
+  process.env.MANIFEST_TIMEOUT_MS = "50";
+  try {
+    let aborted = false;
+    const stalled = async (_url: string, signal: AbortSignal): Promise<Response> => {
+      signal.addEventListener("abort", () => { aborted = true; });
+      // Headers arrive, the body never does.
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    };
+    const r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, stalled);
+    assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
+    assert.ok(r?.detail.includes("timed out after 50 ms"));
+    assert.ok(aborted);
+  } finally {
+    if (prev === undefined) delete process.env.MANIFEST_TIMEOUT_MS;
+    else process.env.MANIFEST_TIMEOUT_MS = prev;
+  }
+});
+
+test("checkAdoptedOta fetches with the default fetcher", async () => {
+  const server = http.createServer((_req, res) => res.end(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address() as AddressInfo;
+  try {
+    const cfg = {
+      ...SIGNED_CFG,
+      dashboard_import: { package_import_url: "github://owner/repo/packages/core.yaml@main" },
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) =>
+      realFetch(`http://127.0.0.1:${port}/`, init)) as typeof fetch;
+    try {
+      const r = await checkAdoptedOta(cfg, UPSTREAM);
+      assert.equal(r?.status, "OK");
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test("checkAdoptedOta fails an import that points back at the reviewed config", async () => {
+  const cfg = {
+    ...SIGNED_CFG,
+    dashboard_import: { package_import_url: "github://Owner/Repo/factory.yaml@main" },
+  };
+  const r = await checkAdoptedOta(cfg, UPSTREAM, async () => { throw new Error("must not fetch"); });
+  assert.equal(r?.status, "MISSING");
+  assert.ok(r?.detail.includes("points at the reviewed config itself"));
+  // A different or omitted ref can name another version of the file: fetch the adoption target instead.
+  const body = okBody(yaml.dump({ ota: [{ platform: "esphome" }] }));
+  for (const ref of ["@user-main", ""]) {
+    const withRef = { ...SIGNED_CFG, dashboard_import: { package_import_url: `github://owner/repo/factory.yaml${ref}` } };
+    const fetched = await checkAdoptedOta(withRef, UPSTREAM, body);
+    assert.equal(fetched?.status, "OK", ref);
+  }
+  // A different file in the same repo is fetched instead.
+  const other = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, okBody(yaml.dump({ ota: [{ platform: "esphome" }] })));
+  assert.equal(other?.status, "OK");
+});
+
+test("reviewPage adds the adopted-OTA row for signed firmware", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-adopt-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\ncat <<'EOF_YAML'\n${yaml.dump(SIGNED_IMPORT_CFG)}EOF_YAML\n`, { mode: 0o755 });
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (url: string) =>
+    new URL(String(url)).hostname === "raw.githubusercontent.com"
+      ? new Response(yaml.dump({ ota: [{ platform: "esphome" }] }), { status: 200 })
+      : new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const saved = process.env.MFE_OTA_MANIFEST;
+  process.env.MFE_OTA_MANIFEST = "0";
+  try {
+    const r = await reviewPage(page, dir, bin, false);
+    const row = r.checks.find((c) => c.item === ADOPTED_ITEM);
+    assert.equal(row?.status, "OK", JSON.stringify(r.checks));
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved;
+  }
 });
 
 test("improv_ble is N/A when there is no wifi", () => {
@@ -933,4 +1178,528 @@ test("buildReport escapes pipes/backslashes/newlines in checklist detail", () =>
   // leading, the two separators, trailing => 4 total delimiters).
   const unescaped = (row.match(/(?<!\\)\|/g) || []).length;
   assert.equal(unescaped, 4);
+});
+
+// ---------------------------------------------------------------------------
+// min_version handling
+// ---------------------------------------------------------------------------
+
+const V = (s: string) => parseEsphomeVersion(s)!;
+
+test("parseEsphomeVersion handles ESPHome and PyPI spellings", () => {
+  assert.deepEqual(V("2026.11.0"), { major: 2026, minor: 11, patch: 0, extra: "" });
+  assert.deepEqual(V("2026.11"), { major: 2026, minor: 11, patch: 0, extra: "" });
+  assert.deepEqual(V("2026.11.0b2"), { major: 2026, minor: 11, patch: 0, extra: "b2" });
+  assert.deepEqual(V("2026.11.0-dev"), { major: 2026, minor: 11, patch: 0, extra: "dev" });
+  assert.equal(parseEsphomeVersion("latest"), null);
+});
+
+test("compareEsphomeVersions orders like ESPHome (beta satisfies its own release)", () => {
+  assert.equal(compareEsphomeVersions(V("2026.10.2"), V("2026.11.0")), -1);
+  assert.equal(compareEsphomeVersions(V("2026.11.1"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.12.0"), V("2026.11.9")), 1);
+  assert.equal(compareEsphomeVersions(V("2027.1.0"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.11.0"), V("2026.11.0")), 0);
+  assert.equal(compareEsphomeVersions(V("2026.11.0b1"), V("2026.11.0")), 1);
+  assert.equal(compareEsphomeVersions(V("2026.11.0"), V("2026.11.0b1")), -1);
+});
+
+test("minVersionFromConfigError reads ESPHome's too-old validation error", () => {
+  const msg = (v: string) => `Failed config\n\nesphome: None\n  \n  Your ESPHome version is too old. Please update to at least ${v}.\n`;
+  assert.equal(minVersionFromConfigError(msg("2026.11.0")), "2026.11.0");
+  assert.equal(minVersionFromConfigError(msg("2026.11.0-b2")), "2026.11.0-b2");
+  // Colour codes around the message are ignored.
+  assert.equal(minVersionFromConfigError("\x1b[31mYour ESPHome version is too old. Please update to at least 2026.11.0\x1b[0m"), "2026.11.0");
+  // Other config errors do not match.
+  assert.equal(minVersionFromConfigError("Component not found: bogus\n"), null);
+  assert.equal(minVersionFromConfigError(""), null);
+});
+
+test("pickEsphomeRelease prefers stable, falls back to the newest beta", () => {
+  const releases = ["2026.9.0", "2026.10.2", "2026.11.0b1", "2026.11.0b10", "2026.11.0b2", "2026.12.0b1", "2026.11.0rc1", "junk"];
+  // A stable release already satisfies the minimum: newest stable wins.
+  assert.equal(pickEsphomeRelease(V("2026.10.0"), releases), "2026.10.2");
+  // 2026.11.0 not out yet: newest beta of that release (numeric, so b10 > b2).
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), releases.filter((r) => r !== "2026.12.0b1")), "2026.11.0b10");
+  // A newer beta base beats an older base.
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), releases), "2026.12.0b1");
+  // Older base listed after the newest one does not displace it.
+  assert.equal(pickEsphomeRelease(V("2026.11.0"), ["2026.12.0b1", "2026.11.0b4"]), "2026.12.0b1");
+  // Stable in a list where a later stable is older.
+  assert.equal(pickEsphomeRelease(V("2026.9.0"), ["2026.10.2", "2026.9.0"]), "2026.10.2");
+  // Nothing satisfies it.
+  assert.equal(pickEsphomeRelease(V("2027.1.0"), releases), null);
+});
+
+function fakeEsphome(version: string): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const bin = path.join(dir, "esphome");
+  fs.writeFileSync(bin, `#!/bin/sh\necho "Version: ${version}"\n`, { mode: 0o755 });
+  return bin;
+}
+
+function pypiResponse(releases: Record<string, boolean>): Response {
+  const body: Record<string, { yanked: boolean }[]> = {};
+  for (const [name, yanked] of Object.entries(releases)) body[name] = [{ yanked }];
+  body["0.0.1"] = [];
+  return new Response(JSON.stringify({ releases: body }), { status: 200 });
+}
+
+test("ensureEsphomeVersion leaves a new-enough or unknown install alone", async () => {
+  const deps = {
+    fetcher: async () => { throw new Error("must not fetch"); },
+    install: () => { throw new Error("must not install"); },
+  };
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.10.0", deps), { ok: true });
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.11.0b1"), "2026.11.0", deps), { ok: true });
+  // Unparseable min_version: ESPHome reports it.
+  assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "soon", deps), { ok: true });
+  // Binary that does not print a version.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const odd = path.join(dir, "esphome");
+  fs.writeFileSync(odd, "#!/bin/sh\necho hello\n", { mode: 0o755 });
+  assert.deepEqual(await ensureEsphomeVersion(odd, "2026.11.0", deps), { ok: true });
+  // Binary that does not exist / fails.
+  assert.deepEqual(await ensureEsphomeVersion(path.join(dir, "nope"), "2026.11.0", deps), { ok: true });
+});
+
+test("ensureEsphomeVersion installs the stable release when it is out", async () => {
+  const installed: string[] = [];
+  const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.10.2": false, "2026.11.0": false, "2026.11.0b1": false }),
+    install: (rel) => (installed.push(rel), { ok: true, output: "" }),
+  });
+  assert.deepEqual(r, { ok: true });
+  assert.deepEqual(installed, ["2026.11.0"]);
+});
+
+test("ensureEsphomeVersion falls back to a beta and skips yanked releases", async () => {
+  const installed: string[] = [];
+  const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.10.2": false, "2026.11.0b1": false, "2026.11.0b2": true }),
+    install: (rel) => (installed.push(rel), { ok: true, output: "" }),
+  });
+  assert.deepEqual(r, { ok: true });
+  assert.deepEqual(installed, ["2026.11.0b1"]);
+});
+
+test("ensureEsphomeVersion reports failures instead of throwing", async () => {
+  const bin = fakeEsphome("2026.10.2");
+  const install = () => { throw new Error("must not install"); };
+  // No release satisfies the minimum.
+  let r = await ensureEsphomeVersion(bin, "2099.1.0", { fetcher: async () => pypiResponse({ "2026.10.2": false }), install });
+  assert.equal(r.ok, false);
+  assert.ok(!r.ok && r.message.includes("newer than any ESPHome stable or beta release"));
+  // PyPI returns a payload without releases.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", {
+    fetcher: async () => new Response("{}", { status: 200 }),
+    install,
+  });
+  assert.equal(r.ok, false);
+  // PyPI HTTP error.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => new Response("", { status: 503 }), install });
+  assert.ok(!r.ok && r.message.includes("HTTP 503"));
+  // PyPI unreachable.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => { throw new Error("offline"); }, install });
+  assert.ok(!r.ok && r.message.includes("offline"));
+  // pip fails.
+  r = await ensureEsphomeVersion(bin, "2026.11.0", {
+    fetcher: async () => pypiResponse({ "2026.11.0": false }),
+    install: () => ({ ok: false, output: "no network" }),
+  });
+  assert.ok(!r.ok && r.message.includes("installing esphome==2026.11.0") && r.message.includes("no network"));
+});
+
+test("ensureEsphomeVersion default deps hit PyPI and pip (stubbed endpoints)", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-ens-"));
+  const log = path.join(dir, "pip.log");
+  const okPip = path.join(dir, "pip-ok");
+  const badPip = path.join(dir, "pip-bad");
+  fs.writeFileSync(okPip, `#!/bin/sh\necho "$@" > ${log}\n`, { mode: 0o755 });
+  fs.writeFileSync(badPip, "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  const server = http.createServer((_req, res) => {
+    res.end(JSON.stringify({ releases: { "2026.11.0b1": [{ yanked: false }] } }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = (server.address() as { port: number }).port;
+  const saved = { pip: process.env.MFE_PIP, url: process.env.MFE_PYPI_URL };
+  process.env.MFE_PYPI_URL = `http://127.0.0.1:${port}/`;
+  try {
+    process.env.MFE_PIP = okPip;
+    assert.deepEqual(await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0"), { ok: true });
+    assert.equal(fs.readFileSync(log, "utf8").trim(), "install --upgrade esphome==2026.11.0b1");
+    process.env.MFE_PIP = badPip;
+    const r = await ensureEsphomeVersion(fakeEsphome("2026.10.2"), "2026.11.0");
+    assert.equal(r.ok, false);
+  } finally {
+    server.close();
+    if (saved.pip === undefined) delete process.env.MFE_PIP; else process.env.MFE_PIP = saved.pip;
+    if (saved.url === undefined) delete process.env.MFE_PYPI_URL; else process.env.MFE_PYPI_URL = saved.url;
+  }
+});
+
+test("reviewPage upgrades ESPHome when config fails on a too-old min_version", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-mv-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const marker = path.join(dir, "upgraded");
+  // Behaves like an ESPHome that is too old until the marker file exists.
+  const makeBin = (name: string, failure: string) => {
+    const bin = path.join(dir, name);
+    fs.writeFileSync(
+      bin,
+      `#!/bin/sh\nif [ -f ${marker} ]; then\ncat <<'EOF_YAML'\n${yaml.dump({ esphome: { name: "x" } })}EOF_YAML\nelse\necho "${failure}"\nexit 2\nfi\n`,
+      { mode: 0o755 }
+    );
+    return bin;
+  };
+  const oldBin = makeBin("old-esphome", "Your ESPHome version is too old. Please update to at least 2026.11.0.");
+  const brokenBin = makeBin("broken-esphome", "Component not found: bogus");
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const saved = { ota: process.env.MFE_OTA_MANIFEST, di: process.env.MFE_DASHBOARD_IMPORT_CHECK };
+  process.env.MFE_OTA_MANIFEST = "0";
+  process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+  try {
+    const seen: string[] = [];
+    const upgrade = async (_bin: string, min: string) => {
+      seen.push(min);
+      fs.writeFileSync(marker, "");
+      return { ok: true } as const;
+    };
+
+    // Too old: ensured with the minimum ESPHome asked for, then config runs again and passes.
+    let r = await reviewPage(page, dir, oldBin, false, upgrade);
+    assert.deepEqual(seen, ["2026.11.0"]);
+    assert.equal(r.configOk, true);
+    assert.equal(r.configInconclusive, false);
+
+    // Cannot be satisfied: inconclusive (not blocking), no second config run.
+    fs.rmSync(marker);
+    r = await reviewPage(page, dir, oldBin, false, async () => ({ ok: false, message: "not released" }));
+    assert.equal(r.configInconclusive, true);
+    assert.equal(r.configError, "not released");
+    assert.equal(r.configOk, null);
+    assert.equal(pageBlocks(r), false);
+
+    // An ordinary config failure never triggers an upgrade.
+    seen.length = 0;
+    r = await reviewPage(page, dir, brokenBin, false, upgrade);
+    assert.deepEqual(seen, []);
+    assert.equal(r.configOk, false);
+
+    // A config that already works never triggers one either.
+    fs.writeFileSync(marker, "");
+    r = await reviewPage(page, dir, oldBin, false, upgrade);
+    assert.deepEqual(seen, []);
+    assert.equal(r.configOk, true);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
+    if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
+});
+
+// Run `fn` with console.log captured, returning the lines it printed.
+async function captureLog(fn: () => Promise<void>): Promise<string[]> {
+  const lines: string[] = [];
+  const real = console.log;
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    await fn();
+  } finally {
+    console.log = real;
+  }
+  return lines;
+}
+
+const LIMITS = { captureLimit: 1024 * 1024, keepTail: true };
+
+test("stamp is an mm:ss elapsed-time prefix", () => {
+  assert.match(stamp(), /^\[\d{2,}:\d{2}\]$/);
+});
+
+test("runStreaming captures output and echoes complete lines live", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'one\\n\\ntwo\\n'; printf 'err\\n' >&2; printf 'tail'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "test",
+      ...LIMITS,
+    });
+  });
+  assert.equal(res?.ok, true);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "one\n\ntwo\ntail");
+  assert.equal(res?.stderr, "err\n");
+  // Blank lines are skipped, the unterminated tail is flushed on exit.
+  assert.deepEqual(lines.sort(), ["    | err", "    | one", "    | tail", "    | two"]);
+});
+
+test("runStreaming stays quiet when streaming is off and reports a non-zero exit", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "echo hidden; exit 3"], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
+  });
+  assert.deepEqual(lines, []);
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "hidden\n");
+});
+
+test("runStreaming reports a command that cannot be spawned", async () => {
+  const res = await runStreaming("/nonexistent/mfe-bin", [], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /ENOENT/);
+});
+
+test("runStreaming kills a command at the timeout and prints a heartbeat while silent", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sleep", ["5"], { timeoutMs: 700, stream: true, label: "sleeper", heartbeatMs: 100, ...LIMITS });
+  });
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, true);
+  assert.ok(lines.some((l) => /sleeper still running \(\d+s, no new output\)/.test(l)), lines.join("\n"));
+});
+
+test("runStreaming bounds the pending line buffer and splits on carriage returns", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'a\\rb\\rc'; printf 'xxxxxxxxxxxx'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "cr",
+      maxLineChars: 5,
+      ...LIMITS,
+    });
+  });
+  assert.equal(res?.ok, true);
+  // "a" and "b" end at carriage returns; the unterminated rest exceeds the
+  // 5 character bound and is echoed instead of being held back.
+  assert.deepEqual(lines, ["    | a", "    | b", "    | cxxxxxxxxxxxx"]);
+});
+
+test("runStreaming echoes a line while the child is still running", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-live-"));
+  const release = path.join(dir, "release");
+  const real = console.log;
+  const lines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    const done = runStreaming(
+      "sh",
+      ["-c", `echo first; while [ ! -f ${release} ]; do sleep 0.05; done; echo last`],
+      { timeoutMs: 30000, stream: true, label: "live", ...LIMITS }
+    );
+    // The child cannot exit until released, so seeing "first" proves it was
+    // echoed before exit rather than buffered until the end.
+    const deadline = Date.now() + 10000;
+    while (!lines.includes("    | first") && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    assert.ok(lines.includes("    | first"), "first line was not echoed while the child ran");
+    assert.equal(lines.includes("    | last"), false);
+    fs.writeFileSync(release, "");
+    const res = await done;
+    assert.equal(res.ok, true);
+    assert.ok(lines.includes("    | last"));
+  } finally {
+    console.log = real;
+  }
+});
+
+test("runStreaming timeout takes down the whole process tree", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "sleep 30 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "tree",
+    graceMs: 20000,
+    ...LIMITS,
+  });
+  assert.equal(res.timedOut, true);
+  // Settled by the pipes closing after the group kill, not by the grace timer.
+  assert.ok(Date.now() - started < 10000);
+});
+
+test("runStreaming settles after the grace period when a descendant escapes the group", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 4 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "escape",
+    graceMs: 200,
+    ...LIMITS,
+  });
+  assert.equal(res.ok, false);
+  assert.equal(res.timedOut, true);
+  assert.ok(Date.now() - started < 3000, `took ${Date.now() - started}ms`);
+});
+
+test("runStreaming sweeps a SIGTERM-ignoring descendant when the direct child exits first", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-sweep-"));
+  const pidFile = path.join(dir, "pid");
+  // The descendant ignores SIGTERM and has its output redirected, so the pipes
+  // close as soon as the direct child dies and the run settles before the grace
+  // period; only the final group sweep can stop it.
+  const res = await runStreaming(
+    "sh",
+    ["-c", `sh -c 'trap "" TERM; echo $$ > ${pidFile}; exec sleep 20' >/dev/null 2>&1 & sleep 30`],
+    { timeoutMs: 500, stream: false, label: "sweep", graceMs: 20000, ...LIMITS }
+  );
+  assert.equal(res.timedOut, true);
+  const pid = Number(fs.readFileSync(pidFile, "utf8"));
+  const alive = (): boolean => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const deadline = Date.now() + 5000;
+  while (alive() && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  assert.equal(alive(), false, "descendant survived the run");
+});
+
+test("runStreaming arms only one grace timer when a timeout follows an overflow", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 3 & yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "double",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 500,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
+  assert.ok(Date.now() - started < 2500);
+});
+
+test("runStreaming keeps only the tail when output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "i=0; while [ $i -lt 500 ]; do echo line$i; i=$((i+1)); done"], {
+    timeoutMs: 10000,
+    stream: false,
+    label: "tail",
+    captureLimit: 100,
+    keepTail: true,
+  });
+  assert.equal(res.ok, true);
+  assert.ok(res.stdout.length <= 100);
+  assert.ok(res.stdout.endsWith("line499\n"));
+});
+
+test("runStreaming fails and stops the child when whole output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 20000,
+    stream: false,
+    label: "overflow",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 200,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
+});
+
+test("reviewPage streams the compile and maps its outcome", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-compile-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(
+    bin,
+    `#!/bin/sh
+if [ "$1" = "config" ]; then
+cat <<'EOF_YAML'
+${yaml.dump({ esphome: { name: "x" } })}EOF_YAML
+exit 0
+fi
+echo "Compiling app"
+case "$MFE_TEST_COMPILE" in
+  pass) exit 0 ;;
+  fail) echo "boom" >&2; exit 1 ;;
+  hang) sleep 5 ;;
+esac
+`,
+    { mode: 0o755 }
+  );
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const names = ["MFE_OTA_MANIFEST", "MFE_DASHBOARD_IMPORT_CHECK", "MFE_TEST_COMPILE", "COMPILE_TIMEOUT_MS"] as const;
+  const saved = Object.fromEntries(names.map((n) => [n, process.env[n]]));
+  process.env.MFE_OTA_MANIFEST = "0";
+  process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+  try {
+    const run = async (mode: string): Promise<{ r: PageResult; lines: string[] }> => {
+      process.env.MFE_TEST_COMPILE = mode;
+      let r: PageResult | undefined;
+      const lines = await captureLog(async () => {
+        r = await reviewPage(page, dir, bin, true);
+      });
+      return { r: r as PageResult, lines };
+    };
+
+    let out = await run("pass");
+    assert.equal(out.r.compile, "PASS");
+    assert.ok(out.lines.includes("    | Compiling app"));
+    assert.ok(out.lines.some((l) => /compile result: PASS/.test(l)));
+    assert.ok(out.lines.some((l) => /`esphome compile` ok in/.test(l)));
+
+    out = await run("fail");
+    assert.equal(out.r.compile, "FAIL");
+    assert.match(out.r.compileLog ?? "", /boom/);
+    assert.ok(out.lines.some((l) => /`esphome compile` FAILED in/.test(l)));
+
+    process.env.COMPILE_TIMEOUT_MS = "300";
+    out = await run("hang");
+    assert.equal(out.r.compile, "INCONCLUSIVE");
+    assert.ok(out.lines.some((l) => /`esphome compile` TIMED OUT in/.test(l)));
+
+    // Compile off: the step is announced as skipped.
+    const skipped = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(skipped.some((l) => /compile skipped/.test(l)));
+
+    // OTA manifest check on (nothing to fetch for this config): the step is announced.
+    delete process.env.MFE_OTA_MANIFEST;
+    const withOta = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(withOta.some((l) => /7\/8 checking OTA update manifests/.test(l)));
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const n of names) {
+      if (saved[n] === undefined) delete process.env[n]; else process.env[n] = saved[n];
+    }
+  }
 });

@@ -14,7 +14,7 @@
  */
 import * as yaml from "js-yaml";
 
-export const ESPHOME_TAGS = ["!secret", "!lambda", "!include", "!env", "!extend", "!remove"] as const;
+export const ESPHOME_TAGS = ["!secret", "!lambda", "!include", "!env", "!env_var", "!extend", "!remove"] as const;
 
 export const ESPHOME_SCHEMA = yaml.CORE_SCHEMA.withTags(
   yaml.mergeTag,
