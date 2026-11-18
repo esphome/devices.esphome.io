@@ -27,7 +27,7 @@ controlled via the VeSync app when running OEM firmware.
 ## Disassembly
 
 There are no screws. The plastic shell is held together by plastic clips.
-You will a spudger to get between the seam of the plastic shell and disengage each of the 5 clips.
+You will need a spudger to get between the seam of the plastic shell and disengage each of the 5 clips.
 
 ![Opening up the ESW15](IMG_1787.jpg "Opening the ESW15")
 ![Opening the ESW15](IMG_1788_2.jpg "Opening the ESW15")
