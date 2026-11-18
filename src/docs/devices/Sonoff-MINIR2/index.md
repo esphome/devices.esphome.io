@@ -6,7 +6,8 @@ standard: global
 board: esp8266
 ---
 
-The Sonoff MINIR2 is a single-channel Wi-Fi relay with external switch terminals.
+The [Sonoff MINIR2](https://sonoff.tech/en-us/products/sonoff-minir2-two-way-smart-switch) is a single-channel Wi-Fi relay
+with external switch terminals.
 The Mini V2.0 PCB uses an ESP8285N08 with 1 MiB of integrated flash.
 It shares its relay and switch GPIO assignments with the [original Sonoff Mini Relay](/devices/sonoff-mini-relay/),
 but has a different board layout.
