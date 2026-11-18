@@ -192,6 +192,7 @@ sensor:
   - platform: adc
     pin: A0
     name: "ADC Input"
+    internal: true
     id: ADC_Input
     accuracy_decimals: 3
     update_interval: 5s
