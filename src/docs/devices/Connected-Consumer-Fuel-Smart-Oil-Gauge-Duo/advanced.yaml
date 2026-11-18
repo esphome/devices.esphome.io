@@ -1266,8 +1266,9 @@ sensor:
     id: Max_Refill_Volume
     name: "Max Fill"
     unit_of_measurement: 'gal'
-    device_class: volume
-    state_class: total
+    device_class: volume_storage
+    state_class: measurement
+    icon: mdi:car-coolant-level
     update_interval: never
     accuracy_decimals: 4
     filters:
