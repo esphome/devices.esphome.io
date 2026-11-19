@@ -185,10 +185,7 @@ and fill in your local credentials separately.
 
 The Advanced Configuration below adds more calculations and functionality.
 This Advanced Configuration would completely replace the Basic Configuration above.
-Added template sensors include: `Raw Oil Depth`, `Oil Depth`, `Max Fill`, and
-separate `Temperature` and `Battery Voltage`.
 Added `Auto Sleep Disable` template switch for remote Auto Sleep Disabling.
-Multiple additional Diagnostic sensors.
 Includes a built-in option to use a look-up table to convert directly from `Oil Depth` to gallons.
 Add your own `wifi:`, `api:`, and `ota:` sections before flashing.
 The example also leaves out passwords and `!secret` references so you can merge it into your own setup
