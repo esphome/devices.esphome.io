@@ -12,16 +12,18 @@ made-for-esphome: False
 The [Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light][3] is a Tuya-based smart home lamp, featuring a strip of
 individually addressable leds with a corner stand frame.
 
-[3]: https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-1-4m-pixel-led-corner-light/
+[3]: https://www.mirabella.com.au/products/i004608
 
 ![Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light][1]
 
 They are sold at [Kmart NZ](https://www.kmart.co.nz/product/mirabella-genio-wi-fi-1.4m-pixel-led-corner-light-43205363/)
 and [Kmart AU](https://www.kmart.com.au/product/mirabella-genio-wi-fi-14m-pixel-led-corner-light-43205363/).
 
-Inside is a [T103_V1.0](https://docs.libretiny.eu/boards/t103-v1.0/) module based on the RTL8710BX MCU. I believe this
-is prossible to reflash using [LibreTiny](https://docs.libretiny.eu/docs/platform/realtek-ambz/) but I have not done so
-myself so do at your own risk. Please update this page if you are successful.
+Inside is a [T103_V1.0](https://docs.libretiny.eu/boards/t103-v1.0/) module based on the RTL8710BX MCU. This
+is possible to reflash using [LibreTiny](https://docs.libretiny.eu/docs/platform/realtek-ambz/), but both FastLED and
+NeoPixelBus led drivers are unsupported on this platform so it's not possible to drive the LEDs.
+The buttons and microphone sensor below have been verified working; the `light:` example is included purely for
+reference and is expected to not function until driver support for this platform improves.
 
 ![Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light Teardown][2]
 
@@ -36,11 +38,12 @@ myself so do at your own risk. Please update this page if you are successful.
 
 ## Basic Configuration
 
-```yaml
-# Config for Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light
-# https://devices.esphome.io/devices/Mirabella-Genio Wi-Fi-1.4m-Pixel-LED-Corner-Light/
-rtl87xx:
-  board: t103-v1.0
+```yaml file=config.yaml
+```
+
+## Example Configuration
+
+```yaml file=example-configuration.yaml
 ```
 
 [1]: ./Mirabella-Genio-Wi-Fi-1.4m-Pixel-LED-Corner-Light-Packaging.png "Mirabella Genio Wi-Fi 1.4m Pixel LED Corner Light"
