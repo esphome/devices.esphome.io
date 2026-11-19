@@ -284,7 +284,7 @@ binary_sensor:
     id: input8
     on_press:
       then:
-        - switch.toggle: relay8
+        - switch.high: relay8
     pin:
       pcf8574: pcf8574_hub_in_1
       number: 7
