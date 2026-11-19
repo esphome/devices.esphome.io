@@ -1,0 +1,69 @@
+esphome:
+  name: sp-esp32-s3-1-28-box
+  friendly_name: "SP-ESP32-S3-1.28-BOX"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  sda: GPIO4
+  scl: GPIO8
+  scan: true
+  id: bus_i2c
+
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO6
+  id: bus_spi
+
+output:
+  - platform: ledc
+    pin: GPIO42
+    frequency: 1000 Hz
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: display_backlight
+    default_transition_length: 250ms
+
+touchscreen:
+  - platform: cst816d
+    interrupt_pin:
+      number: GPIO11
+      mode: INPUT_PULLUP
+    reset_pin: GPIO12
+    i2c_id: bus_i2c
+    id: touch_cst816d
+
+sensor:
+  - platform: adc
+    pin: GPIO1
+    name: "Battery Voltage"
+    id: battery_voltage
+    attenuation: 11db
+    update_interval: 30s
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO41
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Charging Status"
+    id: battery_charging
+
+switch:
+  - platform: gpio
+    pin: GPIO46
+    name: "Speaker Amplifier Power"
+    id: speaker_amp_enable
+    restore_mode: RESTORE_DEFAULT_OFF
