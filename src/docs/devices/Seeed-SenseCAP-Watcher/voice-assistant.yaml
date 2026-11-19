@@ -1,0 +1,432 @@
+# Voice assistant for the Seeed SenseCAP Watcher, with a small on-screen status label.
+# Add your own wifi credentials and an api encryption key, see the notes on the page.
+
+esphome:
+  name: sensecap-watcher
+  friendly_name: SenseCAP Watcher
+  min_version: 2026.11.0
+
+esp32:
+  variant: esp32s3
+  flash_size: 32MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    advanced:
+      # Needed for OTA updates with 32 MB of flash.
+      enable_idf_experimental_features: true
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      # Run code and read-only data from PSRAM, which speeds up wake word detection.
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: UART0
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ap:
+
+captive_portal:
+
+# Buses
+
+i2c:
+  - id: main_i2c
+    sda: GPIO47
+    scl: GPIO48
+    frequency: 400kHz
+  - id: touch_i2c
+    sda: GPIO39
+    scl: GPIO38
+    frequency: 400kHz
+
+spi:
+  - id: lcd_spi
+    interface: spi3
+    type: quad
+    clk_pin: GPIO7
+    data_pins: [GPIO9, GPIO1, GPIO14, GPIO13]
+
+tca9555:
+  - id: io_expander
+    i2c_id: main_i2c
+    address: 0x21
+
+# Power rails, display and touch
+
+switch:
+  # Keeps the device on when running from the battery. Must stay on.
+  - platform: gpio
+    id: system_power_hold
+    pin:
+      tca9555: io_expander
+      number: 10
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+    internal: true
+  # Panel power. Must be on before the display is set up.
+  - platform: gpio
+    id: lcd_power
+    pin:
+      tca9555: io_expander
+      number: 9
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+    internal: true
+  # Speaker amplifier power.
+  - platform: gpio
+    id: speaker_amp
+    pin:
+      tca9555: io_expander
+      number: 12
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+    internal: true
+  # Microphone mute. Also stops the wake word engine. It starts unmuted after every reboot.
+  - platform: template
+    id: mic_mute
+    name: Mute
+    icon: mdi:microphone-off
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    entity_category: config
+    turn_on_action:
+      - microphone.mute:
+      - micro_wake_word.stop:
+      - voice_assistant.stop:
+    turn_off_action:
+      - microphone.unmute:
+      # Until Home Assistant has connected the wake word engine is started by on_client_connected instead.
+      - if:
+          condition:
+            api.connected:
+          then:
+            - micro_wake_word.start:
+    on_turn_on:
+      - lvgl.label.update:
+          id: status_label
+          text: "Muted"
+    on_turn_off:
+      - lvgl.label.update:
+          id: status_label
+          text: "Ready"
+
+output:
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO8
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Backlight
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 250ms
+    entity_category: config
+
+display:
+  - platform: mipi_spi
+    id: watcher_display
+    model: SEEED-SENSECAP-WATCHER
+    spi_id: lcd_spi
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: spd2010
+    id: watcher_touch
+    i2c_id: touch_i2c
+    display: watcher_display
+    # The interrupt line is on the IO expander, so the controller is polled.
+    update_interval: 20ms
+    on_touch:
+      # Touch the screen to start or stop the assistant.
+      - if:
+          condition:
+            voice_assistant.is_running:
+          then:
+            - voice_assistant.stop:
+          else:
+            - voice_assistant.start:
+
+# Rotary wheel: turn for volume, press for push to talk
+
+sensor:
+  - platform: rotary_encoder
+    id: wheel
+    internal: true
+    pin_a:
+      number: GPIO41
+      mode: INPUT
+    pin_b:
+      number: GPIO42
+      mode: INPUT
+    resolution: 2
+    on_clockwise:
+      - media_player.volume_up: watcher_player
+    on_anticlockwise:
+      - media_player.volume_down: watcher_player
+
+binary_sensor:
+  - platform: gpio
+    id: wheel_button
+    pin:
+      tca9555: io_expander
+      number: 3
+      mode: INPUT
+      inverted: true
+    filters:
+      - delayed_on_off: 20ms
+    on_press:
+      - if:
+          condition:
+            voice_assistant.is_running:
+          then:
+            - voice_assistant.stop:
+          else:
+            - voice_assistant.start:
+
+# Audio
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_mclk_pin: GPIO10
+    i2s_bclk_pin: GPIO11
+    i2s_lrclk_pin: GPIO12
+    full_duplex: true
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    i2c_id: main_i2c
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+audio_adc:
+  - platform: es7243e
+    id: es7243e_adc
+    i2c_id: main_i2c
+    # The ADC answers on 0x14, not the default 0x10.
+    address: 0x14
+    mic_gain: 30db
+
+microphone:
+  - platform: i2s_audio
+    id: watcher_mic
+    i2s_audio_id: i2s_bus
+    adc_type: external
+    i2s_din_pin: GPIO15
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    # The microphone is wired to the right channel.
+    channel: right
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_speaker
+    i2s_audio_id: i2s_bus
+    dac_type: external
+    i2s_dout_pin: GPIO16
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+    timeout: never
+    buffer_duration: 100ms
+    audio_dac: es8311_dac
+  # Mixes the announcement and media streams into the one output.
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: i2s_speaker
+    num_channels: 1
+    task_stack_in_psram: true
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 16000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 16000
+    bits_per_sample: 16
+
+media_source:
+  - platform: audio_http
+    id: http_announcement_source
+    buffer_size: 250000
+  - platform: audio_http
+    id: http_media_source
+    buffer_size: 500000
+
+media_player:
+  - platform: speaker_source
+    id: watcher_player
+    name: Media player
+    announcement_pipeline:
+      format: FLAC
+      num_channels: 1
+      sample_rate: 16000
+      speaker: announcement_resampling_speaker
+      sources:
+        - http_announcement_source
+    media_pipeline:
+      format: FLAC
+      num_channels: 1
+      sample_rate: 16000
+      speaker: media_resampling_speaker
+      sources:
+        - http_media_source
+    volume_increment: 0.05
+    volume_min: 0.3
+    volume_max: 0.9
+    # Lower the media stream while the assistant is speaking.
+    on_announcement:
+      - mixer_speaker.apply_ducking:
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0s
+    on_state:
+      if:
+        condition:
+          and:
+            - not:
+                voice_assistant.is_running:
+            - not:
+                media_player.is_announcing: watcher_player
+        then:
+          - mixer_speaker.apply_ducking:
+              id: media_mixing_input
+              decibel_reduction: 0
+              duration: 1s
+
+# Wake word and voice assistant
+
+micro_wake_word:
+  id: mww
+  microphone:
+    microphone: watcher_mic
+    channels: 0
+  stop_after_detection: false
+  models:
+    - model: okay_nabu
+      id: okay_nabu
+  vad:
+  on_wake_word_detected:
+    - if:
+        condition:
+          switch.is_off: mic_mute
+        then:
+          - if:
+              condition:
+                voice_assistant.is_running:
+              then:
+                - voice_assistant.stop:
+              else:
+                - voice_assistant.start:
+                    wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone:
+    microphone: watcher_mic
+    channels: 0
+  media_player: watcher_player
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 0
+  auto_gain: 0 dbfs
+  volume_multiplier: 1
+  on_client_connected:
+    - if:
+        condition:
+          switch.is_off: mic_mute
+        then:
+          - micro_wake_word.start:
+          - lvgl.label.update:
+              id: status_label
+              text: "Ready"
+  on_client_disconnected:
+    - voice_assistant.stop:
+    - lvgl.label.update:
+        id: status_label
+        text: "Not connected"
+  on_start:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 20
+        duration: 0s
+  on_listening:
+    - lvgl.label.update:
+        id: status_label
+        text: "Listening"
+  on_stt_vad_end:
+    - lvgl.label.update:
+        id: status_label
+        text: "Thinking"
+  on_tts_start:
+    - lvgl.label.update:
+        id: status_label
+        text: "Replying"
+  on_error:
+    - if:
+        condition:
+          and:
+            - lambda: return code != "duplicate_wake_up_detected";
+            - lambda: return code != "stt-no-text-recognized";
+        then:
+          - lvgl.label.update:
+              id: status_label
+              text: "Error"
+  on_end:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - mixer_speaker.apply_ducking:
+        id: media_mixing_input
+        decibel_reduction: 0
+        duration: 1s
+    - if:
+        condition:
+          switch.is_off: mic_mute
+        then:
+          - lvgl.label.update:
+              id: status_label
+              text: "Ready"
+
+# Screen: a single status label
+
+lvgl:
+  id: lvgl_main
+  displays: watcher_display
+  touchscreens: watcher_touch
+  buffer_size: 25%
+  default_font: montserrat_28
+  bg_color: 0x000000
+  text_color: 0xFFFFFF
+  pages:
+    - id: main_page
+      scrollable: false
+      widgets:
+        - label:
+            id: status_label
+            align: center
+            text: "Not connected"

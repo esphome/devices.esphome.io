@@ -1,0 +1,98 @@
+esphome:
+  name: sensecap-watcher
+  friendly_name: SenseCAP Watcher
+  min_version: 2026.11.0
+
+esp32:
+  variant: esp32s3
+  flash_size: 32MB
+  framework:
+    type: esp-idf
+    advanced:
+      # Needed for OTA updates with 32 MB of flash.
+      enable_idf_experimental_features: true
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: UART0
+
+wifi:
+  ap:
+
+# The IO expander and the display/audio chips are on this bus.
+i2c:
+  - id: main_i2c
+    sda: GPIO47
+    scl: GPIO48
+    frequency: 400kHz
+  # The touch controller has its own bus.
+  - id: touch_i2c
+    sda: GPIO39
+    scl: GPIO38
+    frequency: 400kHz
+
+spi:
+  - id: lcd_spi
+    interface: spi3
+    type: quad
+    clk_pin: GPIO7
+    data_pins: [GPIO9, GPIO1, GPIO14, GPIO13]
+
+tca9555:
+  - id: io_expander
+    i2c_id: main_i2c
+    address: 0x21
+
+# The expander (IO priority) sets up first, then these switches, then the display and touchscreen.
+switch:
+  # Keeps the device on when running from the battery. Must stay on.
+  - platform: gpio
+    id: system_power_hold
+    pin:
+      tca9555: io_expander
+      number: 10
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+    internal: true
+  # Panel power. Must be on before the display is set up.
+  - platform: gpio
+    id: lcd_power
+    pin:
+      tca9555: io_expander
+      number: 9
+      mode: OUTPUT
+    restore_mode: ALWAYS_ON
+    internal: true
+
+output:
+  - platform: ledc
+    id: backlight_pwm
+    pin: GPIO8
+
+light:
+  - platform: monochromatic
+    id: backlight
+    name: Backlight
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+    default_transition_length: 250ms
+    entity_category: config
+
+display:
+  - platform: mipi_spi
+    id: watcher_display
+    model: SEEED-SENSECAP-WATCHER
+    spi_id: lcd_spi
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - platform: spd2010
+    id: watcher_touch
+    i2c_id: touch_i2c
+    display: watcher_display
+    # The interrupt line is on the IO expander, so the controller is polled.
+    update_interval: 20ms
