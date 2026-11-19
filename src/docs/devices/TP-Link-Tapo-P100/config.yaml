@@ -1,0 +1,57 @@
+esphome:
+  name: tapo_p100
+  friendly_name: Tapo P100
+
+rtl87xx:
+  board: generic-rtl8720cf-2mb-992k
+
+output:
+  - platform: gpio
+    id: relay_output
+    pin: PA8
+
+  # Red/green LED with a common anode: each colour lights when its pin is low.
+  # EU boards have a different LED, see the device page.
+
+  - platform: gpio
+    id: output_red_led
+    pin:
+      number: PA9
+      inverted: true
+
+  - platform: gpio
+    id: output_green_led
+    pin:
+      number: PA10
+      inverted: true
+
+switch:
+  - platform: output
+    id: relay
+    name: Relay
+    output: relay_output
+    on_turn_on:
+      then:
+        - light.turn_on: green_led
+    on_turn_off:
+      then:
+        - light.turn_off: green_led
+
+binary_sensor:
+  - platform: gpio
+    id: button_
+    pin:
+      number: PA17
+      inverted: true
+    on_press:
+      then:
+        - switch.toggle: relay
+
+light:
+  - platform: status_led
+    id: red_led
+    output: output_red_led
+
+  - platform: binary
+    id: green_led
+    output: output_green_led
