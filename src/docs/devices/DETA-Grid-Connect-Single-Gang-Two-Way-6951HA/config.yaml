@@ -1,0 +1,74 @@
+substitutions:
+  device_name: "deta-2-way-1-gang-switch"
+
+  friendly_name: "DETA 2 Way 1 Gang Switch"
+  light_1_name: "${friendly_name}"
+  light_1_icon: "mdi:light-recessed"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+bk72xx:
+  board: wb3s
+
+logger:
+
+status_led:
+  pin:
+    number: P24
+    inverted: true
+
+light:
+  - platform: binary
+    output: filter_1
+    id: light_1
+    name: "${light_1_name}"
+    icon: "${light_1_icon}"
+
+binary_sensor:
+  # Buttons
+  - platform: gpio
+    id: button_1
+    pin:
+      number: P26
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        - light.toggle: light_1
+    internal: true
+
+  # Activation statuses
+  # Represents the "local" relay (this device) XOR the "remote" relay (another device).
+  # It only shows TRUE if one of the "local" or "remote" relays are active, but not both.
+  - platform: gpio
+    id: activation_status_1
+    pin:
+      number: P8
+      mode: INPUT
+      inverted: true
+    internal: true
+
+switch:
+  # Relay
+  - platform: gpio
+    id: relay_1
+    pin: P14
+    internal: true
+
+output:
+  # Filters
+  # Triggered when the "light" entity is turned on or off. Will only toggle
+  # the associated relay if the "light" entity is out of sync with the
+  # "activation status"; otherwise do nothing as the state is already correct.
+  - platform: template
+    type: binary
+    id: filter_1
+    write_action:
+      then:
+        - if:
+            condition:
+              - lambda: "return state != id(activation_status_1).state;"
+            then:
+              - switch.toggle: relay_1
