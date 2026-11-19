@@ -1,0 +1,33 @@
+# Basic Config
+esphome:
+  name: shelly_1_light
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ap:
+
+# Device Specific Config
+output:
+
+  - platform: gpio
+    pin: GPIO4
+    id: shelly_1_relay
+
+light:
+
+  - platform: binary
+    output: shelly_1_relay
+    id: shelly_1_light
+    name: None
+
+binary_sensor:
+
+  - platform: gpio
+    pin: GPIO5
+    id: shelly_1_input
+    name: Input (SW)
+    on_state:
+      then:
+        - light.toggle: lightid
