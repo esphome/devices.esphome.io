@@ -79,6 +79,7 @@ binary_sensor:
 
 
 remote_receiver:
+  id: rf_receiver
   pin: 4
 #  dump: all
   dump: rc_switch
@@ -87,8 +88,20 @@ remote_receiver:
   idle: 2ms
 
 remote_transmitter:
+  id: rf_transmitter
   pin: 5
   carrier_duty_percent: 100%
+
+radio_frequency:
+  - platform: ir_rf_proxy
+    frequency: 433.92MHz
+    name: RF Proxy Transmitter
+    id: ir_proxy_tx
+    remote_transmitter_id: rf_transmitter
+  - platform: ir_rf_proxy
+    name: RF Proxy Receiver
+    id: ir_proxy_rx
+    remote_receiver_id: rf_receiver
 
 status_led:
   pin:
