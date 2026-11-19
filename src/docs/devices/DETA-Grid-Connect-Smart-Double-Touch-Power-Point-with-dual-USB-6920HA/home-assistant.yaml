@@ -1,0 +1,18 @@
+api:
+ota:
+  - platform: esphome
+captive_portal:
+# Home Assistant supplies the clock for daily energy totals.
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+  - platform: total_daily_energy
+    name: "${friendlyname} Daily Energy"
+    power_id: powerpoint_wattage
+    filters:
+      - multiply: 0.001
+      - throttle: 60s
+    unit_of_measurement: kWh
+    icon: mdi:chart-bar

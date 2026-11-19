@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="480" viewBox="0 0 1000 480">
+  <title>Brilliant BL20877 logical GPIO mapping</title>
+  <desc>ESP8266 GPIO4 drives SM16716 data, GPIO5 drives SM16716 clock, GPIO12 drives white LED PWM, and GPIO13 enables the RGB power supply. Logical connections only, not a PCB layout or wiring schematic.</desc>
+  <metadata>Original diagram based on this device page's documented pinout and config.yaml. License: GPL-3.0, as provided in the repository LICENSE file.</metadata>
+  <rect width="1000" height="480" fill="#ffffff"/>
+  <g font-family="Arial, sans-serif" fill="#182f42">
+    <text x="50" y="58" font-size="29" font-weight="700">Brilliant BL20877</text>
+    <text x="50" y="91" font-size="20">Logical GPIO mapping</text>
+    <text x="50" y="138" font-size="17" font-weight="700">ESP8266</text>
+    <text x="474" y="138" font-size="17" font-weight="700">FUNCTION</text>
+    <g fill="#edf4f8" stroke="#47758c" stroke-width="2">
+      <rect x="50" y="160" width="215" height="48" rx="8"/>
+      <rect x="50" y="225" width="215" height="48" rx="8"/>
+      <rect x="50" y="290" width="215" height="48" rx="8"/>
+      <rect x="50" y="355" width="215" height="48" rx="8"/>
+    </g>
+    <g font-size="22" font-weight="700" text-anchor="middle">
+      <text x="157" y="192">GPIO4</text>
+      <text x="157" y="257">GPIO5</text>
+      <text x="157" y="322">GPIO12</text>
+      <text x="157" y="387">GPIO13</text>
+    </g>
+    <g stroke="#47758c" stroke-width="3" fill="none">
+      <path d="M265 184 H437 M427 177 L437 184 L427 191"/>
+      <path d="M265 249 H437 M427 242 L437 249 L427 256"/>
+      <path d="M265 314 H437 M427 307 L437 314 L427 321"/>
+      <path d="M265 379 H437 M427 372 L437 379 L427 386"/>
+    </g>
+    <g font-size="22">
+      <text x="474" y="192">SM16716 data (DAT)</text>
+      <text x="474" y="257">SM16716 clock (CLK)</text>
+      <text x="474" y="322">White LED PWM</text>
+      <text x="474" y="387">RGB power-supply enable</text>
+    </g>
+    <text x="50" y="452" font-size="17" fill="#4a5d6b">Logical connections only; not a PCB layout or wiring schematic.</text>
+  </g>
+</svg>
