@@ -1,0 +1,55 @@
+esphome:
+  name: ekf-rcs-2-wf
+  comment: "EKF Сonnect PRO Wi-Fi (RCS-2-WF) Smart Plug with Power Monitor"
+
+bk72xx:
+  board: cb2s
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: P10
+      inverted: true
+    name: Button
+    icon: mdi:gesture-tap-button
+
+light:
+  - platform: status_led
+    id: status
+    pin:
+      number: P11
+      inverted: true
+
+switch:
+  - platform: gpio
+    id: relay
+    pin: P7
+    name: Relay
+    icon: mdi:electric-switch
+
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    cf_pin:
+      number: P8
+      inverted: true
+    cf1_pin:
+      number: P6
+      inverted: true
+    sel_pin:
+      number: P26
+      inverted: true
+    current:
+      name: Load Current
+      filters:
+        - multiply: 0.5  # (needs calibration)
+    voltage:
+      name: Load Voltage
+    power:
+      name: Load Power
+    energy:
+      name: Load Energy
+    update_interval: 10s
+    voltage_divider: 800  # (needs calibration)
+    change_mode_every: 1
+    current_resistor: 0.001 Ohm  # (needs calibration)

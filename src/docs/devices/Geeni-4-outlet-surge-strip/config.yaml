@@ -1,0 +1,72 @@
+esphome:
+  name: strip4
+  friendly_name: strip4
+
+bk72xx:
+  board: cb2s
+
+logger:
+wifi:
+  ap: {}
+
+# Pinout: https://docs.libretiny.eu/boards/cb2s/#pinout
+# PCB CB2S
+
+## ---------------- ##
+##    Status LED    ##
+## ---------------- ##
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: led
+    pin:
+      number: P11
+      inverted: true
+## ---------------- ##
+##  Binary Sensors  ##
+## ---------------- ##
+binary_sensor:
+  # Button 1
+  - platform: gpio
+    id: bP10
+    pin:
+      number: P10
+      inverted: true
+    name: "Button"
+    on_press:
+      - switch.toggle: switch_1
+## ---------------- ##
+##      Switches    ##
+## ---------------- ##
+switch:
+  - platform: gpio
+    id: switch_1
+    name: Outlet 1
+    pin: P6
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    id: switch_2
+    name: Outlet 2
+    pin: P7
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    id: switch_3
+    name: Outlet 3
+    pin: P26
+    restore_mode: ALWAYS_ON
+  - platform: gpio
+    id: switch_4
+    name: Outlet 4
+    pin: P24
+    restore_mode: ALWAYS_ON
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+    ssid:
+      name: "Connected SSID"
+  - platform: libretiny
+    version:
+      name: LibreTiny Version

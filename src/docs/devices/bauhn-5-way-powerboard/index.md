@@ -20,7 +20,7 @@ only repogramming options.
 The unit is easy to open with "Triangle" socket screws on the back. The CBU module is fairly accessable to solder on the
 5 required wires.
 
-[https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
+[CBU module datasheet](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
 
 ![Product picture 2](20240712_102657.jpg "Product with back removed")
 ![Product picture 3](20240712_102703.jpg "Close up of control board")
@@ -41,7 +41,7 @@ Other features of the board are:
 
 This powerboard incorporates the CBU module
 
-[https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
+[CBU module datasheet](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u)
 
 ![cbu module pinout](cbu_module_pinout.png "CBU module showing pins to connect for programming")
 
@@ -78,194 +78,7 @@ A long press will toggle all plugs on or off.
 
 ## Basic Configuration
 
-```yaml
-# Bauhn 5 way powerboard with individual socket switchng and BL0942 power monitoring.
-# USB sockets are permanently on.
-# There is only one controllable LED
+Add your own Wi-Fi credentials, API and OTA settings to this hardware configuration.
 
-substitutions:
-  name: bunk-bedroom-power
-  friendly_name: Bauhn Power Board
-  relay_restore_mode: RESTORE_DEFAULT_OFF
-
-esphome:
-  name: bauhn-5-way-power-board
-  comment: Bauhn 5 way powerboard with power monitoring
-
-bk72xx:
-  board: cbu
-
-globals:
-  - id: set_on
-    type: "bool"
-    restore_value: no
-    initial_value: "1"
-
-# Enable logging
-logger:
-
-# Enable Home Assistant API
-api:
-
-ota:
-  - platform: esphome
-    id: my_ota
-    password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-captive_portal:
-
-text_sensor:
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
-
-switch:
-  - platform: gpio
-    name: "${friendly_name} 1"
-    pin: P6
-    id: relay_1
-    icon: mdi:power-socket-au
-    restore_mode: ${relay_restore_mode}
-  - platform: gpio
-    name: "${friendly_name} 2"
-    pin: P7
-    id: relay_2
-    icon: mdi:power-socket-au
-    restore_mode: ${relay_restore_mode}
-  - platform: gpio
-    name: "${friendly_name} 3"
-    pin: P8
-    id: relay_3
-    icon: mdi:power-socket-au
-    restore_mode: ${relay_restore_mode}
-  - platform: gpio
-    name: "${friendly_name} 4"
-    pin: P9
-    id: relay_4
-    icon: mdi:power-socket-au
-    restore_mode: ${relay_restore_mode}
-  - platform: gpio
-    name: "${friendly_name} 5"
-    pin: P24
-    id: relay_5
-    icon: mdi:power-socket-au
-    restore_mode: ${relay_restore_mode}
-
-light:
-  - platform: status_led
-    name: "${friendly_name} Status LED"
-    id: blue_led
-    #   disabled_by_default: true
-    pin:
-      inverted: false
-      number: P28
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: P22
-      mode:
-        input: true
-        pullup: true
-      inverted: true
-    name: "${friendly_name} Button"
-    id: button1
-    on_multi_click:
-      - timing:
-          - ON for at most 0.5s
-          - OFF for at least 0.5s
-        then:
-          lambda: |-
-            if ( id(set_on) ) {
-              if (! id(relay_1).state  ) {
-                id(relay_1).turn_on();
-              } else if ( ! id(relay_2).state ) {
-                id(relay_2).turn_on();
-              } else if ( ! id(relay_3).state ) {
-                id(relay_3).turn_on();
-              } else if ( ! id(relay_4).state ) {
-                id(relay_4).turn_on();
-              } else if ( ! id(relay_5).state ) {
-                id(relay_5).turn_on();
-                id(set_on) = 0;
-              } else {
-                id(relay_1).turn_off();
-                id(relay_2).turn_off();
-                id(relay_3).turn_off();
-                id(relay_4).turn_off();
-                id(relay_5).turn_off();
-              }
-            } else {
-              if ( id(relay_1).state  ) {
-                id(relay_1).turn_off();
-              } else if (  id(relay_2).state ) {
-                id(relay_2).turn_off();
-              } else if (  id(relay_3).state ) {
-                id(relay_3).turn_off();
-              } else if (  id(relay_4).state ) {
-                id(relay_4).turn_off();
-              } else if (  id(relay_5).state ) {
-                id(relay_5).turn_off();
-                id(set_on) = 1;
-              } else {
-                id(relay_1).turn_on();
-                id(relay_2).turn_on();
-                id(relay_3).turn_on();
-                id(relay_4).turn_on();
-                id(relay_5).turn_off();
-
-              }
-            }
-      - timing:
-          - ON for at least 0.5s
-          - OFF for at least 0.2s
-        then:
-          lambda: |-
-            if (id(relay_1).state ||
-            id(relay_2).state ||
-            id(relay_3).state ||
-            id(relay_4).state ) {
-              id(relay_1).turn_off();
-              id(relay_2).turn_off();
-              id(relay_3).turn_off();
-              id(relay_4).turn_off();
-              id(relay_5).turn_off();
-            } else {
-              id(relay_1).turn_on();
-              id(relay_2).turn_on();
-              id(relay_3).turn_on();
-              id(relay_4).turn_on();
-              id(relay_5).turn_on();
-            }
-
-uart:
-  id: uart_bus
-  tx_pin: TX1
-  rx_pin: RX1
-  baud_rate: 4800
-  stop_bits: 1
-
-sensor:
-  - platform: bl0942
-    uart_id: uart_bus
-    voltage:
-      name: "${friendly_name} Voltage"
-    current:
-      name: "${friendly_name} Current"
-    power:
-      name: "${friendly_name} Power"
-      filters:
-        multiply: -1
-    energy:
-      name: "${friendly_name} Energy"
-    frequency:
-      name: "${friendly_name} Frequency"
-      accuracy_decimals: 2
-
-    update_interval: 10s
+```yaml file=config.yaml
 ```
