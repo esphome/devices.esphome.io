@@ -79,20 +79,25 @@ api:
     key: !secret api_encryption_key
 
 ota:
-  password: "ota-password"
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
 
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
 
-wifi:
-  ssid: "SSID"
-  password: "PASSWORD"
-  power_save_mode: none
-
+# Enable the captive portal
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # This will take care of the display automatically.
 # You don't need to tell it to print something to the display manually.
@@ -229,12 +234,6 @@ climate:
       - switch.turn_off: mainRelayVirt
     heat_deadband: 0.5 # how many degrees can we go under the temp before starting to heat
     heat_overrun: 0.5 # how many degrees can we go over the temp before stopping
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} IP Address"
-      disabled_by_default: true
 ```
 
 Here is an alternative configuration, set up to control a geyser, with an
@@ -248,10 +247,6 @@ substitutions:
   friendly_name: "Geyser Thermostat"
   project_name: "thermostats"
   project_version: "1.0"
-
-packages:
-  # contains basic setup, WiFi, etc
-  common: !include .common.yaml
 
 esphome:
   name: "${name}"
@@ -271,14 +266,20 @@ esphome:
 esp32:
   variant: esp32
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
-  # It's in the ceiling, nobody is listening to the UART
   baud_rate: 0
   level: DEBUG
 
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
 
+# Enable the captive portal
 captive_portal:
 
 binary_sensor:

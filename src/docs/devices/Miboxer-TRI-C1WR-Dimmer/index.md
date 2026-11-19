@@ -92,28 +92,24 @@ esp32:
   variant: esp32c3
   framework:
     type: esp-idf
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
 
 # Enable Home Assistant API
 api:
-  password: !secret api_password
-  encryption:
-    key: !secret api_encryption_key
 
-# Enable logging
-logger:
-
-ota:
-  safe_mode: true
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: none
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: ${device_ssid} Fallback Hotspot
-    password: !secret ap_password
+# Enable the captive portal
+captive_portal:
 
 uart:
   rx_pin: GPIO20
@@ -152,21 +148,6 @@ sensor:
                 (minutes ? to_string(minutes) + "m " : "") +
                 (to_string(seconds) + "s")
               ).c_str();
-
-text_sensor:
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
-  # Expose Uptime
-  - platform: template
-    name: ${friendly_name} Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
 
 # Restart Buttons
 button:
@@ -235,33 +216,27 @@ esp32:
     type: arduino
     version: 2.0.5
     platform_version: 5.2.0
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
 
 # Enable Home Assistant API
 api:
-  password: !secret api_password
-  encryption:
-    key: !secret api_encryption_key
 
-# Enable logging
-logger:
-
-ota:
-  safe_mode: true
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: none
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: ${device_ssid} Fallback Hotspot
-    password: !secret ap_password
-
+# Enable the captive portal
 captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 uart:
   rx_pin: GPIO20
@@ -272,11 +247,7 @@ uart:
 tuya:
 
 sensor:
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: ${friendly_name} Signal strength
-    update_interval: 60s
-    internal: true
+
   # Uptime Sensor
   - platform: uptime
     name: "${friendly_name} Uptime"
@@ -307,21 +278,6 @@ sensor:
     lambda: return temperatureRead();
     unit_of_measurement: °C
     accuracy_decimals: 2
-
-text_sensor:
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
-  # Expose Uptime
-  - platform: template
-    name: ${friendly_name} Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
 
 # Restart Buttons
 button:

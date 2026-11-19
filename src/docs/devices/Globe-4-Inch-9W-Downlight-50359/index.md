@@ -97,57 +97,26 @@ esp32:
   framework:
     type: esp-idf
 
-wifi:
-  power_save_mode: none
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "ESPHome ${friendly_name}"
-    password: !secret wifi_password_backup
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 115200
-
+  
 # Enable Home Assistant API
 ota: { "password": !secret ota_password }
 api:
-  encryption:
-    key: !secret encryption_key
 
-# Enable NTP
-time:
-  - platform: sntp
-    id: my_time
+# Enable the captive portal
+captive_portal:
 
-# General Config
-text_sensor:
-  - platform: version
-    name: "${display_name} Version"
-  - platform: wifi_info
-    ip_address:
-      name: "${display_name} IP Address"
-    ssid:
-      name: "${display_name} SSID"
-    bssid:
-      name: "${display_name} BSSID"
-
-sensor:
-  - platform: wifi_signal
-    name: "${display_name} WiFi Signal"
-    update_interval: 60s
-    filters:
-      - delta: 0.01
-      - throttle: 300s
-  - platform: uptime
-    name: "${display_name} Uptime"
-    filters:
-      - throttle: 300s
-
-switch:
-  - platform: restart
-    name: "${display_name} Restart"
-
-# Light Config
 light:
   - platform: rgbww
     name: "${friendly_name}"

@@ -55,7 +55,17 @@ rtl87xx
 # Disable Serial Logging so the Tuya MCU functions
 logger:
   baud_rate: 0
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enable Home Assistant API
 api:
 
 ota:
@@ -121,7 +131,17 @@ esp8266:
 # Disable Serial Logging so the Tuya MCU functions
 logger:
   baud_rate: 0
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enable Home Assistant API
 api:
 
 ota:

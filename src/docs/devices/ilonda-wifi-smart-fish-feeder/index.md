@@ -29,16 +29,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 # Binary Sensor to allow relay to be switched when physical button is pressed
 binary_sensor:
@@ -53,9 +61,6 @@ binary_sensor:
     name: 'Switch feeder'
     on_press:
       - switch.turn_on: relay
-
-  - platform: status
-    name: "Status"
 
 switch:
 # Switch to turn feeder on for 3 seconds/off and turn on/off LED

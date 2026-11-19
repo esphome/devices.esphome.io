@@ -52,14 +52,24 @@ PCB
 ## Basic Configuration (2-Gang)
 
 ```yaml
+
 esphome:
-  name: agl-2-gang-switch
-  friendly_name: AGL 2 Gang Switch
-
+  name: example-device
+  friendly_name: Example Device
+  
 esp8266:
-  board: esp01_1m
+  board: esp01_1m  
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 wifi:
@@ -68,12 +78,9 @@ wifi:
   ap:
 
 api:
-  reboot_timeout: 15min
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 sensor:
   - platform: uptime

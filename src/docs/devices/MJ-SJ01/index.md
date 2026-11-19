@@ -57,7 +57,6 @@ substitutions:
   #   # https://esphome.io/guides/configuration-types/
   device_name: martin_jerry_mj_sd01 # hostname & entity_id
   friendly_name: Martin Jerry MJ-SD01 # Displayed in HA frontend
-  ip_address: !secret martin_jerry_mj_sd01_ip # use /config/esphome/secrets.yaml
   pwm_min_power: 15% # keep dimming functional at lowest levels
   no_delay: 0s # transition when changing dimmer_lvl & relay delay
   transition_length: .5s # transition when turning on/off
@@ -353,6 +352,7 @@ api:
     key: !secret encryption_key
   # https://esphome.io/components/api/
 
+# OTA flashing
 ota:
   password: !secret esphome_ota_password
   # https://esphome.io/components/ota/

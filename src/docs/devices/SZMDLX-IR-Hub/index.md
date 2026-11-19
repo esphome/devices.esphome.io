@@ -30,26 +30,24 @@ esphome:
 
 esp8266:
   board: esp8285
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "IR Fallback AP"
-    password: <password>
 
-captive_portal:
-
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 status_led:
   pin: GPIO4
@@ -58,10 +56,6 @@ sensor:
   - platform: uptime
     name: "IR Uptime"
 
-  - platform: wifi_signal
-    name: "IR WiFi signal"
-    update_interval: 60s
-
 binary_sensor:
   - platform: status
     name: "IR Status"
@@ -69,10 +63,6 @@ binary_sensor:
   - platform: gpio
     pin: GPIO13
     id: physical_button
-
-text_sensor:
-  - platform: version
-    name: "IR ESPHome version"
 
 remote_transmitter:
   pin:

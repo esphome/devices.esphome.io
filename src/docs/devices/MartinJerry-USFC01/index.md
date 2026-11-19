@@ -31,27 +31,23 @@ esphome:
 esp8266:
   board: esp01_1m
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: <key>
 
-ota:
-  password: <password>
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "mj-fc01-fan Fallback Hotspot"
-    password: <password>
-
+# Enable the captive portal
 captive_portal:
 
 uart:

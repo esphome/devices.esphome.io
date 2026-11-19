@@ -43,18 +43,21 @@ esphome:
 # LibreTiny Platform
 bk72xx:
   board: wb2s
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
-
-# Enable Web server
-web_server:
-  port: 80
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: <set here>
 
 # Enable upload binaries over-the-air
 ota:
@@ -72,12 +75,12 @@ wifi:
     password: <set here>
 captive_portal:
 
+# Enable the Web Server component 
+webserver:
+
 button:
   - platform: restart
     name: Restart ${device_name}
-
-debug:
-  update_interval: ${update_interval_seconds}
 
 text_sensor:
   - platform: debug
@@ -97,15 +100,6 @@ text_sensor:
       name: ESP Mac Wifi Address
 
 sensor:
-  - platform: uptime
-    name: Uptime
-    unit_of_measurement: minutes
-    filters:
-      - lambda: return x / 60.0;
-
-  - platform: wifi_signal
-    name: Wifi Signal
-    update_interval: 60s
 
   - platform: hlw8012
     model: BL0937

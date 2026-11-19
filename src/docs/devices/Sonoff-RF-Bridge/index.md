@@ -25,14 +25,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+    
+# OTA flashing
 ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Device Specific Config
 
@@ -48,8 +58,6 @@ binary_sensor:
     rc_switch_raw:
       code: '100110011100011010101001'
       protocol: 1
-
-
 
 # use this for dual state sensors (open/closed trigger)
   - platform: remote_receiver
@@ -76,7 +84,6 @@ binary_sensor:
     name: "Sensor2 State"
     device_class: window
     id: Sensor2
-
 
 remote_receiver:
   pin: 4

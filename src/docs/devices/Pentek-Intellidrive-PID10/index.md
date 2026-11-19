@@ -38,11 +38,24 @@ wifi:
   power_save_mode: none
 
 ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
 api:
 
-web_server:
-  port: 80
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 time:
   - platform: sntp

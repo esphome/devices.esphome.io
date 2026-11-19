@@ -34,7 +34,21 @@ api:
     key: !secret encryption_key
 
 ota:
-  password: "ota_password"
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 esp32_ble_tracker:
   scan_interval: 360s

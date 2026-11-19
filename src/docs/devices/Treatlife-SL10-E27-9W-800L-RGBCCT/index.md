@@ -29,8 +29,17 @@ bk72xx:
   board: generic-bk7231t-qfn32-tuya
   framework:
     version: latest
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -50,6 +59,9 @@ web_server:
   port: 80
 
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 light:
   - platform: rgbww

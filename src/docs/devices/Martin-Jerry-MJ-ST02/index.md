@@ -39,35 +39,30 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-# Enable HA API
-api:
-  encryption:
-    key: !secret api_key
-
-# Enable OTAs
+  
+# OTA flashing
 ota:
-  password: !secret api_password
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Sync RTC with HA
 time:
   - platform: homeassistant
     timezone: America/Chicago
-
-# Wi-Fi Setup
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case Wi-Fi connection fails
-  ap:
-    ssid: mj-st02 AP
-    password: !secret ap_password
-
-captive_portal:
-
-logger:
-  baud_rate: 0
 
 uart:
   rx_pin: GPIO3

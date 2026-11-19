@@ -64,22 +64,30 @@ wifi:
     password: "ap_password"
   domain: ".mydomain.com"
 
-# Enable logging
+esp8266:
+  board: esp01_1m
+
+
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: "ota_password"
-web_server:
+# Enable the captive portal
+captive_portal:
 
-sensor:
-  - platform: wifi_signal
-    name: "ESPHome_ir1 Wifi"
-    update_interval: 60s
+# Enable the Web Server component 
+webserver:
 
 remote_transmitter:
   pin: GPIO14

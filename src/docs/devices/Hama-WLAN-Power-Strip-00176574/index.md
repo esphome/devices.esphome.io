@@ -31,15 +31,10 @@ esphome:
 esp8266:
   board: esp01_1m
   restore_from_flash: True
-logger:
-api:
+  
+# OTA flashing
 ota:
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    password: !secret wifi_password
-captive_portal:
+  - platform: esphome
 
 switch:
   # RELAYS

@@ -28,15 +28,26 @@ esphome:
 esp8266:
   board: esp01_1m
 
-wifi:
-  ssid: <YOUR_SSID>
-  password: <YOUR_WIFI_PASSPHRASE>
+esp8266:
+  board: esp01_1m    
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-api:
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
-ota:
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 sm16716:
   data_pin: GPIO4

@@ -32,7 +32,6 @@ The configuration below will simply set up the device as a 2-gang switch for lig
 substitutions:
   device_name: "SC511WSC"
   friendly_name: "SC511WSC"
-  device_ip: 192.168.X.X
   device_description: Cover
   open_duration: 19.80sec
   close_duration: 16.40sec
@@ -54,47 +53,29 @@ esp8266:
   restore_from_flash: true #writes each state change to flash for switch or light with restore_mode: RESTORE_DEFAULT_OFF/ON, see https://esphome.io/components/esphome/#configuration-variables-3
   board: esp01_1m
 
-# Enable logging
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   esp8266_store_log_strings_in_flash: False # recommanded for ESP8266
   #  baud_rate : 115200
   baud_rate: 0
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  manual_ip:
-    static_ip: ${device_ip}
-    gateway: 192.168.0.1
-    subnet: 255.255.255.0
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "ESPHOME"
-    password: "12345678"
-
 # Enable Home Assistant API
 api:
-  reboot_timeout: 15min
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
-# Example configuration entry
-web_server:
-  port: 80
-
-sensor:
-  - platform: wifi_signal
-    name: ${device_name} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${device_name} Uptime
-
-#######################################
-# Device specific Config Begins Below #
-#######################################
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   #  - platform: gpio
@@ -162,7 +143,7 @@ switch:
   #    id: reset
   #    name: "${friendly_name} Restart"
 
-  - platform: gpio
+- platform: gpio
     pin: ${open_relay}
     name: "Relay #1"
     internal: true

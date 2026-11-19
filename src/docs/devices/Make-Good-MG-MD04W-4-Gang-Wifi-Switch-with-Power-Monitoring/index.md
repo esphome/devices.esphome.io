@@ -46,19 +46,19 @@ wifi:
   password: !secret wifi_password
   fast_connect: on
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${device_name} Fallback
-    password: ""
 
-captive_portal:
-
+# Enabling the logging component
 logger:
   baud_rate: 0
-
+# Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 web_server:
   port: 80
@@ -75,9 +75,7 @@ uart:
   baud_rate: 9600
 
 sensor:
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal Strength
-    update_interval: 60s
+ 
   - platform: uptime
     name: ${friendly_name} Uptime
   - platform: tuya
@@ -105,17 +103,6 @@ sensor:
   - platform: total_daily_energy
     name: ${friendly_name} Total Daily Energy
     power_id: total_watts
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
-    mac_address:
-      name: ${friendly_name} Mac
 
 switch:
   - platform: restart

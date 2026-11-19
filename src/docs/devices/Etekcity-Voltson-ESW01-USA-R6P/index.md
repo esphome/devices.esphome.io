@@ -211,6 +211,10 @@ esp8266:
 # Enable Logging
 logger: # More information available at https://esphome.io/components/logger/
   level: INFO # By default, the log level is DEBUG. Increasing the log level severity (e.g., to INFO or WARN) can help improve the performance and memory usage of the application.
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi: # More information available at https://esphome.io/components/wifi
   ssid: !secret wifi_ssid
@@ -225,7 +229,6 @@ wifi: # More information available at https://esphome.io/components/wifi
   # The AP option will make the device broadcast an access point (AP) when the specified Wi-Fi cannot be reached.
   # ⚠ SECURITY WARNING: Not specifying a password here will allow anyone who can see this AP to reconfigure your device!
   ap:
-#    password: !secret wifi_password
 
 # This option along with the "ap" option allows a user to reconfigure the Wi-Fi connection.
 # NOTE: If the captive portal webpage is not loading, rebooting the plug may allow it to load.

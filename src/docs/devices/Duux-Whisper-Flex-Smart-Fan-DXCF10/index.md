@@ -46,35 +46,31 @@ esphome:
 esp8266:
   board: esp07
   restore_from_flash: true
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key:
 
-ota:
-  password:
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid:
-    password:
-
+# Enable the captive portal
 captive_portal:
 
 time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 uart:
   tx_pin: GPIO15
@@ -153,26 +149,4 @@ select:
       11: "11h"
       12: "12h"
 
-sensor:
-  - platform: wifi_signal
-    name: "Wifi Signal"
-    update_interval: 60s
-    icon: mdi:wifi
-
-  - platform: uptime
-    name: "Uptime"
-    update_interval: 60s
-    icon: mdi:clock-outline
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Wi-Fi SSID"
-    bssid:
-      name: "Wi-Fi BSSID"
-  - platform: version
-    name: "ESPHome Version"
-    hide_timestamp: true
 ```

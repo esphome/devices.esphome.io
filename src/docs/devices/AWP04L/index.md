@@ -46,21 +46,22 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
-  baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
 # Enable web server
 web_server:
-  port: 80
 
 # Enable time component for use by daily power sensor
 time:
@@ -83,10 +84,6 @@ binary_sensor:
     name: ${friendly_name} Status
 
 sensor:
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
 
   # Reports how long the device has been powered (in minutes)
   - platform: uptime
@@ -141,11 +138,6 @@ sensor:
     filters:
       - multiply: 0.001 ## convert Wh to kWh
     unit_of_measurement: kWh
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 
 switch:
   - platform: gpio
@@ -269,7 +261,6 @@ In plug_common.yaml:
 
 ```yaml
 # Common code for AWP04L plugs
-
 esphome:
   name: ${device_name}
   comment: ${device_description}
@@ -283,21 +274,22 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
-  baud_rate: 0 #disable UART logging since we aren't connected to GPIO1 TX
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
 # Enable web server
 web_server:
-  port: 80
 
 # Enable time component for use by daily power sensor
 time:
@@ -320,10 +312,6 @@ binary_sensor:
     name: ${friendly_name} Status
 
 sensor:
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
 
   # Reports how long the device has been powered (in minutes)
   - platform: uptime
@@ -378,11 +366,6 @@ sensor:
     filters:
       - multiply: 0.001 ## convert Wh to kWh
     unit_of_measurement: kWh
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 
 switch:
   - platform: gpio

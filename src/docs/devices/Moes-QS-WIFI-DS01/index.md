@@ -20,28 +20,17 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_pw
-  power_save_mode: none
-
-# Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: ${node_name} FB
-    password: "fallback"
-
-captive_portal:
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret api_encryption
-
-# Enable Over The Air updates
+  
+# OTA flashing
 ota:
+  - platform: esphome
 
-# Disable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
   logs:
@@ -50,9 +39,14 @@ logger:
     binary_sensor: ERROR
     light: ERROR
 
-# Enable Web server.
-web_server:
-  port: 80
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # Sync time with Home Assistant.
 time:
@@ -116,10 +110,6 @@ sensor:
                 (minutes ? to_string(minutes) + "m " : "") +
                 (to_string(seconds) + "s")
               ).c_str();
-  - platform: wifi_signal
-    name: ${friendly_node_name} WiFi Signal
-    id: ${node_id}_wifi_signal
-    update_interval: 60s
     # Primary template sensor to track Brightness of light object for "on_value" sending to MCU dimmer
   - platform: template
     name: "${node_id} Brightness Sensor"
@@ -154,21 +144,6 @@ sensor:
     name: "${node_id} Sensor Push Switch"
     update_interval: 20ms
 
-# Text Sensors.
-text_sensor:
-  - platform: template
-    name: Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
-  - platform: version
-    name: ${friendly_node_name} ESPHome Version
-    id: ${node_id}_esphome_version
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_node_name} IP Address
-      id: ${node_id}_ip_address
-      icon: mdi:ip-network
-
 # Switches.
 switch:
   - platform: restart
@@ -181,7 +156,6 @@ switch:
   - platform: safe_mode
     name: ${friendly_node_name} Restart (Safe Mode)"
     id: ${node_id}_safe_mode
-
 
 # Dummy light brightness tracker Global
 globals:

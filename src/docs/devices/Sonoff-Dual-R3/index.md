@@ -59,7 +59,21 @@ api:
     key: !secret esp_api_key
 
 ota:
-  password: !secret ota_secret
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 sensor:
   - platform: wifi_signal
@@ -68,7 +82,7 @@ sensor:
     update_interval: 90s
     entity_category: "diagnostic"
 
-  - platform: uptime
+- platform: uptime
     name: "Uptime"
     id: sensor_uptime
     update_interval: 300s

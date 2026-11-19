@@ -84,6 +84,7 @@ wifi:
   password: !secret wifi_password
   ap:
 
+# Enable the captive portal
 captive_portal:
 
 # see: https://esphome.io/components/time/
@@ -91,9 +92,8 @@ time:
   - platform: homeassistant
     id: homeassistant_time
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 text_sensor:
   - platform: version

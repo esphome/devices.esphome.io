@@ -60,20 +60,29 @@ globals:
     restore_value: no
     initial_value: "false"
 
-api:
+ESP8266:
+  board: esp12e
+  restore_from_flash: true 
 
+# OTA flashing
 ota:
+  - platform: esphome
 
-web_server:
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-wifi:
-  ap: {} # This spawns an AP with the device name and mac address with no password.
-
-captive_portal:
-
+# Enabling the logging component
 logger:
   logs:
     light: none
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 light:
   - platform: rgb

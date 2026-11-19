@@ -74,13 +74,29 @@ In your YAML file add the following:
 esphome:
   name: mLinkRelayExample
   friendly_name: mLink Relay Example
-  
   includes:
     - mLinkRelay.h
-  
   libraries:
     - "Wire"
     - "mlink"
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 switch:
 - platform: custom

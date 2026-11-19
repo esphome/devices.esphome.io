@@ -57,23 +57,26 @@ esphome:
 esp8266:
   board: esp_wroom_02
   restore_from_flash: true
+   
+# OTA flashing
+ota:
+  - platform: esphome
 
-logger:
-  esp8266_store_log_strings_in_flash: False
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
   level: INFO
+  esp8266_store_log_strings_in_flash: False  
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret esp_api_key
 
-ota:
-  password: !secret ota_secret
+# Enable the captive portal
+captive_portal:
 
 external_components:
   - source: github://nrandell/dallasng
@@ -92,12 +95,6 @@ sensor:
     name: "Temperature"
     filters:
       - filter_out: 85.0
-
-  - platform: wifi_signal
-    name: "RSSI"
-    id: sensor_rssi
-    update_interval: 90s
-    entity_category: "diagnostic"
 
   - platform: uptime
     name: "Uptime"

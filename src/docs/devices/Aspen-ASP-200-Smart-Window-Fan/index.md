@@ -48,24 +48,18 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
+# Enabling the logging component
+logger:
+  baud_rate: 0
 
 # Enable Home Assistant API
 api:
-  # https://esphome.io/components/api
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  # https://esphome.io/components/ota
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server.
-web_server:
-  port: 80
-
-logger:
-  baud_rate: 0
+# Enable the Web Server component 
+webserver:
 
 uart:
   rx_pin: GPIO3

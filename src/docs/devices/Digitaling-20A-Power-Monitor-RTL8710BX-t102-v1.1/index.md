@@ -79,33 +79,27 @@ esphome:
 
 rtl87xx:
   board: wr2 # actually t102-v1.1 but https://github.com/libretiny-eu/libretiny/issues/247
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption
 
-ota:
-  #password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot in case wifi connection fails
-  ap:
-    ssid: ${friendly_name} Fallback Hotspot
-    password: !secret wifi_ap_password
+# Enable the captive portal
 captive_portal:
 
-web_server:
-  port: 80
-  auth:
-    username: !secret web_server_username
-    password: !secret web_server_password
+# Enable the Web Server component 
+webserver:
 
 # Enable time component for use by daily power sensor
 time:

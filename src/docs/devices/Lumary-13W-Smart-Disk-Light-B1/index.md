@@ -54,16 +54,20 @@ libretiny:
   board: generic-bk7231n-qfn32-tuya
   framework:
     version: latest
-
+  
+# OTA flashing
 ota:
-  password: !secret ota_password
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
 bp5758d:

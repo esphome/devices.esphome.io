@@ -73,8 +73,30 @@ helpfully contains debug pins next to the module:
 The configuration below is for a Rohnson R-9820, model name FDD20-5250BWR5:
 
 ```yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+  
 esp8266:
   board: esp_wroom_02
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 uart:
   rx_pin: GPIO13 # U1RX

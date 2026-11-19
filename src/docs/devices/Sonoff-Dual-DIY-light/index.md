@@ -26,11 +26,31 @@ again they will both short to 0V when the switch is clicked.
 The R1 version of the Dual controls the relays via the UART:
 
 ```yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
 esp8266:
   board: esp01_1m
+     
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 uart:
   tx_pin: GPIO01

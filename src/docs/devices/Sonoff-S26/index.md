@@ -33,29 +33,32 @@ esphome:
 esp8266:
   board: esp01_1m
   board_flash_mode: dout
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: "ssid"
-  password: "wifi_password"
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "ap_ssid"
-    password: "Password"
-  domain: ".domain.com"
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 status_led:
   pin:
     number: GPIO13
     inverted: false
-logger:
-
-api:
-  encryption:
-    key: !secret api_encryption_key
-
-ota:
-  password: "OTA_password"
-
-web_server:
 
 binary_sensor:
   - platform: gpio
@@ -69,10 +72,6 @@ binary_sensor:
   - platform: status
     name: "Sonoff S26_1 Status"
 
-sensor:
-  - platform: wifi_signal
-    name: "sonoffs26_1 WiFi Signal"
-    update_interval: 60s
 switch:
   - platform: gpio
     name: "Sonoff S26_1 Relay"

@@ -67,9 +67,14 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 logger:
 
+# Enable Home Assistant API
 api:
 
 ota:

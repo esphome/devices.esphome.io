@@ -33,20 +33,25 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: "YourSSID"
-  password: "YourWifiPassword"
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
   baud_rate: 0
 
 # Enable Home Assistant API
 api:
 
-# Allow OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
 uart:
   #Serial connection between the TYWE1S and the Tuya MCU

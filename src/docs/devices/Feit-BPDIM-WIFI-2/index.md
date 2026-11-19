@@ -25,8 +25,6 @@ a manual, serial flash. Once accomplished, OTA is the way to go.
 ```yaml
 substitutions:
   comment: "...any comment here, like the device hostname..."
-  platform: ESP8266
-  board: esp01_1m
   devicename: my_bpdim_1
   propername: "My BPDIM 1"
   min_brightness: '10'
@@ -34,8 +32,6 @@ substitutions:
 
 esphome:
   name: $devicename
-  platform: $platform
-  board: $board
   comment: "${comment}"
 
 wifi:
@@ -48,16 +44,24 @@ wifi:
 
 captive_portal:
 
+# OTA flashing
 ota:
-  password: !secret ota_pass
+  - platform: esphome
 
-api:
-  encryption:
-    key: !secret encryption_key
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# disable serial logging by setting baud_rate to 0 because baud_rate/serial connection is used by tuyamcu
+# Enabling the logging component
 logger:
   baud_rate: 0
+  
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 uart:
   rx_pin: GPIO3

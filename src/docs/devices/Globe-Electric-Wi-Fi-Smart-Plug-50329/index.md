@@ -45,56 +45,27 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-bk72xx:
-  board: wb2s
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: "YOUR KEY HERE"
 
-web_server:
-  port: 80
-  auth:
-    username: admin
-    password: !secret web_server_password
+# Enable the captive portal
+captive_portal:
 
-ota:
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ESP IP Address
-    ssid:
-      name: ESP Connected SSID
-    bssid:
-      name: ESP Connected BSSID
-    mac_address:
-      name: ESP Mac Wifi Address
-
-time:
-  - platform: homeassistant
-    id: homeassistant_time
-
-sensor:
-  - platform: uptime
-    name: ${friendly_name} Uptime
-    unit_of_measurement: minutes
-    filters:
-      - lambda: return x / 60.0;
-
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
+bk72xx:
+  board: wb2s
 
 light:
   - platform: status_led

@@ -52,18 +52,16 @@ wifi:
   password: "SSIDPassword"
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Esphome Node1 Fallback Hotspot"
-    password: "Cpxg9hRIBU7M"
-captive_portal:
-# Enable logging
+
+# Enabling the logging component
 logger:
+
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: "OTApassword"
+# Enable the captive portal
+captive_portal:
+
 # Just embedded test D3 (GPIO0) button on every ESP8266 Devboard
 # You can press D3 button several times to simulate incoming GGreg pulses
 binary_sensor:

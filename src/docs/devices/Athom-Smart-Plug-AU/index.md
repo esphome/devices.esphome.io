@@ -34,15 +34,23 @@ esphome:
 
 esp8266:
   board: esp8285
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-ota:
-
+# Enable the captive portal
 captive_portal:
 
 wifi:

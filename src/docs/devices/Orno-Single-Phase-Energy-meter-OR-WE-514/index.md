@@ -25,8 +25,19 @@ esphome:
 esp8266:
   board: esp12e
 
-# Configure logging
-# turn off logging because RX/TX pins used for modbus
+esp8266:
+  board: esp12e
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   level: DEBUG
   baud_rate: 0 #off
@@ -34,18 +45,7 @@ logger:
 # Enable Home Assistant API
 api:
 
-ota:
-  password: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-wifi:
-  ssid: "your ssid"
-  password: "your-wlan-password"
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Fallback Hotspot"
-    password: "xxxxxxxxxxxx"
-
+# Enable the captive portal
 captive_portal:
 
 uart:

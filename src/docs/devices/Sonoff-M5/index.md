@@ -74,18 +74,8 @@ esp32:
   variant: esp32
   framework:
     type: arduino
-
-logger:
-  level: INFO
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-api:
-  encryption:
-    key: !secret esp_api_key
-
+    
+# OTA flashing
 ota:
   - platform: esphome
     password: !secret ota_secret
@@ -136,9 +126,6 @@ output:
     frequency: 1000 Hz
 
 binary_sensor:
-  - platform: status
-    name: "Status"
-    id: sensor_status
 
   - platform: template
     name: "API connected"
@@ -204,12 +191,6 @@ light:
 #   esphome.on_gesture { button: (A|B|C), gesture: (click|double_click|hold) }
 # - Off-state (Background Brightness) of the LEDs is configurable via the UI
 #
-# For the below example, you need to keep the following entries in your secrets.yaml file:
-#  - wifi_ssid: "<secret>"
-#  - wifi_password: "<secret>"
-#  - ota_password: "<secret>"
-#  - esp_key: "<32-byte-base-64-secret>"
-#
 # Example file (sonoff-m5-3g-office-01.yaml)
 #
 # substitutions:
@@ -223,9 +204,7 @@ light:
 #     ref: main
 #     files: [sonoff-m5-3g-us.yaml]
 #     refresh: 0d
-#
-# wifi:
-#   use_address: "10.16.40.49"
+
 
 # Basic substitutions (can be safely overriden)
 substitutions:
@@ -233,10 +212,6 @@ substitutions:
   friendly: "Sonoff Switchman M5 3G US"
   uniquename: "switch-m5-3g"
   loglevel: INFO
-  apikey: !secret esp_key
-  wifi_ssid: !secret wifi_ssid
-  wifi_password: !secret wifi_password
-  ota_password: !secret ota_password
   device_name: "M53G"
   device_make: "Sonoff"
   sw_version: "2024.2.4"
@@ -263,10 +238,18 @@ esphome:
 dashboard_import:
   package_import_url: ${package_url}
   import_full_config: false
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
-  level: "${loglevel}"
 
 # Enable Home Assistant API
 api:
@@ -290,39 +273,12 @@ wifi:
     ssid: "${uniquename}-setup"
     password: "${wifi_password}"
 
+# Enable the captive portal
 captive_portal:
 
-# Diagnostic output sensors
-text_sensor:
-  - platform: template
-    name: "Deployment Version"
-    lambda: return {"${sw_version}"};
-    icon: "mdi:tag"
-    entity_category: diagnostic
-
-  - platform: wifi_info
-    ip_address:
-      id: ip_address
-      name: "IP Address"
-      icon: "mdi:wan"
-
 sensor:
-  - platform: template
-    id: internal_temp
-    name: "Internal Temperature"
-    icon: "mdi:thermometer"
-    unit_of_measurement: "°C"
-    entity_category: diagnostic
-    disabled_by_default: true
-    lambda: return temperatureRead();
 
-  - platform: wifi_signal
-    name: "RSSI"
-    id: sensor_rssi
-    update_interval: 90s
-    entity_category: "diagnostic"
-
-  - platform: uptime
+- platform: uptime
     name: "Uptime"
     id: sensor_uptime
     update_interval: 300s

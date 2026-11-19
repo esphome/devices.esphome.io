@@ -54,22 +54,26 @@ esphome:
 
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
-
-api:
-  encryption:
-    key: !secret api_encryption_key
-
+    
+# OTA flashing
 ota:
-  id: my_ota
-  password: !secret ota_password
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
   baud_rate: 2000000  # The original firmware uses the same baud rate for log outputs
   hardware_uart: UART1
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 external_components:
   - source: github://pr#6515
@@ -106,7 +110,4 @@ output:
     # min_power: 14%
     # zero_means_zero: True
 
-sensor:
-  - platform: internal_temperature
-    name: "Internal Temperature"
 ```

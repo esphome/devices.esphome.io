@@ -15,32 +15,28 @@ Tuya changed their firmware such that tuya-convert no longer works as before.
 substitutions:
    comment: "...any comment, like the device hostname..."
    devicename: my_device
-   platform: ESP8266
-   board: esp01_1m
 
  esphome:
    name: $devicename
-   platform: $platform
-   board: $board
    comment: "${comment}"
 
  wifi:
    ssid: !secret wifi_ssid
    password: !secret wifi_password
 
-   # Define SSID for hotspot (captive portal) in case wifi connection fails
-   ap:
-     ssid: AP_${devicename}
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
- #enable captive portal for hotspot
- captive_portal:
+# Enabling the logging component
+logger:
 
- ota:
-   password: !secret ota_pass
+# Enable Home Assistant API
+api:
 
- api:
-   encryption:
-    key: !secret encryption_key
+# Enable the captive portal
+captive_portal:
 
 sm16716:
   data_pin: GPIO12

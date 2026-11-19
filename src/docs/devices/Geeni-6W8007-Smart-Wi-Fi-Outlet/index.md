@@ -76,22 +76,14 @@ web_server:
 
 captive_portal:
 
-mdns:
-
-# Add your own api encryption key if you use it or use a secrets file one, your choice
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_key
 
-ota:
-  password: ""
+# Enable the captive portal
+captive_portal:  
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: $device_name
-    password: !secret wifi_ap_password
+bk72xx:
+  board: cb2s
 
 text_sensor:
   - platform: libretiny
