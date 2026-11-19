@@ -3,14 +3,16 @@ title: Deta Grid Connect Smart Fan Speed Controller with Touch Light Switch
 date-published: 2021-02-02
 type: switch
 standard: au
-board: bk72xx
+board:
+  - esp8266
+  - bk72xx
 ---
 
 ## General Information
 
 [Deta 6914HA][1] is a smart fan controller with light switch sold in Australia and New Zealand.
 
-[1]: https://detaelectrical.com.au/product/deta-grid-connect-smart-touch-fan-speed-controller-with-light-switch/
+[1]: https://detaelectrical.com.au/products/deta-gloss-white-grid-connect-smart-single-fan-speed-controller-with-touch-light-switch
 
 ### Series 1
 
@@ -22,54 +24,63 @@ Newer revision uses BK7231T controller on the Tuya WB3S module.
 
 ### Series 3
 
-revision uses BK7231N controller on the Tuya [CB3S module](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076)
+Latest revision uses BK7231N controller on the Tuya [CB3S module](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076)
 
 ## GPIO Pinout
 
-### ESP8266 Version
+### Series 1 - ESP8266 Version
 
-| GPIO # | Component |
-|:------:|----------:|
-| GPIO00 |   Button2 |
-| GPIO01 |      None |
-| GPIO02 |      None |
-| GPIO03 |   LedLink |
-| GPIO04 |    Relay3 |
-| GPIO05 |   Button3 |
-| GPIO09 |      None |
-| GPIO10 |      None |
-| GPIO12 |      None |
-| GPIO13 |    Relay2 |
-| GPIO14 |    Relay1 |
-| GPIO15 |    Relay4 |
-| GPIO16 |   Button1 |
-|  FLAG  |      None |
+| GPIO # |           Component |
+| :----: | ------------------: |
+| GPIO00 | Button2 (fan power) |
+| GPIO01 |                None |
+| GPIO02 |                None |
+| GPIO03 |          Status Led |
+| GPIO04 |         Fan Relay 3 |
+| GPIO05 | Button3 (fan speed) |
+| GPIO09 |                None |
+| GPIO10 |                None |
+| GPIO12 |                None |
+| GPIO13 |         Fan Relay 1 |
+| GPIO14 |         Light Relay |
+| GPIO15 |         Fan Relay 2 |
+| GPIO16 |     Button1 (light) |
+|  FLAG  |                None |
 
-### BK72xx Version
+### Series 2 - BK7231T Version
 
-|  Pin # |     Component |
-|:------:|--------------:|
-|    P14 |       Button1 |
-|     P1 |       Button2 |
-|     P8 |       Button3 |
-|    P10 |           Led |
-|    P26 |   Light Relay |
-|     P6 |   Fan Relay 1 |
-|     P7 |   Fan Relay 2 |
-|     P9 |   Fan Relay 3 |
+| Pin # |           Component |
+| :---: | ------------------: |
+|  P14  |     Button1 (light) |
+|   P1  | Button2 (fan power) |
+|   P8  | Button3 (fan speed) |
+|  P10  |          Status Led |
+|  P26  |         Light Relay |
+|   P6  |         Fan Relay 1 |
+|   P7  |         Fan Relay 2 |
+|   P9  |         Fan Relay 3 |
 
-### BK7231N Version
+### Series 3 - BK7231N Version
 
-|  Pin # |     Component |
-|:------:|--------------:|
-|    P14 |       Button1 |
-|    P20 |       Button2 |
-|     P7 |       Button3 |
-|    P10 |           Led |
-|    P26 |   Light Relay |
-|     P6 |   Fan Relay 1 |
-|     P8 |   Fan Relay 2 |
-|     P9 |   Fan Relay 3 |
+| Pin # |           Component |
+| :---: | ------------------: |
+|  P14  |     Button1 (light) |
+|  P20  | Button2 (fan power) |
+|   P7  | Button3 (fan speed) |
+|  P22  |          Status Led |
+|  P26  |         Light Relay |
+|   P6  |         Fan Relay 1 |
+|   P9  |         Fan Relay 2 |
+|   P8  |         Fan Relay 3 |
+
+Note: Pin numbering differs between series, but physical footprint positions are mostly the same. Only button 2 and
+the status LED moved from series 2 to series 3.
+
+The relays control the fan speed by switching the capacitance in series with the fan. The relay circuits are in
+parallel: relay 1 feeds the fan through a 2 µF capacitor, relay 2 through a 1 µF capacitor, and relay 3 bypasses the
+capacitors.
+Speeds: low = relay 1, medium = relays 1+2 (equivalent to 3 µF), high = all three. The fan would run at full speed
+with just relay 3, but the same GPIO also controls the LEDs in the speed button.
 
 ## Getting it up and running
 
@@ -92,7 +103,7 @@ Follow the [official guide](https://github.com/tuya-cloudcutter/tuya-cloudcutter
 
 ### Manual Flashing
 
-If you prefer to flash manually, you'll need a USB to serial adapter. Follow the disassembly steps below:
+Series 3 boards need to be flashed manually. You'll need a USB-to-serial adapter. Follow the disassembly steps below:
 
 1. Remove the front plastic face.
 2. Unscrew the exposed screws.
@@ -102,460 +113,15 @@ If you prefer to flash manually, you'll need a USB to serial adapter. Follow the
 
 ### Series 1 (ESP8266)
 
-```yaml
-substitutions:
-  device_name: deta_fan_controller
-  friendly_name: "Deta Smart Fan Speed Controller"
-
-##########################
-
-esphome:
-  name: ${device_name}
-
-esp8266:
-  board: esp01_1m
-  restore_from_flash: true
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-captive_portal:
-
-sensor:
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${friendly_name} Uptime
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP
-    ssid:
-      name: ${friendly_name} SSID
-    bssid:
-      name: ${friendly_name} BSSID
-    mac_address:
-      name: ${friendly_name} Mac
-
-logger:
-
-api:
-
-ota:
-
-web_server:
-  port: 80
-
-light:
-  - platform: binary
-    output: relay_light
-    id: light1
-    name: ${friendly_name} Light
-
-status_led:
-  pin:
-    number: GPIO3
-    inverted: True
-
-output:
-  - platform: gpio
-    id: relay_light
-    pin: GPIO14
-  - platform: template
-    id: fan_speed
-    type: float
-    write_action:
-      - then:
-        - if:
-            condition:
-              lambda: return ((state > 0) && (state < .4));
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_off: relay_fan_2
-              - delay: 20ms
-              - switch.turn_off: relay_fan_3
-        - if:
-            condition:
-              lambda: return ((state > .4) && (state < .7));
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_off: relay_fan_2
-              - delay: 20ms
-              - switch.turn_on: relay_fan_3
-        - if:
-            condition:
-              lambda: return (state > .7);
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_on: relay_fan_2
-              - delay: 20ms
-              - switch.turn_on: relay_fan_3
-        - if:
-            condition:
-              lambda: return (state < 0.01);
-            then:
-              - switch.turn_off: relay_fan_1
-              - delay: 20ms
-              - switch.turn_off: relay_fan_2
-              - delay: 20ms
-              - switch.turn_off: relay_fan_3
-
-binary_sensor:
-  - platform: gpio
-    id: fan_light_sensor
-    pin:
-      number: GPIO16
-      mode: INPUT
-      inverted: True
-    on_press:
-      - light.toggle: light1
-  - platform: gpio
-    id: fan_power_sensor
-    pin:
-      number: GPIO00
-      mode: INPUT
-      inverted: True
-    on_press:
-      then:
-        - fan.toggle: fan_1
-  - platform: gpio
-    id: fan_speed_sensor
-    pin:
-      number: GPIO05
-      mode: INPUT
-      inverted: True
-    on_press:
-      then:
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 2
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 3
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_on: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 1
-
-fan:
-  - platform: speed
-    id: fan_1
-    output: fan_speed
-    name: ${friendly_name} Fan Speed
-    speed_count: 3
-
-switch:
-  - platform: restart
-    name: ${friendly_name} REBOOT
-  - platform: gpio
-    id: relay_fan_1
-    pin: GPIO13
-  - platform: gpio
-    id: relay_fan_2
-    pin: GPIO04
-  - platform: gpio
-    id: relay_fan_3
-    pin: GPIO15
-  - platform: template
-    id: update_fan_speed
-    optimistic: True
-    turn_on_action:
-      then:
-        - delay: 200ms
-        - if:
-            condition:
-              and:
-                - switch.is_off: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_off: fan_1
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 1
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 2
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_on: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 3
-
+```yaml file=config.yaml
 ```
 
-### Series 2 (BK72xx)
+### Series 2 (BK7231T)
 
-```yaml
-substitutions:
-  devicename: "deta-switchfan"
-  friendlyname: Deta Switch Fan
-  deviceid: deta-switchfan
-  devicemodel: Deta Grid Connect 6914HA Series 2
+```yaml file=series-2-bk7231t.yaml
+```
 
-#################################
+### Series 3 (BK7231N)
 
-esphome:
-  name: ${devicename}
-
-bk72xx:
-  board: generic-bk7231t-qfn32-tuya
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-logger:
-
-web_server:
-
-captive_portal:
-
-api:
-
-ota:
-
-sensor:
-  - platform: wifi_signal
-    name: ${friendlyname} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${friendlyname} Uptime
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendlyname} IP
-    ssid:
-      name: ${friendlyname} SSID
-    bssid:
-      name: ${friendlyname} BSSID
-    mac_address:
-      name: ${friendlyname} Mac
-  - platform: version
-    name: ${friendlyname} ESPHome Version
-
-#################################
-status_led:
-  pin:
-    number: P10
-    inverted: true
-
-light:
-  - platform: binary
-    output: relay_light
-    id: light1
-    name: ${friendlyname} Light
-
-output:
-  - platform: gpio
-    id: relay_light
-    pin: P26
-  - platform: template
-    id: fan_speed
-    type: float
-    write_action:
-      - then:
-        - if:
-            condition:
-              lambda: return ((state > 0) && (state < .4));
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_off: relay_fan_2
-              - delay: 20ms
-              - switch.turn_off: relay_fan_3
-        - if:
-            condition:
-              lambda: return ((state > .4) && (state < .7));
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_on: relay_fan_2
-              - delay: 20ms
-              - switch.turn_off: relay_fan_3
-        - if:
-            condition:
-              lambda: return (state > .7);
-            then:
-              - switch.turn_on: relay_fan_1
-              - delay: 20ms
-              - switch.turn_on: relay_fan_2
-              - delay: 20ms
-              - switch.turn_on: relay_fan_3
-        - if:
-            condition:
-              lambda: return (state < 0.01);
-            then:
-              - switch.turn_off: relay_fan_1
-              - delay: 20ms
-              - switch.turn_off: relay_fan_2
-              - delay: 20ms
-              - switch.turn_off: relay_fan_3
-
-binary_sensor:
-  - platform: gpio
-    id: fan_light_sensor
-    pin:
-      number: P14
-      mode: INPUT
-      inverted: True
-    on_press:
-      - light.toggle: light1
-  - platform: gpio
-    id: fan_power_sensor
-    pin:
-      number: P1
-      mode: INPUT
-      inverted: True
-    on_press:
-      then:
-        - fan.toggle: fan_1
-  - platform: gpio
-    id: fan_speed_sensor
-    pin:
-      number: P8
-      mode: INPUT
-      inverted: True
-    on_press:
-      then:
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 2
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 3
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_on: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 1
-
-fan:
-  - platform: speed
-    id: fan_1
-    output: fan_speed
-    name: ${friendlyname} Fan Speed
-    speed_count: 3
-
-switch:
-  - platform: gpio
-    id: relay_fan_1
-    pin: P6
-  - platform: gpio
-    id: relay_fan_2
-    pin: P7
-  - platform: gpio
-    id: relay_fan_3
-    pin: P9
-  - platform: template
-    id: update_fan_speed
-    optimistic: True
-    turn_on_action:
-      then:
-        - delay: 200ms
-        - if:
-            condition:
-              and:
-                - switch.is_off: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_off: fan_1
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_off: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 1
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_off: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 2
-        - if:
-            condition:
-              and:
-                - switch.is_on: relay_fan_1
-                - switch.is_on: relay_fan_2
-                - switch.is_on: relay_fan_3
-            then:
-              - fan.turn_on:
-                  id: fan_1
-                  speed: 3
+```yaml file=series-3-bk7231n.yaml
 ```
