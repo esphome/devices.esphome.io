@@ -434,7 +434,7 @@ sensor:
           id(Oil_Depth_in) = x;  // inches
 
           // Calculate Rectangle and Arc Heights
-          
+
           if (isnan(x)) {
             return NAN;
           }
