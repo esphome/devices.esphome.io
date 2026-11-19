@@ -1,0 +1,10 @@
+api:
+
+time:
+  - platform: homeassistant
+    id: ha_time
+    # instead try to synchronize via network repeatedly ...
+    on_time_sync:
+      then:
+        # ... and update the RTC when the synchronization was successful
+        - pcf8563.write_time

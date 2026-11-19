@@ -1,0 +1,59 @@
+esphome:
+  name: tuya-smart-plug-20a
+  comment: "Tuya Smart Socket EU 20A with Power Monitor"
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya  # actually a T34 Tuya module
+
+status_led:
+  pin:
+    number: P28
+    inverted: true
+
+# Local button on PCB
+binary_sensor:
+  - platform: gpio
+    id: button_1
+    pin:
+      number: P26
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    icon: "mdi:radiobox-blank"
+    filters:
+      - delayed_on: 50ms
+
+# Relay output
+output:
+  - platform: gpio
+    pin: P24
+    id: relay_1
+
+# Energy meter BL0937
+sensor:
+  # https://esphome.io/components/sensor/hlw8012/
+  - platform: hlw8012
+    model: BL0937
+    cf_pin:
+      number: P06
+      inverted: true
+    cf1_pin:
+      number: P07
+      inverted: true
+    sel_pin:
+      number: P08
+      inverted: true
+    current:
+      name: "Current"
+    voltage:
+      name: "Voltage"
+    power:
+      name: "Power"
+    energy:
+      name: "Energy"
+    # current_resistor: 0.001ohm
+    voltage_divider: 760
+    initial_mode: CURRENT
+    update_interval: 15s
+    change_mode_every: 4

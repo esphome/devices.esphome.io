@@ -1,0 +1,57 @@
+esphome:
+  name: geeni-powerstrip
+
+bk72xx:
+  board: cb3s
+
+wifi:
+  ap: {}
+
+logger:
+
+switch:
+  - platform: gpio
+    id: switch_1
+    name: Outlet 1
+    pin: P6
+  - platform: gpio
+    id: switch_2
+    name: Outlet 2
+    pin: P24
+  - platform: gpio
+    id: switch_3
+    name: Outlet 3
+    pin: P26
+  - platform: gpio
+    id: switch_4
+    name: Outlet 4
+    pin: P8
+  - platform: gpio
+    id: switch_5
+    name: Outlet 5
+    pin: P7
+  - platform: gpio
+    id: switch_6
+    name: Outlet 6
+    pin: P9
+
+binary_sensor:
+  - platform: gpio
+    id: binary_switch_all
+    pin:
+      number: P23
+      inverted: true
+      mode: INPUT_PULLUP
+    on_press:
+      then:
+        - switch.toggle: switch_1
+        - switch.toggle: switch_2
+        - switch.toggle: switch_3
+        - switch.toggle: switch_4
+        - switch.toggle: switch_5
+        - switch.toggle: switch_6
+
+status_led:
+  pin:
+    number: P14
+    inverted: true
