@@ -1,0 +1,44 @@
+wifi:
+  id: plug_wifi
+
+api:
+  id: native_api
+  # Keep local control working while Home Assistant is unavailable.
+  reboot_timeout: 0s
+
+interval:
+  - interval: 100ms
+    then:
+      - lambda: |-
+          // HA identifies itself as "Home Assistant <version>". Ignore loggers,
+          // web clients and standalone API tools.
+          const bool wifi_connected = id(plug_wifi).is_connected();
+          bool ha_connected = false;
+          if (wifi_connected) {
+            for (const auto &client : id(native_api).active_clients()) {
+              if (!client->is_marked_for_removal() && client->is_authenticated() &&
+                  strncmp(client->get_name(), "Home Assistant ", 15) == 0) {
+                ha_connected = true;
+                break;
+              }
+            }
+          }
+          // Wi-Fi takes priority over HA. "White" means both LED channels.
+          // 0=off, 1=blue, 2=yellow, 3=yellow blink, 4=white, 5=white blink.
+          const int mode = !wifi_connected ? (id(main_plug).state ? 4 : 5)
+                           : ha_connected ? (id(main_plug).state ? 1 : 0)
+                                          : (id(main_plug).state ? 2 : 3);
+          // Output mask: blue=1, yellow=2, both=3. Blink at 500 ms on/off.
+          const bool blink_on = millis() % 1000 < 500;
+          int lit = mode;
+          if (mode == 3) lit = blink_on ? 2 : 0;
+          if (mode == 4) lit = 3;
+          if (mode == 5) lit = blink_on ? 3 : 0;
+          static int previous_lit = -1;
+          if (lit != previous_lit) {
+            id(led_blue).turn_off();
+            id(led_yellow).turn_off();
+            if (lit & 1) id(led_blue).turn_on();
+            if (lit & 2) id(led_yellow).turn_on();
+            previous_lit = lit;
+          }
