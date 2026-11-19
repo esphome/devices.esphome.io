@@ -6,6 +6,8 @@ standard: uk, us, eu, au
 board: esp8266
 ---
 
+  ![Product Image](./sonoff_s26_img1.jpg "Product Image")
+
 ## GPIO Pinout
 
 | Pin    | Function                           |
