@@ -1,0 +1,40 @@
+# Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml
+# IoTextra Relay2 3.02 + IoTsmart XIAO 1.02 + XIAO ESP32-S3 — GPIO mode (HOST AP0..AP7)
+# Source: IoTsmart/XIAO/v.1.02/host-map.yaml (xiao-esp32s3) + IoTextra-Digital/Relay2/v3.02/host-map.yaml
+# Outputs RL1..RL4: SPDT relays K1..K4, active-low on the HOST line (output on = 0)
+# AP4..AP7 not used by the module (TCA9534 P4..P7 only)
+esphome:
+  name: relay2-xiao-s3
+  project:
+    name: makethingshappy.iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio
+    version: "1.01"
+
+esp32:
+  variant: esp32s3
+  flash_size: 8MB           # Seeed XIAO ESP32-S3: 8 MB flash
+  framework:
+    type: esp-idf
+
+# The board also has 8 MB octal PSRAM; it is not needed here and is left off.
+
+logger:
+wifi:
+  ap: {}
+
+# HOST I2C on IoTsmart XIAO: SDA = D4 = GPIO5, SCL = D5 = GPIO6 (onboard EEPROM 0x54-0x57 on the same bus)
+i2c:
+  id: host_i2c
+  sda: GPIO5
+  scl: GPIO6
+  scan: true
+
+switch:
+  # AP0 = D9, K1
+  - {platform: gpio, id: rl1, name: "RL1", pin: {number: GPIO8, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP1 = D10, K2
+  - {platform: gpio, id: rl2, name: "RL2", pin: {number: GPIO9, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP2 = D8, K3
+  - {platform: gpio, id: rl3, name: "RL3", pin: {number: GPIO7, inverted: true}, restore_mode: ALWAYS_OFF}
+  # AP3 = D7, K4 (GPIO44 = UART0 RX)
+  - {platform: gpio, id: rl4, name: "RL4", pin: {number: GPIO44, inverted: true}, restore_mode: ALWAYS_OFF}
