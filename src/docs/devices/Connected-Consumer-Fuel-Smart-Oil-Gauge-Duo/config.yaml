@@ -549,7 +549,7 @@ sensor:
     filters:
       - lambda: |-
           return id(Distance_to_Oil);
-          
+
   - platform: copy
     source_id: Ultrasonic_Distance
     name: "Oil Depth"
