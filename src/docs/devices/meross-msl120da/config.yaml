@@ -1,0 +1,53 @@
+substitutions:
+  name: meross-msl120da
+  friendly_name: "Meross Bulb"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# Realtek RTL8720CF (AmebaZ2) via LibreTiny.
+# This board's flash/partition layout matches the stock Meross dump.
+rtl87xx:
+  board: generic-rtl8720cf-2mb-992k
+
+logger:
+
+# BP5758D 5-channel constant-current LED driver (2-wire). Pins and
+# currents were recovered from the stock firmware.
+bp5758d:
+  data_pin: PA3
+  clock_pin: PA2
+
+output:
+  - platform: bp5758d
+    id: out_blue
+    channel: 1
+    current: 15
+  - platform: bp5758d
+    id: out_green
+    channel: 2
+    current: 8
+  - platform: bp5758d
+    id: out_red
+    channel: 3
+    current: 10
+  - platform: bp5758d
+    id: out_warm
+    channel: 4
+    current: 28
+  - platform: bp5758d
+    id: out_cold
+    channel: 5
+    current: 28
+
+light:
+  - platform: rgbww
+    name: ${friendly_name}
+    red: out_red
+    green: out_green
+    blue: out_blue
+    warm_white: out_warm
+    cold_white: out_cold
+    warm_white_color_temperature: 2700 K
+    cold_white_color_temperature: 6500 K
