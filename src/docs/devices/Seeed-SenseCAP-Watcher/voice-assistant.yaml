@@ -115,14 +115,23 @@ switch:
             api.connected:
           then:
             - micro_wake_word.start:
+    # The restored state is applied at boot, before LVGL has created the label, so check it exists first.
     on_turn_on:
-      - lvgl.label.update:
-          id: status_label
-          text: "Muted"
+      - if:
+          condition:
+            lambda: return id(status_label) != nullptr;
+          then:
+            - lvgl.label.update:
+                id: status_label
+                text: "Muted"
     on_turn_off:
-      - lvgl.label.update:
-          id: status_label
-          text: "Ready"
+      - if:
+          condition:
+            lambda: return id(status_label) != nullptr;
+          then:
+            - lvgl.label.update:
+                id: status_label
+                text: "Ready"
 
 output:
   - platform: ledc
