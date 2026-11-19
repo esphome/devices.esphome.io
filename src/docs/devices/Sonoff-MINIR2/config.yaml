@@ -1,0 +1,42 @@
+esphome:
+  name: sonoff-minir2
+
+logger:
+
+esp8266:
+  board: esp8285
+  restore_from_flash: true
+
+switch:
+  - platform: gpio
+    name: Relay
+    id: relay
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_OFF
+
+binary_sensor:
+  - platform: gpio
+    id: physical_button
+    pin:
+      number: GPIO0
+      inverted: true
+      mode: INPUT_PULLUP
+    filters:
+      - delayed_on_off: 20ms
+    on_press:
+      - switch.toggle: relay
+  - platform: gpio
+    name: External Switch
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 20ms
+    on_state:
+      - switch.toggle: relay
+
+status_led:
+  pin:
+    number: GPIO13
+    inverted: true
