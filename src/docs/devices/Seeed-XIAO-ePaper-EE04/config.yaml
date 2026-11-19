@@ -1,0 +1,51 @@
+esphome:
+  name: seeed-xiao-epaper-ee04
+  friendly_name: Seeed XIAO ePaper EE04
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+wifi:
+  ap:
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+
+display:
+  - platform: waveshare_epaper
+    id: epaper_display
+    model: 7.50inv2
+    cs_pin: GPIO44
+    dc_pin: GPIO10
+    busy_pin: GPIO4
+    reset_pin: GPIO38
+    update_interval: 300s
+
+binary_sensor:
+  - platform: gpio
+    id: key0
+    name: Key0
+    pin:
+      number: GPIO2
+      inverted: true
+  - platform: gpio
+    id: key1
+    name: Key1
+    pin:
+      number: GPIO3
+      inverted: true
+  - platform: gpio
+    id: key2
+    name: Key2
+    pin:
+      number: GPIO5
+      inverted: true
