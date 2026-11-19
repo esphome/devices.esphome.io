@@ -1,0 +1,30 @@
+# LoRa Radio Configuration
+sx127x:
+  dio0_pin: GPIO26
+  cs_pin: GPIO18
+  rst_pin: GPIO23
+  pa_pin: BOOST
+  pa_power: 10
+  bandwidth: 125_0kHz
+  crc_enable: true
+  frequency: 433920000
+  modulation: LORA
+  rx_start: true
+  sync_value: 0x12
+  preamble_size: 8
+  spreading_factor: 7
+  coding_rate: CR_4_6
+  on_packet:
+    then:
+      - lambda: |-
+          ESP_LOGD("lora", "Received packet RSSI: %.2f dBm, SNR: %.2f dB, Data: %s",
+                   rssi, snr, format_hex(x).c_str());
+
+# Example button to send LoRa packet
+button:
+  - platform: template
+    name: "Send LoRa Packet"
+    on_press:
+      then:
+        - sx127x.send_packet:
+            data: [0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE]
