@@ -225,9 +225,7 @@ sensor:
     update_interval: 5s
     entity_category: "diagnostic"
     icon: mdi:current-dc
-    
-    
-    
+
   - platform: copy
     source_id: ADC_Input_Raw
     name: 'Battery Voltage'
