@@ -435,17 +435,7 @@ sensor:
 
           // Calculate Rectangle and Arc Heights
 
-          if (isnan(x)) {
-            return NAN;
-          }
           double Oil_Height = x;  // Inches
-
-          const double tank_depth = id(Tank_Orientation) == 1 ? id(Tank_Height) : id(Tank_Width);
-          if (Oil_Height < 0.0) {
-            Oil_Height = 0.0;
-          } else if (Oil_Height > tank_depth) {
-            Oil_Height = tank_depth;
-          }
 
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
@@ -528,8 +518,24 @@ sensor:
           // Calculate Oil Volume in Tank
           // x = Total Area in²
 
-          id(Oil_Volume_Geo) = x * id(Tank_Length) / 231; // gallons
+          double Oil_Volume = 0.0;
 
+          Oil_Volume = x * id(Tank_Length) / 231; // gallons
+
+          if (Oil_Volume < 0) {
+            Oil_Volume = 0;
+          }
+          
+          if (Oil_Volume > id(Max_Fill)) {
+            Oil_Volume = id(Max_Fill);
+          }
+
+          if (isnan(id(Raw_Oil_Depth_in))){
+            Oil_Volume = NAN;
+          } 
+
+          id(Oil_Volume_Geo) = Oil_Volume;
+          
           static const char *const TAG = "Ultrasonic Output";
           ESP_LOGD(TAG,
                     "Results:\n"
