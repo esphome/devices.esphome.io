@@ -1,0 +1,13 @@
+# Optional daily energy, using the wattage sensor in config.yaml.
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+  - platform: total_daily_energy
+    name: ${friendly_name} Total Daily Energy
+    icon: mdi:circle-slice-3
+    power_id: wattage
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
