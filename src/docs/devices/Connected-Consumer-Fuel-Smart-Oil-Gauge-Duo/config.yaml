@@ -415,7 +415,7 @@ sensor:
           double Oil_Depth;
 
           id(Distance_to_Oil) = Oil_Distance;
-          
+
           if (id(Tank_Orientation) == 1){  // Vertical
             Oil_Depth = id(Tank_Height) - Oil_Distance;
           } else {  // Horizontal
@@ -545,7 +545,7 @@ sensor:
     state_class: measurement
     icon: mdi:arrow-expand-vertical
     accuracy_decimals: 2
-    entity_category: "diagnostic" 
+    entity_category: "diagnostic"
     filters:
       - lambda: |-
           return id(Distance_to_Oil);
@@ -558,7 +558,7 @@ sensor:
     state_class: measurement
     icon: mdi:arrow-expand-vertical
     accuracy_decimals: 4
-    entity_category: "diagnostic" 
+    entity_category: "diagnostic"
     filters:
       - lambda: |-
           return id(Oil_Depth_in);
@@ -571,7 +571,7 @@ sensor:
     state_class: measurement
     icon: mdi:arrow-expand-vertical
     accuracy_decimals: 4
-    entity_category: "diagnostic" 
+    entity_category: "diagnostic"
     filters:
       - lambda: |-
           return id(Raw_Oil_Depth_in);
