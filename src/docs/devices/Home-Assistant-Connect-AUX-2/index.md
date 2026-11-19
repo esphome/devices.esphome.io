@@ -38,7 +38,8 @@ To re-install the factory firmware, use the [web installer](https://firmware.nab
 
 The Grove port is an I²C bus (`i2c_grove`, 400 kHz) at 5 V logic levels: SDA and SCL pass through a level
 shifter with 5.1 kΩ pull-ups to the port's 5 V supply. The 5 V supply is switched by GPIO46 (high = on), exposed
-as the "Grove Power" switch. It is on at boot and its entity is disabled by default in Home Assistant.
+as the "Grove Power" switch. It defaults to on and restores its previous state after reboot. Its entity is
+disabled by default in Home Assistant.
 
 The port is intended primarily for I²C, but GPIO1 and GPIO2 can be used for other purposes, such as digital
 inputs and outputs. To free the pins, remove the bus by adding `- id: !remove i2c_grove` under `i2c:` in your
