@@ -1,0 +1,57 @@
+esphome:
+  name: shelly-plus-uni
+  friendly_name: "Shelly Plus Uni"
+  platformio_options:
+    board_build.f_cpu: 160000000L
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
+
+wifi:
+  ap:
+
+logger:
+
+status_led:
+  pin:
+    number: GPIO18
+    inverted: true
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO37
+    name: "Input 1"
+    filters:
+      - delayed_on_off: 50ms
+
+  - platform: gpio
+    pin:
+      number: GPIO38
+    name: "Input 2"
+    filters:
+      - delayed_on_off: 50ms
+
+output:
+  - platform: gpio
+    pin: GPIO19
+    id: relay_1
+
+  - platform: gpio
+    pin: GPIO21
+    id: relay_2
+
+switch:
+  - platform: output
+    name: "Output 1"
+    output: relay_1
+
+  - platform: output
+    name: "Output 2"
+    output: relay_2
