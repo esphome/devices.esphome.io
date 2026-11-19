@@ -62,12 +62,25 @@ function pr(
 
 // `reads` maps a PR number to its successive reads (the last one repeats);
 // `pages` lists the PR numbers on each page of the open-PR listing.
-function makeGithub(reads: Record<number, Pr[]>, pages: number[][] = []) {
+// `readyAuthors` maps a PR number to its author type, making the promotion
+// find a green, bot-drafted PR it marks ready; other PRs read as closed.
+function makeGithub(
+  reads: Record<number, Pr[]>,
+  pages: number[][] = [],
+  readyAuthors: Record<number, string> = {},
+) {
   const queries: { query: string; vars: Record<string, unknown> }[] = [];
   const writes: unknown[][] = [];
   const next = (n: number) => (reads[n].length > 1 ? reads[n].shift()! : reads[n][0]);
+  const listForRef = () => {};
+  const listEvents = () => {};
   const github = {
+    paginate: async (fn: unknown) =>
+      fn === listForRef
+        ? [{ name: "CI", app: { slug: "github-actions" }, status: "completed", conclusion: "success" }]
+        : [{ event: "convert_to_draft", actor: { type: "Bot" } }],
     graphql: async (query: string, vars: Record<string, unknown>) => {
+      if (query.includes("markPullRequestReadyForReview")) return {};
       queries.push({ query, vars });
       if (query.includes("pullRequests(")) {
         const index = vars.cursor === null ? 0 : Number(vars.cursor);
@@ -88,16 +101,29 @@ function makeGithub(reads: Record<number, Pr[]>, pages: number[][] = []) {
       pulls: {
         get: async (a: { pull_number: number }) => {
           writes.push(["promote", a.pull_number]);
-          return { data: { state: "closed" } };
+          const type = readyAuthors[a.pull_number];
+          if (!type) return { data: { state: "closed" } };
+          return {
+            data: {
+              state: "open",
+              draft: true,
+              node_id: `PR_${a.pull_number}`,
+              head: { sha: `sha${a.pull_number}` },
+              labels: [{ name: "made-for-esphome" }, { name: "made-for-esphome-pending" }],
+              user: { type },
+            },
+          };
         },
       },
       issues: {
+        listEvents,
         addLabels: async (a: { issue_number: number; labels: string[] }) =>
           void writes.push(["addLabels", a.issue_number, a.labels]),
         removeLabel: async (a: { issue_number: number; name: string }) =>
           void writes.push(["removeLabel", a.issue_number, a.name]),
       },
       checks: {
+        listForRef,
         create: async (a: { head_sha: string; name: string; conclusion: string }) =>
           void writes.push(["checks.create", a.head_sha, a.name, a.conclusion]),
         update: async (a: { check_run_id: number; name: string; conclusion: string }) =>
@@ -110,7 +136,16 @@ function makeGithub(reads: Record<number, Pr[]>, pages: number[][] = []) {
 
 function makeCore() {
   const warnings: string[] = [];
-  return { warnings, core: { info: () => {}, warning: (m: string) => void warnings.push(m) } };
+  const outputs: Record<string, string> = {};
+  return {
+    warnings,
+    outputs,
+    core: {
+      info: () => {},
+      warning: (m: string) => void warnings.push(m),
+      setOutput: (name: string, value: string) => void (outputs[name] = value),
+    },
+  };
 }
 
 const repository = { default_branch: "main" };
@@ -340,4 +375,38 @@ test("a clean new head leaves the promotion to CI; conflicts and base changes re
     await conflicts({ github, context: prContext(8, action), core, sleep: async () => {} });
     assert.equal(writes.some((w) => w[0] === "promote"), promoted, `${action} ${mergeable}`);
   }
+});
+
+test("PRs a sweep marks ready are handed to the Copilot review step, bots aside", async () => {
+  const read = (n: number) => [pr(n, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" })];
+  const { github } = makeGithub({ 8: read(8), 9: read(9), 10: read(10) }, [[8, 9, 10]], {
+    8: "User",
+    9: "Bot",
+    10: "User",
+  });
+  const { core, outputs } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.deepEqual(outputs, { "marked-ready": "8,10" });
+});
+
+test("a sweep that marks nothing ready sets no output", async () => {
+  const { github } = makeGithub({
+    8: [pr(8, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" })],
+  }, [[8]]);
+  const { core, outputs } = makeCore();
+  await conflicts({ github, context: pushContext, core, sleep: async () => {} });
+  assert.deepEqual(outputs, {});
+});
+
+test("PRs promoted before a sweep fails are still handed to the Copilot review step", async () => {
+  const read = (n: number) => [pr(n, "CONFLICTING", { labels: [LABEL, "made-for-esphome"], check: "SUCCESS" })];
+  const { github } = makeGithub({ 8: read(8), 9: read(9) }, [[8, 9]], { 8: "User", 9: "User" });
+  const update = github.rest.checks.update;
+  github.rest.checks.update = async (a: { check_run_id: number; name: string; conclusion: string }) => {
+    if (a.check_run_id === 109) throw new Error("HTTP 502");
+    return update(a);
+  };
+  const { core, outputs } = makeCore();
+  await assert.rejects(conflicts({ github, context: pushContext, core, sleep: async () => {} }), /HTTP 502/);
+  assert.deepEqual(outputs, { "marked-ready": "8" });
 });
