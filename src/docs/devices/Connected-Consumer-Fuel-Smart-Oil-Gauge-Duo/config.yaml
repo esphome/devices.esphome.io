@@ -391,13 +391,16 @@ sensor:
 
           double total_dist_m = time_s * speed_sound_m_per_s;
 
-          id(Distance_to_Oil) = (total_dist_m / 2.0) * 100.0;  // cm
+          // id(Distance_to_Oil) = (total_dist_m / 2.0) * 100.0;  // cm
 
-          return id(Distance_to_Oil);  // cm
+          // return id(Distance_to_Oil);  // cm
+
+          return (total_dist_m / 2.0) * 100.0;  // cm
 
       - lambda: |-
           id(Sleep_Check).execute();
-          return id(Distance_to_Oil);
+          // return id(Distance_to_Oil);
+          return x;
 
       - sliding_window_moving_average:
           window_size: ${Samples_Before_Sleep}
@@ -411,6 +414,8 @@ sensor:
           double Oil_Distance = x * 10 /25.4;  // cm to inches
           double Oil_Depth;
 
+          id(Distance_to_Oil) = Oil_Distance;
+          
           if (id(Tank_Orientation) == 1){  // Vertical
             Oil_Depth = id(Tank_Height) - Oil_Distance;
           } else {  // Horizontal
@@ -534,6 +539,45 @@ sensor:
 
   - platform: copy
     source_id: Ultrasonic_Distance
+    name: "Distance to Oil"
+    unit_of_measurement: 'in'
+    device_class: distance
+    state_class: measurement
+    icon: mdi:arrow-expand-vertical
+    accuracy_decimals: 2
+    entity_category: "diagnostic" 
+    filters:
+      - lambda: |-
+          return id(Distance_to_Oil);
+          
+  - platform: copy
+    source_id: Ultrasonic_Distance
+    name: "Oil Depth"
+    unit_of_measurement: 'in'
+    device_class: distance
+    state_class: measurement
+    icon: mdi:arrow-expand-vertical
+    accuracy_decimals: 4
+    entity_category: "diagnostic" 
+    filters:
+      - lambda: |-
+          return id(Oil_Depth_in);
+
+  - platform: copy
+    source_id: Ultrasonic_Distance
+    name: "Raw Oil Depth"
+    unit_of_measurement: 'in'
+    device_class: distance
+    state_class: measurement
+    icon: mdi:arrow-expand-vertical
+    accuracy_decimals: 4
+    entity_category: "diagnostic" 
+    filters:
+      - lambda: |-
+          return id(Raw_Oil_Depth_in);
+
+  - platform: copy
+    source_id: Ultrasonic_Distance
     id: Max_Refill_Volume
     name: "Max Fill"
     unit_of_measurement: 'gal'
@@ -546,6 +590,30 @@ sensor:
           // x = Oil Volume in Tank gallons
           double Max_Refill = id(Max_Fill) - x;
           return Max_Refill;
+
+  - platform: copy
+    source_id: TempC_sens
+    name: "Speed of Sound"
+    unit_of_measurement: 'm/s'
+    device_class: speed
+    entity_category: "diagnostic"
+    accuracy_decimals: 1
+    icon: mdi:speedometer
+    filters:
+      - lambda: |-
+          return id(Speed_of_Sound);
+
+  - platform: copy
+    source_id: TempC_sens
+    name: 'Vapor Pressure Oil'
+    device_class: pressure
+    unit_of_measurement: kPa
+    entity_category: "diagnostic"
+    accuracy_decimals: 8
+    icon: mdi:gauge
+    filters:
+      - lambda: |-
+          return id(VP_Oil);
 
 
 script:
