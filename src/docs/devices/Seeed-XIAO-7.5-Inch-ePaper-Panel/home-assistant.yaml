@@ -1,0 +1,69 @@
+# A Home Assistant dashboard on top of the hardware configuration.
+#
+# E-paper holds its last image with no power, so the screen alone can never tell
+# you whether what you are reading is current. That is why the footer carries a
+# timestamp - on e-paper that is a design requirement, not a nice-to-have.
+
+substitutions:
+  weather_entity: weather.forecast_home
+  indoor_temp_entity: sensor.living_room_temperature
+
+api:
+
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time:
+      # Refresh on the minute boundary so a displayed clock cannot drift.
+      - seconds: 0
+        then:
+          - script.execute: refresh_screen
+
+script:
+  # mode: restart plus a short delay coalesces a burst of entity changes into
+  # one redraw instead of one per entity.
+  - id: refresh_screen
+    mode: restart
+    then:
+      - delay: 2s
+      - component.update: epaper
+
+sensor:
+  - platform: homeassistant
+    id: indoor_temp
+    entity_id: ${indoor_temp_entity}
+    on_value:
+      - script.execute: refresh_screen
+
+text_sensor:
+  - platform: homeassistant
+    id: weather_state
+    entity_id: ${weather_entity}
+    on_value:
+      - script.execute: refresh_screen
+
+display:
+  - id: !extend epaper
+    lambda: |-
+      const auto BLK = Color(0, 0, 0);
+      it.fill(Color(255, 255, 255));
+
+      // Clock
+      it.strftime(400, 150, id(font_title), BLK, TextAlign::CENTER,
+                  "%H:%M", id(ha_time).now());
+
+      // Indoor temperature
+      if (id(indoor_temp).has_state()) {
+        it.printf(400, 260, id(font_body), BLK, TextAlign::CENTER,
+                  "Indoor %.1f C", id(indoor_temp).state);
+      }
+
+      // Weather
+      if (id(weather_state).has_state()) {
+        it.printf(400, 310, id(font_body), BLK, TextAlign::CENTER,
+                  "%s", id(weather_state).state.c_str());
+      }
+
+      // Always stamp the render time. See the note at the top of this file.
+      it.strftime(400, 440, id(font_body), BLK, TextAlign::CENTER,
+                  "updated %H:%M", id(ha_time).now());
