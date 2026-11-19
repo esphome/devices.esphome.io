@@ -1,0 +1,101 @@
+captive_portal:
+
+interval:
+  - interval: 5s
+    then:
+      - script.execute: readCTs
+
+script:
+  - id: readCTs
+    then:
+      - component.update: ct1Amps
+      - delay: 300ms
+      - component.update: ct2Amps
+      - delay: 300ms
+      - component.update: ct3Amps
+      - delay: 300ms
+      - component.update: ct4Amps
+      - delay: 300ms
+
+sensor:
+  # Power (Watts) -- Amps x 240V (UK mains)
+  - platform: template
+    name: "CT1 Power"
+    id: ct1Watts
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: "return id(ct1Amps).state * 240;"
+
+  - platform: template
+    name: "CT2 Power"
+    id: ct2Watts
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: "return id(ct2Amps).state * 240;"
+
+  - platform: template
+    name: "CT3 Power"
+    id: ct3Watts
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: "return id(ct3Amps).state * 240;"
+
+  - platform: template
+    name: "CT4 Power"
+    id: ct4Watts
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: never
+    lambda: "return id(ct4Amps).state * 240;"
+
+  # Daily Energy (kWh) for HA Energy Dashboard
+  - platform: total_daily_energy
+    name: "CT1 Energy"
+    id: ct1Energy
+    power_id: ct1Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+
+  - platform: total_daily_energy
+    name: "CT2 Energy"
+    id: ct2Energy
+    power_id: ct2Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+
+  - platform: total_daily_energy
+    name: "CT3 Energy"
+    id: ct3Energy
+    power_id: ct3Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+
+  - platform: total_daily_energy
+    name: "CT4 Energy"
+    id: ct4Energy
+    power_id: ct4Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
