@@ -1,0 +1,50 @@
+esphome:
+  name: downlight-cb3s-rgbww
+  friendly_name: Tuya CB3S RGBWW Downlight
+
+bk72xx:
+  board: cb3s
+
+output:
+  - platform: libretiny_pwm
+    id: output_red
+    pin: P8
+  - platform: libretiny_pwm
+    id: output_green
+    pin: P24
+  - platform: libretiny_pwm
+    id: output_blue
+    pin: P26
+  - platform: libretiny_pwm
+    id: output_cold_white
+    pin: P7
+  - platform: libretiny_pwm
+    id: output_warm_white
+    pin: P6
+
+light:
+  - platform: rgbww
+    name: "Light"
+    id: light_rgbww
+    red: output_red
+    green: output_green
+    blue: output_blue
+    cold_white: output_cold_white
+    warm_white: output_warm_white
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    color_interlock: true
+
+binary_sensor:
+  - platform: gpio
+    id: touch_button
+    pin:
+      number: P14
+      mode: INPUT_PULLUP
+      inverted: true
+    on_click:
+      then:
+        - light.toggle: light_rgbww
+
+wifi:
+  ap:
