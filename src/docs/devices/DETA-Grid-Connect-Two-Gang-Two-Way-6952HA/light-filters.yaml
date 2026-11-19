@@ -1,0 +1,49 @@
+output:
+  # Filters
+  # Triggered when the "light" entity is turned on or off. Will only toggle
+  # the associated relay if the "light" entity is out of sync with the
+  # "activation status"; otherwise do nothing as the state is already correct.Z
+  - platform: template
+    type: binary
+    id: filter_1
+    write_action:
+      then:
+        - if:
+            condition:
+              - lambda: "return state != id(activation_status_1).state;"
+            then:
+              - switch.toggle: relay_1
+
+  - platform: template
+    type: binary
+    id: filter_2
+    write_action:
+      then:
+        - if:
+            condition:
+              - lambda: "return state != id(activation_status_2).state;"
+            then:
+              - switch.toggle: relay_2
+
+light:
+  - platform: binary
+    output: filter_1
+    id: light_1
+    name: "${light_1_name}"
+    icon: "${light_1_icon}"
+
+  - platform: binary
+    output: filter_2
+    id: light_2
+    name: "${light_2_name}"
+    icon: "${light_2_icon}"
+
+binary_sensor:
+  - id: !extend button_1
+    on_press:
+      then:
+        - light.toggle: light_1
+  - id: !extend button_2
+    on_press:
+      then:
+        - light.toggle: light_2

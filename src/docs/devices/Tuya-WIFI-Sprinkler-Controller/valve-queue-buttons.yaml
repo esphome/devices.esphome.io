@@ -1,0 +1,70 @@
+button:
+  - platform: template
+    name: "Queue valve 1"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 0
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 2"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 1
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 3"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 2
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 4"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 3
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 5"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 4
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 6"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 5
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 7"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 6
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Queue valve 8"
+    on_press:
+      - sprinkler.queue_valve:
+          id: lawn_sprinkler_ctrlr
+          valve_number: 7
+      - sprinkler.start_from_queue:
+          id: lawn_sprinkler_ctrlr
+  - platform: template
+    name: "Clear queue"
+    on_press:
+      - sprinkler.clear_queued_valves:
+          id: lawn_sprinkler_ctrlr
