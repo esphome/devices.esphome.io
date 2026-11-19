@@ -1,0 +1,10 @@
+switch:
+  - platform: gpio
+    pin: GPIO42
+    name: "Relay"
+    id: relay_switch
+
+interval:
+  - interval: 5s
+    then:
+      - switch.toggle: relay_switch

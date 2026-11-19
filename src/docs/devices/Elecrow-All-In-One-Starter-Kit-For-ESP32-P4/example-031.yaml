@@ -1,0 +1,13 @@
+sensor:
+  - platform: adc
+    pin: GPIO17
+    name: "Gas Level"
+    update_interval: 2s
+    attenuation: 11db
+    filters:
+      - sliding_window_moving_average:
+          window_size: 10
+    on_value_range:
+      - above: 2.0
+        then:
+          - logger.log: "Gas detected!"

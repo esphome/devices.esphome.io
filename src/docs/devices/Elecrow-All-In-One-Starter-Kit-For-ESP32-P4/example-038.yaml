@@ -1,0 +1,16 @@
+output:
+  - platform: gpio
+    pin: GPIO8
+    id: led_output
+
+switch:
+  - platform: output
+    name: "LED"
+    output: led_output
+
+interval:
+  - interval: 500ms
+    then:
+      - output.turn_on: led_output
+      - delay: 500ms
+      - output.turn_off: led_output

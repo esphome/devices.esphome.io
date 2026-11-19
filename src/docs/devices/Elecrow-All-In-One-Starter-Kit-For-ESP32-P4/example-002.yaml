@@ -1,0 +1,17 @@
+sensor:
+  - platform: ultrasonic
+    trigger_pin: GPIO13
+    echo_pin: GPIO12
+    name: "Distance"
+    update_interval: 1s
+    timeout: 3m
+    filters:
+      - filter_out: nan
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+    on_value:
+      then:
+        - logger.log:
+            format: "Distance: %.1f m"
+            args: ['x']

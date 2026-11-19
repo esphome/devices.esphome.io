@@ -1,0 +1,36 @@
+# configuration.yaml
+sensor:
+  - platform: template
+    sensors:
+      esp32_p4_temperature:
+        friendly_name: "Room Temperature"
+        unit_of_measurement: "°C"
+        value_template: "{{ states('sensor.temperature') }}"
+
+binary_sensor:
+  - platform: template
+    sensors:
+      esp32_p4_motion:
+        friendly_name: "Room Motion"
+        device_class: motion
+        value_template: "{{ is_state('binary_sensor.motion_detected', 'on') }}"
+
+automation:
+  - alias: "Motion Detected Alert"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.motion_detected
+        to: 'on'
+    action:
+      - service: notify.mobile_app
+        data:
+          message: "Motion detected in room"
+
+  - alias: "High Temperature Warning"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.temperature
+        above: 30
+    action:
+      - service: switch.turn_on
+        entity_id: switch.relay  # Turn on fan/ventilation
