@@ -1,0 +1,281 @@
+# BASICS
+esphome:
+  name: hama-wifi-power-strip-00176574
+  friendly_name: "Hama WiFi Power Strip 00176574"
+  min_version: 2026.8.0
+  project:
+    name: switch123456789.advanced_config
+    version: "2.0"
+esp8266:
+  board: esp01_1m
+  early_pin_init: false
+  restore_from_flash: true
+api:
+ota:
+  platform: esphome
+wifi:
+  ap:
+network:
+  enable_ipv6: true
+captive_portal:
+switch:
+
+# POWER SOCKET 1
+  - id: power_socket_1
+    name: "Power socket 1"
+    platform: gpio
+    pin: 5
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - switch.turn_on: mainswitch
+  - id: power_socket_1_state
+    platform: template
+    optimistic: True
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# POWER SOCKET 2
+  - id: power_socket_2
+    name: "Power socket 2"
+    platform: gpio
+    pin: 4
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - switch.turn_on: mainswitch
+  - id: power_socket_2_state
+    platform: template
+    optimistic: True
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# POWER SOCKET 3
+  - id: power_socket_3
+    name: "Power socket 3"
+    platform: gpio
+    pin: 12
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - switch.turn_on: mainswitch
+  - id: power_socket_3_state
+    platform: template
+    optimistic: True
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# POWER SOCKET 4
+  - id: power_socket_4
+    name: "Power socket 4"
+    platform: gpio
+    pin: 13
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - switch.turn_on: mainswitch
+  - id: power_socket_4_state
+    platform: template
+    optimistic: True
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# USB SOCKET
+  - id: usb_socket
+    name: "Power socket USB"
+    platform: gpio
+    pin: 14
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - switch.turn_on: mainswitch
+  - id: usb_socket_state
+    platform: template
+    optimistic: True
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# MAINSWITCH
+  - id: mainswitch
+    name: "Mainswitch"
+    platform: gpio
+    pin:
+      number: 1
+      inverted: true
+    on_turn_off:
+      - if:
+          condition:
+            switch.is_on: power_socket_1
+          then:
+            - switch.turn_on: power_socket_1_state
+          else:
+            - switch.turn_off: power_socket_1_state
+      - if:
+          condition:
+            switch.is_on: power_socket_2
+          then:
+            - switch.turn_on: power_socket_2_state
+          else:
+            - switch.turn_off: power_socket_2_state
+      - if:
+          condition:
+            switch.is_on: power_socket_3
+          then:
+            - switch.turn_on: power_socket_3_state
+          else:
+            - switch.turn_off: power_socket_3_state
+      - if:
+          condition:
+            switch.is_on: power_socket_4
+          then:
+            - switch.turn_on: power_socket_4_state
+          else:
+            - switch.turn_off: power_socket_4_state
+      - if:
+          condition:
+            switch.is_on: usb_socket
+          then:
+            - switch.turn_on: usb_socket_state
+          else:
+            - switch.turn_off: usb_socket_state
+      - switch.turn_off: power_socket_1
+      - switch.turn_off: power_socket_2
+      - switch.turn_off: power_socket_3
+      - switch.turn_off: power_socket_4
+      - switch.turn_off: usb_socket
+    on_turn_on:
+      - if:
+          condition:
+            - switch.is_off: power_socket_1
+            - switch.is_off: power_socket_2
+            - switch.is_off: power_socket_3
+            - switch.is_off: power_socket_4
+            - switch.is_off: usb_socket
+          then:
+            - if:
+                condition:
+                  switch.is_on: power_socket_1_state
+                then:
+                  - switch.turn_on: power_socket_1
+            - if:
+                condition:
+                  switch.is_on: power_socket_2_state
+                then:
+                  - switch.turn_on: power_socket_2
+            - if:
+                condition:
+                  switch.is_on: power_socket_3_state
+                then:
+                  - switch.turn_on: power_socket_3
+            - if:
+                condition:
+                  switch.is_on: power_socket_4_state
+                then:
+                  - switch.turn_on: power_socket_4
+            - if:
+                condition:
+                  switch.is_on: usb_socket_state
+                then:
+                  - switch.turn_on: usb_socket
+
+# BUTTON EVENT
+event:
+  - id: button
+    name: "Button"
+    platform: template
+    icon: "mdi:gesture-tap-button"
+    event_types:
+      - pressed_short
+      - pressed_long
+
+# BUTTON BEHAVIOR
+select:
+  - id: button_behavior
+    name: "Button behavior"
+    platform: template
+    entity_category: "config"
+    restore_value: true
+    initial_option: "Toggle mainswitch"
+    options:
+      - "Do nothing"
+      - "Toggle mainswitch"
+      - "Toggle power socket 1"
+      - "Toggle power socket 2"
+      - "Toggle power socket 3"
+      - "Toggle power socket 4"
+      - "Toggle USB socket"
+    optimistic: true
+
+# BUTTON
+binary_sensor:
+  - id: powerstrip_button
+    platform: gpio
+    pin:
+      number: 3
+      inverted: true
+    filters:
+      - delayed_off: 40ms
+    on_multi_click:
+      - timing:
+          - ON for at most 999ms
+        invalid_cooldown: 0ms
+        then:
+          - event.trigger:
+              id: button
+              event_type: pressed_short
+          - if:
+              condition:
+                not:
+                  select.is:
+                    id: button_behavior
+                    options: "Do nothing"
+              then:
+                - if:
+                    condition:
+                      select.is:
+                        id: button_behavior
+                        options: "Toggle mainswitch"
+                    then:
+                      - switch.toggle: mainswitch
+                    else:
+                      - if:
+                          condition:
+                            select.is:
+                              id: button_behavior
+                              options: "Toggle power socket 1"
+                          then:
+                            - switch.toggle: power_socket_1
+                          else:
+                            - if:
+                                condition:
+                                  select.is:
+                                    id: button_behavior
+                                    options: "Toggle power socket 2"
+                                then:
+                                  - switch.toggle: power_socket_2
+                                else:
+                                  - if:
+                                      condition:
+                                        select.is:
+                                          id: button_behavior
+                                          options: "Toggle power socket 3"
+                                      then:
+                                        - switch.toggle: power_socket_3
+                                      else:
+                                        - if:
+                                            condition:
+                                              select.is:
+                                                id: button_behavior
+                                                options: "Toggle power socket 4"
+                                            then:
+                                              - switch.toggle: power_socket_4
+                                            else:
+                                              - if:
+                                                  condition:
+                                                    select.is:
+                                                      id: button_behavior
+                                                      options: "Toggle USB socket"
+                                                  then:
+                                                    - switch.toggle: usb_socket
+      - timing:
+          - ON for at least 1000ms
+        invalid_cooldown: 0ms
+        then:
+          - event.trigger:
+              id: button
+              event_type: pressed_long
+          - switch.turn_on: power_socket_1
+          - switch.turn_on: power_socket_2
+          - switch.turn_on: power_socket_3
+          - switch.turn_on: power_socket_4
+          - switch.turn_on: usb_socket
