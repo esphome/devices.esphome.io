@@ -1,0 +1,13 @@
+# Add-on for config.yaml: a Home Assistant notification when the thermal cutoff trips. Needs `api:`.
+
+sensor:
+  - id: !extend temperature
+    on_value_range:
+      - above: ${max_temp}
+        then:
+          - homeassistant.service:
+              service: persistent_notification.create
+              data:
+                title: Message from ${device_name}
+              data_template:
+                message: Switch turned off because temperature exceeded ${max_temp}°C
