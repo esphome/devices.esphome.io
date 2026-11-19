@@ -525,17 +525,17 @@ sensor:
           if (Oil_Volume < 0) {
             Oil_Volume = 0;
           }
-          
+
           if (Oil_Volume > id(Max_Fill)) {
             Oil_Volume = id(Max_Fill);
           }
 
           if (isnan(id(Raw_Oil_Depth_in))){
             Oil_Volume = NAN;
-          } 
+          }
 
           id(Oil_Volume_Geo) = Oil_Volume;
-          
+
           static const char *const TAG = "Ultrasonic Output";
           ESP_LOGD(TAG,
                     "Results:\n"
