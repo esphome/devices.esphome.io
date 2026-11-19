@@ -219,12 +219,24 @@ sensor:
 
   - platform: adc
     pin: A0
-    name: "ADC Input"
-    id: ADC_Input
+    name: "ADC Input RAW"
+    id: ADC_Input_Raw
     accuracy_decimals: 3
     update_interval: 5s
     entity_category: "diagnostic"
     icon: mdi:current-dc
+
+  - platform: copy
+    source_id: ADC_Input_Raw
+    name: 'Battery Voltage'
+    id: BattV_sens
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 3
+    unit_of_measurement: 'V'
+    icon: mdi:current-dc
+    entity_category: ''
+
     filters:
       - lambda: |-
 
@@ -232,13 +244,33 @@ sensor:
           int R1 = 10.0;  // MOhm
           int R2 = 1.0;   // MOhm
 
+          if (id(TempSens_EN).state){
+            return NAN;
+          } else {
+            id(BattV) =  (x * (R1+R2))/R2;  // Battery Voltage
+            return id(BattV);
+          }
+
+  - platform: copy
+    source_id: ADC_Input_Raw
+    name: 'Temperature'
+    id: TempC_sens
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 3
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+    entity_category: ''
+
+    filters:
+      - lambda: |-
+
           float offset = -1.1;  // Temperature correction offset (degC)
 
           if (id(TempSens_EN).state){
             id(TempC) = (((x*1000.0)-500.0)/10.0) + offset;  // Temperature Sensor (degC)
             return id(TempC);
           } else {
-            id(BattV) =  (x * (R1+R2))/R2;  // Battery Voltage
             return id(TempC);
           }
 
@@ -304,11 +336,7 @@ sensor:
                   " BattV: %.4g V\n",
                   id(TempC), id(BattV));
 
-          if (id(TempSens_EN).state){
-            return id(TempC);
-          } else {
-            return id(BattV);
-          }
+          return id(TempC);
 
     on_value:
       then:
