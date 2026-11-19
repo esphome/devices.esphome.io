@@ -434,7 +434,10 @@ sensor:
           id(Oil_Depth_in) = x;  // inches
 
           // Calculate Rectangle and Arc Heights
-
+          
+          if (isnan(x)) {
+            return NAN;
+          }
           double Oil_Height = x;  // Inches
 
           const double tank_depth = id(Tank_Orientation) == 1 ? id(Tank_Height) : id(Tank_Width);
