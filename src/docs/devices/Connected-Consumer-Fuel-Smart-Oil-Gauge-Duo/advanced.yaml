@@ -1250,7 +1250,7 @@ sensor:
           if { (x > id(Max_Fill)) {
             x = id(Max_Fill);
           }
-          
+
           if (isnan(id(Raw_Oil_Depth).state)){
             return NAN;
           } else {
