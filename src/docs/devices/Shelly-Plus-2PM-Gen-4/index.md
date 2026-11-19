@@ -17,7 +17,7 @@ board: esp32
 | GPIO4  | NTC            |
 | GPIO5  | Switch 1 input |
 | GPIO6  | SDA            |
-| GPIO7  | SDL            |
+| GPIO7  | SCL            |
 | GPIO10 | Relay 2        |
 | GPIO11 | Relay 1        |
 | GPIO12 | Button         |
