@@ -339,6 +339,7 @@ sensor:
     disabled_by_default: false
     entity_category: "diagnostic"
     filters:
+      # - lambda: return NAN;
       - multiply: 100  # convert m to cm
       - median:
           window_size: 5
@@ -512,17 +513,7 @@ sensor:
 
           // Calculate Rectangle and Arc Heights
 
-          if (isnan(x)) {
-            return NAN;
-          }
           double Oil_Height = x;  // Inches
-
-          const double tank_depth = id(Tank_Orientation) == 1 ? id(Tank_Height) : id(Tank_Width);
-          if (Oil_Height < 0.0) {
-            Oil_Height = 0.0;
-          } else if (Oil_Height > tank_depth) {
-            Oil_Height = tank_depth;
-          }
 
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
@@ -1255,6 +1246,14 @@ sensor:
       - clamp:
           min_value: 0
           max_value: ${tank_size}
+
+      - lambda: |-
+          if (isnan(id(Raw_Oil_Depth).state)){
+            return NAN;
+          } else {
+            return x;
+          }
+
     on_value:
       then:
         - lambda: |-
