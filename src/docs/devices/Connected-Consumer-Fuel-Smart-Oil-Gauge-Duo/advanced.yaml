@@ -1243,11 +1243,14 @@ sensor:
     state_class: measurement
     accuracy_decimals: 4
     filters:
-      - clamp:
-          min_value: 0
-          max_value: ${tank_size}
-
       - lambda: |-
+          if (x < 0){
+            x = 0;
+          }
+          if { (x > id(Max_Fill)) {
+            x = id(Max_Fill);
+          }
+          
           if (isnan(id(Raw_Oil_Depth).state)){
             return NAN;
           } else {
