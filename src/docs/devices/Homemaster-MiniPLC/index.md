@@ -5,7 +5,7 @@ type: relay
 standard: global
 board: esp32
 project-url: https://github.com/isystemsautomation/homemaster-dev/tree/main/MiniPLC
-made-for-esphome: True
+made-for-esphome: true
 difficulty: 1
 ---
 
@@ -24,13 +24,13 @@ Product page: [home-master.eu/shop/esp32-miniplc-55](https://www.home-master.eu/
 
 Repository: [GitHub — isystemsautomation/homemaster-dev/MiniPLC](https://github.com/isystemsautomation/homemaster-dev/tree/main/MiniPLC)
 
-Schematics: [MiniPLC/Schematic](https://github.com/isystemsautomation/homemaster-dev/tree/main/MiniPLC/Schematic)
+Schematics: [MiniPLC/Schematics](https://github.com/isystemsautomation/homemaster-dev/tree/main/MiniPLC/Schematics)
 
 Datasheet: [MiniPLC_Datasheet.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/MiniPLC/Manuals/MiniPLC_Datasheet.pdf)
 
 User Manual: [User Manual.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/MiniPLC/Manuals/User%20Manual.pdf)
 
-Declaration of Conformity: [DoC-MiniPLC-V1.0.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/MiniPLC/Manuals/DoC-MiniPLC-V1.0.pdf)
+Declaration of Conformity: [DoC_MiniPLC.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/MiniPLC/Manuals/DoC_MiniPLC.pdf)
 
 ## Features
 
