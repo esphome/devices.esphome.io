@@ -1,0 +1,9 @@
+wifi:
+  ap:
+
+captive_portal:
+
+api:
+
+ota:
+  - platform: esphome
