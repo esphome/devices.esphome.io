@@ -7,6 +7,8 @@ board: esp32
 difficulty: 2
 ---
 
+![Seeed SenseCAP Watcher](seeed-sensecap-watcher.webp "Seeed SenseCAP Watcher")
+
 The SenseCAP Watcher is a palm-sized desk device from Seeed Studio with a 1.46 inch round touch display, a rotary
 wheel, a microphone and speaker, a camera with a separate AI chip, a battery and a microSD slot. It is built around an
 ESP32-S3 with 32 MB of flash and 8 MB of octal PSRAM. It ships with Seeed's own firmware, and flashing ESPHome over USB
