@@ -5,7 +5,7 @@ type: relay
 standard: global
 board: esp32
 project-url: https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway
-made-for-esphome: True
+made-for-esphome: true
 difficulty: 1
 ---
 
@@ -24,7 +24,7 @@ Product page: [home-master.eu/shop/opentherm-gateway-59](https://www.home-master
 
 Repository: [GitHub — isystemsautomation/homemaster-dev/OpenthermGateway](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway)
 
-Schematics: [OpenthermGateway/Schematic](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway/Schematic)
+Schematics: [OpenthermGateway/Schematics](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway/Schematics)
 
 Datasheet: [OpenTherm_Datasheet.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/OpenthermGateway/Manuals/OpenTherm_Datasheet.pdf)
 
