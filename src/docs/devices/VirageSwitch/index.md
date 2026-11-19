@@ -7,7 +7,7 @@ standard: us
 
 [Virage Laboratories](https://www.viragelabs.com)
 
-[KS-602H Switch](https://www.viragelabs.com/product/virageswitch/)![image](virage_labs_KS-602H.jpg)
+[KS-602H Switch](https://www.viragelabs.com/)![image](virage_labs_KS-602H.jpg)
 
 ## General Notes
 
