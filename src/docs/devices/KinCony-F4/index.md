@@ -21,11 +21,18 @@ Here is an example YAML configuration for the KinCony F4 ESP32-S3 relay board.
 esphome:
   name: f4
   friendly_name: f4
+  platformio_options:
+    board_build.flash_mode: dio
 
 esp32:
   board: esp32-s3-devkitc-1
+  flash_size: 16MB
   framework:
     type: arduino
+
+psram:
+  mode: octal
+  speed: 80MHz
 
 api:
 
