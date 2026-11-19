@@ -1,0 +1,55 @@
+esphome:
+  name: basic-r4
+  friendly_name: basic-r4
+
+esp32:
+  variant: esp32c3
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+logger:
+
+wifi:
+  ap:
+
+# Magic switch mode
+external_components:
+  - source:
+      type: git
+      url: https://github.com/ssieb/esphome_components
+    components: [magic_switch]
+    refresh: 1min
+
+magic_switch:
+  pin: 5
+  on_switch:
+    - switch.toggle: switch_1
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO9
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    id: button_1
+    on_press:
+      then:
+        - switch.toggle: switch_1
+
+switch:
+  - platform: gpio
+    name: Relay
+    id: switch_1
+    pin: GPIO4
+    restore_mode: ALWAYS_OFF
+
+status_led:
+  pin:
+    number: GPIO6
+    inverted: true
