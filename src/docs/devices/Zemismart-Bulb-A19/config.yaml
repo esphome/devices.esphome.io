@@ -1,0 +1,48 @@
+substitutions:
+  dev_name: zemismart_bulb_a19_001
+
+esphome:
+  name: ${dev_name}
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+switch:
+  - platform: shutdown
+    name: "${dev_name}_shutdown"
+  - platform: restart
+    name: "${dev_name}_restart"
+
+my9231:
+  data_pin: GPIO13
+  clock_pin: GPIO15
+  num_channels: 4
+  num_chips: 1
+
+output:
+  - platform: my9231
+    id: output_white
+    channel: 0
+  - platform: my9231
+    id: output_blue
+    channel: 1
+  - platform: my9231
+    id: output_green
+    channel: 2
+  - platform: my9231
+    id: output_red
+    channel: 3
+
+light:
+  - platform: rgbw
+    id: light_01
+    name: "${dev_name}_light"
+    default_transition_length: 0s
+    restore_mode: ALWAYS_ON #Start with light on after reboot/power-loss event, so that it works from a dumb lightswitch
+    red: output_red
+    green: output_green
+    blue: output_blue
+    white: output_white
