@@ -102,3 +102,21 @@ output:
     id: relayoutput
     pin: P20
 ```
+New version with 1.1
+has diffrent chip T1-U-HL / BK7238
+
+## GPIO Pinout
+
+| Pin    | Function        |
+| ------ | --------------- |
+| GPIO26 | Blue Status LED |
+| GPIO24 | Button          |
+| GPIO14 | S1 Input        |
+| GPIO23 | Relais          |
+
+## Configuration
+
+```yaml
+bk72xx:
+  board: generic-bk7238-tuya
+```
