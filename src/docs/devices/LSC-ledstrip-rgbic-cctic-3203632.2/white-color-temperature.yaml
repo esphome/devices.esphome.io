@@ -1,0 +1,56 @@
+# Optional: expose the white chips as a colour temperature light (2700-6500 K).
+# A cwww light drives two template outputs, which set the "White chips" partition
+# from config.yaml (blue = warm white, green = cold white).
+globals:
+  - id: cw_level
+    type: float
+    initial_value: "0.0"
+  - id: ww_level
+    type: float
+    initial_value: "0.0"
+
+output:
+  - platform: template
+    id: out_cold
+    type: float
+    write_action:
+      - lambda: |-
+          id(cw_level) = state;
+          id(apply_whites).execute();
+  - platform: template
+    id: out_warm
+    type: float
+    write_action:
+      - lambda: |-
+          id(ww_level) = state;
+          id(apply_whites).execute();
+
+script:
+  - id: apply_whites
+    mode: queued
+    max_runs: 4
+    then:
+      - lambda: |-
+          const float c = id(cw_level), w = id(ww_level);
+          const float m = std::max(c, w);
+          if (m <= 0.001f) {
+            auto call = id(whites_raw).turn_off();
+            call.set_transition_length(0);
+            call.perform();
+            return;
+          }
+          auto call = id(whites_raw).turn_on();
+          call.set_transition_length(0);
+          call.set_brightness(m);
+          call.set_rgb(0.0f, c / m, w / m);
+          call.perform();
+
+light:
+  - platform: cwww
+    id: whites
+    name: "White"
+    cold_white: out_cold
+    warm_white: out_warm
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: false
