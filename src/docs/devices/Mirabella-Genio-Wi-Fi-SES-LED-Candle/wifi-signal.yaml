@@ -1,0 +1,4 @@
+sensor:
+  - platform: wifi_signal
+    name: "Mirabella LED Candle WiFi Signal"
+    update_interval: 60s

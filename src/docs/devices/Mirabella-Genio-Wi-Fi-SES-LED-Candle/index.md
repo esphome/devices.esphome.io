@@ -8,7 +8,9 @@ board: esp8266
 
 ## General Notes
 
-This is for [Mirabella Genio Wi-Fi SES LED Candle](https://mirabellagenio.net.au/ses-led-candle).
+This page covers the Mirabella Genio Wi-Fi SES LED Candle.
+
+[Hardware reference for the I002745 candle](https://templates.blakadder.com/mirabella_genio_I002745.html).
 
 ![Genio Wi-Fi SES LED Candle](./mirabella-genio-wi-fi-ses-led-candle.jpg "Genio Wi-Fi SES LED Candle")
 
@@ -21,65 +23,30 @@ This is for [Mirabella Genio Wi-Fi SES LED Candle](https://mirabellagenio.net.au
 
 ## Basic Configuration
 
-```yaml
-# Basic Config
-# https://mirabellagenio.net.au/ses-led-candle
-esphome:
-  name: mirabella_1
-  on_boot:
-    priority: 100 # Highest priority, ensures light turns on without delay.
-    then:
-      - light.turn_on: light
+```yaml file=config.yaml
+```
 
-esp8266:
-  board: esp01_1m
-wifi:
-  ssid: "sid"
-  password: "wifi_password"
-  ap:
-    ssid: "mirabella1"
-    password: "ap_password"
-  domain: ".mydomain.com"
+## Optional features
 
-# Enable logging
-logger:
+Download the selected YAML files into the same directory and include them as local packages alongside `config.yaml`.
+Add your Wi-Fi credentials in your own configuration.
 
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret encryption_key
+Home Assistant API and OTA updates:
 
-ota:
-  password: "ota_password"
+```yaml file=home-assistant.yaml
+```
 
-web_server:
-  port: 80
+MQTT, using an example broker hostname to replace with your own:
 
-sensor:
-  - platform: wifi_signal
-    name: "Mirabella LED Candle WiFi Signal"
-    update_interval: 60s
+```yaml file=mqtt.yaml
+```
 
-mqtt:
-  broker: MQTT_SERVER_IP
-  discovery: false
+Turn the light on at boot:
 
-output:
-  - platform: esp8266_pwm
-    id: output_warm_white
-    pin: GPIO12
-  - platform: esp8266_pwm
-    id: output_daylight
-    pin: GPIO14
+```yaml file=turn-on-at-boot.yaml
+```
 
-light:
-  - platform: cwww
-    name: "LED Candle"
-    cold_white: output_daylight
-    warm_white: output_warm_white
-    cold_white_color_temperature: 6500 K
-    warm_white_color_temperature: 2700 K
+Wi-Fi signal sensor:
 
-    # Ensure the light turns on by default if the physical switch is actuated.
-    restore_mode: ALWAYS_ON
+```yaml file=wifi-signal.yaml
 ```
