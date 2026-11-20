@@ -15,86 +15,179 @@ It contains a Tuya CB2S Wi-Fi module based on the BK7231N microcontroller and su
 
 The original Tuya firmware configuration was examined to recover the GPIO assignments. The configuration has been tested on two fixtures running ESPHome.
 
-## GPIO assignments
+### Specifications
 
-| GPIO | Function |
+| Property | Value |
 | --- | --- |
-| P6 | Red |
-| P7 | Green |
-| P8 | Blue |
-| P24 | Cool white |
-| P26 | Warm white |
+| Manufacturer | B.K. Licht |
+| Model | LSB F03026B |
+| Device type | RGB+CCT ceiling light |
+| Operating voltage | 230V AC, 50Hz |
+| Rated power | 20W |
+| Advertised light output | 2100 lumens |
+| Wi-Fi module | Tuya CB2S |
+| Microcontroller | BK7231N |
+| ESPHome board | `cb2s` |
+| PWM frequency | 1000 Hz |
+| White LEDs | 22 warm-white and 22 cool-white |
+| RGB LEDs | 8 |
 
-The manufacturer's PWM frequency is 1000 Hz.
+### Manufacturer's label
 
-## ESPHome configuration
+![Manufacturer markings and device specifications](device-mark.jpg)
 
-```yaml file=config.yaml
+## Hardware
 
-esphome:
-  name: bk-licht-ceiling-light
-  friendly_name: B.K. Licht Ceiling Light
+### Internal components
 
-bk72xx:
-  board: cb2s
+![Internal view of the ceiling light](internal-top.jpg)
 
-logger:
-  baud_rate: 0
+The ceiling light contains an LED board, driver circuitry and a Tuya CB2S Wi-Fi module.
 
-wifi:
-  ap: {}
+The original firmware controls the five LED channels using PWM.
 
-output:
-  - platform: libretiny_pwm
-    id: red_output
-    pin: P6
-    frequency: 1000 Hz
+### CB2S Wi-Fi module
 
-  - platform: libretiny_pwm
-    id: green_output
-    pin: P7
-    frequency: 1000 Hz
+![Close-up of the Tuya CB2S module](closeup-wifi-board.jpg)
 
-  - platform: libretiny_pwm
-    id: blue_output
-    pin: P8
-    frequency: 1000 Hz
+The CB2S uses the BK7231N microcontroller and can be programmed through its UART interface.
 
-  - platform: libretiny_pwm
-    id: cool_white_output
-    pin: P24
-    frequency: 1000 Hz
+### GPIO assignments
 
-  - platform: libretiny_pwm
-    id: warm_white_output
-    pin: P26
-    frequency: 1000 Hz
+The following pin assignments were recovered from the original Tuya configuration and confirmed through functional testing.
 
-light:
-  - platform: rgbww
-    name: "Ceiling Light"
-    id: ceiling_light
-    red: red_output
-    green: green_output
-    blue: blue_output
-    cold_white: cool_white_output
-    warm_white: warm_white_output
-    cold_white_color_temperature: 6500 K
-    warm_white_color_temperature: 2700 K
-    color_interlock: true
-    constant_brightness: false
-    gamma_correct: 1.0
-    default_transition_length: 300ms
+| CB2S GPIO | Function |
+| --- | --- |
+| P6 | Red LEDs |
+| P7 | Green LEDs |
+| P8 | Blue LEDs |
+| P24 | Cool-white LEDs |
+| P26 | Warm-white LEDs |
+
+The original Tuya configuration specifies a PWM frequency of `1000 Hz`.
+
+## Flashing ESPHome
+
+**Warning: This is a 230V mains-powered device.**
+
+Disconnect the fixture completely from mains power before disassembly or soldering. Capacitors may retain a dangerous charge after disconnection.
+
+Do not assume that the CB2S circuit is isolated from mains. Before connecting a computer or USB-to-UART adapter, the electrical safety of the connection must be established. Never connect mains power and a USB serial adapter simultaneously.
+
+### 1. Locate the programming connections
+
+The following photograph shows the underside of the circuit board where the programming wires were soldered.
+
+![Underside of circuit board showing soldered programming connections](internal-bottom.jpg)
+
+The soldered wire colours are:
+
+| Wire colour | CB2S connection |
+| --- | --- |
+| Red | 3.3V VCC |
+| Black | GND |
+| Blue | RX |
+| White | TX |
+| Green | CEN |
+
+These wire colours describe the installation shown in the photograph, not a universal CB2S colour convention.
+
+### 2. Connect the USB-to-UART adapter
+
+Use a suitable 3.3V logic-level USB-to-UART adapter and an electrically safe, verified power arrangement.
+
+| CB2S wire | USB-to-UART connection |
+| --- | --- |
+| Red — 3.3V | 3.3V supply, only if safe and appropriate |
+| Black — GND | GND |
+| Blue — RX | Adapter TX |
+| White — TX | Adapter RX |
+| Green — CEN | Briefly connect to GND to reset the module |
+
+**Note:** TX and RX are crossed between the module and adapter.
+
+Do not connect 5V to the CB2S 3.3V supply pin.
+
+### 3. Back up the original firmware
+
+It is recommended to read and preserve the stock firmware before flashing ESPHome.
+
+The BK7231N has 2 MiB of flash memory.
+
+The original firmware was successfully backed up with `ltchiptool` on Linux. During testing, some larger reads encountered serial communication errors, so the firmware was read in smaller 64 KiB sections.
+
+An example read command is:
+
+```bash
+ltchiptool flash read bk7231n original-part-00.bin \
+  -d /dev/ttyUSB0 \
+  -B 115200 \
+  -b 57600 \
+  -s 0x000000 \
+  -l 0x10000
 ```
 
-## Flashing
+The serial port may differ depending on the computer and USB adapter.
 
-The CB2S module can be flashed using a 3.3V USB-to-UART adapter and ltchiptool. Connect TX to RX1, RX to TX1, and GND to GND; use CEN to reset the module into the serial bootloader. Confirm the safe power arrangements for the board before connecting 3.3V.
+Stock firmware backups may contain device-specific credentials and should not be published.
 
-Back up the original firmware before flashing. Select BK7231N-compatible ESPHome firmware.
+### 4. Compile ESPHome firmware
 
-**Electrical safety:** This is a 230V mains-powered fixture. Disconnect it from mains and ensure stored charge is discharged before working on the electronics. Do not connect mains power and a USB serial adapter simultaneously. The low-voltage circuitry must not be assumed electrically isolated.
+Create an ESPHome configuration using the `cb2s` board and the five PWM GPIO assignments.
 
-## Notes
+The following configuration was tested on two fixtures:
 
-Using `gamma_correct: 1.0` improves low-brightness dimming and smooth warm/cool transitions. Stock Tuya and ESPHome brightness curves may differ.
+```yaml file=config.yaml
+```
+
+For the initial serial installation, compile and download BK7231N-compatible `.uf2` firmware.
+
+### 5. Flash using ltchiptool
+
+Using the downloaded firmware file, run:
+
+```bash
+ltchiptool flash write kitchen-light-firmware.uf2 \
+  -d /dev/ttyUSB0 \
+  -B 115200 \
+  -b 57600
+```
+
+Replace `kitchen-light-firmware.uf2` with the actual firmware filename.
+
+When the tool is attempting to establish communication, briefly connect the CB2S `CEN` connection to GND and release it to reset the module.
+
+Wait for the flashing tool to report successful completion.
+
+After programming, disconnect the serial adapter. Reassemble the fixture with the driver electronics and mains terminals safely enclosed before restoring mains power.
+
+## ESPHome behaviour and calibration
+
+The five LED channels work with ESPHome's `rgbww` light platform.
+
+During testing, the default ESPHome gamma correction caused the LEDs to stop illuminating at low brightness settings.
+
+Changing the light configuration to:
+
+```yaml inline
+gamma_correct: 1.0
+```
+
+allowed the LEDs to remain illuminated at 1% brightness and improved smooth transitions between warm-white and cool-white settings.
+
+The following settings were also tested:
+
+```yaml inline
+constant_brightness: false
+default_transition_length: 300ms
+```
+
+The exact dimming curve may differ from the original Tuya firmware. The stock firmware can appear brighter at equivalent percentage settings, so additional calibration may be desirable.
+
+## Additional notes
+
+- The RGB and white channels use separate PWM outputs.
+- `logger: baud_rate: 0` was used during testing to disable UART logging.
+- ESPHome firmware was successfully installed on two identical CB2S-based fixtures.
+- This conversion requires access to the internal circuit board and soldering to programming connections.
+- The 230V LED driver must be treated as potentially hazardous even when disconnected from mains.
