@@ -74,12 +74,21 @@ sound module adds motion-synced audio.
 ```yaml file=config.yaml
 ```
 
-For the full configuration with all board variants, drives, and add-ons:
+For the full configuration with all board variants, drives, and add-ons,
+pick the main file for your board (upstream split the old single `main.yaml`
+into one main per board):
 
-```yaml url=https://github.com/CodeMakesItGo/NeatoFx_Public/blob/main/Controllers/NeatoMotor/main.yaml
+12V board (Rev 3.3, or the original Rev 3.0):
+
+```yaml url=https://github.com/CodeMakesItGo/NeatoFx_Public/blob/main/Controllers/NeatoMotor/main_12v.yaml
 ```
 
-### Board variants (select one in `main.yaml`)
+24V board (Rev 4.3, with CAN):
+
+```yaml url=https://github.com/CodeMakesItGo/NeatoFx_Public/blob/main/Controllers/NeatoMotor/main_24v.yaml
+```
+
+### Board variants (select one in `main_12v.yaml` or `main_24v.yaml`)
 
 | Package | Behavior |
 |---------|----------|
