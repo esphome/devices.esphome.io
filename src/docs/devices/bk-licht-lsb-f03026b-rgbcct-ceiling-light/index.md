@@ -167,27 +167,18 @@ The five LED channels work with ESPHome's `rgbww` light platform.
 
 During testing, the default ESPHome gamma correction caused the LEDs to stop illuminating at low brightness settings.
 
-Changing the light configuration to:
+Setting `gamma_correct` to `1.0` allowed the LEDs to remain illuminated at 1% brightness and improved smooth transitions between warm-white and cool-white settings.
 
-```yaml inline
-gamma_correct: 1.0
-```
+The configuration also uses `constant_brightness: false` to allow both white channels to contribute to the overall output, and `default_transition_length: 300ms` to smooth brightness and colour-temperature changes.
 
-allowed the LEDs to remain illuminated at 1% brightness and improved smooth transitions between warm-white and cool-white settings.
+These settings are included in the tested `config.yaml` configuration referenced above.
 
-The following settings were also tested:
-
-```yaml inline
-constant_brightness: false
-default_transition_length: 300ms
-```
-
-The exact dimming curve may differ from the original Tuya firmware. The stock firmware can appear brighter at equivalent percentage settings, so additional calibration may be desirable.
+The exact dimming curve may differ from the original Tuya firmware. During testing, the stock firmware appeared brighter at equivalent percentage settings, so additional brightness calibration may be desirable.
 
 ## Additional notes
 
-- The RGB and white channels use separate PWM outputs.
+- The RGB and white channels use separate PWM outputs at 1000 Hz.
 - `logger: baud_rate: 0` was used during testing to disable UART logging.
-- ESPHome firmware was successfully installed on two identical CB2S-based fixtures.
-- This conversion requires access to the internal circuit board and soldering to programming connections.
-- The 230V LED driver must be treated as potentially hazardous even when disconnected from mains.
+- ESPHome firmware was successfully installed and tested on two identical CB2S-based fixtures.
+- This conversion requires access to the internal circuit board and soldering to the programming connections.
+- The 230V LED driver must be treated as potentially hazardous even after disconnection from mains power, due to possible stored charge.
