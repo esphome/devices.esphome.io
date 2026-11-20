@@ -2,8 +2,9 @@ name: Request Copilot review
 
 # Requests a Copilot code review on ready pull requests, again after each push.
 # Token, seat and Triage details: esphome/workflows request-copilot-review.yml.
-# Changes made with a bot token fire no PR event, so made-for-esphome-pr.yml and
-# merge-conflicts.yml request those via .github/scripts/request-copilot-review.cjs.
+# Promotions mark drafts ready with GITHUB_TOKEN, whose events start no workflow,
+# so made-for-esphome-pr.yml and merge-conflicts.yml request those through
+# .github/scripts/request-copilot-review.cjs.
 
 on:
   workflow_run:
@@ -22,8 +23,8 @@ permissions: {}
 jobs:
   request:
     name: Request Copilot review
-    # 2026.11.1
-    uses: esphome/workflows/.github/workflows/request-copilot-review.yml@7f0b0f230ba1b9fa1361e699b3a2043c92f0d3f3
+    # yamllint disable-line rule:line-length
+    uses: esphome/workflows/.github/workflows/request-copilot-review.yml@7f0b0f230ba1b9fa1361e699b3a2043c92f0d3f3  # 2026.11.1
     permissions:
       contents: read  # the shared workflow checks out its own script
       pull-requests: read  # the shared workflow lists open pull requests
