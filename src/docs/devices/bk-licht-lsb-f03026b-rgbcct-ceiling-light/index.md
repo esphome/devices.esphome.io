@@ -11,9 +11,12 @@ difficulty: 4
 
 The B.K. Licht LSB F03026B is a 20W RGB+CCT smart ceiling light originally controlled by Tuya firmware.
 
-It contains a Tuya CB2S Wi-Fi module based on the BK7231N microcontroller and supports independently controlled red, green, blue, warm-white and cool-white LED channels.
+It contains a Tuya CB2S Wi-Fi module based on the BK7231N microcontroller
+and supports independently controlled red, green, blue, warm-white and cool-white
+LED channels.
 
-The original Tuya firmware configuration was examined to recover the GPIO assignments. The configuration has been tested on two fixtures running ESPHome.
+The original Tuya firmware configuration was examined to recover the GPIO assignments.
+The configuration has been tested on two fixtures running ESPHome.
 
 ### Specifications
 
@@ -70,9 +73,12 @@ The original Tuya configuration specifies a PWM frequency of `1000 Hz`.
 
 **Warning: This is a 230V mains-powered device.**
 
-Disconnect the fixture completely from mains power before disassembly or soldering. Capacitors may retain a dangerous charge after disconnection.
+Disconnect the fixture completely from mains power before disassembly or soldering.
+Capacitors may retain a dangerous charge after disconnection.
 
-Do not assume that the CB2S circuit is isolated from mains. Before connecting a computer or USB-to-UART adapter, the electrical safety of the connection must be established. Never connect mains power and a USB serial adapter simultaneously.
+Do not assume that the CB2S circuit is isolated from mains. Before connecting a
+computer or USB-to-UART adapter, the electrical safety of the connection must
+be established. Never connect mains power and a USB serial adapter simultaneously.
 
 ### 1. Locate the programming connections
 
@@ -114,7 +120,9 @@ It is recommended to read and preserve the stock firmware before flashing ESPHom
 
 The BK7231N has 2 MiB of flash memory.
 
-The original firmware was successfully backed up with `ltchiptool` on Linux. During testing, some larger reads encountered serial communication errors, so the firmware was read in smaller 64 KiB sections.
+The original firmware was successfully backed up with `ltchiptool`
+on Linux. During testing, some larger reads encountered serial
+communication errors, so the firmware was read in smaller 64 KiB sections.
 
 An example read command is:
 
@@ -155,11 +163,13 @@ ltchiptool flash write kitchen-light-firmware.uf2 \
 
 Replace `kitchen-light-firmware.uf2` with the actual firmware filename.
 
-When the tool is attempting to establish communication, briefly connect the CB2S `CEN` connection to GND and release it to reset the module.
+When the tool is attempting to establish communication, briefly connect the
+CB2S `CEN` connection to GND and release it to reset the module.
 
 Wait for the flashing tool to report successful completion.
 
-After programming, disconnect the serial adapter. Reassemble the fixture with the driver electronics and mains terminals safely enclosed before restoring mains power.
+After programming, disconnect the serial adapter. Reassemble the fixture with the driver
+electronics and mains terminals safely enclosed before restoring mains power.
 
 ## ESPHome behaviour and calibration
 
@@ -167,13 +177,18 @@ The five LED channels work with ESPHome's `rgbww` light platform.
 
 During testing, the default ESPHome gamma correction caused the LEDs to stop illuminating at low brightness settings.
 
-Setting `gamma_correct` to `1.0` allowed the LEDs to remain illuminated at 1% brightness and improved smooth transitions between warm-white and cool-white settings.
+Setting `gamma_correct` to `1.0` allowed the LEDs to remain illuminated at 1% brightness
+and improved smooth transitions between warm-white and cool-white settings.
 
-The configuration also uses `constant_brightness: false` to allow both white channels to contribute to the overall output, and `default_transition_length: 300ms` to smooth brightness and colour-temperature changes.
+The configuration also uses `constant_brightness: false` to allow both white channels to
+contribute to the overall output, and `default_transition_length: 300ms`
+to smooth brightness and colour-temperature changes.
 
 These settings are included in the tested `config.yaml` configuration referenced above.
 
-The exact dimming curve may differ from the original Tuya firmware. During testing, the stock firmware appeared brighter at equivalent percentage settings, so additional brightness calibration may be desirable.
+The exact dimming curve may differ from the original Tuya firmware. During testing,
+the stock firmware appeared brighter at equivalent percentage settings,
+so additional brightness calibration may be desirable.
 
 ## Additional notes
 
@@ -181,4 +196,5 @@ The exact dimming curve may differ from the original Tuya firmware. During testi
 - `logger: baud_rate: 0` was used during testing to disable UART logging.
 - ESPHome firmware was successfully installed and tested on two identical CB2S-based fixtures.
 - This conversion requires access to the internal circuit board and soldering to the programming connections.
-- The 230V LED driver must be treated as potentially hazardous even after disconnection from mains power, due to possible stored charge.
+- The 230V LED driver must be treated as potentially hazardous even after disconnection from
+  mains power, due to possible stored charge.
