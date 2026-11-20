@@ -37,13 +37,13 @@ The configuration has been tested on two fixtures running ESPHome.
 
 ### Manufacturer's label
 
-![Manufacturer markings and device specifications](device-mark.jpg)
+![Manufacturer markings and device specifications](device-mark.jpg "Manufacturer label")
 
 ## Hardware
 
 ### Internal components
 
-![Internal view of the ceiling light](internal-top.jpg)
+![Internal view of the ceiling light](internal-top.jpg "Internal components")
 
 The ceiling light contains an LED board, driver circuitry and a Tuya CB2S Wi-Fi module.
 
@@ -51,7 +51,7 @@ The original firmware controls the five LED channels using PWM.
 
 ### CB2S Wi-Fi module
 
-![Close-up of the Tuya CB2S module](closeup-wifi-board.jpg)
+![Close-up of the Tuya CB2S module](closeup-wifi-board.jpg "CB2S Wi-Fi module")
 
 The CB2S uses the BK7231N microcontroller and can be programmed through its UART interface.
 
@@ -84,7 +84,7 @@ be established. Never connect mains power and a USB serial adapter simultaneousl
 
 The following photograph shows the underside of the circuit board where the programming wires were soldered.
 
-![Underside of circuit board showing soldered programming connections](internal-bottom.jpg)
+![PCB underside showing soldered programming connections](internal-bottom.jpg "UART solder points")
 
 The soldered wire colours are:
 
@@ -198,3 +198,11 @@ so additional brightness calibration may be desirable.
 - This conversion requires access to the internal circuit board and soldering to the programming connections.
 - The 230V LED driver must be treated as potentially hazardous even after disconnection from
   mains power, due to possible stored charge.
+
+## Reference links
+
+- [B.K. Licht manufacturer](https://www.bk-licht.eu/) (manufacturer reference; not a model-specific listing).
+- [Tuya CB2S module datasheet](https://developer.tuya.com/en/docs/Document/cb2s-module-datasheet?id=Kamwxuk0z7j9x).
+- [LibreTiny CB2S board reference](https://docs.libretiny.eu/boards/cb2s/).
+- [LibreTiny ESPHome flashing guide](https://docs.libretiny.eu/docs/flashing/esphome/).
+- [ltchiptool documentation](https://docs.libretiny.eu/docs/flashing/tools/ltchiptool/).
