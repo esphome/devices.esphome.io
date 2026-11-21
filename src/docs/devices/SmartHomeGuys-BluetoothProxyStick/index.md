@@ -19,7 +19,7 @@ against the wall instead of sticking outward.
 
 We designed these to look good, be as small as possible and blend in with your home.
 
-![Bluetooth Proxy Stick All Models](Bluetooth-Proxy-Stick-All-Models.jpg "Bluetooth Proxy Stick All Models")
+![Bluetooth Proxy Stick All Models](Bluetooth-Proxy-Stick-All-Models2.jpg "Bluetooth Proxy Stick All Models")
 ![Bluetooth Proxy Stick in xbox](Bluetooth-proxy-straight-xbox.jpg "Bluetooth Proxy Stick in xbox")
 ![Bluetooth Proxy Stick angled in wall socket](Bluetooth-Proxy-In-Wall-Socket.jpg "Bluetooth Proxy Stick Angled in Wall Socket")
 
@@ -30,6 +30,6 @@ We designed these to look good, be as small as possible and blend in with your h
 
 ## Support
 
-- [Shop](https://www.ebay.co.uk/itm/227206771185)
+- [Shop](https://smarthomeguys.uk/products/bluetooth-proxy-stick-for-home-assistant)
 - [Official Documentation](https://smarthomeguys.github.io/Bluetooth-Proxy/)
 - [GitHub](https://github.com/SmartHomeGuys/Bluetooth-Proxy)
