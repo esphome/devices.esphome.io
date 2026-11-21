@@ -1,0 +1,114 @@
+# --- Media player ---
+# The media player is the only component that drives the speaker. Voice
+# assistant replies go through it too (voice_assistant.media_player below).
+# Replies and Home Assistant announcements share one announcement pipeline and
+# do NOT queue: ESPHome starts a new announcement immediately and drops the
+# one that is playing. What this config does is keep the wake word, and so
+# new voice requests, off while something is playing (below), so the device
+# itself never starts a request on top of an announcement.
+media_player:
+  - platform: speaker
+    id: audio_player
+    name: "Audio Player"
+    announcement_pipeline:
+      speaker: spkr
+    on_announcement:
+      # Microphone and speaker share one I2S bus: free it for playback.
+      - micro_wake_word.stop:
+      - delay: 500ms
+      - wait_until:
+          not:
+            media_player.is_announcing:
+      - delay: 500ms
+      # During a voice assistant turn, on_end restarts the wake word instead.
+      - script.execute: restart_wake_word
+
+# --- Wake word + voice assistant ---
+# Every delayed wake word restart below ends here. The handlers wait, but
+# something else can start in the meantime (an announcement that arrives while
+# one is still settling, a new assistant turn), and the microphone must not
+# take the shared I2S bus back while the speaker is being used. So the idle
+# check runs again at the moment of the restart, not only before the wait.
+script:
+  - id: restart_wake_word
+    then:
+      - if:
+          condition:
+            and:
+              - not:
+                  voice_assistant.is_running:
+              - not:
+                  media_player.is_announcing:
+              - not:
+                  speaker.is_playing:
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - micro_wake_word.start:
+
+micro_wake_word:
+  id: mww
+  microphone: mic
+  vad:
+    model: github://esphome/micro-wake-word-models/models/v2/vad.json
+  models:
+    - okay_nabu
+  on_wake_word_detected:
+    # A detection already in flight when an announcement starts must not
+    # start a reply that would replace the announcement.
+    - if:
+        condition:
+          not:
+            media_player.is_announcing:
+        then:
+          - voice_assistant.start:
+              wake_word: !lambda return wake_word;
+        else:
+          - script.execute: restart_wake_word
+
+voice_assistant:
+  id: va
+  microphone: mic
+  media_player: audio_player
+  micro_wake_word: mww
+  use_wake_word: false
+  noise_suppression_level: 2
+  volume_multiplier: 2.0
+
+  on_client_connected:
+    - delay: 2s
+    - script.execute: restart_wake_word
+
+  # on_end fires when the pipeline ends, which can be before the reply has
+  # played. The voice assistant keeps running until its own reply finishes
+  # (or right away when there is no spoken reply), so wait for that, then for
+  # any announcement queued behind it, before handing the bus back to the mic.
+  # Up to ESPHome 2026.10.x, a RUN_END with no spoken reply that arrives while
+  # the microphone is still stopping can leave the assistant running, so the
+  # wake word does not come back. esphome/esphome#21380 fixes that in
+  # 2026.11.0.
+  on_end:
+    - light.turn_off: rgb_ring
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - wait_until:
+        and:
+          - not:
+              media_player.is_announcing:
+          - not:
+              speaker.is_playing:
+    - delay: 500ms
+    - script.execute: restart_wake_word
+
+  on_error:
+    - wait_until:
+        not:
+          voice_assistant.is_running:
+    - wait_until:
+        and:
+          - not:
+              media_player.is_announcing:
+          - not:
+              speaker.is_playing:
+    - delay: 500ms
+    - script.execute: restart_wake_word
