@@ -19,7 +19,7 @@ It is connected using the UART feature to UART1.
 
 [BL0942 Datasheet](https://www.belling.com.cn/media/file_object/bel_product/BL0942/datasheet/BL0942_V1.06_en.pdf)
 
-[BL0942 Application](https://support.tuya.com/help/_detail/Kd2fly62orx3p)
+[BL0942 Application](https://www.belling.com.cn/media/file_object/bel_product/BL0942/guide/BL0942%20APP%20Note_V1.04_cn.pdf)
 
 [BL0942 ESPHome](https://esphome.io/components/sensor/bl0942/)
 
