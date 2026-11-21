@@ -18,8 +18,9 @@ Model Reference: AWP02L2
 
 Manufacturer: [Avatar](https://www.avatarcontrols.com/)
 
-The [Avatar Smart Mini WiFi Plug](https://shop.avatarcontrols.com/smart-mini-wifi-plug.html) is available at
+The Avatar Smart Mini WiFi Plug is available at
 [Amazon.com](https://www.amazon.com/dp/B08ZN5J2XR). The product is sold under the Round Arc style.
+See the [user manual for the Avatar Smart Plug (AWP02L)](https://manuals.plus/asin/B08H1V6N6D).
 
 This plug can be converted using [tuya-convert to flash ESPHome](/devices/tuya-convert) (as of January 2022).
 
