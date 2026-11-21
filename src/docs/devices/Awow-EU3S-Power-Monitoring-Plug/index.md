@@ -15,7 +15,7 @@ Model reference: EU3S
 - Maxus Brio Head 16A Power Monitoring Plug (BRIO-W-HEAD16)
 - iQtech SmartLife Power Monitoring Plug (WS020)
 
-Manufacturer: [Awow](https://www.awow-tech.com/)
+Manufacturer: Awow
 
 ## GPIO Pinout
 
