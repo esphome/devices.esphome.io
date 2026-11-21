@@ -1,0 +1,222 @@
+esphome:
+  name: sonoff-th-elite
+  name_add_mac_suffix: true
+  friendly_name: "Sonoff TH Elite"
+  # Supply the external temperature/humidity sensor with 3V power by pulling this GPIO high.
+  on_boot:
+    - then:
+        - switch.turn_on: sensor_power
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+globals:
+  # Stores the current auto mode setting so it can be restored via the physical button.
+  - id: last_auto_mode
+    type: std::string
+    restore_value: true
+    initial_value: '"HEAT"'
+
+logger:
+
+# Uncomment to enable the API secured by an automatically generated encryption key.
+# api:
+#   encryption:
+
+# Uncomment the two lines below to enable OTA updates.
+# Define a secret and uncomment the third line to secure the OTA flashing functionality with a password.
+# ota:
+#   - platform: esphome
+#     password: !secret ota_update_password
+
+wifi:
+  # You may try increasing transmit power if signal between the relay and your router is weak.
+  # 20.5dBm is the maximum allowed value, but it might cause unexpected restarts, according to the docs.
+  # Restarts have not been observed on THR316D though.
+  # Default value is 20dBm.
+  # output_power: 20.5dBm
+  ap:
+  on_connect:
+    - light.turn_on: wifi_led
+  on_disconnect:
+    - light.turn_off: wifi_led
+
+# The captive portal component in ESPHome is a fallback mechanism for when connecting to the configured WiFi fails.
+# It starts the hotspot if attempts to connect to the configured Wi-Fi fail for 1 minute.
+# captive_portal:
+
+display:
+  - platform: tm1621
+    id: device_display
+    cs_pin:
+      number: GPIO17
+    data_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    read_pin:
+      number: GPIO23
+    write_pin:
+      number: GPIO18
+    update_interval: 1s
+    lambda: |-
+      it.printf(0, "%.1f", id(sensor_temperature).state);
+      it.display_celsius(true);
+      it.printf(1, "%.1f", id(sensor_humidity).state);
+      it.display_humidity(true);
+
+binary_sensor:
+  # Single main button that also puts device into flash mode when held on boot.
+  # This setup intends to emulate what the button does in the original firmware.
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: true
+      ignore_strapping_warning: true
+    name: Button
+    on_click:
+      then:
+        - switch.toggle: relay
+    on_double_click:
+      then:
+        - if:
+            condition:
+              lambda: return id(auto_mode).mode == CLIMATE_MODE_OFF;
+            then:
+              - if:
+                  condition:
+                    lambda: return id(last_auto_mode) == "HEAT";
+                  then:
+                    - climate.control:
+                        id: auto_mode
+                        mode: "HEAT"
+                  else:
+                    - climate.control:
+                        id: auto_mode
+                        mode: "COOL"
+            else:
+              - climate.control:
+                  id: auto_mode
+                  mode: "OFF"
+  - platform: status
+    id: device_status
+    name: Status
+    disabled_by_default: true
+
+light:
+  - platform: status_led
+    id: switch_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO16
+  - platform: status_led
+    id: wifi_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO15
+      ignore_strapping_warning: true
+  - platform: status_led
+    id: auto_mode_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO13
+
+sensor:
+  - platform: wifi_signal
+    name: Wi-Fi RSSI
+    id: sensor_wifi_rssi
+    disabled_by_default: true
+  - platform: copy
+    source_id: sensor_wifi_rssi
+    name: Wi-Fi Signal Strength
+    id: sensor_wifi_percent
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: diagnostic
+    disabled_by_default: true
+  - platform: uptime
+    name: Uptime Seconds
+    id: sensor_uptime
+    disabled_by_default: true
+  # This assumes a Sonoff THS01 Temperature and Humidity sensor is used.
+  - platform: dht
+    pin: GPIO25
+    model: SI7021
+    temperature:
+      name: Temperature
+      id: sensor_temperature
+    humidity:
+      name: Humidity
+      id: sensor_humidity
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+      disabled_by_default: true
+
+switch:
+  - platform: gpio
+    name: Relay
+    id: relay
+    pin: GPIO21
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - light.turn_on: switch_led
+    on_turn_off:
+      - light.turn_off: switch_led
+  - platform: gpio
+    name: Sensor Power
+    id: sensor_power
+    pin: GPIO27
+    restore_mode: ALWAYS_ON
+    internal: true
+
+climate:
+  # You could define one or more presets for auto_mode, which could then be easily switched to from the front-end.
+  # With only two inputs (mode and temperature) and one output (relay on/off), this doesn't seem very useful though.
+  # Read the docs for the Thermostat Climate Controller component for more info.
+  - platform: thermostat
+    name: Auto Mode
+    id: auto_mode
+    sensor: sensor_temperature
+    humidity_sensor: sensor_humidity
+    min_idle_time: 30s
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    min_cooling_off_time: 30s
+    min_cooling_run_time: 30s
+    heat_action:
+      - switch.turn_on: relay
+    cool_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+    on_state:
+      - if:
+          condition:
+            lambda: return id(auto_mode).mode == CLIMATE_MODE_OFF;
+          then:
+            - light.turn_off: auto_mode_led
+          else:
+            - light.turn_on: auto_mode_led
+            - lambda: |-
+                if (x.mode == CLIMATE_MODE_HEAT && id(last_auto_mode) != "HEAT") {
+                  id(last_auto_mode) = "HEAT";
+                } else if (x.mode == CLIMATE_MODE_COOL && id(last_auto_mode) != "COOL") {
+                  id (last_auto_mode) = "COOL";
+                }
+    # How many degrees can we go under the temp before starting to heat.
+    heat_deadband: 0.5
+    # How many degrees can we go over the temp before stopping.
+    heat_overrun: 0.5
+    visual:
+      # These two values are the device operating temperatures specified in its manual.
+      min_temperature: "-10°C"
+      max_temperature: 40°C
