@@ -9,8 +9,8 @@ board: esp8266
 
 ## General Notes
 
-This is for
-[Mirabella Genio Door & Window Sensor](https://www.mirabellagenio.com.au/product-range/mirabella-genio-wi-fi-door-and-window-sensor/).
+This is for the Mirabella Genio Door & Window Sensor
+([user manual](https://manuals.plus/genio/hkwl-dws02w-door-window-sensor-manual)).
 
 The file [sb1_uart.h](https://github.com/brandond/esphome-tuya_pir/blob/master/sb1_uart.h) must be added to your Home
 Assistant /config/esphome directory for a succesful compile.
@@ -23,7 +23,6 @@ Credit to [Brandon D](https://github.com/brandond) for the file and esphome conf
 
 ```yaml
 # Basic Config
-# https://mirabellagenio.net.au/door-%26-window-sensor
 esphome:
   name: mirabella_genio_door_window_sensor
   arduino_version: 2.5.1
