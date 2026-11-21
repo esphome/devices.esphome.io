@@ -1,0 +1,194 @@
+esphome:
+  name: sonoff-th-elite
+  name_add_mac_suffix: true
+  friendly_name: "Sonoff TH Elite"
+  # Supply the external temperature/humidity sensor with 3V power by pulling this GPIO high.
+  on_boot:
+    - switch.turn_on: sensor_power
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+logger:
+
+# Uncomment to enable the API secured by an automatically generated encryption key.
+# api:
+#   encryption:
+
+# Define the secret and uncomment to enable OTA updates.
+# ota:
+#   - platform: esphome
+#     password: !secret ota_update_password
+
+wifi:
+  ap:
+  on_connect:
+    - delay: 500ms
+    - light.turn_on: wifi_led
+  on_disconnect:
+    - delay: 500ms
+    - light.turn_off: wifi_led
+
+# Web server is optional.
+# web_server:
+
+# Uncomment to enable captive portal so you can connect the device to your Wi-Fi later.
+# captive_portal:
+
+display:
+  - platform: tm1621
+    id: device_display
+    cs_pin:
+      number: GPIO17
+    data_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    read_pin:
+      number: GPIO23
+    write_pin:
+      number: GPIO18
+    update_interval: 1s
+    lambda: |-
+      it.printf(0, "%.1f", id(sensor_temperature).state);
+      it.display_celsius(true);
+      it.printf(1, "%.1f", id(sensor_humidity).state);
+      it.display_humidity(true);
+
+binary_sensor:
+  # Single main button that also puts device into flash mode when held on boot.
+  # This setup intends to emulate what the button does in the original firmware.
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+      ignore_strapping_warning: true
+    name: Button
+    on_click:
+      then:
+        - switch.toggle: relay
+    on_double_click:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(auto_mode).mode == CLIMATE_MODE_OFF;
+            then:
+              - climate.control:
+                  id: auto_mode
+                  mode: HEAT
+            else:
+              - climate.control:
+                  id: auto_mode
+                  mode: "OFF"
+  - platform: status
+    id: device_status
+    name: Status
+    disabled_by_default: true
+
+light:
+  - platform: status_led
+    name: On/Off LED
+    id: switch_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO16
+  - platform: status_led
+    name: Wi-Fi Status LED
+    id: wifi_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO15
+      ignore_strapping_warning: true
+  - platform: status_led
+    name: Auto Mode LED
+    id: auto_mode_led
+    internal: true
+    pin:
+      inverted: true
+      number: GPIO13
+
+sensor:
+  - platform: wifi_signal
+    name: Wifi RSSI
+    id: sensor_wifi_rssi
+    disabled_by_default: true
+  - platform: uptime
+    name: Uptime
+    id: sensor_uptime
+    disabled_by_default: true
+  # This assumes you are using the "Sonoff THS01" sensor.
+  - platform: dht
+    pin: GPIO25
+    model: SI7021
+    temperature:
+      name: Temperature
+      id: sensor_temperature
+    humidity:
+      name: Humidity
+      id: sensor_humidity
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP Address
+      disabled_by_default: true
+
+switch:
+  - platform: gpio
+    name: Relay
+    id: relay
+    pin: GPIO21
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - delay: 500ms
+      - light.turn_on: switch_led
+    on_turn_off:
+      - delay: 500ms
+      - light.turn_off: switch_led
+  - platform: gpio
+    name: Sensor Power
+    id: sensor_power
+    pin: GPIO27
+    restore_mode: ALWAYS_ON
+    internal: true
+
+climate:
+  - platform: thermostat
+    name: Auto Mode
+    id: auto_mode
+    sensor: sensor_temperature
+    humidity_sensor: sensor_humidity
+    # # Example preset.
+    # default_preset: Home
+    # preset:
+    #   - name: Home
+    #     default_target_temperature_low: 21°C
+    #     mode: HEAT
+    min_idle_time: 30s
+    min_heating_off_time: 30s
+    min_heating_run_time: 30s
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+    on_state:
+      - if:
+          condition:
+            lambda: |-
+              return id(auto_mode).mode == CLIMATE_MODE_OFF;
+          then:
+            - light.turn_off: auto_mode_led
+          else:
+            - light.turn_on: auto_mode_led
+    # How many degrees can we go under the temp before starting to heat.
+    heat_deadband: 0.5
+    # How many degrees can we go over the temp before stopping.
+    heat_overrun: 0.5
+    visual:
+      min_temperature: "-10°C"
+      max_temperature: 40°C
