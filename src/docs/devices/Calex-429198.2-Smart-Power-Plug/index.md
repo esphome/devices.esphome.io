@@ -35,7 +35,7 @@ opening the enclosure; units updated to newer patched TuyaOS firmware require 3.
 
 ## Basic Configuration
 
-```yaml file=calex-429198-2.yaml
+```yaml file=config.yaml
 ```
 
 ## Product Images
