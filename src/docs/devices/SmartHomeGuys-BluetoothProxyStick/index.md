@@ -19,7 +19,7 @@ against the wall instead of sticking outward.
 
 We designed these to look good, be as small as possible and blend in with your home.
 
-![Bluetooth Proxy Stick All Models](Bluetooth-Proxy-Stick-All-Models.jpg "Bluetooth Proxy Stick All Models")
+![Bluetooth Proxy Stick All Models](Bluetooth-Proxy-Stick-All-Models2.jpg "Bluetooth Proxy Stick All Models")
 ![Bluetooth Proxy Stick in xbox](Bluetooth-proxy-straight-xbox.jpg "Bluetooth Proxy Stick in xbox")
 ![Bluetooth Proxy Stick angled in wall socket](Bluetooth-Proxy-In-Wall-Socket.jpg "Bluetooth Proxy Stick Angled in Wall Socket")
 
