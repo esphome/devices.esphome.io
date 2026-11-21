@@ -122,6 +122,8 @@ hardware-specific; add them as usual for your own network.
 
 ## Voice Assistant
 
+This section requires ESPHome 2026.11.0 or newer. Earlier versions can leave the wake word off after a reply with no speech.
+
 Add this to the configuration above for a voice assistant with on-device wake word detection. Note that
 `use_wake_word` is set to `false` because `micro_wake_word` handles wake word detection directly. Voice assistant
 replies play through the media player rather than straight to the speaker. ESPHome does not queue announcements: a
