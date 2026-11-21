@@ -45,7 +45,7 @@ profile connectors do not.
 
 ```yaml
 # Basic Config
-# https://mirabellagenio.net.au/smart-ir-controller
+# https://manuals.plus/m/831f8db78aa022de03b28c7b7a210961b82905abda935fb4e75594560bdb898d
 ---
 esphome:
   name: esphome_ir1
