@@ -26,8 +26,6 @@ Repository: [GitHub — isystemsautomation/homemaster-dev/OpenthermGateway](http
 
 Schematics: [OpenthermGateway/Schematic](https://github.com/isystemsautomation/homemaster-dev/tree/main/OpenthermGateway/Schematic)
 
-Datasheet: [OpenTherm_Datasheet.pdf](https://github.com/isystemsautomation/homemaster-dev/blob/main/OpenthermGateway/Manuals/OpenTherm_Datasheet.pdf)
-
 ## Features
 
 - **ESP32-WROOM-32U-N16** microcontroller with Wi-Fi and Bluetooth (16 MB flash, external antenna)
