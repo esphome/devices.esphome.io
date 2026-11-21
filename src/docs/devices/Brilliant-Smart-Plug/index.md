@@ -17,7 +17,7 @@ board: esp8266
 ## Basic Configuration
 
 ```yaml
-# https://brilliantlighting.com.au/product/smart-wifi-plug-with-usb-charger-8e7c49
+# https://www.sparkydirect.com.au/assets/brochures/20676-05.pdf
 # Brilliant Smart WiFi Plug with USB charger model: 20676/05
 substitutions:
   devicename: brilliant-1
