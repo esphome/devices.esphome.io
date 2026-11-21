@@ -35,7 +35,7 @@ board: esp32
 | GPIO39 | Free GPIO                   |
 | GPIO35 | Free GPIO                   |
 
-[Additional pinout/design details](https://www.kincony.com/esp32-wifi-temperatur)
+[Additional pinout/design details](https://www.kincony.com/kc868-uair-hardware-design-details.html)
 
 ## Basic Configuration
 
@@ -55,7 +55,7 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "hx8eSqbwjWs9/2bK0qK55QfTIOpI4gCfzLOeaOXZMaU="
+    key: "hx8eSqbwjWs9/2bK0qS55QfTIOpI4gCfzLOeaOXZMaU="
 
 i2c:
   sda: 4
