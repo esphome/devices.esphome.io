@@ -12,9 +12,9 @@ Configuration: ESP32, Embedded temperature sensor SHTC3, RGB LED.
 
 ![alt text](rowi.png "Rowi ESP32 Smart Plug AU and NZ")
 
-Maker: Vaiotech ([https://www.vaiotech.co.nz/products/](https://www.vaiotech.co.nz/products/))
+Maker: Vaiotech ([https://www.vaiotech.co.nz/rowi-smart-plug-with-api/](https://www.vaiotech.co.nz/rowi-smart-plug-with-api/))
 
-Purchase online in Australia and New Zealand: [https://www.kiwi-warmer.co.nz/for-developers/](https://www.kiwi-warmer.co.nz/for-developers/)
+Purchase online in Australia and New Zealand: [https://www.kiwi-warmer.co.nz/for-engineers/](https://www.kiwi-warmer.co.nz/for-engineers/)
 
 ## GPIO Pinout
 
