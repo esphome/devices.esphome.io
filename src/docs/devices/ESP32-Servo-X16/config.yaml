@@ -1,0 +1,71 @@
+esphome:
+  name: servo-x16
+
+esp32:
+  variant: esp32
+
+output:
+  - platform: ledc
+    id: servo_00
+    pin: GPIO4
+    frequency: 50Hz    # Standard servo frequency
+  - platform: ledc
+    id: servo_01
+    pin: GPIO16
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_02
+    pin: GPIO17
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_03
+    pin: GPIO12
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_04
+    pin: GPIO18
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_05
+    pin: GPIO19
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_06
+    pin: GPIO21
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_07
+    pin: GPIO22
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_08
+    pin: GPIO15
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_09
+    pin: GPIO32
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_10
+    pin: GPIO33
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_11
+    pin: GPIO25
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_12
+    pin: GPIO26
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_13
+    pin: GPIO27
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_14
+    pin: GPIO14
+    frequency: 50Hz
+  - platform: ledc
+    id: servo_15
+    pin: GPIO13
+    frequency: 50Hz
