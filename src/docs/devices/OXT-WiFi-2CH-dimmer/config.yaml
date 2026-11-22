@@ -1,0 +1,94 @@
+esphome:
+  name: oxt-dimmer-2c
+  friendly_name: OXT Dimmer 2C
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+preferences:
+  flash_write_interval: 10s
+
+# The UART is used by the dimming MCU
+logger:
+  baud_rate: 0
+
+wifi:
+  ap:
+
+external_components:
+  - source: github://PrawilnyAlo/esphome-oxt-dimmer
+    components: [oxt_dimmer]
+
+# TX only - the MCU never replies, P10 (RX) is not connected
+uart:
+  tx_pin: P11
+  baud_rate: 9600
+
+status_led:
+  pin:
+    number: P6
+    inverted: true
+
+output:
+  - platform: oxt_dimmer
+    id: output_l1
+    channel: 1
+  - platform: oxt_dimmer
+    id: output_l2
+    channel: 2
+
+# The MCU makes its own ~0.5 s ramp, so ESPHome transitions are off
+light:
+  - platform: monochromatic
+    id: light_l1
+    name: Light 1
+    output: output_l1
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_OFF
+  - platform: monochromatic
+    id: light_l2
+    name: Light 2
+    output: output_l2
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# S1 / S2 are latching wall switches: every flip toggles the light
+binary_sensor:
+  - platform: gpio
+    name: S1
+    pin:
+      number: P8
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 60ms
+    on_state:
+      - light.toggle: light_l1
+  - platform: gpio
+    name: S2
+    pin:
+      number: P9
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 60ms
+    on_state:
+      - light.toggle: light_l2
+  - platform: gpio
+    name: Button
+    pin:
+      number: P24
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 20ms
+    on_press:
+      - light.toggle: light_l1
