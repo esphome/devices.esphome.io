@@ -1,0 +1,26 @@
+# Additional config for config.yaml and battery-deep-sleep.yaml: Home Assistant API, ESPHome OTA and the clock.
+# Merge it into your config, e.g. with `packages:`. Add your own `wifi:` credentials and API encryption key.
+
+api:
+
+ota:
+  - platform: esphome
+    # Needed to write the stock flash layout (see "OTA from Shelly Stock Firmware"). Keep it in every build.
+    allow_partition_access: true
+    # Show the OTA progress on the e-paper display (needs the display from config.yaml / battery-deep-sleep.yaml).
+    on_begin:
+      - lambda: id(display).show_ota_begin();
+    on_progress:
+      - lambda: id(display).show_ota_progress(x);
+    on_end:
+      - lambda: id(display).show_ota_end();
+    on_error:
+      - lambda: id(display).show_ota_error();
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+# Show the Home Assistant clock in the T1-T4 zone of the display.
+shelly_ht_display:
+  time_id: ha_time
