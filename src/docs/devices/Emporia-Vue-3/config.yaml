@@ -32,11 +32,6 @@ logger:
   logs:
     sensor: INFO
 
-api:
-
-ota:
-  - platform: esphome
-
 # Ethernet (RTL8201F) preferred, Wi-Fi when the cable has no link.
 network:
   priority:
@@ -54,11 +49,6 @@ ethernet:
 wifi:
   ap: {}
 
-captive_portal:
-
-time:
-  - platform: homeassistant
-
 emporiavue:
   mains:
     line_1:
@@ -70,4 +60,3 @@ emporiavue:
       name: "Circuit 1"
       line: 1
       power:
-      energy:
