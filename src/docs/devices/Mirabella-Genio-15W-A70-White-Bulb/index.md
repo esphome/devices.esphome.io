@@ -16,7 +16,7 @@ board: esp8266
 
 ```yaml
 # Basic Config
-# https://mirabellagenio.net.au/wi-fi-led-a70-1400-lumen
+# https://manuals.plus/mirabella-genio/i003608-smart-wi-fi-lighting-range-manual
 esphome:
   name: mirabella_1
   on_boot:
