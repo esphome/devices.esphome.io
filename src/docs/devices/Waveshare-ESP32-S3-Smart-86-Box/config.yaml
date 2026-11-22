@@ -1,0 +1,235 @@
+esphome:
+  name: waveshare-esp32-s3-smart-86-box
+  friendly_name: Waveshare ESP32-S3 Smart 86 Box
+  platformio_options:
+    board_build.flash_mode: qio
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+  on_boot:
+    priority: 600
+    then:
+      - switch.turn_on: speaker_enable
+      - light.turn_on:
+          id: display_backlight
+          brightness: 100%
+      - component.update: s3_box_lcd
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  power_save_mode: none
+  ap:
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/salnajjar/Waveshare-ESP32-S3-Smart-86-Box-ESPHome-Home-Assistant
+      ref: main
+      path: local_components
+    components:
+      - axp2101_powerkey
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+i2c:
+  - id: i2c_bus
+    scl: GPIO48
+    sda: GPIO47
+    frequency: 400kHz
+
+pca9554:
+  - id: io_expander
+    pin_count: 8
+    i2c_id: i2c_bus
+    address: 0x20
+
+output:
+  - platform: ledc
+    pin: GPIO4
+    id: backlight_output
+    inverted: true
+
+light:
+  - platform: monochromatic
+    id: display_backlight
+    name: Display Backlight
+    output: backlight_output
+    restore_mode: RESTORE_DEFAULT_ON
+    default_transition_length: 0s
+
+spi:
+  - id: display_spi
+    interface: software
+    clk_pin:
+      pca9554: io_expander
+      number: 2
+      mode:
+        output: true
+    mosi_pin:
+      pca9554: io_expander
+      number: 1
+      mode:
+        output: true
+
+display:
+  - platform: mipi_rgb
+    id: s3_box_lcd
+    model: WAVESHARE-4-480X480
+    dimensions:
+      width: 480
+      height: 480
+    color_order: RGB
+    pixel_mode: 18bit
+    invert_colors: true
+    data_rate: 2MHz
+    spi_mode: MODE3
+    cs_pin:
+      pca9554: io_expander
+      number: 0
+      mode:
+        output: true
+    reset_pin:
+      pca9554: io_expander
+      number: 7
+      mode:
+        output: true
+    pclk_frequency: 12MHz
+    pclk_inverted: false
+    hsync_pulse_width: 10
+    hsync_back_porch: 10
+    hsync_front_porch: 20
+    vsync_pulse_width: 10
+    vsync_back_porch: 10
+    vsync_front_porch: 10
+    de_pin: GPIO17
+    pclk_pin: GPIO9
+    hsync_pin:
+      number: GPIO46
+      ignore_strapping_warning: true
+    vsync_pin:
+      number: GPIO3
+      ignore_strapping_warning: true
+    data_pins:
+      red:
+        - GPIO40
+        - GPIO41
+        - GPIO42
+        - GPIO2
+        - GPIO1
+      green:
+        - GPIO21
+        - GPIO8
+        - GPIO18
+        - GPIO45
+        - GPIO38
+        - GPIO39
+      blue:
+        - GPIO10
+        - GPIO11
+        - GPIO12
+        - GPIO13
+        - GPIO14
+    update_interval: 1s
+    lambda: |-
+      it.fill(Color::BLACK);
+      it.printf(it.get_width() / 2, it.get_height() / 2, id(display_font), Color::WHITE, TextAlign::CENTER, "ESPHome");
+
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    display: s3_box_lcd
+    i2c_id: i2c_bus
+    update_interval: 50ms
+    calibration:
+      x_min: 0
+      x_max: 480
+      y_min: 0
+      y_max: 480
+
+i2s_audio:
+  - id: i2s_audio_bus
+    i2s_lrclk_pin: GPIO7
+    i2s_bclk_pin: GPIO16
+    i2s_mclk_pin: GPIO5
+
+audio_adc:
+  - platform: es7210
+    i2c_id: i2c_bus
+    id: es7210_adc
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+audio_dac:
+  - platform: es8311
+    i2c_id: i2c_bus
+    id: es8311_dac
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+microphone:
+  - platform: i2s_audio
+    id: box_microphone
+    sample_rate: 16000
+    i2s_din_pin: GPIO15
+    bits_per_sample: 16bit
+    adc_type: external
+
+speaker:
+  - platform: i2s_audio
+    id: box_speaker
+    i2s_dout_pin: GPIO6
+    dac_type: external
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: stereo
+    audio_dac: es8311_dac
+    buffer_duration: 160ms
+    timeout: never
+
+switch:
+  - platform: gpio
+    name: Speaker Enable
+    id: speaker_enable
+    pin:
+      pca9554: io_expander
+      number: 3
+      mode:
+        output: true
+    restore_mode: ALWAYS_ON
+
+binary_sensor:
+  - platform: gpio
+    name: Boot Button
+    pin:
+      number: GPIO0
+      ignore_strapping_warning: true
+      mode: INPUT_PULLUP
+      inverted: true
+
+  - platform: axp2101_powerkey
+    name: Power Button
+    i2c_id: i2c_bus
+    update_interval: 100ms
+
+font:
+  - file:
+      type: gfonts
+      family: Figtree
+      weight: 400
+    id: display_font
+    size: 24
+    glyphsets:
+      - GF_Latin_Core
