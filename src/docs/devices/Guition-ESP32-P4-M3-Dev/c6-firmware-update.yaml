@@ -1,0 +1,8 @@
+# The HTTP source needs http_request.
+http_request:
+
+update:
+  - platform: esp32_hosted
+    name: "C6 Coprocessor Update"
+    type: http
+    source: https://esphome.github.io/esp-hosted-firmware/manifest/esp32c6.json
