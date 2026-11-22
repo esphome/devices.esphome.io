@@ -1,0 +1,54 @@
+esphome:
+  name: bk-licht-ceiling-light
+  friendly_name: B.K. Licht Ceiling Light
+
+bk72xx:
+  board: cb2s
+
+logger:
+  baud_rate: 0
+
+wifi:
+  ap: {}
+
+output:
+  - platform: libretiny_pwm
+    id: red_output
+    pin: P6
+    frequency: 1000 Hz
+
+  - platform: libretiny_pwm
+    id: green_output
+    pin: P7
+    frequency: 1000 Hz
+
+  - platform: libretiny_pwm
+    id: blue_output
+    pin: P8
+    frequency: 1000 Hz
+
+  - platform: libretiny_pwm
+    id: cool_white_output
+    pin: P24
+    frequency: 1000 Hz
+
+  - platform: libretiny_pwm
+    id: warm_white_output
+    pin: P26
+    frequency: 1000 Hz
+
+light:
+  - platform: rgbww
+    name: "Ceiling Light"
+    id: ceiling_light
+    red: red_output
+    green: green_output
+    blue: blue_output
+    cold_white: cool_white_output
+    warm_white: warm_white_output
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    color_interlock: true
+    constant_brightness: false
+    gamma_correct: 1.0
+    default_transition_length: 300ms
