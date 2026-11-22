@@ -1,5 +1,5 @@
 ---
-title: WAVESHARE ESP32-S3-ETH-8DI-8RO
+title: Waveshare ESP32-S3-ETH-8DI-8RO
 date-published: 2025-07-31
 type: relay
 standard: global
