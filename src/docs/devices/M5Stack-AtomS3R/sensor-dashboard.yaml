@@ -1,0 +1,17 @@
+font:
+  - file: "gfonts://Roboto"
+    id: font_mini
+    size: 10
+
+display:
+  - id: !extend main_display
+    lambda: |-
+      it.printf(0, 0, id(font_mini), "AX %.2f AY %.2f", id(imu_accel_x).state, id(imu_accel_y).state);
+      it.printf(0, 10, id(font_mini), "AZ %.2f", id(imu_accel_z).state);
+      it.printf(0, 20, id(font_mini), "GX %.1f GY %.1f", id(imu_gyro_x).state, id(imu_gyro_y).state);
+      it.printf(0, 30, id(font_mini), "GZ %.1f", id(imu_gyro_z).state);
+      it.printf(0, 40, id(font_mini), "MX %.1f MY %.1f", id(imu_mag_x).state, id(imu_mag_y).state);
+      it.printf(0, 50, id(font_mini), "MZ %.1f", id(imu_mag_z).state);
+      it.printf(0, 60, id(font_mini), "Temp %.1f C", id(imu_temperature).state);
+      it.printf(0, 70, id(font_mini), "Backlight %.0f%%",
+                id(display_backlight).current_values.get_brightness() * 100.0f);
