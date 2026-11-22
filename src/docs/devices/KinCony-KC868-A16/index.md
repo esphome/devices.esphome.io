@@ -34,6 +34,14 @@ Remove the 433MHz modules from the board. Connect the board with a USB-C cable t
 `S2` switch, attach the external power supply (12V) to the board. Erase flash and then flash the board with the usual
 ESPHome installation methods.
 
+In this state, the Kincony A16 panel can only be used as a Modbus slave device (Modbus server). For more
+information, see the [Modbus Server Example](https://esphome.io/components/modbus_controller.html#example-server).
+
+To enable Modbus master mode (Modbus client), the 120-ohm termination resistor labeled R79 on the board must be
+removed.
+
+![image](https://github.com/user-attachments/assets/e0e7a779-9f81-48b3-a394-a1a42b3f4ee9)
+
 ## Basic Configuration
 
 ```yaml
