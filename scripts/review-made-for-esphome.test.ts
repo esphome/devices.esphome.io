@@ -52,6 +52,8 @@ import {
   checkDashboardImport,
   checkAdoptedOta,
   reviewPage,
+  runStreaming,
+  stamp,
   parseEsphomeVersion,
   compareEsphomeVersions,
   minVersionFromConfigError,
@@ -1405,5 +1407,299 @@ test("reviewPage upgrades ESPHome when config fails on a too-old min_version", a
     globalThis.fetch = realFetch;
     if (saved.ota === undefined) delete process.env.MFE_OTA_MANIFEST; else process.env.MFE_OTA_MANIFEST = saved.ota;
     if (saved.di === undefined) delete process.env.MFE_DASHBOARD_IMPORT_CHECK; else process.env.MFE_DASHBOARD_IMPORT_CHECK = saved.di;
+  }
+});
+
+// Run `fn` with console.log captured, returning the lines it printed.
+async function captureLog(fn: () => Promise<void>): Promise<string[]> {
+  const lines: string[] = [];
+  const real = console.log;
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    await fn();
+  } finally {
+    console.log = real;
+  }
+  return lines;
+}
+
+const LIMITS = { captureLimit: 1024 * 1024, keepTail: true };
+
+test("stamp is an mm:ss elapsed-time prefix", () => {
+  assert.match(stamp(), /^\[\d{2,}:\d{2}\]$/);
+});
+
+test("runStreaming captures output and echoes complete lines live", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'one\\n\\ntwo\\n'; printf 'err\\n' >&2; printf 'tail'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "test",
+      ...LIMITS,
+    });
+  });
+  assert.equal(res?.ok, true);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "one\n\ntwo\ntail");
+  assert.equal(res?.stderr, "err\n");
+  // Blank lines are skipped, the unterminated tail is flushed on exit.
+  assert.deepEqual(lines.sort(), ["    | err", "    | one", "    | tail", "    | two"]);
+});
+
+test("runStreaming stays quiet when streaming is off and reports a non-zero exit", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "echo hidden; exit 3"], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
+  });
+  assert.deepEqual(lines, []);
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, false);
+  assert.equal(res?.stdout, "hidden\n");
+});
+
+test("runStreaming reports a command that cannot be spawned", async () => {
+  const res = await runStreaming("/nonexistent/mfe-bin", [], { timeoutMs: 10000, stream: false, label: "test", ...LIMITS });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /ENOENT/);
+});
+
+test("runStreaming kills a command at the timeout and prints a heartbeat while silent", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sleep", ["5"], { timeoutMs: 700, stream: true, label: "sleeper", heartbeatMs: 100, ...LIMITS });
+  });
+  assert.equal(res?.ok, false);
+  assert.equal(res?.timedOut, true);
+  assert.ok(lines.some((l) => /sleeper still running \(\d+s, no new output\)/.test(l)), lines.join("\n"));
+});
+
+test("runStreaming bounds the pending line buffer and splits on carriage returns", async () => {
+  let res: Awaited<ReturnType<typeof runStreaming>> | undefined;
+  const lines = await captureLog(async () => {
+    res = await runStreaming("sh", ["-c", "printf 'a\\rb\\rc'; printf 'xxxxxxxxxxxx'"], {
+      timeoutMs: 10000,
+      stream: true,
+      label: "cr",
+      maxLineChars: 5,
+      ...LIMITS,
+    });
+  });
+  assert.equal(res?.ok, true);
+  // "a" and "b" end at carriage returns; the unterminated rest exceeds the
+  // 5 character bound and is echoed instead of being held back.
+  assert.deepEqual(lines, ["    | a", "    | b", "    | cxxxxxxxxxxxx"]);
+});
+
+test("runStreaming echoes a line while the child is still running", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-live-"));
+  const release = path.join(dir, "release");
+  const real = console.log;
+  const lines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    lines.push(args.join(" "));
+  };
+  try {
+    const done = runStreaming(
+      "sh",
+      ["-c", `echo first; while [ ! -f ${release} ]; do sleep 0.05; done; echo last`],
+      { timeoutMs: 30000, stream: true, label: "live", ...LIMITS }
+    );
+    // The child cannot exit until released, so seeing "first" proves it was
+    // echoed before exit rather than buffered until the end.
+    const deadline = Date.now() + 10000;
+    while (!lines.includes("    | first") && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    assert.ok(lines.includes("    | first"), "first line was not echoed while the child ran");
+    assert.equal(lines.includes("    | last"), false);
+    fs.writeFileSync(release, "");
+    const res = await done;
+    assert.equal(res.ok, true);
+    assert.ok(lines.includes("    | last"));
+  } finally {
+    console.log = real;
+  }
+});
+
+test("runStreaming timeout takes down the whole process tree", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "sleep 30 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "tree",
+    graceMs: 20000,
+    ...LIMITS,
+  });
+  assert.equal(res.timedOut, true);
+  // Settled by the pipes closing after the group kill, not by the grace timer.
+  assert.ok(Date.now() - started < 10000);
+});
+
+test("runStreaming settles after the grace period when a descendant escapes the group", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 4 & sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "escape",
+    graceMs: 200,
+    ...LIMITS,
+  });
+  assert.equal(res.ok, false);
+  assert.equal(res.timedOut, true);
+  assert.ok(Date.now() - started < 3000, `took ${Date.now() - started}ms`);
+});
+
+test("runStreaming sweeps a SIGTERM-ignoring descendant when the direct child exits first", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-sweep-"));
+  const pidFile = path.join(dir, "pid");
+  // The descendant ignores SIGTERM and has its output redirected, so the pipes
+  // close as soon as the direct child dies and the run settles before the grace
+  // period; only the final group sweep can stop it.
+  const res = await runStreaming(
+    "sh",
+    ["-c", `sh -c 'trap "" TERM; echo $$ > ${pidFile}; exec sleep 20' >/dev/null 2>&1 & sleep 30`],
+    { timeoutMs: 500, stream: false, label: "sweep", graceMs: 20000, ...LIMITS }
+  );
+  assert.equal(res.timedOut, true);
+  const pid = Number(fs.readFileSync(pidFile, "utf8"));
+  const alive = (): boolean => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const deadline = Date.now() + 5000;
+  while (alive() && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  assert.equal(alive(), false, "descendant survived the run");
+});
+
+test("runStreaming arms only one grace timer when a timeout follows an overflow", async () => {
+  const started = Date.now();
+  const res = await runStreaming("sh", ["-c", "setsid sleep 3 & yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 200,
+    stream: false,
+    label: "double",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 500,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
+  assert.ok(Date.now() - started < 2500);
+});
+
+test("runStreaming keeps only the tail when output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "i=0; while [ $i -lt 500 ]; do echo line$i; i=$((i+1)); done"], {
+    timeoutMs: 10000,
+    stream: false,
+    label: "tail",
+    captureLimit: 100,
+    keepTail: true,
+  });
+  assert.equal(res.ok, true);
+  assert.ok(res.stdout.length <= 100);
+  assert.ok(res.stdout.endsWith("line499\n"));
+});
+
+test("runStreaming fails and stops the child when whole output exceeds the limit", async () => {
+  const res = await runStreaming("sh", ["-c", "yes x | head -c 100000; sleep 30"], {
+    timeoutMs: 20000,
+    stream: false,
+    label: "overflow",
+    captureLimit: 100,
+    keepTail: false,
+    graceMs: 200,
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.stderr, /output exceeded 100 characters/);
+});
+
+test("reviewPage streams the compile and maps its outcome", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mfe-rp-compile-"));
+  const repo = path.join(dir, "src", "repo-main");
+  fs.mkdirSync(repo, { recursive: true });
+  fs.writeFileSync(path.join(repo, "config.yaml"), "esphome:\n  name: x\n");
+  const tarball = path.join(dir, "repo.tar.gz");
+  execFileSync("tar", ["czf", tarball, "-C", path.join(dir, "src"), "repo-main"]);
+  const bin = path.join(dir, "fake-esphome");
+  fs.writeFileSync(
+    bin,
+    `#!/bin/sh
+if [ "$1" = "config" ]; then
+cat <<'EOF_YAML'
+${yaml.dump({ esphome: { name: "x" } })}EOF_YAML
+exit 0
+fi
+echo "Compiling app"
+case "$MFE_TEST_COMPILE" in
+  pass) exit 0 ;;
+  fail) echo "boom" >&2; exit 1 ;;
+  hang) sleep 5 ;;
+esac
+`,
+    { mode: 0o755 }
+  );
+  const page = path.join(dir, "index.md");
+  fs.writeFileSync(
+    page,
+    "---\ntitle: Test\nmade-for-esphome: true\n---\n\n```yaml url=https://github.com/owner/repo/blob/main/config.yaml\n```\n"
+  );
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response(fs.readFileSync(tarball), { status: 200 })) as typeof fetch;
+  const names = ["MFE_OTA_MANIFEST", "MFE_DASHBOARD_IMPORT_CHECK", "MFE_TEST_COMPILE", "COMPILE_TIMEOUT_MS"] as const;
+  const saved = Object.fromEntries(names.map((n) => [n, process.env[n]]));
+  process.env.MFE_OTA_MANIFEST = "0";
+  process.env.MFE_DASHBOARD_IMPORT_CHECK = "0";
+  try {
+    const run = async (mode: string): Promise<{ r: PageResult; lines: string[] }> => {
+      process.env.MFE_TEST_COMPILE = mode;
+      let r: PageResult | undefined;
+      const lines = await captureLog(async () => {
+        r = await reviewPage(page, dir, bin, true);
+      });
+      return { r: r as PageResult, lines };
+    };
+
+    let out = await run("pass");
+    assert.equal(out.r.compile, "PASS");
+    assert.ok(out.lines.includes("    | Compiling app"));
+    assert.ok(out.lines.some((l) => /compile result: PASS/.test(l)));
+    assert.ok(out.lines.some((l) => /`esphome compile` ok in/.test(l)));
+
+    out = await run("fail");
+    assert.equal(out.r.compile, "FAIL");
+    assert.match(out.r.compileLog ?? "", /boom/);
+    assert.ok(out.lines.some((l) => /`esphome compile` FAILED in/.test(l)));
+
+    process.env.COMPILE_TIMEOUT_MS = "300";
+    out = await run("hang");
+    assert.equal(out.r.compile, "INCONCLUSIVE");
+    assert.ok(out.lines.some((l) => /`esphome compile` TIMED OUT in/.test(l)));
+
+    // Compile off: the step is announced as skipped.
+    const skipped = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(skipped.some((l) => /compile skipped/.test(l)));
+
+    // OTA manifest check on (nothing to fetch for this config): the step is announced.
+    delete process.env.MFE_OTA_MANIFEST;
+    const withOta = await captureLog(async () => {
+      await reviewPage(page, dir, bin, false);
+    });
+    assert.ok(withOta.some((l) => /7\/8 checking OTA update manifests/.test(l)));
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const n of names) {
+      if (saved[n] === undefined) delete process.env[n]; else process.env[n] = saved[n];
+    }
   }
 });

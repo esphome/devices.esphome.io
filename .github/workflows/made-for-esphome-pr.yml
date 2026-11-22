@@ -144,7 +144,8 @@ jobs:
             await script({ github, context, core });
 
       # The promotion's ready_for_review event starts no workflow, so ask
-      # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      # Copilot here, with the review bot's token (only an account with a
+      # Copilot seat gets a review for every author).
       # This also runs when the promotion failed after marking the PR ready.
       - name: Request Copilot review
         if: ${{ always() && steps.promote.outputs.marked-ready }}
@@ -152,7 +153,7 @@ jobs:
         env:
           PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
         with:
-          github-token: ${{ steps.generate-token.outputs.token }}
+          github-token: ${{ secrets.COPILOT_REVIEW_TOKEN }}
           script: |
             const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
             await requestCopilotReviews({
@@ -209,16 +210,9 @@ jobs:
             const script = require('./.github/scripts/mfe-promote.cjs');
             await script({ github, context, core });
 
-      - name: Generate a token
-        if: ${{ always() && steps.promote.outputs.marked-ready }}
-        id: generate-token
-        uses: actions/create-github-app-token@v3.3.0
-        with:
-          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
-          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
-
       # The promotion's ready_for_review event starts no workflow, so ask
-      # Copilot here, with the app token (GITHUB_TOKEN requests are ignored).
+      # Copilot here, with the review bot's token (only an account with a
+      # Copilot seat gets a review for every author).
       # This also runs when the promotion failed after marking the PR ready.
       - name: Request Copilot review
         if: ${{ always() && steps.promote.outputs.marked-ready }}
@@ -226,7 +220,7 @@ jobs:
         env:
           PR_NUMBERS: ${{ steps.promote.outputs.marked-ready }}
         with:
-          github-token: ${{ steps.generate-token.outputs.token }}
+          github-token: ${{ secrets.COPILOT_REVIEW_TOKEN }}
           script: |
             const { requestCopilotReviews } = require('./.github/scripts/request-copilot-review.cjs');
             await requestCopilotReviews({

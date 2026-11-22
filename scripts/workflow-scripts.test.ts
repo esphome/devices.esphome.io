@@ -133,7 +133,7 @@ const RUN = {
 const runPulls = () =>
   runPrNumber === null
     ? []
-    : [{ number: runPrNumber, head: { sha: RUN.head_sha, repo: { full_name: RUN.head_repository.full_name } } }];
+    : [{ number: runPrNumber, head: { sha: RUN.head_sha, ref: RUN.head_branch, repo: { full_name: RUN.head_repository.full_name } } }];
 
 const context = {
   repo: { owner: "esphome", repo: "esphome-devices" },
