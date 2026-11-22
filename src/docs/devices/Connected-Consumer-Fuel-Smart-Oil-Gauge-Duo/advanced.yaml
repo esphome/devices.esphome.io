@@ -191,26 +191,12 @@ sensor:
 
   - platform: adc
     pin: A0
-    name: "ADC Input"
-    internal: true
+    name: "ADC Input RAW"
     id: ADC_Input
     accuracy_decimals: 3
     update_interval: 5s
     entity_category: "diagnostic"
     icon: mdi:current-dc
-    filters:
-      - lambda: |-
-          // Battery Voltage Divider R Values
-          int R1 = 10.0;  // MOhm
-          int R2 = 1.0;   // MOhm
-
-          float offset = -1.1; // Temperature correction offset (degC)
-
-          if (id(TempSens_EN).state){
-            return (((x*1000.0)-500.0)/10.0) + offset; // Temperature Sensor (degC)
-          } else {
-            return (x * (R1+R2))/R2; // Battery Voltage
-          }
     on_value:
       then:
         - if:
@@ -236,6 +222,11 @@ sensor:
     state_class: measurement
     accuracy_decimals: 3
     unit_of_measurement: '°C'
+    filters:
+      - lambda: |-
+          float offset = -1.1; // Temperature correction offset (degC)
+
+          return (((x*1000.0)-500.0)/10.0) + offset; // Temperature Sensor (degC)
     on_value:
       then:
         - component.update: VP_Oil
@@ -249,6 +240,13 @@ sensor:
     accuracy_decimals: 3
     unit_of_measurement: 'V'
     icon: mdi:current-dc
+    filters:
+      - lambda: |-
+          // Battery Voltage Divider R Values
+          int R1 = 10.0;  // MOhm
+          int R2 = 1.0;   // MOhm
+          
+          return (x * (R1+R2))/R2; // Battery Voltage
     on_value:
       then:
         - lambda: |-
@@ -1242,21 +1240,6 @@ sensor:
     device_class: volume_storage
     state_class: measurement
     accuracy_decimals: 4
-    filters:
-      - lambda: |-
-          if (x < 0){
-            x = 0;
-          }
-          if { (x > id(Max_Fill)) {
-            x = id(Max_Fill);
-          }
-
-          if (isnan(id(Raw_Oil_Depth).state)){
-            return NAN;
-          } else {
-            return x;
-          }
-
     on_value:
       then:
         - lambda: |-
