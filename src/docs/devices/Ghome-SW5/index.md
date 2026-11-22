@@ -13,7 +13,7 @@ board: bk72xx
 As of November 2024, there are two methods of flashing this device, using a serial adapter and ltchiptool, or OTA using
 tuya-cloudcutterflash
 
-Attention: Recently purchased units (Decemeber, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.
+Attention: Recently purchased units (December, 2024) contain a Lightning Semi LN882H rather than the Beken BK7231N.
 These units cannot be flashed with ESPHome.  The newly purchased units also have screw terminals on the switch body for
 the wiring.  The older units had four wires coming off of the back of the switch body.
 
@@ -100,7 +100,16 @@ Booting firmware  [#############################################################
 
 Congrats you are done! You can now disconnect it and wire in the normal switch!
 
-## Pinout
+## Hardware Variants & Pinout
+
+There are different variants of this switch, based on when it was manufactured, which determines the micro-controller
+within. Some of these different versions have different pins assigned to the various functions (button, switch, LED).
+Flashing of the different Beken based chips remains the same as described above.
+
+### Beken BK7231N
+
+This variant was available from Amazon around 2024, and is built on the BK7231N micro-controller. The pin assignments are
+listed below and in the example YAML configuration below.
 
 | Pin | Function  |
 |-----|-----------|
@@ -109,78 +118,22 @@ Congrats you are done! You can now disconnect it and wire in the normal switch!
 | P14 | Relay     |
 | P16 | Red LED   |
 
+### Beken BK7238
+
+This variant was available from Amazon around November 2026 and is built on the BK7238, and uses a different pinout.
+Additionally, the bk72xx board need to be changed to `generic-bk7238-tuya` in the YAML configuration as well. With these
+changes, the example YAML configuration can be used on this variant.
+
+| Pin | Function  |
+|-----|-----------|
+| P7  | Green LED |
+| P17 | Red LED   |
+| P22 | Relay     |
+| P23 | Button    |
+
 ## Example YAML Config
 
-```yaml
-esphome:
-  name: ghome_sw5
-  friendly_name: Ghome SW5
-
-bk72xx:
-  board: generic-bk7231n-qfn32-tuya
-
-logger:
-
-api:
-  encryption:
-    key: !secret api_key
-
-ota:
-  - platform: esphome
-    password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  ap:
-    ssid: "Ghome SW5 Fallback Hotspot"
-    password: !secret fallback_password
-
-captive_portal:
-
-# Status LED configuration
-status_led:
-  pin:
-    number: P7  # WiFi/Green LED
-    inverted: true
-
-# Output configuration for the red LED
-output:
-  - platform: gpio
-    id: red_led
-    pin:
-      number: P16  # Red LED
-      inverted: false
-
-# Light configuration for Home Assistant
-light:
-  - platform: binary
-    output: red_led
-    id: led
-    name: "Red LED"
-
-# Binary sensor for the button
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: P8  # Button
-      mode: INPUT_PULLUP
-    id: button1
-    on_press:
-      then:
-        - switch.toggle: relay1
-
-# Relay switch configuration
-switch:
-  - platform: gpio
-    pin: P14  # Relay
-    id: relay1
-    name: "Relay Switch"
-    on_turn_on:
-      - light.turn_off: led  # Turn off the red LED when relay is on
-    on_turn_off:
-      - light.turn_on: led  # Turn on the red LED when relay is off
+```yaml file=config.yaml
 ```
 
 ## Notes/Issues/Troubleshooting
