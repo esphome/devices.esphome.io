@@ -1,0 +1,7 @@
+sensor:
+  # 14. Gas Sensor
+  - platform: adc
+    pin: GPIO17
+    name: "Gas Level"
+    update_interval: 5s
+    attenuation: 11db

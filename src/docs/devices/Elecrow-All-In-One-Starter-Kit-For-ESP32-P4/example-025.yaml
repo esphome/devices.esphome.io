@@ -1,0 +1,15 @@
+output:
+  - platform: gpio
+    pin: GPIO8
+    id: led_output
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO2
+    name: "Touch Button"
+    on_press:
+      - output.turn_on: led_output
+      - logger.log: "Touch detected - LED ON"
+    on_release:
+      - output.turn_off: led_output
+      - logger.log: "Touch released - LED OFF"

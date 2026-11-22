@@ -1,0 +1,23 @@
+i2s_audio:
+  - id: i2s_output
+    i2s_lrclk_pin: GPIO21
+    i2s_bclk_pin: GPIO22
+
+speaker:
+  # 13. I2S Speaker
+  - platform: i2s_audio
+    id: speaker_output
+    i2s_audio_id: i2s_output
+    dac_type: external
+    i2s_dout_pin: GPIO23
+    channel: stereo
+
+# GPIO6 powers the audio rail when driven low.
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO6
+      inverted: true
+    id: speaker_enable
+    internal: true
+    restore_mode: ALWAYS_ON
