@@ -11,10 +11,12 @@ difficulty: 3
 
 ## Product Description
 
-The **Calex Smart Power Plug 16A EU** (Electro Cirkel article `429198.2`, e.g. batch `AL G21210`) is a 16A / 3680W
-grounded Schuko smart plug sold across the Netherlands and Europe (Action, Gamma, Praxis, Bol). Unlike the energy-meter
-variant (`429201`), SKU `429198.2` is a pure 16A relay switch board (`oem_bk7231s_rnd_switch`) built around a Tuya
-**WB2S** (`BK7231T`) module without a power-metering IC populated.
+The [Calex](https://www.calex.eu/) **Smart Power Plug 16A EU** (Electro Cirkel article `429198.2`, e.g. batch
+`AL G21210`) is a 16A / 3680W grounded Schuko smart plug sold across the Netherlands and Europe (Action, Gamma, Praxis,
+Bol). Unlike the energy-meter variant (`429201`), SKU `429198.2` is a pure 16A relay switch board
+(`oem_bk7231s_rnd_switch`) built around a Tuya [WB2S](https://docs.libretiny.eu/boards/wb2s/) (`BK7231T`) module
+supported by [ESPHome LibreTiny (`bk72xx`)](https://esphome.io/components/libretiny/), without a power-metering IC
+populated.
 
 Units on factory firmware **`1.1.2`** (`1.1.2 - BK7231T / oem_bk7231s_rnd_switch`) can be flashed wirelessly with
 [tuya-cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter) using an ESPHome Kickstart UF2 image without
