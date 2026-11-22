@@ -1,0 +1,61 @@
+esphome:
+  name: dingtian-relay-2ch
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: 3.1
+      sram1_as_iram: true
+
+# Above the "FACTORY" button there are two LEDs. One is wired in series with the switch and the other is
+# controllable via GPIO. Use the second one as a status indicator.
+status_led:
+  pin:
+    number: GPIO32
+    inverted: true
+
+ethernet:
+  type: JL1101
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  phy_addr: 0
+  clk:
+    mode: CLK_OUT
+    pin: GPIO17
+  power_pin: GPIO0
+
+# Enable logging
+logger:
+
+binary_sensor:
+  # The "factory reset" button
+  - platform: gpio
+    name: "User Button"
+    pin:
+      number: GPIO34
+      inverted: true
+
+  # The two sets of contacts for manual trigger
+  # input is pulled up to 3.3V by default.
+  - name: "User Input 1"
+    platform: gpio
+    pin:
+      number: GPIO36
+      inverted: true
+
+  - name: "User Input 2"
+    platform: gpio
+    pin:
+      number: GPIO39
+      inverted: true
+
+switch:
+  - name: "Relay 1"
+    platform: gpio
+    pin: GPIO2
+
+  - name: "Relay 2"
+    platform: gpio
+    pin: GPIO16
