@@ -1,0 +1,48 @@
+substitutions:
+  plug_name: lsc-powerplug1
+
+esphome:
+  name: ${plug_name}
+
+esp8266:
+  board: esp01_1m
+
+logger:
+
+binary_sensor:
+  # Binary sensor for the button press
+  - platform: gpio
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+    name: ${plug_name}_button
+    internal: true
+    on_press:
+      - switch.toggle: relay
+
+output:
+  # Relay state led
+  - platform: esp8266_pwm
+    id: state_led
+    pin:
+      number: GPIO4
+      inverted: true
+
+light:
+  # Relay state light
+  - platform: monochromatic
+    id: led
+    name: ${plug_name}_led
+    output: state_led
+
+switch:
+  # Switch toggles relay
+  - platform: gpio
+    id: relay
+    name: ${plug_name}_relay
+    pin: GPIO12
+    on_turn_on:
+      - light.turn_on: led
+    on_turn_off:
+      - light.turn_off: led
