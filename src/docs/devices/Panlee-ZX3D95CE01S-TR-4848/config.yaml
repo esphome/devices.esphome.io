@@ -1,0 +1,52 @@
+esphome:
+  name: panlee-zx3d95ce01s-tr-4848
+  min_version: 2026.11.0
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    advanced:
+      flash_chip: generic
+      execute_from_psram: true
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+# Only used to send the display init sequence. GPIO45 and GPIO48 are shared with
+# the RGB data lines, so they must be declared with allow_other_uses.
+spi:
+  clk_pin:
+    number: 45
+    allow_other_uses: true
+    ignore_strapping_warning: true
+  mosi_pin:
+    number: 48
+    allow_other_uses: true
+
+display:
+  - platform: mipi_rgb
+    model: ZX3D95CE01S-TR-4848
+    id: my_display
+    # Remove show_test_card when you use lvgl or a display lambda.
+    show_test_card: true
+
+i2c:
+  sda: GPIO15
+  scl: GPIO6
+  scan: true
+  frequency: 400kHz
+
+touchscreen:
+  - platform: ft63x6
+    interrupt_pin: GPIO4
+    id: my_touchscreen
+    calibration:
+      x_min: 0
+      x_max: 480
+      y_min: 0
+      y_max: 480
