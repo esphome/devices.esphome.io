@@ -32,6 +32,9 @@ GPIO16 and GPIO17 are used by the internal flash: do not use them.
 
 ## Flashing
 
+Whichever route you use, add your own `wifi:` credentials, `api:` and an `ota:` entry to the config before you
+build it: `config.yaml` alone only starts the fallback hotspot, and without `ota:` later updates need UART.
+
 ### Over the air with free-shelly-ota (no UART)
 
 Tested on a unit with stock firmware 2.0.1, with
@@ -67,10 +70,29 @@ the plug may not accept Shelly firmware again. If something goes wrong, only UAR
 
 ### Via Tasmota (old stock firmware)
 
-A unit with factory firmware 0.11.99 was converted with the `PlusPlugIT` zip of
-[mgos32-to-tasmota32](https://github.com/tasmota/mgos32-to-tasmota32), then switched to ESPHome by uploading the
-ESPHome OTA image from Tasmota's firmware upgrade page, keeping Shelly's two-slot partition table.
-This route does not work from stock firmware 1.5 or newer.
+Tested on one unit with factory firmware 0.11.99. This route does not work from stock firmware 1.5 or newer.
+
+1. Install `mgos32-to-tasmota32-PlusPlugIT.zip` from release
+   [v14.1.1](https://github.com/tasmota/mgos32-to-tasmota32/releases/tag/v14.1.1) of mgos32-to-tasmota32
+   (Tasmota 12.5.0 solo1). The 0.11.99 page has no file upload: serve the zip over HTTP from your PC and put its
+   URL in the firmware update field.
+2. In Tasmota, run **Configuration → Auto-configuration → Shelly_PlugIT** right away, before the plug restarts:
+   this step replaces Shelly's bootloader, and the converter's instructions warn that skipping it bricks the
+   device. Here the template it loads did not apply (it is the old ESP8266 plug), which does not matter: only the
+   bootloader is needed.
+3. Do **not** run Tasmota's Partition Wizard: keep Shelly's partition table, which on 0.11.99 is
+
+   ```text
+   nvs, data, nvs, 0x9000, 0x4000,
+   otadata, data, ota, 0xd000, 0x2000,
+   app0, app, ota_0, 0x10000, 0x180000,
+   fs_0, data, spiffs, 0x190000, 0x70000,
+   app1, app, ota_1, 0x200000, 0x180000,
+   fs_1, data, spiffs, 0x380000, 0x70000,
+   ```
+
+4. Save it as a CSV next to your yaml, set `partitions:` under `esp32:` to that file, build, and upload the
+   ESPHome OTA image from Tasmota's **Firmware Upgrade** page.
 
 ## Calibration
 
