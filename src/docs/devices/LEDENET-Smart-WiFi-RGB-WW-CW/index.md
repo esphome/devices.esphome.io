@@ -10,7 +10,7 @@ board: esp8266
 
 LEDENET Smart WiFi LED controller compatible with MagicHome.
 
-Manufacturer: [LEDENET](http://www.ledenet.com/products/smart-wifi-led-controller-5-channels-control-4a5ch-cwww-rgb-rgbw-rgbww-led-light-timer-music-group-sync-controller/)
+Manufacturer: [LEDENET](https://www.amazon.com/LEDENET-Smart-Controller-Channels-Control/dp/B01DY56N8U)
 
 ![Product](./LEDENET-Smart-WiFi-RGB-WW-CW.jpg "Product Image")
 
