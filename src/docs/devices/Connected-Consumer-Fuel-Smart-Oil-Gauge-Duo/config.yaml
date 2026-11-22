@@ -386,14 +386,10 @@ sensor:
           ESP_LOGD(TAG, "Time of Flight %.4g ms", id(Time_of_Flight));
 
           // Calc Distance to Oil Surface
-          // double time_s = id(Time_of_Flight) / 1000.0;
+
           double speed_sound_m_per_s = id(Speed_of_Sound);
 
           double total_dist_m = time_s * speed_sound_m_per_s;
-
-          // id(Distance_to_Oil) = (total_dist_m / 2.0) * 100.0;  // cm
-
-          // return id(Distance_to_Oil);  // cm
 
           return (total_dist_m / 2.0) * 100.0;  // cm
 
@@ -440,13 +436,25 @@ sensor:
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
 
-          if (id(Tank_Orientation) == 2){  // Horizontal
+          if (Oil_Height < 0){
+            Oil_Height = 0;
+          }
 
+          if (id(Tank_Orientation) == 2){  // Horizontal
+            
+            if (Oil_Height > id(Tank_Width)) {
+              Oil_Height = id(Tank_Width);
+            }
+            
             Rectangle_Height = Oil_Height;
             Arc_Height = Oil_Height;
 
           } else {  // Vertical
 
+            if (Oil_Height > id(Tank_Height)) {
+              Oil_Height = id(Tank_Height);
+            }
+          
             if (Oil_Height >= (id(Tank_Height) - id(Tank_Radius))) {
               Rectangle_Height = id(Tank_Height) - id(Tank_Width);
               Arc_Height = Oil_Height - Rectangle_Height;
@@ -460,11 +468,6 @@ sensor:
             if ((Oil_Height >= 0)&&(Oil_Height < id(Tank_Radius))){
               Rectangle_Height = 0;
               Arc_Height = Oil_Height;
-            }
-
-            if (Oil_Height < 0){
-              Rectangle_Height = 0;
-              Arc_Height = 0;
             }
           }
 
@@ -522,20 +525,14 @@ sensor:
 
           Oil_Volume = x * id(Tank_Length) / 231; // gallons
 
-          if (Oil_Volume < 0) {
-            Oil_Volume = 0;
-          }
-
-          if (Oil_Volume > id(Max_Fill)) {
-            Oil_Volume = id(Max_Fill);
-          }
+          ESP_LOGD("Oil Volume","%.5g", Oil_Volume);
 
           if (isnan(id(Raw_Oil_Depth_in))){
             Oil_Volume = NAN;
-          }
+          } 
 
           id(Oil_Volume_Geo) = Oil_Volume;
-
+          
           static const char *const TAG = "Ultrasonic Output";
           ESP_LOGD(TAG,
                     "Results:\n"
@@ -597,6 +594,11 @@ sensor:
     filters:
       - lambda: |-
           // x = Oil Volume in Tank gallons
+
+          if (x > id(Max_Fill)) {
+            x = id(Max_Fill);
+          }
+          
           double Max_Refill = id(Max_Fill) - x;
           return Max_Refill;
 
