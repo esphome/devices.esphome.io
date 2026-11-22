@@ -1,0 +1,34 @@
+substitutions:
+  device_name: hunter-xcore
+  friendly_name: Hunter X-Core
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp8266:
+  board: d1_mini
+
+# For an ESP32 board, replace the esp8266 block with:
+# esp32:
+#   board: esp32dev
+#   framework:
+#     type: arduino
+# and set the pin number below to GPIO18.
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/marek-polak/esphome-hunter-xcore
+    components: [hunter_roam]
+
+hunter_roam:
+  id: hunter_roam_instance
+  pin:
+    number: GPIO16
+    mode: OUTPUT
+
+logger:
+
+wifi:
+  ap:
