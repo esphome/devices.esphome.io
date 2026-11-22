@@ -1,0 +1,64 @@
+# Meter calibration values are examples from one unit.
+# You should calibrate your own plug if you need accurate power metering.
+esphome:
+  name: connex-connect-cc-p1004
+  friendly_name: Connex Connect CC-P1004
+bk72xx:
+  board: wb2s
+logger:
+  baud_rate: 0
+wifi:
+  power_save_mode: NONE
+  ap: {}
+switch:
+  - platform: gpio
+    name: Socket
+    id: socket_relay
+    pin: P26
+    restore_mode: RESTORE_DEFAULT_OFF
+binary_sensor:
+  - platform: gpio
+    id: physical_button
+    pin:
+      number: P10
+      inverted: true
+      mode: INPUT_PULLUP
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_press:
+      - switch.toggle: socket_relay
+status_led:
+  pin:
+    number: P6
+    inverted: true
+sensor:
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: P24
+      inverted: true
+    cf_pin:
+      number: P7
+      inverted: true
+    cf1_pin:
+      number: P8
+      inverted: true
+    current_resistor: 0.0010215
+    voltage_divider: 810.785
+    change_mode_every: 3
+    update_interval: 5s
+    current:
+      name: Current
+      filters:
+        - multiply: 0.445546
+    voltage:
+      name: Voltage
+    power:
+      name: Power
+    energy:
+      name: Energy
+      unit_of_measurement: kWh
+      accuracy_decimals: 3
+      filters:
+        - multiply: 0.001
