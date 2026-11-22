@@ -26,7 +26,6 @@ packages:
     files:
       - packages/vue3-i2c.yaml
       - packages/vue3-1phase.yaml
-      - packages/vue3-gpios.yaml
 
 logger:
   logs:
