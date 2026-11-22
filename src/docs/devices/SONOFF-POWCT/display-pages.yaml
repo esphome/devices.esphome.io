@@ -1,0 +1,38 @@
+# A long press on the button (between 360ms and 3s) cycles the display between
+# voltage / current and energy / power.
+binary_sensor:
+  - id: !extend reset
+    on_click:
+      - min_length: 360ms  # long press to cycle display info
+        max_length: 3s
+        then:
+          - if:
+              condition:
+                binary_sensor.is_on: page
+              then:
+                binary_sensor.template.publish:
+                  id: page
+                  state: false
+              else:
+                binary_sensor.template.publish:
+                  id: page
+                  state: true
+  - platform: template  # this is a fake sensor to tell the screen which info to show on display
+    id: page
+    publish_initial_state: true
+    internal: true
+
+display:
+  - id: !extend tm1621_display
+    lambda: |-
+      if (id(page).state) {
+        it.display_voltage(true);
+        it.display_kwh(false);
+        it.printf(0, "%.1f", id(v_sensor).state);
+        it.printf(1, "%.1f", id(a_sensor).state);
+      } else {
+        it.display_voltage(false);
+        it.display_kwh(true);
+        it.printf(0, "%.1f", id(kw_sensor).state);
+        it.printf(1, "%.1f", id(w_sensor).state);
+      }

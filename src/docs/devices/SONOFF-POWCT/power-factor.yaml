@@ -1,0 +1,7 @@
+sensor:
+  - platform: template
+    name: Power Factor
+    device_class: power_factor
+    id: power_factor
+    icon: mdi:angle-acute
+    lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
