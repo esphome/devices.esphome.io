@@ -1,6 +1,6 @@
 ---
 title: Emporia Vue 3 Energy Monitor
-date-published: 2026-11-23
+date-published: 2026-11-22
 type: sensor
 standard: global
 board: esp32
@@ -48,8 +48,10 @@ needed to flash.
 - IO0 is the plated hole; tie it to GND before power-up.
 - Tie TP6 (SAMD09 reset) to GND as well. With the SAMD09 running, serial reads
   had single flipped bits every 20-90 KB and the esptool stub didn't come up;
-  with TP6 low, a full 8 MB read passed every block checksum. Remove the TP6
-  wire before ESPHome boots.
+  with TP6 low, a full 8 MB read passed every block checksum.
+- After flashing, power off and remove both the IO0 and the TP6 wires. With
+  IO0 still grounded the ESP32 starts the ROM downloader again instead of
+  ESPHome, and ESPHome drives TP6 from GPIO23.
 - Power the 3.3 V pad (TP12) from a supply good for 500 mA. A USB-serial
   adapter's 3.3 V pin sagged under the board.
 
@@ -70,9 +72,20 @@ pin; that is expected.
 
 ## Basic Configuration
 
+The example assumes single-phase wiring: `vue3-1phase.yaml` measures the BLACK
+voltage input with main clamp A, and every circuit uses line 1. For split-phase
+or three-phase installations use the driver's `vue3-2phase.yaml` or
+`vue3-3phase.yaml` and set each circuit's `line` to its actual voltage
+reference.
+
 The driver's default voltage calibration (0.022) read about 14 % high on the
-first unit; calibrate against a meter. Add `power` and `energy` to the circuits
-you use.
+first unit; calibrate against a meter. Add `power` to the circuits you use.
+`energy` also needs a `time:` source (SNTP or Home Assistant), which this
+hardware-only example leaves out.
+
+The driver's optional `vue3-gpios.yaml` (status LEDs on GPIO2 and GPIO4) is left
+out: at 2026.11.1 it lights only the Wi-Fi LED whenever Wi-Fi is compiled in,
+so with Ethernet and Wi-Fi together the Ethernet LED stays off.
 
 ```yaml file=config.yaml
 ```
