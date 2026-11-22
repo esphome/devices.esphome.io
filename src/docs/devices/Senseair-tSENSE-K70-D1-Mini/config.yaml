@@ -8,6 +8,8 @@ esphome:
 
 esp8266:
   board: d1_mini
+  # Keep restore_value settings (e.g. the temperature offset) across power cuts.
+  restore_from_flash: true
 
 wifi:
   ap: {}
@@ -108,18 +110,25 @@ number:
     min_value: 400
     max_value: 1950
     step: 50
-    # The tSENSE stores the relay band as low + span; rewrite the span so the
-    # upper threshold stays where it was.
+    # The tSENSE stores the relay band as low + span; rewrite the span too
+    # so the upper threshold stays where it was.
     write_lambda: |-
-      float high = id(relay_high).state;
-      if (isnan(high) || x >= high) {
+      float low = id(relay_low).state, high = id(relay_high).state;
+      if (isnan(low) || isnan(high) || x >= high) {
         ESP_LOGW("tsense", "Lower threshold %.0f must be below upper threshold %.0f", x, high);
         return {};
       }
-      auto span = esphome::modbus_controller::ModbusCommandItem::create_write_single_command(
-          id(tsense), 43, (uint16_t) (high - x));
-      id(tsense)->queue_command(span);
-      return x;
+      uint16_t span = (uint16_t) (high - x);
+      // Order the two writes so the switch-on level (low + span) never dips
+      // below its target in between, which could switch the relay on.
+      if (x > low) {
+        item->write_single_register(35, (uint16_t) x);
+        item->write_single_register(43, span);
+      } else {
+        item->write_single_register(43, span);
+        item->write_single_register(35, (uint16_t) x);
+      }
+      return {};
 
   - platform: modbus_controller
     modbus_controller_id: tsense
