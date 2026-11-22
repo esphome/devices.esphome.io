@@ -4,12 +4,12 @@ date-published: 2026-04-08
 type: misc
 standard: global
 board: esp32
-project-url: https://github.com/glowswitch/glowswitch-esphome  
+project-url: https://github.com/glowswitch/glowswitch-esphome
 made-for-esphome: true
 difficulty: 1
 ---
 
-The [glowswitch WiFi](https://glowswitch.net) is a small device that attaches to a light switch
+The [glowswitch WiFi](https://github.com/glowswitch/glowswitch-esphome) is a small device that attaches to a light switch
 and uses a servo to turn it on and off.
 
 Features:
