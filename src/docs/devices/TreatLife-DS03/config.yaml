@@ -1,0 +1,43 @@
+substitutions:
+  devicename: fan_switch
+  friendly_name: Fan Switch
+
+esphome:
+  name: ${devicename}
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 115200
+
+tuya:
+
+sensor:
+  - platform: wifi_signal
+    name: $friendly_name Wifi Signal
+    update_interval: 60s
+
+  - platform: uptime
+    name: $friendly_name uptime
+
+light:
+  - platform: "tuya"
+    name: $friendly_name Light
+    dimmer_datapoint: 10
+    switch_datapoint: 9
+    min_value: 100
+    max_value: 1000
+
+fan:
+  - platform: "tuya"
+    name: $friendly_name Speed
+    switch_datapoint: 1
+    speed_datapoint: 3
+    speed_count: 4
