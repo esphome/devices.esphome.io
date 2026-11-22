@@ -7,7 +7,7 @@ standard: eu
 
 ## Warning
 
-![Warning](https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Warning.svg/260px-Warning.svg.png)
+![Warning](https://upload.wikimedia.org/wikipedia/commons/1/17/Warning.svg)
 
 Looks like device chip was replaced to non-flashable custom tasmota chip.
 
