@@ -1,0 +1,89 @@
+substitutions:
+  devicename: brilliant-smartplug-1
+  friendly_name: Brilliant Smartplug 1
+  device_description: Brilliant Lighting BL20925 Power Monitoring Plug with button and Blue led.
+
+esphome:
+  name: $devicename
+  comment: ${device_description}
+
+esp8266:
+  board: esp01_1m
+wifi:
+  ap: {}
+
+# Enable logging
+logger:
+sensor:
+  # Reports how long the device has been powered (in minutes)
+  - platform: uptime
+    name: ${friendly_name} Uptime
+    filters:
+      - lambda: return x / 60.0;
+    unit_of_measurement: minutes
+
+  # Reports the WiFi signal strength
+  - platform: wifi_signal
+    name: ${friendly_name} Wifi Signal
+    update_interval: 60s
+
+  # Reports the Current, Voltage, and Power used by the plugged-in device
+  - platform: hlw8012
+    sel_pin:
+      number: GPIO12
+      inverted: true
+    cf_pin: GPIO04
+    cf1_pin: GPIO05
+    change_mode_every: 3
+    update_interval: 3s
+    power:
+      name: ${friendly_name} Power
+      unit_of_measurement: W
+      id: wattage
+    current:
+      name: ${friendly_name} Current
+      unit_of_measurement: A
+    voltage:
+      name: ${friendly_name} Voltage
+      unit_of_measurement: V
+
+binary_sensor:
+  # Front button; add button-and-status.yaml for relay control.
+  - platform: gpio
+    device_class: power
+    pin:
+      number: GPIO03
+      inverted: true
+    name: ${friendly_name} Button  # Name to make button visible in HA
+    id: power_button
+text_sensor:
+  # Reports the ESPHome Version with compile date
+  - platform: version
+    name: ${friendly_name} ESPHome Version
+
+  # Reports detailed wifi info, can be commented out
+  - platform: wifi_info
+    ip_address:
+      name: ${friendly_name} IP Address
+
+switch:
+  # Relay itself
+  - platform: gpio
+    name: ${friendly_name}
+    pin: GPIO14
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF  # Try to restore relay state after reboot/power-loss event.
+output:
+  # Output GPIOs for blue led
+  - platform: esp8266_pwm  # Blue
+    id: brilliant_smartplug_1_blue_output
+    pin:
+      number: GPIO013
+      inverted: true
+
+light:
+  # Blue indicator
+  - platform: monochromatic
+    name: ${friendly_name} Light
+    output: brilliant_smartplug_1_blue_output
+    id: brilliant_smartplug_1_blue_led

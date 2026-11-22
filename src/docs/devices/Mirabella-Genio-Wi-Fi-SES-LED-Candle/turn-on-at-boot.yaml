@@ -1,0 +1,5 @@
+esphome:
+  on_boot:
+    priority: 100  # Highest priority, ensures light turns on without delay.
+    then:
+      - light.turn_on: candle_light

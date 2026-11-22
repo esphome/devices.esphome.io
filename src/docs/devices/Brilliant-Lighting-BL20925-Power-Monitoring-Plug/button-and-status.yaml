@@ -1,0 +1,37 @@
+binary_sensor:
+  - id: !extend power_button
+    on_press:
+      - switch.toggle: relay
+
+switch:
+  - id: !extend relay
+    on_turn_on:  # Action when relay is turned on
+      - script.execute: led_power_on
+    on_turn_off:  # Action when relay is turned off
+      - script.execute: led_relay_off
+
+interval:
+  - interval: 2000ms
+    then:
+      - if:
+          condition:
+            for:
+              time: 30s
+              condition:
+                not:
+                  wifi.connected:
+          then:
+            - light.turn_on:
+                id: brilliant_smartplug_1_blue_led
+                brightness: 100%
+
+script:
+  - id: led_relay_off  # Normal operation when relay is off
+    then:
+      - light.turn_off:
+          id: brilliant_smartplug_1_blue_led
+  - id: led_power_on  # Normal operation when relay is on
+    then:
+      - light.turn_on:
+          id: brilliant_smartplug_1_blue_led
+          brightness: 80%

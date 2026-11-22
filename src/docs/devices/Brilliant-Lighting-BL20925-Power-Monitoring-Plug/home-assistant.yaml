@@ -1,0 +1,15 @@
+api:
+ota:
+  - platform: esphome
+captive_portal:
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+  - platform: total_daily_energy
+    name: ${friendly_name} Total Daily Energy
+    power_id: wattage
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh

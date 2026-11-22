@@ -1,0 +1,5 @@
+binary_sensor:
+  - id: !extend strip_light_pushbutton
+    on_press:
+      then:
+        - light.toggle: strip_light

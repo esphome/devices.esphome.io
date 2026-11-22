@@ -1,0 +1,14 @@
+interval:
+  - interval: 1s
+    then:
+      if:
+        condition:
+          wifi.connected:
+        then:
+          - output.turn_on: status_led
+        else:
+          - output.turn_off: status_led
+          - delay: 500ms
+          - output.turn_on: status_led
+
+# Use the button as a sensor.
