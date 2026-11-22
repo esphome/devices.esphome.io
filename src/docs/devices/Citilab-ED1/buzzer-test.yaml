@@ -1,0 +1,8 @@
+switch:
+  - platform: template
+    name: "Buzzer Test"
+    id: buzzer_switch
+    turn_on_action:
+      - rtttl.play: "beep:d=4,o=5,b=100:c"
+    turn_off_action:
+      - rtttl.stop

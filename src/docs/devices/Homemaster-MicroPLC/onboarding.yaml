@@ -1,0 +1,11 @@
+captive_portal:
+
+improv_serial:
+
+esp32_improv:
+  authorizer: none  # No additional authorization required for Improv
+
+dashboard_import:
+  package_import_url: github://isystemsautomation/HOMEMASTER/MicroPLC/Firmware/microplc.yaml@main
+  import_full_config: true
+  # Allows importing this YAML from GitHub into ESPHome Dashboard

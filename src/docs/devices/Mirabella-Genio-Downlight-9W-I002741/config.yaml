@@ -1,0 +1,52 @@
+esphome:
+  name: downlight
+  name_add_mac_suffix: true
+
+wifi:
+  ap: {}
+
+logger:
+
+bk72xx:
+  board: cb2l
+
+# LED driver
+bp5758d:
+  data_pin: GPIO7
+  clock_pin: GPIO8
+
+# Individual outputs
+output:
+  - platform: bp5758d
+    id: output_red
+    channel: 1
+    current: 10  # 10mA measured on unmodified unit
+  - platform: bp5758d
+    id: output_green
+    channel: 2
+    current: 7  # 7.5mA measured on unmodified unit
+  - platform: bp5758d
+    id: output_blue
+    channel: 3
+    current: 7  # 7mA measured on unmodified unit
+  - platform: bp5758d
+    id: output_warmwhite
+    channel: 4
+    current: 25  # 25mA measured on unmodified unit
+  - platform: bp5758d
+    id: output_white
+    channel: 5
+    current: 25  # 25mA measured on unmodified unit
+
+light:
+  - platform: rgbww
+    name: 'downlight'
+    id: 'downlight'
+    red: output_red
+    green: output_green
+    blue: output_blue
+    warm_white: output_warmwhite
+    cold_white: output_white
+    warm_white_color_temperature: 2700 K
+    cold_white_color_temperature: 6500 K
+    color_interlock: true

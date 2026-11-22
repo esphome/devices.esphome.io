@@ -1,0 +1,36 @@
+esphome:
+  name: steren-rgbww-desk-lamp
+
+bk72xx:
+  board: wb3l
+
+output:
+  - platform: libretiny_pwm
+    id: red
+    pin: P8
+  - platform: libretiny_pwm
+    id: blue
+    pin: P26
+  - platform: libretiny_pwm
+    id: green
+    pin: P24
+  - platform: libretiny_pwm
+    id: warm_white
+    pin: P6
+  - platform: libretiny_pwm
+    id: cold_white
+    pin: P7
+
+light:
+  - platform: rgbww
+    name: "Light"
+    id: rgb_light
+    restore_mode: ALWAYS_OFF
+    red: red
+    green: green
+    blue: blue
+    warm_white: warm_white
+    cold_white: cold_white
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2000 K
+    color_interlock: true
