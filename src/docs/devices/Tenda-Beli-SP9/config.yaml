@@ -1,0 +1,78 @@
+esphome:
+  name: beli-plug
+  friendly_name: Beli Plug
+
+# Custom 1 MiB board definition, see the "Board definition" section of the page.
+rtl87xx:
+  board: tenda-sp3
+  family: rtl8710b
+
+logger:
+  baud_rate: 115200
+
+wifi:
+  ap:
+
+sensor:
+  # PA18 pulses with the load; one-point estimate from a measured 4.1 W lamp.
+  # The meter IC and accuracy at other loads are not established.
+  - platform: pulse_meter
+    id: plug_power
+    name: Power Estimated
+    pin:
+      number: GPIO18
+      mode:
+        input: true
+        pullup: false
+        pulldown: false
+    internal_filter_mode: EDGE
+    internal_filter: 1ms
+    timeout: 30s
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    icon: mdi:flash
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.15356649
+      - lambda: |
+          return id(main_plug).state ? x : 0.0f;
+
+switch:
+  - platform: gpio
+    id: main_plug
+    name: Main Plug
+    pin: GPIO12
+    restore_mode: ALWAYS_OFF
+    on_turn_off:
+      - lambda: id(plug_power).publish_state(0.0f);
+
+binary_sensor:
+  - platform: gpio
+    id: physical_button
+    name: Physical Button
+    entity_category: diagnostic
+    pin:
+      number: GPIO11
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    use_interrupt: false
+    filters:
+      - delayed_on_off: 30ms
+    on_press:
+      - switch.toggle: main_plug
+
+# Stock LED outputs, active low.
+output:
+  - platform: gpio
+    id: led_blue
+    pin:
+      number: GPIO22
+      inverted: true
+  - platform: gpio
+    id: led_yellow
+    pin:
+      number: GPIO19
+      inverted: true
