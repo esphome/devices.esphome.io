@@ -1,0 +1,54 @@
+substitutions:
+  devicename: brilliant-1
+  friendlyname: brilliant_1
+
+esphome:
+  name: $devicename
+  friendly_name: $friendlyname
+
+esp8266:
+  board: esp01_1m
+  board_flash_mode: dout
+
+logger:
+
+#------------------------------------
+# Button toggles relay
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO14
+      mode: INPUT_PULLUP
+      inverted: True
+    name: $friendlyname Button
+    on_press:
+      - switch.toggle: relay
+  - platform: status
+    name: $friendlyname Status
+
+# Relay output of plug
+switch:
+  - platform: gpio
+    name: Relay
+    pin: GPIO5
+    id: relay
+    on_turn_on:
+      - output.turn_off: light_output #turn status led OFF so LED is blue when relay is on
+    on_turn_off:
+      - output.turn_on: light_output #turn status led ON so LED is red when relay==off && status==ok
+
+# Red LED status when module initialising and connecting
+light:
+  - platform: status_led # status_led type can be overwritten by output if status==ok.
+    name: status
+    internal: True #don't expose a user controllable switch to HomeAssistant interface
+    pin:
+      number: GPIO12
+      inverted: False
+
+output:
+  - id: light_output
+    platform: gpio
+    pin:
+      number: GPIO12
+      inverted: True
