@@ -1,0 +1,60 @@
+# OOK Radio Configuration
+sx127x:
+  cs_pin: GPIO18
+  rst_pin: GPIO23
+  frequency: 433920000
+  modulation: OOK
+  packet_mode: false
+  bitsync: false
+  rx_start: true
+  bandwidth: 50_0kHz
+  rx_floor: -85
+  pa_pin: BOOST
+  pa_power: 10
+
+# Remote receiver on DIO2
+remote_receiver:
+  pin:
+    number: GPIO32
+    allow_other_uses: true
+    mode:
+      input: true
+      output: true
+      pullup: true
+      open_drain: true
+  filter: 50us
+  dump: raw
+  idle: 1ms
+
+# Remote transmitter on DIO2 (shared with receiver)
+remote_transmitter:
+  pin:
+    number: GPIO32
+    allow_other_uses: true
+    mode:
+      input: true
+      output: true
+      pullup: true
+      open_drain: true
+  eot_level: false
+  carrier_duty_percent: 100%
+  on_transmit:
+    then:
+      - sx127x.set_mode_standby
+      - remote_transmitter.digital_write: false
+      - sx127x.set_mode_tx
+  on_complete:
+    then:
+      - sx127x.set_mode_standby
+      - remote_transmitter.digital_write: true
+      - sx127x.set_mode_rx
+
+
+# Example button to transmit OOK signal
+button:
+  - platform: template
+    name: "Transmit OOK"
+    on_press:
+      then:
+        - remote_transmitter.transmit_raw:
+            code: [614, -614, 600, -614, 614, -614, 601, -614]

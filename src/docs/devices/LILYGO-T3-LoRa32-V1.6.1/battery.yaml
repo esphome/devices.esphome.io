@@ -1,0 +1,9 @@
+sensor:
+  - platform: adc
+    pin: GPIO35
+    name: "Battery Voltage"
+    icon: mdi:battery
+    attenuation: 12db
+    filters:
+      - multiply: 2.0  # Voltage divider correction
+    update_interval: 60s
