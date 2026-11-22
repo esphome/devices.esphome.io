@@ -1,0 +1,25 @@
+alias: Pet feeder notifications
+description: ""
+trigger:
+  - platform: event
+    event_type: esphome.feeder_food_low
+    id: food_low
+  - platform: event
+    event_type: esphome.feeder_food_dispensed
+    id: food_dispensed
+condition: []
+action:
+  - if:
+      - condition: trigger
+        id:
+          - food_low
+    then:
+      - service: notify.notify
+        metadata: {}
+        data:
+          message: "{{ trigger.event.data.message }}"
+      - service: notify.persistent_notification
+        metadata: {}
+        data:
+          message: "{{ trigger.event.data.message }}"
+mode: single
