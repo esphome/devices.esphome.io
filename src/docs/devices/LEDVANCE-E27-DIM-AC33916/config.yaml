@@ -1,0 +1,27 @@
+esphome:
+  name: ledvance-e27-dim
+  friendly_name: LEDVANCE E27 DIM
+
+bk72xx:
+  board: generic-bk7231t-qfn32-tuya
+
+preferences:
+  flash_write_interval: 10s
+
+logger:
+
+wifi:
+  ap:
+
+output:
+  - platform: libretiny_pwm
+    id: output_brightness
+    pin: P7
+    frequency: 600 Hz
+
+light:
+  - platform: monochromatic
+    name: None
+    output: output_brightness
+    gamma_correct: 2.0
+    restore_mode: RESTORE_DEFAULT_ON
