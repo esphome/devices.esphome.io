@@ -245,7 +245,7 @@ sensor:
           // Battery Voltage Divider R Values
           int R1 = 10.0;  // MOhm
           int R2 = 1.0;   // MOhm
-          
+
           return (x * (R1+R2))/R2; // Battery Voltage
     on_value:
       then:
