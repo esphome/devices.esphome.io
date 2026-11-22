@@ -94,7 +94,7 @@ Both examples limit software volume commands to 0 dB. This is not a limiter for 
 
 ## Compatibility And Validation
 
-The project is beta software. This page describes an RX-V1600 configuration, not a claim that every Yamaha receiver or
+This page describes an RX-V1600 configuration, not a claim that every Yamaha receiver or
 every function has been tested. Release `v0.4.0` also provides x500, x700, x800 and RX-V1900 profiles; select the appropriate
 profile rather than applying RX-V1600 settings to a different model.
 Consult the project's [model matrix](https://github.com/memphi2/ESPHome-Yamaha-Serial/blob/v0.4.0/docs/supported_models.md)
