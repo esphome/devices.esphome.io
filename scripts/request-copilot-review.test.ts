@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 /**
- * Unit tests for .github/scripts/request-copilot-review.cjs, the "Request
- * Copilot review" workflow handler, against a recording GitHub client mock.
+ * Unit tests for .github/scripts/request-copilot-review.cjs, the Copilot review
+ * helpers the promotion and merge-conflict workflows call, against a recording
+ * GitHub client mock.
  * Run with `npm test`.
  */
 import test from "node:test";
@@ -97,38 +98,29 @@ function makeCore() {
   };
 }
 
-const prContext = (type = "User") => ({
-  repo: REPO,
-  payload: { pull_request: { number: 9, user: { type } } },
-});
+const requestOn9 = (github: unknown, core: unknown) =>
+  copilot.requestCopilotReview({ github, core, ...REPO, prNumber: 9 });
 
-test("a PR event requests a Copilot review", async () => {
+test("a PR number requests a Copilot review", async () => {
   const { github, calls } = makeGithub();
   const { core, infos, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.deepEqual(calls, [{ ...REPO, pull_number: 9, reviewers: ["copilot-pull-request-reviewer[bot]"] }]);
   assert.deepEqual(warnings, []);
   assert.match(infos[0], /Requested a Copilot review on #9/);
 });
 
-test("bot PRs are skipped", async () => {
-  const { github, calls } = makeGithub();
-  const { core } = makeCore();
-  await copilot({ github, context: prContext("Bot"), core });
-  assert.deepEqual(calls, []);
-});
-
 test("a failed request warns instead of failing", async () => {
   const { github } = makeGithub({ fail: true });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /Could not request a Copilot review on #9/);
 });
 
 test("an accepted request GitHub never recorded warns", async () => {
   const { github } = makeGithub({ after: [{ id: 1, event: "labeled" }] });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /recorded none/);
 });
 
@@ -136,7 +128,7 @@ test("a request filed by another account does not confirm ours", async () => {
   const after = [copilotRequest(1, "other"), copilotReview(2, LATER)];
   const { github } = makeGithub({ after });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /recorded none/);
 });
 
@@ -144,7 +136,7 @@ test("an earlier request by the same account does not confirm this one", async (
   const earlier = [copilotRequest(1, "ours", OLD), copilotReview(2, LATER)];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /recorded none/);
 });
 
@@ -152,7 +144,7 @@ test("a Copilot review still pending is logged, not warned", async () => {
   const earlier = [copilotReview(1, OLD), copilotRequest(2, "other")];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, infos, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.deepEqual(warnings, []);
   assert.match(infos[0], /requested by someone is still pending on #9/);
 });
@@ -164,7 +156,7 @@ test("a Copilot request that was removed is not pending", async () => {
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /recorded none/);
 });
 
@@ -175,14 +167,14 @@ test("a completed review under the bot account login ends the pending request", 
   ];
   const { github } = makeGithub({ before: earlier, after: earlier });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.match(warnings[0], /recorded none/);
 });
 
 test("a failed timeline read after the request warns instead of failing", async () => {
   const { github, calls } = makeGithub({ timelineError: "after" });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.equal(calls.length, 1);
   assert.match(warnings[0], /could not confirm it: secondary rate limit/);
 });
@@ -190,7 +182,7 @@ test("a failed timeline read after the request warns instead of failing", async 
 test("a failed baseline read still requests the review, unconfirmed", async () => {
   const { github, calls } = makeGithub({ timelineError: "before" });
   const { core, warnings } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.equal(calls.length, 1);
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /goes unconfirmed: secondary rate limit/);
@@ -199,7 +191,7 @@ test("a failed baseline read still requests the review, unconfirmed", async () =
 test("a rejected token fails the run so it gets rotated", async () => {
   const { github, calls } = makeGithub({ whoamiStatus: 401 });
   const { core, failures } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.equal(calls.length, 0);
   assert.match(failures[0], /COPILOT_REVIEW_TOKEN was rejected/);
 });
@@ -207,7 +199,7 @@ test("a rejected token fails the run so it gets rotated", async () => {
 test("a failed account lookup still requests the review, unconfirmed", async () => {
   const { github, calls } = makeGithub({ whoamiStatus: 502 });
   const { core, warnings, failures } = makeCore();
-  await copilot({ github, context: prContext(), core });
+  await requestOn9(github, core);
   assert.equal(calls.length, 1);
   assert.deepEqual(failures, []);
   assert.equal(warnings.length, 1);
