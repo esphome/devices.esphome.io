@@ -1,0 +1,40 @@
+esphome:
+  name: ledvance-tunable-white
+  friendly_name: LEDVANCE Tunable White
+
+bk72xx:
+  board: generic-bk7231n-qfn32-tuya
+
+preferences:
+  flash_write_interval: 10s
+
+logger:
+
+wifi:
+  ap:
+
+# min_power = the duty cycle at which the LEDs start to glow (~0.8 %)
+output:
+  - platform: libretiny_pwm
+    id: output_cold
+    pin: P8
+    frequency: 1000 Hz
+    min_power: 0.008
+    zero_means_zero: true
+  - platform: libretiny_pwm
+    id: output_warm
+    pin: P7
+    frequency: 1000 Hz
+    min_power: 0.008
+    zero_means_zero: true
+
+light:
+  - platform: cwww
+    name: None
+    cold_white: output_cold
+    warm_white: output_warm
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.0
+    restore_mode: RESTORE_DEFAULT_ON
