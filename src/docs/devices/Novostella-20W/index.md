@@ -27,7 +27,7 @@ This template has been updated with "comment:" and "captive_portal:" feautures a
 ```yaml
 #Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
-#https://blakadder.github.io/templates/novostella_20W_flood.html
+#https://templates.blakadder.com/novostella_UT88835.html
 substitutions:
   device_name: novoflood
   device_description: 20W RGBWW flood light
@@ -177,7 +177,7 @@ In novoflood_common.yaml:
 
 #Novostella 20W Flood Light, https://www.amazon.com/dp/B07VH1VHYL
 #https://fccid.io/2AI5T-SFGD-002
-#https://blakadder.github.io/templates/novostella_20W_flood.html
+#https://templates.blakadder.com/novostella_UT88835.html
 
 esphome:
   name: ${device_name}
