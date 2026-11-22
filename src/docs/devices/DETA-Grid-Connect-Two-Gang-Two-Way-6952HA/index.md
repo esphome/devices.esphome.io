@@ -4,7 +4,7 @@ date-published: 2025-01-18
 type: switch
 standard: au
 board: bk72xx
-made-for-esphome: False
+made-for-esphome: false
 difficulty: 3
 ---
 
@@ -51,7 +51,8 @@ configuration below.
 ### Series 2 (CB3S) GPIO Pinouts
 
 _See
-[Pinouts on CB3S Module Datasheet](https://developer.tuya.com/docs/iot/cb3s?id=Kai94mec0s076#title-5-Pin%20definition) for more detail_
+[Pinouts on CB3S Module Datasheet](https://developer.tuya.com/en/docs/iot/cb3s?id=Kai94mec0s076#title-5-Pin%20definition)
+for more detail_
 
 | Pin | Function                                                                                                                                      |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,134 +68,21 @@ _See
 
 ### Series 2 (CB3S) Configuration Examples
 
-```yaml
-substitutions:
-  device_name: "deta-2-way-2-gang-switch"
+The base example contains the device hardware settings. Add your Wi-Fi, API and OTA configuration separately.
 
-  friendly_name: "DETA 2 Way 2 Gang Switch"
-  light_1_name: "${friendly_name} 1"
-  light_2_name: "${friendly_name} 2"
-  light_1_icon: "mdi:light-recessed"
-  light_2_icon: "mdi:light-recessed"
+```yaml file=config.yaml
+```
 
-esphome:
-  name: ${device_name}
-  friendly_name: ${friendly_name}
+### Two-way light controls
 
-bk72xx:
-  board: cb3s
+Combine this fragment with the base configuration above to enable the buttons, light entities and relay filters.
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-
-status_led:
-  pin:
-    number: P24
-    inverted: true
-
-light:
-  - platform: binary
-    output: filter_1
-    id: light_1
-    name: "${light_1_name}"
-    icon: "${light_1_icon}"
-
-  - platform: binary
-    output: filter_2
-    id: light_2
-    name: "${light_2_name}"
-    icon: "${light_2_icon}"
-
-binary_sensor:
-  # Buttons
-  - platform: gpio
-    id: button_1
-    pin:
-      number: P26
-      inverted: true
-      mode: INPUT_PULLUP
-    on_press:
-      then:
-        - light.toggle: light_1
-    internal: true
-
-  - platform: gpio
-    id: button_2
-    pin:
-      number: P23
-      inverted: true
-      mode: INPUT_PULLUP
-    on_press:
-      then:
-        - light.toggle: light_2
-    internal: true
-
-  # Activation statuses
-  # Represents the "local" relay (this device) XOR the "remote" relay (another device).
-  # It only shows TRUE if one of the "local" or "remote" relays are active, but not both.
-  - platform: gpio
-    id: activation_status_1
-    pin:
-      number: P7
-      mode: INPUT
-      inverted: true
-    internal: true
-
-  - platform: gpio
-    id: activation_status_2
-    pin:
-      number: P8
-      mode: INPUT
-      inverted: true
-    internal: true
-
-switch:
-  # Relays
-  - platform: gpio
-    id: relay_1
-    pin: P14
-    internal: true
-
-  - platform: gpio
-    id: relay_2
-    pin: P6
-    internal: true
-
-output:
-  # Filters
-  # Triggered when the "light" entity is turned on or off. Will only toggle
-  # the associated relay if the "light" entity is out of sync with the
-  # "activation status"; otherwise do nothing as the state is already correct.Z
-  - platform: template
-    type: binary
-    id: filter_1
-    write_action:
-      then:
-        - if:
-            condition:
-              - lambda: "return state != id(activation_status_1).state;"
-            then:
-              - switch.toggle: relay_1
-
-  - platform: template
-    type: binary
-    id: filter_2
-    write_action:
-      then:
-        - if:
-            condition:
-              - lambda: "return state != id(activation_status_2).state;"
-            then:
-              - switch.toggle: relay_2
+```yaml file=light-filters.yaml
 ```
 
 ### Add Reboot button to HA
 
-```yaml
-switch:
-  - platform: restart
-    name: ${friendlyname} REBOOT
+Combine this fragment with the base configuration above to add the restart switch.
+
+```yaml file=add-reboot-button-to-ha.yaml
 ```

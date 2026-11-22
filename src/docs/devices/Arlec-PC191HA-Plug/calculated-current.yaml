@@ -1,0 +1,11 @@
+sensor:
+  - platform: template
+    name: $name Current
+    id: ${device_name}_current
+    unit_of_measurement: A
+    accuracy_decimals: 2
+    update_interval: "30s"
+    lambda: |-
+      return (id(${device_name}_power).state / id(${device_name}_voltage).state);
+    filters:
+      - skip_initial: 2

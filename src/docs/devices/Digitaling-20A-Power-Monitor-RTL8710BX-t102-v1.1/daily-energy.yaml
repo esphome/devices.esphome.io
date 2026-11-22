@@ -1,0 +1,14 @@
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+sensor:
+  - platform: total_daily_energy
+    name: Total Daily Energy
+    icon: mdi:circle-slice-3
+    power_id: power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    state_class: total_increasing
+    device_class: energy
