@@ -101,14 +101,27 @@ sensor:
       name: "Current"
       filters:
         - multiply: 1.057
-      on_value_range:
-        - above: 10.5
-          then:
-            - switch.turn_off: relay
+      # Checked on every reading, so the relay also goes off if it is switched on
+      # while the load is still too high
+      on_value:
+        - if:
+            condition:
+              lambda: "return x > 10.5;"
+            then:
+              - switch.turn_off: relay
     power:
       name: "Power"
       filters:
         - multiply: 3.355
+      # Current is only read on every second update (CF1 alternates with voltage),
+      # power on every update: a power limit trips faster.
+      # The plug is rated 2300 W; 2400 W leaves the same margin as 10.5 A over 10 A
+      on_value:
+        - if:
+            condition:
+              lambda: "return x > 2400.0;"
+            then:
+              - switch.turn_off: relay
     energy:
       name: "Energy"
       unit_of_measurement: kWh
@@ -135,8 +148,10 @@ sensor:
       b_constant: 3950
       reference_temperature: 25°C
       reference_resistance: 10kOhm
-    # Like the stock firmware: relay off above 90 °C
-    on_value_range:
-      - above: 90
-        then:
-          - switch.turn_off: relay
+    # Like the stock firmware: relay off above 90 °C, checked on every reading
+    on_value:
+      - if:
+          condition:
+            lambda: "return x > 90.0;"
+          then:
+            - switch.turn_off: relay

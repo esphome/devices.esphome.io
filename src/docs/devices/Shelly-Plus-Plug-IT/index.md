@@ -10,7 +10,9 @@ difficulty: 2
 Italian version of the Shelly Plus Plug (Italian/Schuko 10 A socket), model **SNPL-00110IT**.
 ESP32-U4WDH (single core) with 4 MB flash, BL0937 power meter.
 
-The pinout is **not** the same as the [Shelly Plus Plug S](/devices/shelly-plus-plug-s/).
+![Shelly Plus Plug IT](shelly-plus-plug-it.jpg "Shelly Plus Plug IT")
+
+The pinout is **not** the same as the [Shelly Plus Plug S](/devices/Shelly-Plus-Plug-S).
 The pins below were read from the stock 2.0.1 firmware and checked on the hardware.
 
 ## GPIO Pinout
@@ -38,32 +40,15 @@ Tested on a unit with stock firmware 2.0.1, with
 1. Create the profile from the official 2.0.1 package:
    `python ota.py add-device <official.zip>` and
    `python ota.py partition-csv PlusPlugIT --official <official.zip> -o PlusPlugIT-stock.csv`.
-2. Build the config below with the stock partition table, so the image matches the layout in flash.
-   Replace the `esp32:` block with this one and put `PlusPlugIT-stock.csv` next to your yaml:
-
-   ```yaml inline
-   esp32:
-     variant: esp32
-     board: esp32dev
-     flash_size: 4MB
-     partitions: PlusPlugIT-stock.csv
-     framework:
-       type: esp-idf
-       sdkconfig_options:
-         CONFIG_FREERTOS_UNICORE: y
-         # Shelly's bootloader header says 80 MHz: without this `build` refuses
-         CONFIG_ESPTOOLPY_FLASHFREQ_80M: "y"
-       advanced:
-         enable_ota_rollback: false
-   ```
-
-   and add `allow_partition_access: true` to your `ota:` entry.
+2. Build the config with the stock partition table, so the image matches the layout in flash: add the
+   settings from [Stock partition layout](#stock-partition-layout) to your yaml and put `PlusPlugIT-stock.csv`
+   next to it.
 3. Download both the factory and the OTA image from ESPHome, then
    `python ota.py build PlusPlugIT <ota.bin> --esphome-factory <factory.bin> --boot-min-version 1.0.9`,
    `python ota.py send PlusPlugIT <zip> --ip <plug IP> --dry-run` (must report target slot 0) and the same
    command without `--dry-run`.
 
-The stock 2.0.1 partition table produced by `partition-csv`:
+The stock 2.0.1 partition table produced by `partition-csv` (the same as `PlusPlugIT-stock.csv` in this folder):
 
 ```text
 nvs, data, nvs, 0x9000, 0x4000,
@@ -96,4 +81,12 @@ check yours with a known load.
 ## Configuration
 
 ```yaml file=config.yaml
+```
+
+### Stock partition layout
+
+Only for the free-shelly-ota route above: merge this onto the config (for example as a local package) and put
+`PlusPlugIT-stock.csv` next to your yaml.
+
+```yaml file=stock-partitions.yaml
 ```

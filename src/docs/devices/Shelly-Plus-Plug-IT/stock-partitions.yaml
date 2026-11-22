@@ -1,0 +1,15 @@
+# Only for the free-shelly-ota route: build with Shelly's stock 2.0.1 partition
+# table, so the image matches the layout already in flash.
+# Put PlusPlugIT-stock.csv next to your yaml.
+esp32:
+  partitions: PlusPlugIT-stock.csv
+  framework:
+    sdkconfig_options:
+      # Shelly's bootloader header says 80 MHz: without this `build` refuses
+      CONFIG_ESPTOOLPY_FLASHFREQ_80M: "y"
+    advanced:
+      enable_ota_rollback: false
+
+ota:
+  - platform: esphome
+    allow_partition_access: true
