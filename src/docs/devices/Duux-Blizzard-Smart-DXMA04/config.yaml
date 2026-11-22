@@ -1,0 +1,88 @@
+substitutions:
+  devicename: duux-blizzard
+
+esphome:
+  name: ${devicename}
+  friendly_name: Duux Blizzard
+  comment: Duux Blizzard Smart 10K portable airco (DXMA04), Tuya TYWE1S on a TYJW2S-5V-BL carrier
+
+esp8266:
+  board: esp01_1m
+
+# The UART belongs to the Tuya MCU, so logs only go over the network.
+logger:
+  baud_rate: 0
+
+# The MCU is on the SWAPPED UART0 pins. GPIO1/3 (TXD0/RXD0 on the 6-pin header) are
+# for flashing only: the MCU never answers on them.
+uart:
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+
+tuya:
+
+climate:
+  - platform: tuya
+    name: None
+    supports_cool: true
+    supports_heat: false
+    switch_datapoint: 1
+    target_temperature_datapoint: 5
+    current_temperature_datapoint: 8
+    active_state:
+      datapoint: 2
+      cooling_value: 1
+      drying_value: 3
+      fanonly_value: 2
+    fan_mode:
+      datapoint: 3
+      low_value: 0
+      medium_value: 1
+      high_value: 2
+    preset:
+      sleep:
+        datapoint: 6
+    visual:
+      min_temperature: 18
+      max_temperature: 32
+      temperature_step: 1
+
+# ESPHome's tuya climate has no AUTO mode (0). This select shows and sets all four.
+select:
+  - platform: tuya
+    name: Mode
+    enum_datapoint: 2
+    options:
+      0: Auto
+      1: Cool
+      2: Fan
+      3: Dry
+
+number:
+  - platform: tuya
+    name: Timer
+    number_datapoint: 4
+    min_value: 0
+    max_value: 24
+    step: 1
+    unit_of_measurement: h
+    entity_category: config
+
+switch:
+  - platform: tuya
+    name: Ionizer
+    switch_datapoint: 7
+    entity_category: config
+
+sensor:
+  # Fault bitmask: 0 = OK, 1 = water tank full.
+  - platform: tuya
+    name: Fault code
+    sensor_datapoint: 9
+  - platform: tuya
+    name: Timer remaining
+    sensor_datapoint: 15
+    unit_of_measurement: min
+    device_class: duration
+    entity_category: diagnostic
