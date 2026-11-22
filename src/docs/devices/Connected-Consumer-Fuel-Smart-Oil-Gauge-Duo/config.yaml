@@ -441,11 +441,11 @@ sensor:
           }
 
           if (id(Tank_Orientation) == 2){  // Horizontal
-            
+
             if (Oil_Height > id(Tank_Width)) {
               Oil_Height = id(Tank_Width);
             }
-            
+
             Rectangle_Height = Oil_Height;
             Arc_Height = Oil_Height;
 
@@ -454,7 +454,7 @@ sensor:
             if (Oil_Height > id(Tank_Height)) {
               Oil_Height = id(Tank_Height);
             }
-          
+
             if (Oil_Height >= (id(Tank_Height) - id(Tank_Radius))) {
               Rectangle_Height = id(Tank_Height) - id(Tank_Width);
               Arc_Height = Oil_Height - Rectangle_Height;
@@ -529,10 +529,10 @@ sensor:
 
           if (isnan(id(Raw_Oil_Depth_in))){
             Oil_Volume = NAN;
-          } 
+          }
 
           id(Oil_Volume_Geo) = Oil_Volume;
-          
+
           static const char *const TAG = "Ultrasonic Output";
           ESP_LOGD(TAG,
                     "Results:\n"
@@ -598,7 +598,7 @@ sensor:
           if (x > id(Max_Fill)) {
             x = id(Max_Fill);
           }
-          
+
           double Max_Refill = id(Max_Fill) - x;
           return Max_Refill;
 
