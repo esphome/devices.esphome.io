@@ -1,3 +1,7 @@
+substitutions:
+  # Must match the unit shown on the tSENSE display ("°F" or "°C").
+  temp_unit: "°F"
+
 esphome:
   name: tsense-k70
   friendly_name: tSENSE K70
@@ -44,7 +48,6 @@ sensor:
     accuracy_decimals: 0
 
   # Hundredths of a degree, in whatever unit the tSENSE display is set to.
-  # Change the unit of measurement to °C if your display shows Celsius.
   - platform: modbus_controller
     modbus_controller_id: tsense
     id: tsense_temp_raw
@@ -52,7 +55,7 @@ sensor:
     register_type: read
     address: 4
     value_type: S_WORD
-    unit_of_measurement: "°F"
+    unit_of_measurement: ${temp_unit}
     device_class: temperature
     state_class: measurement
     accuracy_decimals: 1
@@ -132,7 +135,8 @@ number:
     max_value: 2000
     step: 50
     lambda: |-
-      if (isnan(id(relay_low).state)) return {};
+      // An empty result would publish the raw span, so stay unknown instead.
+      if (isnan(id(relay_low).state)) return NAN;
       return x + id(relay_low).state;
     write_lambda: |-
       float low = id(relay_low).state;

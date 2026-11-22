@@ -8,6 +8,8 @@ difficulty: 4
 project-url: https://espeasy.readthedocs.io/en/latest/Plugin/P052_tSense_K70.html
 ---
 
+![Senseair tSENSE (K70)](tsense-k70.jpg "Senseair tSENSE (K70)")
+
 ## Description
 
 The Senseair tSENSE (K70) is a wall-mount CO2, temperature and humidity transmitter with a touchscreen, three
@@ -62,6 +64,8 @@ Changing the relay High setting on the touchscreen from 1500 to 1400 changed onl
 - The D1 Mini inside the case warms the sensor by roughly 2-3 °F, which also makes the humidity read a few points
   low. `self-heating-correction.yaml` adds an adjustable offset and recomputes humidity at the corrected
   temperature.
+- Set `temp_unit` in `config.yaml` to the unit shown on the tSENSE display; the temperature register and the
+  correction both follow it.
 - Writing the relay thresholds from Home Assistant updates the touchscreen settings, and changes made on the
   touchscreen show up in Home Assistant.
 - Whether a relay override survives a tSENSE power cycle has not been tested.
