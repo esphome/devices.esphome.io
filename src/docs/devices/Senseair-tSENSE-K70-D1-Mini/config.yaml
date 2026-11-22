@@ -25,6 +25,19 @@ uart:
   rx_pin: GPIO13
   baud_rate: 9600
 
+# Relay threshold registers as last read or written (-1 = not read yet) and
+# the end of the settle window after a write.
+globals:
+  - id: threshold_low
+    type: int
+    initial_value: "-1"
+  - id: threshold_span
+    type: int
+    initial_value: "-1"
+  - id: threshold_busy_until
+    type: uint32_t
+    initial_value: "0"
+
 modbus:
   id: tsense_modbus
   uart_id: tsense_uart
@@ -110,26 +123,40 @@ number:
     min_value: 400
     max_value: 1950
     step: 50
-    # The tSENSE stores the relay band as low + span; rewrite the span too
-    # so the upper threshold stays where it was.
+    # While paired writes are in flight, show what was written instead of a
+    # possibly stale register, so low and span never mix old and new values.
+    lambda: |-
+      if ((int32_t) (millis() - id(threshold_busy_until)) < 0) return (float) id(threshold_low);
+      id(threshold_low) = (int) x;
+      return x;
+    # The relay band is stored as low + span; keep the upper threshold put.
     write_lambda: |-
-      float low = id(relay_low).state, high = id(relay_high).state;
-      if (isnan(low) || isnan(high) || x >= high) {
-        ESP_LOGW("tsense", "Lower threshold %.0f must be below upper threshold %.0f", x, high);
+      if ((int32_t) (millis() - id(threshold_busy_until)) < 0 || id(threshold_low) < 0 ||
+          id(threshold_span) < 0) {
+        ESP_LOGW("tsense", "Thresholds not settled yet; try again shortly");
         return {};
       }
-      uint16_t span = (uint16_t) (high - x);
-      // Order the two writes so the switch-on level (low + span) never dips
-      // below its target in between, which could switch the relay on.
-      if (x > low) {
-        item->write_single_register(35, (uint16_t) x);
+      int low = id(threshold_low), high = low + id(threshold_span), new_low = (int) x;
+      if (new_low >= high) {
+        ESP_LOGW("tsense", "Lower threshold %d must be below upper threshold %d", new_low, high);
+        return {};
+      }
+      uint16_t span = (uint16_t) (high - new_low);
+      // Order the writes so the switch-on level (low + span) never dips below
+      // its target in between, which could switch the relay on.
+      if (new_low > low) {
+        item->write_single_register(35, (uint16_t) new_low);
         item->write_single_register(43, span);
       } else {
         item->write_single_register(43, span);
-        item->write_single_register(35, (uint16_t) x);
+        item->write_single_register(35, (uint16_t) new_low);
       }
+      id(threshold_low) = new_low;
+      id(threshold_span) = span;
+      id(threshold_busy_until) = millis() + 35000;
       return {};
 
+  # The tSENSE stores the upper threshold as a span above the lower one.
   - platform: modbus_controller
     modbus_controller_id: tsense
     id: relay_high
@@ -144,16 +171,26 @@ number:
     max_value: 2000
     step: 50
     lambda: |-
+      if ((int32_t) (millis() - id(threshold_busy_until)) < 0)
+        return (float) (id(threshold_low) + id(threshold_span));
+      id(threshold_span) = (int) x;
       // An empty result would publish the raw span, so stay unknown instead.
-      if (isnan(id(relay_low).state)) return NAN;
-      return x + id(relay_low).state;
+      if (id(threshold_low) < 0) return NAN;
+      return (float) (id(threshold_low) + (int) x);
     write_lambda: |-
-      float low = id(relay_low).state;
-      if (isnan(low) || x <= low) {
-        ESP_LOGW("tsense", "Upper threshold %.0f must be above lower threshold %.0f", x, low);
+      if ((int32_t) (millis() - id(threshold_busy_until)) < 0 || id(threshold_low) < 0) {
+        ESP_LOGW("tsense", "Thresholds not settled yet; try again shortly");
         return {};
       }
-      return x - low;
+      int low = id(threshold_low), new_high = (int) x;
+      if (new_high <= low) {
+        ESP_LOGW("tsense", "Upper threshold %d must be above lower threshold %d", new_high, low);
+        return {};
+      }
+      item->write_single_register(43, (uint16_t) (new_high - low));
+      id(threshold_span) = new_high - low;
+      id(threshold_busy_until) = millis() + 35000;
+      return {};
 
 select:
   - platform: modbus_controller
