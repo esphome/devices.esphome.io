@@ -67,23 +67,30 @@ output:
     type: float
     write_action:
     - uart.write: ""
+    
 esp8266:
   board: esp01_1m
-# Enable logging
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
   level: verbose
+
 # Enable Home Assistant API
 api:
-  encryption:
-    key: ""
-ota:
-  password: ""
-wifi:
-  ssid: ""
-  password: !secret wifi_password
-  power_save_mode: none
-  fast_connect: true
+
+# Enable the captive portal
+captive_portal:
+
 status_led:
   pin:
     number: GPIO12

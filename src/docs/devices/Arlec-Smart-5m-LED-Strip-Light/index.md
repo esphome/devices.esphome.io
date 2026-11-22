@@ -31,22 +31,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+ 
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
+# Enabling the logging component
 logger:
 
-web_server:
-
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: "ota_password"
+# Enable the captive portal
+captive_portal:
 
 light:
   - platform: rgbw

@@ -35,9 +35,8 @@ esphome:
 esp8266:
   board: esp01_1m
   restore_from_flash: true
-
-logger:
-api:
+    
+# OTA flashing
 ota:
 
 wifi:
@@ -47,9 +46,14 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "iFan02"
-    password: !secret wifi_password
 
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
 captive_portal:
   - platform: status
     name: "Sonoff iFan02 Status"
@@ -144,10 +148,4 @@ fan:
     speed_count: 3
     id: ifan02_fan
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: IP Address
-    ssid:
-      name: Connected SSID
 ```

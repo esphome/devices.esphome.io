@@ -49,9 +49,9 @@ esp32:
   framework:
     type: esp-idf
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
     ssid: ${device_name}
     password: !secret wifi_failover
@@ -64,16 +64,17 @@ wifi:
 
 captive_portal:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
 ota:
   - platform: esphome
 
-#optional
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 uart:
   rx_pin: GPIO16

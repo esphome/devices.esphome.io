@@ -50,27 +50,22 @@ esp8266:
   board_flash_mode: dout
   restore_from_flash: true
 
-wifi:
-  networks:
-    - ssid: SSID
-      password: Password
-    - ssid: SSID Secondary
-      password: Password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${device_name} Hotspot
-    password: "Password"
 
-captive_portal:
-
+# Enabling the logging component
 logger:
-  #level: VERBOSE
 
+# Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 time:
   - platform: homeassistant

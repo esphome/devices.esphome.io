@@ -35,32 +35,18 @@ esp8266:
 
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: HIGH # for ESP8266 LOW/HIGH are mixed up, esphome/issues/issues/1532
-  ap:
-    ssid: "${devicename} Fallback"
-    password: !secret fallback_password
-
-web_server:
-  port: 80
-  auth:
-    username: admin
-    password: !secret web_server_password
+# Enable the Web Server component 
+webserver:
 
 time:
   - platform: homeassistant
     id: homeassistant_time
-
-captive_portal:
 
 switch:
   - platform: gpio
@@ -70,10 +56,7 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
 
 sensor:
-  - platform: wifi_signal
-    name: "${devicename} WiFi Signal"
-    device_class: signal_strength
-    update_interval: 60s
+ 
   - platform: hlw8012
     cf_pin: GPIO05
     cf1_pin: GPIO13 # not used because it is not available on the 1PM but it is needed to compile

@@ -56,8 +56,16 @@ esp8266:
 
 api:
 
+# OTA flashing
 ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 web_server:
@@ -68,7 +76,11 @@ wifi:
   password: !secret wifi_password
   ap:
 
+# Enable the captive portal
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 binary_sensor:
   - platform: status
@@ -112,9 +124,4 @@ light:
     warm_white_color_temperature: 3000 K
     color_interlock: true
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} IP Address"
-      disabled_by_default: true
 ```

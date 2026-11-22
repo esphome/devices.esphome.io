@@ -54,8 +54,12 @@ If you'll power it up with 3.3V on 5V pin - the MCU will brownout.
 
 ```yaml
 esphome:
-  name: ac-dc-relay-x4
-  friendly_name: ac-dc-relay-x4
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 esp32:
   variant: esp32

@@ -25,7 +25,6 @@ board: esp8266
 ```yaml
 substitutions:
   device_name: kogan_RGBWWSTRIP_1
-  device_ip: 192.168.x.x
 
 esphome:
   name: ${device_name}
@@ -33,23 +32,23 @@ esphome:
 esp8266:
   board: esp01_1m
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  manual_ip:
-    static_ip: ${device_ip}
-    gateway: 192.168.x.x
-    subnet: 255.255.255.0
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  reboot_timeout: 15min
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 binary_sensor:
   - platform: gpio
@@ -94,7 +93,4 @@ light:
     cold_white_color_temperature: 6500 K
     warm_white_color_temperature: 2700 K
 
-time:
-  - platform: homeassistant
-    id: homeassistant_time
 ```

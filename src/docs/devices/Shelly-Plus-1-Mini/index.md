@@ -35,19 +35,24 @@ esp32:
   variant: esp32c3
   framework:
     type: esp-idf
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 output:
   - platform: gpio

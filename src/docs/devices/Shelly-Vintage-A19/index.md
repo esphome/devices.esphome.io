@@ -38,36 +38,31 @@ esp8266:
 
 preferences:
   flash_write_interval: 1min
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# WiFi connection
-wifi:
-  ssid: !secret iot_wifi_ssid
-  password: !secret iot_wifi_password
-  power_save_mode: none
-  fast_connect: true
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "${displayname}"
-    password: !secret ap_mode_password
 
-captive_portal:
+# Enabling the logging component
+logger:
+  baud_rate: 0
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_enc
 
-ota:
-  password: !secret ota_password
-
-logger:
-  baud_rate: 0
+# Enable the captive portal
+captive_portal:
 
 mdns:
   disabled: false
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 text_sensor:
   - platform: wifi_info

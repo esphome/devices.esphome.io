@@ -34,6 +34,10 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -44,7 +48,8 @@ logger:
 # Remove this line if you're not using Home Assistsant or your switch will restart every now and again
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
 # Device Specific Config
 binary_sensor:

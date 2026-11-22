@@ -34,27 +34,24 @@ esp8266:
   board: esp01_1m
   framework:
     version: recommended
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: ""
-
+    
+# OTA flashing
 ota:
-  password: ""
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
   baud_rate: 0 # (UART logging interferes with cse7766)
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Sonoff S31-lite  Fallback Hotspot"
-    password: ""
+# Enable Home Assistant API
+api:
 
+# Enable the captive portal
 captive_portal:
 
 uart:
@@ -72,11 +69,6 @@ binary_sensor:
       - switch.toggle: relay
   - platform: status
     name: "Sonoff S31-lite Status"
-
-sensor:
-  - platform: wifi_signal
-    name: "Sonoff S31-lite WiFi Signal"
-    update_interval: 60s
 
 switch:
   - platform: gpio

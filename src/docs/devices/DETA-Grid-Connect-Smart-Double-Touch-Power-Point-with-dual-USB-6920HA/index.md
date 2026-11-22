@@ -58,33 +58,30 @@ substitutions:
 
 esphome:
   name: ${devicename}
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
   
 bk72xx:
   board: generic-bk7231t-qfn32-tuya
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "ESPHOME"
-    password: "123456"
-
-logger:
-
-web_server:
-
-captive_portal:
-
-api:
-
-ota:
-
 sensor:
-  - platform: wifi_signal
-    name: ${friendlyname} Wifi Signal Strength
-    update_interval: 60s
-  - platform: uptime
-    name: ${friendlyname} Uptime
+
   - platform: cse7766
     current:
       name: "${friendlyname} Current"
@@ -118,19 +115,6 @@ sensor:
       - throttle: 60s
     unit_of_measurement: kWh
     icon: mdi:chart-bar
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${friendlyname} IP
-    ssid:
-      name: ${friendlyname} SSID
-    bssid:
-      name: ${friendlyname} BSSID
-    mac_address:
-      name: ${friendlyname} Mac
-  - platform: version
-    name: ${friendlyname} ESPHome Version
 
 # Enable time component for use by daily power sensor
 time:

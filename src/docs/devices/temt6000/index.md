@@ -19,6 +19,28 @@ measure the voltage on the `SIG` (also called `OUT`) pin using `adc` and convert
 voltage measurements to illuminance values in lux using a formula:
 
 ``` yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+      
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 sensor:
   - platform: adc
     pin: A0

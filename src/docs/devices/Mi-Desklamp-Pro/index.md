@@ -78,7 +78,7 @@ wifi:
     password: !secret ap_password
     ap_timeout: 1min
 
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable captive portal (fallback AP)
@@ -86,9 +86,6 @@ captive_portal:
 
 # Enable Home Assistant API
 api:
-  reboot_timeout: 0s
-  encryption:
-    key: !secret encryption_key
 
 # Enable over-the-air updates
 ota:

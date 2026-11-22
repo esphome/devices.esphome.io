@@ -27,13 +27,23 @@ esphome:
 esp8266:
   board: esp01_1m
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+# OTA flashing
 ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Device Specific Config
 output:
@@ -60,7 +70,6 @@ binary_sensor:
     internal: true
     id: switchid
 ```
-
 ## Detached switch mode for push button light switch
 
 This config will send events to Home Assistant so you can use the Shelly as detached switch. The events can be used as
@@ -89,50 +98,22 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${device_name} Hotspot
-    password: !secret hotspot_pass
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server (optional).
-web_server:
-  port: 80
-
-# Text sensors with general information.
-text_sensor:
-  # Expose ESPHome version as sensor.
-  - platform: version
-    name: ${device_name} ESPHome Version
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: ${device_name} IP
-    ssid:
-      name: ${device_name} SSID
-    bssid:
-      name: ${device_name} BSSID
-
-# Sensors with general information.
-sensor:
-  # Uptime sensor.
-  - platform: uptime
-    name: ${device_name} Uptime
-
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: ${device_name} WiFi Signal
-    update_interval: 60s
+# Enable the Web Server component 
+webserver:
 
 # Shelly 1 detached switch config with multi click options and fallback in case of wifi or api fail
 
@@ -241,42 +222,22 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: "shelly1 kitchen hotspot"
-    password: !secret hotspot_pass
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
 
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server (optional).
-web_server:
-  port: 80
-
-# Text sensors with general information.
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: ${device_name} IP
-
-# Sensors with general information.
-sensor:
-  # Uptime sensor.
-  - platform: uptime
-    name: ${device_name} Uptime
-
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: ${device_name} WiFi Signal
-    update_interval: 60s
+# Enable the Web Server component 
+webserver:
 
 # Shelly 1 detached switch config with fallback in case of wifi or api fail
 

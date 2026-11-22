@@ -67,25 +67,24 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
-  level: DEBUG # Default
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 # https://esphome.io/components/status_led/
 status_led:

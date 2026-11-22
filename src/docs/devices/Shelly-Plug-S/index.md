@@ -36,10 +36,6 @@ Config tested by [gieljnssns](https://github.com/gieljnssns)
 substitutions:
   devicename: shelly_plug_s
   channel_1: Relay
-  ip: 192.168.xx.xx
-
-  ssid: !secret ssid
-  password: !secret password
 
   # Higher value gives lower watt readout
   current_res: "0.000943"
@@ -58,44 +54,25 @@ esphome:
 
 esp8266:
   board: esp8285
+      
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: ${ssid}
-  password: ${password}
-  manual_ip:
-    static_ip: ${ip}
-    gateway: 192.168.xx.xx
-    subnet: 255.255.255.0
-    dns1: 8.8.8.8
-    dns2: 8.8.4.4
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${devicename}
-    password: ${password}
-    manual_ip:
-      static_ip: 192.168.100.2
-      gateway: 192.168.100.1
-      subnet: 255.255.255.0
-      dns1: 8.8.8.8
-      dns2: 8.8.4.4
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
   level: DEBUG
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_key
 
-ota:
-  password: ${password}
-
-web_server:
-  port: 80
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: sntp
@@ -130,11 +107,6 @@ switch:
       - output.turn_on: led
     on_turn_off:
       - output.turn_off: led
-
-sensor:
-  - platform: wifi_signal
-    name: "${devicename} WiFi Signal"
-    update_interval: 300s
 
   # NTC Temperature
   - platform: ntc

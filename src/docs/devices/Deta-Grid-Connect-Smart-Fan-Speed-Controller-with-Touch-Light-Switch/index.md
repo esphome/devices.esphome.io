@@ -141,14 +141,17 @@ text_sensor:
     mac_address:
       name: ${friendly_name} Mac
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
-ota:
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 light:
   - platform: binary
@@ -343,6 +346,27 @@ substitutions:
 
 esphome:
   name: ${devicename}
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 bk72xx:
   board: generic-bk7231t-qfn32-tuya

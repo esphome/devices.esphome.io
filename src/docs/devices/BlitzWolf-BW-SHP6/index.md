@@ -62,6 +62,13 @@ esphome:
     then:
       - switch.turn_on: relay
       - output.turn_on: led
+  
+esp8266:
+  board: esp8285    
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 esp8266:
   board: esp8285
@@ -71,14 +78,18 @@ wifi:
   password: !secret wifi_password
   ap:
 
+# Enabling the logging component
 logger:
-  baud_rate: 0
 
+# Enable Home Assistant API
 api:
 
-ota:
-  password: !secret otapw
+# Enable the captive portal
+captive_portal:
 
+# Enable the Web Server component 
+webserver:
+  
 # Button configuration
 binary_sensor:
   - platform: gpio
@@ -231,33 +242,3 @@ power:
               message: Switch turned off because power exceeded ${max_power}W
 ```
 
-To have different data shown for the device (ESPHome version) and the wifi. Will appear as sensors in HA.
-
-```yaml
-# Sensors for ESP version and WIFI information
-text_sensor:
-  - platform: version
-    name: "${device_name} ESPHome Version"
-  - platform: wifi_info
-    ip_address:
-      name: "${device_name} ip"
-    ssid:
-      name: "${device_name} ssid"
-```
-
-This will create sensors so that you can track wifi coverage for the devices, and also note the uptime for the devices.
-
-```yaml
-sensors:
-  - platform: wifi_signal
-    name: "${device_name} WiFi Signal"
-    update_interval: 60s
-    accuracy_decimals: 0
-  - platform: uptime
-    name: "${device_name} Uptime"
-    unit_of_measurement: days
-    update_interval: 300s
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.000011574
-```

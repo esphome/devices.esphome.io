@@ -23,7 +23,6 @@ Then at compile time the two files are merged.
 ```yaml
 substitutions:
   name: nodemcu_lr
-  ip: 192.168.1.21
   friendly_name: Livingroom Sensor
   friendly_name_temp: Livingroom Temperature
   friendly_name_humidity: Livingroom Humidity
@@ -38,25 +37,24 @@ esphome:
 
 esp8266:
   board: nodemcuv2
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  #hostname: ${name}
-  ssid: !secret wifi_ssid
-  password: !secret wifi_pwd
-  fast_connect: true
-  manual_ip:
-    static_ip: ${ip}
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
-  # encryption:
-  #  key: !secret encryption_key
 
-ota:
-  #password: !secret esphome_ota_pwd
+# Enable the captive portal
+captive_portal:
 
 switch:
   - platform: restart
@@ -88,12 +86,4 @@ sensor:
       accuracy_decimals: 1 # humidity gets 0 decimals by default
     model: DHT11
     update_interval: 60s
-
-  - platform: wifi_signal
-    name: ${friendly_name} WiFi Signal Strength
-    update_interval: 60s
-
-text_sensor:
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 ```

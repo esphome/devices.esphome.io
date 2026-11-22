@@ -49,9 +49,7 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API

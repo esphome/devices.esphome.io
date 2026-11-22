@@ -30,13 +30,8 @@ esphome:
 
 esp8266:
   board: esp01_1m
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+    
+# OTA flashing
 ota:
   - platform: esphome
 

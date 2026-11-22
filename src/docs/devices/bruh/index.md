@@ -17,6 +17,28 @@ complete support for all the stuff used by the Multisensor.
 Thank you very much to [\@jackjohnsonuk](https://github.com/jackjohnsonuk) for providing this configuration file.
 
 ``` yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 sensor:
   - platform: dht
     pin: D7

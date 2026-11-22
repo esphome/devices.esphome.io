@@ -47,14 +47,20 @@ esphome:
     - binary_sensor.template.publish:
         id: doorbell_outdoor
         state: OFF
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
   encryption:
     key: "" # Add your API encryption key here
@@ -137,10 +143,6 @@ binary_sensor:
     icon: mdi:bell
     filters:
       - delayed_off: 1s
-
-sensor:
-  - platform: internal_temperature
-    name: "Internal Temperature"
 
 text_sensor:
   - platform: template

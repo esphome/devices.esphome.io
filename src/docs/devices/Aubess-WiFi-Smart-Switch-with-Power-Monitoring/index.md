@@ -32,11 +32,10 @@ esphome:
 
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
-
-logger:
-api:
-captive_portal:
+    
+# OTA flashing
 ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
@@ -76,18 +75,8 @@ binary_sensor:
     name: "Status"
 
 sensor:
-  - platform: wifi_signal
-    update_interval: 10s
-    id: wifi_signal_db
-  - platform: uptime
-    name: "Uptime"
-  - platform: copy
-    source_id: wifi_signal_db
-    name: "WiFi Signal Percent"
-    filters:
-      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: "%"
-  - platform: bl0942
+
+- platform: bl0942
     uart_id: uart_bus
     current:
       name: AubessPM01 Current
@@ -123,13 +112,4 @@ time:
   - platform: homeassistant
     id: homeassistant_time
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Connected SSID"
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
 ```

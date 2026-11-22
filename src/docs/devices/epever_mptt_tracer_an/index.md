@@ -101,6 +101,24 @@ esp32:
   #...
   framework:
     type: arduino
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 time:
   - platform: sntp
@@ -140,10 +158,6 @@ sensor:
     name: "Generated Charge today"
     id: generated_charge_today
     unit_of_measurement: "Ah"
-
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    update_interval: ${updates}
 
 binary_sensor:
   - platform: modbus_controller
@@ -254,8 +268,8 @@ text_sensor:
     raw_encode: HEXBYTES
     response_size: 6
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 ```
 
 The definitions for most sensors is included using Packages:

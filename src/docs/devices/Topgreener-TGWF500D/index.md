@@ -44,19 +44,24 @@ wifi:
     ssid: ${device_name}
     password: !secret esphome_ap_password
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   level: DEBUG
   baud_rate: 0
 
+# Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret esphome_ota_password
+# Enable the captive portal
+captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 uart:
   rx_pin: GPIO13
@@ -66,9 +71,6 @@ uart:
 tuya:
 
 sensor:
-  - platform: wifi_signal
-    name: ${friendly_name} WiFi Signal
-    update_interval: 60s
 
   - platform: uptime
     name: ${friendly_name} Uptime

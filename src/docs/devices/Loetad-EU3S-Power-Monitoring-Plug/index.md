@@ -44,37 +44,28 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
-    ssid: ${friendly_name}
-    password: !secret AP_Password
 
-  manual_ip:
-      static_ip: 192.168.x.xx
-      gateway: 192.168.x.x
-      subnet: 255.255.255.0
-
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 # Web server can be removed after enabling HA API
 #web_server:
 #  port: 80
-
-# Enable Home Assistant API
-api:
-  encryption:
-    key: !secret encryption_key
-
-ota:
-  password: !secret OTA_Password
 
 # Enable time component for use by daily power sensor
 time:
@@ -88,11 +79,6 @@ sensor:
     filters:
       - lambda: return x / 60.0;
     unit_of_measurement: minutes
-
-# Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal
-    update_interval: 60s
 
 # Reports the Current, Voltage, and Power used by the plugged-in device
   - platform: hlw8012
@@ -140,20 +126,6 @@ binary_sensor:
     name: ${friendly_name} Button # Name to make button visible in HA
     on_press:
       - switch.toggle: relay
-
-text_sensor:
-# Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
-
-# Reports detailed wifi info, can be commented out
-  - platform: wifi_info
-    ip_address:
-      name: ${friendly_name} IP Address
-    # ssid: # Some additional wifi info that is not normally needed
-    #   name: ${friendly_name} Connected SSID
-    # bssid:
-    #   name: ${friendly_name} Connected BSSID
 
 switch:
 # Relay itself

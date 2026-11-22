@@ -43,6 +43,10 @@ esphome:
 
 esp8266:
   board: esp12e
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 # Enable status LED
 status_led:
@@ -50,7 +54,7 @@ status_led:
     number: GPIO2
     inverted: true
 
-# Enable logging
+# Enabling the logging component
 logger:
   level: INFO
   # Disable logging via UART, we need it for the Tuya MCU
@@ -58,8 +62,6 @@ logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret home_assistant_key
 
 ota:
   password: !secret ota_password
@@ -71,6 +73,12 @@ wifi:
   ap:
 
 captive_portal:
+
+# Enable status LED
+status_led:
+    pin:
+      number: GPIO2
+      inverted: true
 
 # Initialize the UART that connects to the Tuya MCU
 uart:

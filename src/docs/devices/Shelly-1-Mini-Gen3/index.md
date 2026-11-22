@@ -53,16 +53,16 @@ esp32:
 wifi:
   ap:
 
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
 
 ota:
 
 time:
   - platform: homeassistant
-
-captive_portal:
 
 sensor:
   - platform: ntc

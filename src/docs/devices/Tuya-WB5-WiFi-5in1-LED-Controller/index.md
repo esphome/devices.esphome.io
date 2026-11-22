@@ -120,9 +120,8 @@ wifi: #if you dont have secrets setup change the values with your wifi name and 
     ssid: "WB5 LED Controller Fallback Hotspot"
     password: "CHANGE-THIS-PASSWORD-OR-DISABLE-AP-FALLBACK"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 captive_portal:
 
@@ -192,9 +191,8 @@ wifi: #if you dont have secrets setup change the values with your wifi name and 
     ssid: "WB5 LED Controller Fallback Hotspot"
     password: "CHANGE-THIS-PASSWORD-OR-DISABLE-AP-FALLBACK"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 captive_portal:
 
@@ -264,9 +262,8 @@ wifi: #if you dont have secrets setup change the values with your wifi name and 
     ssid: "WB5 LED Controller Fallback Hotspot"
     password: "CHANGE-THIS-PASSWORD-OR-DISABLE-AP-FALLBACK"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 captive_portal:
 
@@ -335,9 +332,8 @@ wifi: #if you dont have secrets setup change the values with your wifi name and 
     ssid: "WB5 LED Controller Fallback Hotspot"
     password: "CHANGE-THIS-PASSWORD-OR-DISABLE-AP-FALLBACK"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 captive_portal:
 
@@ -406,9 +402,8 @@ wifi: #if you dont have secrets setup change the values with your wifi name and 
     ssid: "WB5 LED Controller Fallback Hotspot"
     password: "CHANGE-THIS-PASSWORD-OR-DISABLE-AP-FALLBACK"
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 captive_portal:
 

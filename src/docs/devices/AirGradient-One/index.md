@@ -38,16 +38,21 @@ esp32:
 # https://esphome.io/components/logger.html
 logger:
   baud_rate: 0  # Must disable serial logging as ESP32-C3 only has 2 hardware UART and both are in use
-  logs:
-    component: ERROR  # Hiding warning messages about component taking a long time https://github.com/esphome/issues/issues/4717
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
 wifi:
   ssid: !secret wifi_ssid
@@ -368,7 +373,6 @@ light:
     chipset: ws2812
     name: "LED Strip"
     id: led_strip
-
 
 interval:
   - interval: 30s

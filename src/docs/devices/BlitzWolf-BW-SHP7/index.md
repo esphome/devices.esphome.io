@@ -57,13 +57,20 @@ wifi:
   password: !secret wifi_password
   ap:
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
   baud_rate: 0
 
+# Enable Home Assistant API
 api:
 
-ota:
-  password: !secret otapw
+# Enable the captive portal
+captive_portal:
 
 # Button configuration
 binary_sensor:
@@ -187,72 +194,7 @@ In the esphome section, you can perform actions when the device boots:
     then:
       - switch.turn_on: relay1
 #  - switch.turn_on: relay2
-```
 
 Under wifi this can be added, this will set up static IP, allow the device to connect to a hidden SSID (fast_connect)
 and create a backup AP
 
-```yaml
-wifi:
-  reboot_timeout: 60min
-  manual_ip:
-    static_ip: 192.168.1.100
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-  fast_connect: true
-
-# Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "${device_name} Hotspot"
-    password: !secret appw
-```
-
-This wll activate the internal webserver with password protection
-
-```yaml
-web_server:
-  port: 80
-  auth:
-    username: !secret webuser
-    password: !secret webpw
-```
-
-To set time locally to the same as on the HomeAssistant (better logging)
-
-```yaml
-# Sets time from Homeassistant
-time:
-  - platform: homeassistant
-    id: homeassistant_time
-```
-
-To have different data shown for the device (ESPHome version) and the wifi. Will appear as sensors in HA.
-
-```yaml
-# Sensors for ESP version and WIFI information
-text_sensor:
-  - platform: version
-    name: "${device_name} ESPHome Version"
-  - platform: wifi_info
-    ip_address:
-      name: "${device_name} ip"
-    ssid:
-      name: "${device_name} ssid"
-```
-
-This will create sensors so that you can track wifi coverage for the devices, and also note the uptime for the devices.
-
-```yaml
-sensors:
-  - platform: wifi_signal
-    name: '${device_name} WiFi Signal'
-    update_interval: 60s
-    accuracy_decimals: 0
-  - platform: uptime
-    name: '${device_name} Uptime'
-    unit_of_measurement: days
-    update_interval: 300s
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.000011574
-```

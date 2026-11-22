@@ -83,9 +83,20 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
+# Enable Home Assistant API
 api:
   encryption:
     key: "" # Add your API encryption key here
@@ -264,8 +275,17 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -416,12 +436,6 @@ sensor:
     entity_category: 'diagnostic'
     update_interval: 300s
 
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: "${upper_devicename} WiFi Signal"
-    update_interval: 60s
-    entity_category: 'diagnostic'
-
   #temperature sensor
   - platform: ntc
     sensor: temp_resistance_reading
@@ -558,9 +572,24 @@ esp32:
   variant: esp32
   framework:
     type: arduino
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # Enable Home Assistant API
 api:
@@ -768,11 +797,6 @@ binary_sensor:
       - delayed_on_off: 5ms
 
 sensor:
-  # WiFi Signal sensor.
-  - platform: wifi_signal
-    name: "${devicename} - Wifi Signal"
-    update_interval: 60s
-    icon: mdi:wifi
 
   # Uptime sensor.
   - platform: uptime
@@ -889,15 +913,4 @@ status_led:
     inverted: true
     ignore_strapping_warning: true
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "${devicename} - IP Address"
-    ssid:
-      name: "${devicename} - Wi-Fi SSID"
-    bssid:
-      name: "${devicename} - Wi-Fi BSSID"
-  - platform: version
-    name: "${devicename} - ESPHome Version"
-    hide_timestamp: true
  ```

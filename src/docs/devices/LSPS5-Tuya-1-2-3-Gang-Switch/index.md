@@ -65,8 +65,17 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
   framework:
     version: latest
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -86,8 +95,8 @@ wifi:
 
 captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 sensor:
   - platform: uptime
@@ -101,10 +110,8 @@ switch:
     id: relay_1
 
 binary_sensor:
-  - platform: status
-    name: $devicename Status
 
-  - platform: gpio
+- platform: gpio
     pin:
       number: GPIO26
       mode: INPUT_PULLUP
@@ -134,8 +141,17 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
   framework:
     version: latest
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -155,8 +171,8 @@ wifi:
 
 captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 sensor:
   - platform: uptime
@@ -217,8 +233,17 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
   framework:
     version: latest
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -238,8 +263,8 @@ wifi:
 
 captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 sensor:
   - platform: uptime
@@ -350,8 +375,17 @@ bk72xx:
   board: generic-bk7231n-qfn32-tuya
   framework:
     version: latest
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -371,8 +405,8 @@ wifi:
 
 captive_portal:
 
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 globals:
   - id: counter

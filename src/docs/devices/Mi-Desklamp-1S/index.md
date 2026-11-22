@@ -34,9 +34,6 @@ wifi:
   password: !secret wifi_password
   fast_connect: on
   ap:
-    ssid: ${device_name}
-    password: !secret ap_password
-    ap_timeout: 1min
 
 # Enable logging
 logger:

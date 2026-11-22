@@ -27,23 +27,25 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
-# Enable logging to ESPHome
+# Enabling the logging component
 logger:
-  # Disable logging to serial
   baud_rate: 0
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-ota:
-  password: "ota_password"
+# Enable the captive portal
+captive_portal:
 
 # Define output pins
 output:

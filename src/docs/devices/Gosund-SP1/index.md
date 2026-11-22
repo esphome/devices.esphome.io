@@ -35,29 +35,27 @@ esphome:
 
 esp8266:
   board: esp8285
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# WiFi connection
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
   ap:
 
-captive_portal:
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret encryption_key
 
-# Enable over-the-air updates
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
-# Enable Web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Sync time with Home Assistant
 time:
@@ -76,10 +74,6 @@ sensor:
   # Uptime sensor
   - platform: uptime
     name: ${friendly_name} Uptime
-  # WiFi Signal sensor
-  - platform: wifi_signal
-    name: ${friendly_name} Wifi Signal
-    update_interval: 60s
   # Gosund SP1 Config
   # Power sensor
   - platform: hlw8012

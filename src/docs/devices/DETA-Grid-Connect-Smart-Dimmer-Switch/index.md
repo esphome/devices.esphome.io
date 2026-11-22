@@ -94,13 +94,28 @@ api:
   encryption:
     key: !secret api_encryption_key
 
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+    
+# OTA flashing
 ota:
   - platform: esphome
     password: !secret ota_password
 
-# The web_server & sensor components can be removed without affecting core functionaility.
-web_server:
-  port: 80
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 #################################
 captive_portal:

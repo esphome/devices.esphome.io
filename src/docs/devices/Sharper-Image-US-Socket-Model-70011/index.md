@@ -66,8 +66,14 @@ esp8266:
 
 api:
 ota:
-captive_portal:
-web_server:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 wifi:

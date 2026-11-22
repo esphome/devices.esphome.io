@@ -43,24 +43,19 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
 api:
-  reboot_timeout: 0s
-  encryption:
-    key: !secret api_encryption_key
+
+# Enable the captive portal
+captive_portal:
 
 text_sensor:
   - platform: wifi_info
     ip_address:
       name: "${displayname} IP Address"
-
-ota:
-  password: !secret ota_password
 
 switch:
   - platform: gpio

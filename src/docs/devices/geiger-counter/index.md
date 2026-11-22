@@ -56,6 +56,28 @@ cps/mR/h: 18 cpm/m/h: 1080 cpm/μSv/h: 123.147092360319 Factor:
 opengeiger.de/LibeliumDoku.pdf](http://www.opengeiger.de/LibeliumDoku.pdf).
 
 ``` yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 sensor:
   - platform: pulse_counter
     pin: 34

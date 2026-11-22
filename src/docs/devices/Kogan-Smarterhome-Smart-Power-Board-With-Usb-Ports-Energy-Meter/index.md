@@ -49,28 +49,28 @@ esphome:
 
 esp8266:
   board: esp8285
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  manual_ip:
-    static_ip: ${device_ip}
-    gateway: 192.168.x.x
-    subnet: 255.255.255.0
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
 
+# Enabling the logging component
 logger:
 
-web_server:
-  port: 80
-  
+# Enable Home Assistant API
 api:
-  reboot_timeout: 15min
-  encryption:
-    key: !secret encryption_key
 
-ota:
-  password: !secret ota_password
+# Enable the captive portal
+captive_portal:
 
+# Enable the Web Server component 
+webserver:
+ 
 binary_sensor:
   - platform: gpio
     pin:
@@ -183,41 +183,6 @@ sensor:
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
-
-  - platform: wifi_signal
-    name: "${device_name}_rssi"
-    update_interval: 5min
-
-  - platform: uptime
-    id: uptime_sec
-    name: "${device_name}_uptime"
-    update_interval: 5min
-
-text_sensor:
-  - platform: template
-    name: "${device_name}_upformat"
-    lambda: |-
-      uint32_t dur = id(uptime_sec).state;
-      int dys = 0;
-      int hrs = 0;
-      int mnts = 0;
-      if (dur > 86399) {
-        dys = trunc(dur / 86400);
-        dur = dur - (dys * 86400);
-      }
-      if (dur > 3599) {
-        hrs = trunc(dur / 3600);
-        dur = dur - (hrs * 3600);
-      }
-      if (dur > 59) {
-        mnts = trunc(dur / 60);
-        dur = dur - (mnts * 60);
-      }
-      char buffer[17];
-      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
-      return {buffer};
-    icon: mdi:clock-start
-    update_interval: 5min
 
 time:
   - platform: homeassistant

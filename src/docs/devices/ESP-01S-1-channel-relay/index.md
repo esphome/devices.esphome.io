@@ -38,8 +38,17 @@ esphome:
 
 esp8266:
   board: esp01_1m
+  
+# OTA flashing
+ota:
+  - platform: esphome
 
-# Enable logging
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
 logger:
 
 # Enable Home Assistant API
@@ -66,58 +75,4 @@ switch:
     name: "Heart switch"
     inverted: true
 
-  # The following can be omitted
-  - platform: restart
-    name: ${devicename} restart
-
-sensor:
-  - platform: wifi_signal
-    name: ${devicename} wifi signal
-    update_interval: 600s
-
-  # human readable uptime sensor output to the text sensor above
-  - platform: uptime
-    name: ${devicename} Uptime in Days
-    id: uptime_sensor_days
-    update_interval: 60s
-    on_raw_value:
-      then:
-        - text_sensor.template.publish:
-            id: uptime_human
-            state: !lambda |-
-              int seconds = round(id(uptime_sensor_days).raw_state);
-              int days = seconds / (24 * 3600);
-              seconds = seconds % (24 * 3600);
-              int hours = seconds / 3600;
-              seconds = seconds % 3600;
-              int minutes = seconds /  60;
-              seconds = seconds % 60;
-              return (
-                (days ? String(days) + "d " : "") +
-                (hours ? String(hours) + "h " : "") +
-                (minutes ? String(minutes) + "m " : "") +
-                (String(seconds) + "s")
-              ).c_str();
-
-time:
-  - platform: homeassistant
-    id: homeassistant_time
-
-# Text sensors with general information.
-text_sensor:
-  # Expose ESPHome version as sensor.
-  - platform: version
-    name: $devicename Version
-  # Expose WiFi information as sensors.
-  - platform: wifi_info
-    ip_address:
-      name: $devicename IP
-    bssid:
-      name: $devicename BSSID
-
-  # human readable update text sensor from sensor:uptime
-  - platform: template
-    name: Uptime Human Readable
-    id: uptime_human
-    icon: mdi:clock-start
 ```

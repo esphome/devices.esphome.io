@@ -51,21 +51,18 @@ wifi:
   password: !secret wifi_password
   ap:
 
-captive_portal:
+# Enable Home Assistant API
+api:
 
 # Enable logging
 logger:
   baud_rate: 0 #disable UART logging
 
-# Enable Home Assistant API
-api:
-
-# Enable OTA updates
-ota:
+# Enable the captive portal
+captive_portal:
 
 # Enable web server
 web_server:
-  port: 80
 
 # Enable time component for use by daily power sensor
 time:
@@ -281,30 +278,27 @@ esphome:
 
 esp8266:
   board: esp01_1m
+    
+# OTA flashing
+ota:
+  - platform: esphome
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
 
-captive_portal:
-
-# Enable logging
+# Enabling the logging component
 logger:
-  baud_rate: 0 #disable UART logging
 
 # Enable Home Assistant API
 api:
-  encryption:
-    key: !secret api_encryption_key
 
-# Enable OTA updates
-ota:
-  password: !secret esphomeotapwd
+# Enable the captive portal
+captive_portal:
 
-# Enable web server
-web_server:
-  port: 80
+# Enable the Web Server component 
+webserver:
 
 # Enable time component for use by daily power sensor
 time:
@@ -327,10 +321,6 @@ binary_sensor:
     name: ${friendly_name} Status
 
 sensor:
-  # Reports the WiFi signal strength
-  - platform: wifi_signal
-    name: ${friendly_name} Signal
-    update_interval: 60s
 
   # Reports how long the device has been powered (in minutes)
   - platform: uptime
@@ -385,11 +375,6 @@ sensor:
     filters:
       - multiply: 0.001 ## convert Wh to kWh
     unit_of_measurement: kWh
-
-text_sensor:
-  # Reports the ESPHome Version with compile date
-  - platform: version
-    name: ${friendly_name} ESPHome Version
 
 switch:
   - platform: gpio
@@ -508,7 +493,6 @@ substitutions:
   device_name: test_plug
   device_description: Power Monitoring plug used for testing
   friendly_name: Lab Test Plug
-  ipaddress: 192.168.1.200
   wattage_calibration: 67.6 -> 11.0
   amperage_calibration: 0.12 -> 0.08
   voltage_calibration1: 0.0 -> 0.0

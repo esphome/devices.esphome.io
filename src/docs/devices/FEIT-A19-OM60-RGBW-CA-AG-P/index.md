@@ -9,6 +9,28 @@ board: esp8266
 The Costco Variant:
 
 ```yaml
+esphome:
+  name: example-device
+  friendly_name: Example Device
+    
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
+
 sm16716:
   data_pin: GPIO04
   clock_pin: GPIO05

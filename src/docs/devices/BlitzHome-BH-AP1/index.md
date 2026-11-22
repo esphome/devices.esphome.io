@@ -75,13 +75,29 @@ ota:
 esp8266:
   board: esp01_1m
 
-logger:
-  baud_rate: 0
-
 uart:
   rx_pin: GPIO3
   tx_pin: GPIO1
   baud_rate: 9600
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 tuya:
   id: tuyadevice
@@ -247,7 +263,7 @@ number:
 substitutions:
   name: air-purifier
   devicename: Air Purifier
-
+  
 esphome:
   name: ${name}
   comment: ${devicename}
@@ -271,13 +287,29 @@ ota:
 esp8266:
   board: esp01_1m
 
-logger:
-  baud_rate: 0
-
 uart:
   rx_pin: GPIO3
   tx_pin: GPIO1
   baud_rate: 9600
+  
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+
+# Enable the captive portal
+captive_portal:
 
 tuya:
   id: tuyadevice

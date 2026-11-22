@@ -52,13 +52,8 @@ esphome:
 
 esp8266:
   board: esp8285
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-logger:
-api:
+     
+# OTA flashing
 ota:
   - platform: esphome
 

@@ -49,6 +49,18 @@ esp8266:
 preferences:
   flash_write_interval: 1min
 
+# OTA flashing
+ota:
+  - platform: esphome
+
+wifi: # Your Wifi network details
+  
+# Enable fallback hotspot in case wifi connection fails  
+  ap:
+
+# Enabling the logging component
+logger:
+
 # Enable Home Assistant API
 api:
 
@@ -66,6 +78,9 @@ wifi:
   ap:
 
 captive_portal:
+
+# Enable the Web Server component 
+webserver:
 
 # Time used for daily KWh usage
 time:
@@ -95,10 +110,6 @@ binary_sensor:
           - button.press: Reset
 
 sensor:
-  - platform: uptime
-    name: "${friendly_name} Uptime"
-    icon: mdi:clock-outline
-    disabled_by_default: true
 
   - platform: hlw8012
     sel_pin:
@@ -188,9 +199,4 @@ light:
       inverted: true
       number: GPIO13
 
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_name} IP Address"
-      disabled_by_default: true
 ```
