@@ -36,6 +36,12 @@ pads:
 
 GPIO13/GPIO15 are the ESP8266 UART0 pins swapped, so serial logging is disabled in the config.
 
+![D1 Mini mounted inside the tSENSE](tsense-k70-inside.jpg "D1 Mini mounted inside the tSENSE")
+
+The D1 Mini sits upside down next to the CO2 optical cell, wired to the service-jack pads at the bottom. The
+temperature and humidity sensor is the small chip at the end of the slotted strip on the left; heat from the D1 Mini
+still reaches it, which is what `self-heating-correction.yaml` compensates for.
+
 ## Modbus registers
 
 Measured on a tSENSE Disp T RH RL over the service port (slave address `0xFE`, 9600 8N1). Addresses are the
