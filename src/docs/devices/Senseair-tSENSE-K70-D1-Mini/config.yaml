@@ -1,0 +1,155 @@
+esphome:
+  name: tsense-k70
+  friendly_name: tSENSE K70
+
+esp8266:
+  board: d1_mini
+
+wifi:
+  ap: {}
+
+# GPIO13/GPIO15 are UART0 swapped, so keep serial logging off.
+logger:
+  baud_rate: 0
+
+# tSENSE 3.5 mm service-jack pads: tSENSE TX -> GPIO13 (D7), tSENSE RX <- GPIO15 (D8).
+uart:
+  id: tsense_uart
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+
+modbus:
+  id: tsense_modbus
+  uart_id: tsense_uart
+
+# 0xFE is the Senseair "any address" slave id on the service port.
+modbus_controller:
+  - id: tsense
+    modbus_id: tsense_modbus
+    address: 0xFE
+    update_interval: 15s
+    command_throttle: 100ms
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: CO2
+    register_type: read
+    address: 3
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    device_class: carbon_dioxide
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Hundredths of a degree, in whatever unit the tSENSE display is set to.
+  # Change the unit of measurement to °C if your display shows Celsius.
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_temp_raw
+    name: Temperature
+    register_type: read
+    address: 4
+    value_type: S_WORD
+    unit_of_measurement: "°F"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_rh_raw
+    name: Humidity
+    register_type: read
+    address: 5
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: humidity
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_error_bits
+    name: Error Bits
+    entity_category: diagnostic
+    register_type: read
+    address: 0
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+binary_sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: Relay
+    register_type: read
+    address: 28
+    bitmask: 0x100
+
+number:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: relay_low
+    name: Relay Off Below
+    icon: mdi:molecule-co2
+    register_type: holding
+    address: 35
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    mode: box
+    min_value: 400
+    max_value: 1950
+    step: 50
+    # The tSENSE stores the relay band as low + span; rewrite the span so the
+    # upper threshold stays where it was.
+    write_lambda: |-
+      float high = id(relay_high).state;
+      if (isnan(high) || x >= high) {
+        ESP_LOGW("tsense", "Lower threshold %.0f must be below upper threshold %.0f", x, high);
+        return {};
+      }
+      auto span = esphome::modbus_controller::ModbusCommandItem::create_write_single_command(
+          id(tsense), 43, (uint16_t) (high - x));
+      id(tsense)->queue_command(span);
+      return x;
+
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: relay_high
+    name: Relay On Above
+    icon: mdi:molecule-co2
+    register_type: holding
+    address: 43
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    mode: box
+    min_value: 450
+    max_value: 2000
+    step: 50
+    lambda: |-
+      if (isnan(id(relay_low).state)) return {};
+      return x + id(relay_low).state;
+    write_lambda: |-
+      float low = id(relay_low).state;
+      if (isnan(low) || x <= low) {
+        ESP_LOGW("tsense", "Upper threshold %.0f must be above lower threshold %.0f", x, low);
+        return {};
+      }
+      return x - low;
+
+select:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: Relay Mode
+    icon: mdi:electric-switch
+    address: 24
+    value_type: U_WORD
+    optionsmap:
+      "Auto (tSENSE)": 32767
+      "Force On": 16383
+      "Force Off": 0
