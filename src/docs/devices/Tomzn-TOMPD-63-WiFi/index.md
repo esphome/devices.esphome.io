@@ -11,7 +11,7 @@ difficulty: 4
 
 ## Programming
 
-Internally, it uses the [TUYA CBU](https://developer.tuya.com/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u) chip,
+Internally, it uses the [TUYA CBU](https://developer.tuya.com/en/docs/iot/cbu-module-datasheet?id=Ka07pykl5dk4u) chip,
 which is based on the BK7231N.
 
 You need to solder 5 wires for the GND, +3v3, RX, TX and CEN (Reset) signals in order to connect them to a USB-to-serial
@@ -47,73 +47,12 @@ If flashing fails, desoldering the CBU chip may help by improving 3.3V line stab
 
 ## Basic ESPHome config
 
-```yaml
-esphome:
-  name: medidor-din-2
-  friendly_name: medidor-din-2
+```yaml file=config.yaml
+```
 
-bk72xx:
-  board: generic-bk7231n-qfn32-tuya
+### Power measurements
 
-# Disable logging
-logger:
-  baud_rate: 0
-  
-uart:
-  baud_rate: 9600
-  id: uart_tuya
-  rx_pin: RX1
-  tx_pin: TX1
+Merge this optional fragment with `config.yaml` to decode datapoint 6 into voltage, current and power sensors.
 
-tuya:
-  uart_id: uart_tuya
-  on_datapoint_update:
-  - sensor_datapoint: 6
-    datapoint_type: raw
-    then:
-      - lambda: |-
-          ESP_LOGD("main", "on_datapoint_update %s", format_hex_pretty(x).c_str());
-          id(voltage).publish_state((x[0] << 8 | x[1]) * 0.1);
-          id(current).publish_state((x[3] << 8 | x[4]) * 0.001);
-          id(power).publish_state((x[6] << 8 | x[7]) * 1);
-
-switch:
-  - platform: tuya
-    switch_datapoint: 16
-    name: "On"
-
-sensor:
-  - platform: template
-    id: voltage
-    name: "Volt"
-    unit_of_measurement: "V"
-    icon: "mdi:sine-wave"
-    accuracy_decimals: 1
-  - platform: template
-    id: current
-    name: "Curent"
-    icon: "mdi:current-ac"
-    unit_of_measurement: "A"
-    accuracy_decimals: 2
-  - platform: template
-    id: power
-    name: "Power"
-    icon: "mdi:flash"
-    unit_of_measurement: "W"
-    accuracy_decimals: 0
-  - platform: tuya
-    name: "Total Energy"
-    sensor_datapoint: 1
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 2
-    icon: "mdi:lightning-bolt"
-    filters:
-      - multiply: 0.01  
-  - platform: tuya
-    name: "Leakage Current"
-    sensor_datapoint: 15
-    unit_of_measurement: "mA"
-    accuracy_decimals: 0
-    icon: "mdi:flash-alert"
-
+```yaml file=power-measurements.yaml
 ```

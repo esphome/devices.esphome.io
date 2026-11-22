@@ -5,7 +5,7 @@ type: plug
 standard: us
 board: bk72xx
 difficulty: 4
-made-for-esphome: False
+made-for-esphome: false
 ---
 
 [Amazon Link](https://www.amazon.com/dp/B0D4R98V5F)
@@ -18,7 +18,7 @@ made-for-esphome: False
 
 Manufacturer: [Geeni](https://mygeeni.com/)
 
-MCU: [Tuya 2BSC](https://developer.tuya.com/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq)
+MCU: [Tuya 2BSC](https://developer.tuya.com/en/docs/iot/cb2s-module-datasheet?id=Kafgfsa2aaypq)
 
 The toggle switch shuts off everything. It can not be controlled or monitored by esphome.
 
@@ -53,91 +53,15 @@ You must disassemble the unit and solder on a serial flasher. See also the flash
 
 ## Configuration
 
-```yaml
+Add your own Wi-Fi credentials, API and OTA settings to this hardware configuration.
 
-esphome:
-  name: strip4
-  friendly_name: strip4
+```yaml file=config.yaml
+```
 
-bk72xx:
-  board: cb2s
+### Home Assistant time
 
-logger:
-api:
-captive_portal:
-ota:
-  - platform: esphome
-    # Optional: Add your password if you have one configured
-    # password: "your_ota_password" 
+Merge this optional fragment with `config.yaml` to retain the Home Assistant time source. It requires the API
+component in your own configuration.
 
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-
-#Pinout: https://docs.libretiny.eu/boards/cb2s/#pinout
-#PCB CB2S
-
-## ---------------- ##
-##    Status LED    ##
-## ---------------- ##
-
-light:
-  - platform: status_led
-    name: "Status LED"
-    id: led
-    pin:
-      number: P11
-      inverted: true
-## ---------------- ##
-##  Binary Sensors  ##
-## ---------------- ##
-binary_sensor:
-  # Button 1
-  - platform: gpio
-    id: bP10
-    pin:
-      number: P10
-      inverted: true
-    name: "Button"
-    on_press:
-      - switch.toggle: switch_1
-## ---------------- ##
-##      Switches    ##
-## ---------------- ##
-switch:
-  - platform: gpio
-    id: switch_1
-    name: Outlet 1
-    pin: P6
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: switch_2
-    name: Outlet 2
-    pin: P7
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: switch_3
-    name: Outlet 3
-    pin: P26
-    restore_mode: ALWAYS_ON
-  - platform: gpio
-    id: switch_4
-    name: Outlet 4
-    pin: P24
-    restore_mode: ALWAYS_ON
-
-time:
-  - platform: homeassistant
-    id: homeassistant_time
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "IP Address"
-    ssid:
-      name: "Connected SSID"
-  - platform: libretiny
-    version:
-      name: LibreTiny Version
+```yaml file=home-assistant-time.yaml
 ```
