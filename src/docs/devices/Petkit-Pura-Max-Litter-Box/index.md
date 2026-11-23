@@ -77,9 +77,11 @@ The display is an SH1107 128x128 OLED on SPI (`ssd1306_spi`, rotated 180°).
 
 This configuration covers the hardware: the motor MCU link through the `pkt4_mcu` external component with its sensors
 (weight, presence, cover, bin, drum and flap positions), the display, the buttons, the buzzer and the real-time clock.
-It does not move the motors on its own. The cleaning cycles, the local menu and the safety checks are in the full
-[petkit.yaml](https://github.com/Triskae/esphome-petkit-t4/blob/master/petkit.yaml), documented in the
-[project README](https://github.com/Triskae/esphome-petkit-t4#readme).
+It does not move the motors on its own, and the weight and distance are raw readings: the load cell and the proximity
+sensor need a per-unit calibration. The cleaning cycles, the local menu, the calibration and the safety checks are in
+the full firmware, [t4.yaml](https://github.com/Triskae/esphome-petkit-t4/blob/master/t4.yaml), which can be installed
+and updated from the ESPHome Device Builder
+([instructions](https://github.com/Triskae/esphome-petkit-t4#installing-from-the-esphome-device-builder)).
 
 ```yaml file=config.yaml
 ```

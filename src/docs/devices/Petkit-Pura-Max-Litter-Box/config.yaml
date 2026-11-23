@@ -8,6 +8,10 @@ esphome:
   friendly_name: Petkit Pura Max
   platformio_options:
     board_upload.maximum_size: 0x800000
+  on_boot:
+    priority: 200  # once the I2C bus and the RTC are set up
+    then:
+      - bm8563.read_time: rtc
 
 esp32:
   variant: esp32
@@ -72,6 +76,7 @@ i2c:
   scan: false
 
 time:
+  # Read once at boot (see on_boot), so the system clock starts from the RTC.
   - platform: bm8563
     id: rtc
     update_interval: never
@@ -155,12 +160,20 @@ binary_sensor:
 
 sensor:
   - platform: pkt4_mcu
+    # Raw MCU readings: the load cell and the proximity sensor need a per-unit calibration
+    # (filters in the full firmware), so they carry no unit here.
     weight:
-      id: weight
-      name: Weight
+      id: weight_raw
+      name: Weight Raw
+      unit_of_measurement: ""
+      device_class: ""
+      accuracy_decimals: 0
     distance:
-      id: distance
-      name: Distance
+      id: distance_raw
+      name: Distance Raw
+      unit_of_measurement: ""
+      device_class: ""
+      accuracy_decimals: 0
     drum_position:
       id: drum_position
       name: Drum Position
