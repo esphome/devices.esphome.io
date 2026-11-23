@@ -1268,7 +1268,7 @@ sensor:
     device_class: volume_storage
     state_class: measurement
     accuracy_decimals: 4
-    filters: 
+    filters:
       - lambda: |-
           if (isnan(id(Raw_Oil_Depth).state)){
             return NAN;
@@ -1302,7 +1302,7 @@ sensor:
     filters:
       - lambda: |-
           // x = Oil Volume in Tank gallons
-          
+
           if (x > id(Max_Fill)) {
             x = id(Max_Fill);
           }
