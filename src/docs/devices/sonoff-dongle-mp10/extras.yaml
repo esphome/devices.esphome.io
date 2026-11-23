@@ -71,8 +71,6 @@ wifi:
   id: wifi_network
 
   # Optional: configure station-mode Wi-Fi credentials in secrets.yaml.
-  # ssid: !secret wifi_ssid
-  # password: !secret wifi_password
 
   # Access point configuration used for local setup and recovery.
   ap:
