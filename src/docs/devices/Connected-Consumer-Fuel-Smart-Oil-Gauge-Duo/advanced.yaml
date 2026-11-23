@@ -516,7 +516,7 @@ sensor:
   - platform: template
     id: Oil_Volume_Geo
     name: 'Oil Volume Geo'
-    unit_of_measurement: 'in²'
+    unit_of_measurement: 'gal'
     update_interval: never
     device_class: volume_storage
     entity_category: "diagnostic"
