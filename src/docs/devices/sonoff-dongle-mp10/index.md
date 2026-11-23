@@ -17,8 +17,8 @@ The CC2674P10 serves as a Zigbee NCP (Zigbee Coordinator), Zigbee Router, OpenTh
 **Note:** ESPHome firmware runs exclusively on Dongle-MP10's ESP32-S3 Wi-Fi SoC.
 Flashing ESPHome firmware onto Dongle-MP10 will not affect the functionality of the firmware on the CC2674P10 SoC.
 
-![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-max-device.png)
-![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-max-in-the-box.png)
+![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-device.png)
+![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-in-the-box.png)
 
 ## Quick Start
 
