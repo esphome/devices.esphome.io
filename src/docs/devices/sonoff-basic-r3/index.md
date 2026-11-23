@@ -22,6 +22,7 @@ as it does not support tuya-convert.
 Disconnect the device from mains before opening it, and keep mains disconnected throughout serial flashing.
 Use a suitable 3.3 V supply and a UART adapter with 3.3 V logic levels; never apply 5 V to the ESP's power or serial pins.
 Hold down the physical button while applying the 3.3 V supply to enter bootloader mode.
+
 ## GPIO Pinout
 
 | Pin    | Function                           |
