@@ -1,4 +1,4 @@
----
+<img width="1718" height="1304" alt="image" src="https://github.com/user-attachments/assets/c532712f-c6f0-4912-b893-281b09706d2c" />---
 title: SONOFF Dongle Max CC2674P10 (Dongle-MP10)
 date-published: 2026-11-23
 type: misc
@@ -77,5 +77,6 @@ button events, access point controls, and CC2674P10 radio management.
 
 ## Links
 
-- **Shop:** Purchase Dongle-MP10 from the [official SONOFF store](https://sonoff.tech/products/sonoff-dongle-max-cc2674p10-zigbee-thread-poe-dongle-dongle-mp10).
-- **Forum:** Post questions in the [eWeLink community forum](https://forum.ewelink.cc/t/esphome-on-sonoff-dongle-max/209243).
+- [**Shop:** Purchase Dongle-MP10 from the official SONOFF store.](https://sonoff.tech/products/sonoff-dongle-max-cc2674p10-zigbee-thread-poe-dongle-dongle-mp10)
+- [**Guide:** Follow Running ESPHome Firmware on Dongle-MP10.](https://dongle.sonoff.tech/guide/dongle-mp10/running-esphome-firmware-on-dongle-mp10)
+- [**Forum:** Post questions on the eWeLink Community Forum for discussion and assistance.](https://forum.ewelink.cc/t/esphome-on-sonoff-dongle-max/209243)
