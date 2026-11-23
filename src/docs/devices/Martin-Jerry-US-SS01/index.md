@@ -22,7 +22,7 @@ before flashing. The stock Tasmota web UI shows the chip on its **Information** 
 
 ## ESP8285 version
 
-### GPIO Pinout
+### ESP8285 GPIO Pinout
 
 | Pin    | Function |
 | ------ | -------- |
@@ -31,14 +31,16 @@ before flashing. The stock Tasmota web UI shows the chip on its **Information** 
 | GPIO12 | red LED  |
 | GPIO14 | blue LED |
 
-### Basic Configuration
+### ESP8285 Configuration
 
 ```yaml file=config.yaml
 ```
 
 ## ESP32-C3 version
 
-### GPIO Pinout
+![Martin Jerry US-SS01, ESP32-C3 version, installed](us-ss01-esp32c3.jpg)
+
+### ESP32-C3 GPIO Pinout
 
 | Pin    | Function                                    |
 | ------ | ------------------------------------------- |
@@ -52,11 +54,13 @@ Stock Tasmota template on this version:
 {"NAME":"US-SS01 Switch","GPIO":[0,0,321,0,0,0,0,224,0,0,0,0,0,0,0,0,0,0,0,0,32,0],"FLAG":0,"BASE":1}
 ```
 
-**Important:** GPIO20 is the ESP32-C3's UART0 RX pin. The configuration below sets `logger: baud_rate: 0`. Without it,
-the serial logger claims GPIO20 and the button silently does nothing, though the relay still works from Home Assistant.
-Logs are still available over the API.
+**Important:** keep `logger: baud_rate: 0` from the configuration below. On the tested unit, the same configuration
+with the default logger settings left the button unresponsive, though the relay still worked from Home Assistant.
+Adding `baud_rate: 0` was the only change needed to fix it. GPIO20 is the ESP32-C3's UART0 RX pin. The exact
+interaction wasn't investigated further, since ESPHome's ESP32-C3 logger defaults to USB Serial/JTAG. Logs are still
+available over the API.
 
-### Basic Configuration
+### ESP32-C3 Configuration
 
 ```yaml file=esp32c3.yaml
 ```
@@ -73,7 +77,9 @@ without opening the switch by following
 2. Upload `firmware.ota.bin` through Tasmota's **Firmware Upgrade → Upgrade by file upload**.
 3. Push ESPHome's partition table:
    `esphome upload --partition-table --file partitions_esphome.bin <config>.yaml`
-4. Remove `allow_partition_access` and install the full configuration over normal OTA.
+4. Remove `allow_partition_access`. Merge the hardware and logger settings from `esp32c3.yaml` into the working
+   migration configuration, keeping its `wifi:`, `api:` and `ota:` sections, then install it over normal OTA.
+   Installing `esp32c3.yaml` on its own would leave the switch without Wi-Fi credentials or OTA.
 
 Afterwards ESPHome logs `Bootloader too old for OTA rollback`, because the bootloader is still Tasmota's. This is
 harmless; only a serial flash replaces it.
