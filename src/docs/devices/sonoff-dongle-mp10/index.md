@@ -1,4 +1,3 @@
-<img width="1718" height="1304" alt="image" src="https://github.com/user-attachments/assets/c532712f-c6f0-4912-b893-281b09706d2c" />---
 title: SONOFF Dongle Max CC2674P10 (Dongle-MP10)
 date-published: 2026-11-23
 type: misc
