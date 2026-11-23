@@ -627,3 +627,4 @@ script:
           id(cc2674p10_bootloader_active) = false;
           id(cc2674p10_bootloader_switch).publish_state(false);
       - script.execute: apply_radio_app_baud_rate
+
