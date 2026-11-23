@@ -103,15 +103,6 @@ function reviewedSince(events, since) {
   );
 }
 
-module.exports = async ({ github, context, core }) => {
-  const pull = context.payload.pull_request;
-  if (pull.user?.type === "Bot") {
-    core.info(`#${pull.number} was opened by a bot; skipping the Copilot review.`);
-    return;
-  }
-  await requestCopilotReview({ github, core, ...context.repo, prNumber: pull.number });
-};
-
 // Requests a review on each PR in a comma-separated list, the promotion jobs'
 // marked-ready output.
 async function requestCopilotReviews({ github, core, owner, repo, prNumbers }) {
