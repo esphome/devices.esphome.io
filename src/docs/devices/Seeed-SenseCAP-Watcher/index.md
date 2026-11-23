@@ -1,6 +1,6 @@
 ---
 title: Seeed SenseCAP Watcher (W1-A)
-date-published: 2026-10-21
+date-published: 2026-11-23
 type: misc
 standard: global
 board: esp32
