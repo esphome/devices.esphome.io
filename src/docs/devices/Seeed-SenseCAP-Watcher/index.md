@@ -113,8 +113,8 @@ assistant pipeline:
 - A mixing speaker with separate announcement and media streams, and a media player.
 - `micro_wake_word` with the "Okay Nabu" model, and `voice_assistant`.
 - A mute switch.
-- The rotary wheel turns the volume up and down, and pressing it (or touching the screen) starts or stops the assistant.
-- A single label on the display shows the assistant state.
+- The rotary wheel turns the volume up and down, and a long press (over 700 ms) starts or stops the assistant without
+  the wake word.
 
 ```yaml file=voice-assistant.yaml
 ```
@@ -126,9 +126,7 @@ Things to be aware of in this configuration:
 - The speaker amplifier is powered from the expander (pin 12) and has to be switched on.
 - Wake word detection is faster with the sdkconfig options in the example, which run code and read-only data from
   PSRAM.
-- Other wake word models (`hey_jarvis`, `hey_mycroft`) can be added to `micro_wake_word`.
-- The configuration is a starting point. The display only shows the assistant state, and timers are not handled on the
-  screen.
+- The configuration is a starting point. It does not draw anything on the display, play sounds or show timers.
 
 Add your own `wifi` credentials and `api` encryption key before flashing, then adopt the device in Home Assistant and
 choose a voice assistant for it in the device settings.

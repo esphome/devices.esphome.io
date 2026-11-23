@@ -1,5 +1,10 @@
-# Voice assistant for the Seeed SenseCAP Watcher, with a small on-screen status label.
+# Voice assistant for the Seeed SenseCAP Watcher.
 # Add your own wifi credentials and an api encryption key, see the notes on the page.
+
+substitutions:
+  # Voice assistant phases, as used by the Home Assistant Voice Preview Edition.
+  phase_idle: "1"
+  phase_not_ready: "10"
 
 esphome:
   name: sensecap-watcher
@@ -107,31 +112,36 @@ switch:
       - microphone.mute:
       - micro_wake_word.stop:
       - voice_assistant.stop:
+    # This also runs once at boot, before the audio components are ready, so the wake word engine
+    # waits until Home Assistant has connected.
     turn_off_action:
       - microphone.unmute:
-      # Until Home Assistant has connected the wake word engine is started by on_client_connected instead.
       - if:
           condition:
-            api.connected:
+            lambda: return id(va_phase) != ${phase_not_ready};
           then:
             - micro_wake_word.start:
-    # The restored state is applied at boot, before LVGL has created the label, so check it exists first.
-    on_turn_on:
+
+globals:
+  - id: va_phase
+    type: int
+    initial_value: ${phase_not_ready}
+
+script:
+  # Push to talk: starts the assistant without a wake word, or stops it if it is running.
+  - id: toggle_assistant
+    then:
       - if:
           condition:
-            lambda: return id(status_label) != nullptr;
+            switch.is_off: mic_mute
           then:
-            - lvgl.label.update:
-                id: status_label
-                text: "Muted"
-    on_turn_off:
-      - if:
-          condition:
-            lambda: return id(status_label) != nullptr;
-          then:
-            - lvgl.label.update:
-                id: status_label
-                text: "Ready"
+            - if:
+                condition:
+                  voice_assistant.is_running:
+                then:
+                  - voice_assistant.stop:
+                else:
+                  - voice_assistant.start:
 
 output:
   - platform: ledc
@@ -162,17 +172,8 @@ touchscreen:
     display: watcher_display
     # The interrupt line is on the IO expander, so the controller is polled.
     update_interval: 20ms
-    on_touch:
-      # Touch the screen to start or stop the assistant.
-      - if:
-          condition:
-            voice_assistant.is_running:
-          then:
-            - voice_assistant.stop:
-          else:
-            - voice_assistant.start:
 
-# Rotary wheel: turn for volume, press for push to talk
+# Rotary wheel: turn for volume, long press for push to talk
 
 sensor:
   - platform: rotary_encoder
@@ -193,6 +194,7 @@ sensor:
 binary_sensor:
   - platform: gpio
     id: wheel_button
+    name: Wheel button
     pin:
       tca9555: io_expander
       number: 3
@@ -200,14 +202,11 @@ binary_sensor:
       inverted: true
     filters:
       - delayed_on_off: 20ms
-    on_press:
-      - if:
-          condition:
-            voice_assistant.is_running:
-          then:
-            - voice_assistant.stop:
-          else:
-            - voice_assistant.start:
+    on_click:
+      - min_length: 700ms
+        max_length: 10s
+        then:
+          - script.execute: toggle_assistant
 
 # Audio
 
@@ -336,7 +335,7 @@ micro_wake_word:
     channels: 0
   stop_after_detection: false
   models:
-    - model: okay_nabu
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu_20241226.3/okay_nabu.json
       id: okay_nabu
   vad:
   on_wake_word_detected:
@@ -350,8 +349,16 @@ micro_wake_word:
               then:
                 - voice_assistant.stop:
               else:
-                - voice_assistant.start:
-                    wake_word: !lambda return wake_word;
+                - if:
+                    condition:
+                      media_player.is_announcing: watcher_player
+                    then:
+                      - media_player.stop:
+                          id: watcher_player
+                          announcement: true
+                    else:
+                      - voice_assistant.start:
+                          wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
@@ -365,46 +372,16 @@ voice_assistant:
   auto_gain: 0 dbfs
   volume_multiplier: 1
   on_client_connected:
-    - if:
-        condition:
-          switch.is_off: mic_mute
-        then:
-          - micro_wake_word.start:
-          - lvgl.label.update:
-              id: status_label
-              text: "Ready"
+    - micro_wake_word.start:
+    - lambda: id(va_phase) = ${phase_idle};
   on_client_disconnected:
     - voice_assistant.stop:
-    - lvgl.label.update:
-        id: status_label
-        text: "Not connected"
+    - lambda: id(va_phase) = ${phase_not_ready};
   on_start:
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 20
         duration: 0s
-  on_listening:
-    - lvgl.label.update:
-        id: status_label
-        text: "Listening"
-  on_stt_vad_end:
-    - lvgl.label.update:
-        id: status_label
-        text: "Thinking"
-  on_tts_start:
-    - lvgl.label.update:
-        id: status_label
-        text: "Replying"
-  on_error:
-    - if:
-        condition:
-          and:
-            - lambda: return code != "duplicate_wake_up_detected";
-            - lambda: return code != "stt-no-text-recognized";
-        then:
-          - lvgl.label.update:
-              id: status_label
-              text: "Error"
   on_end:
     - wait_until:
         not:
@@ -413,29 +390,4 @@ voice_assistant:
         id: media_mixing_input
         decibel_reduction: 0
         duration: 1s
-    - if:
-        condition:
-          switch.is_off: mic_mute
-        then:
-          - lvgl.label.update:
-              id: status_label
-              text: "Ready"
-
-# Screen: a single status label
-
-lvgl:
-  id: lvgl_main
-  displays: watcher_display
-  touchscreens: watcher_touch
-  buffer_size: 25%
-  default_font: montserrat_28
-  bg_color: 0x000000
-  text_color: 0xFFFFFF
-  pages:
-    - id: main_page
-      scrollable: false
-      widgets:
-        - label:
-            id: status_label
-            align: center
-            text: "Not connected"
+    - lambda: id(va_phase) = ${phase_idle};
