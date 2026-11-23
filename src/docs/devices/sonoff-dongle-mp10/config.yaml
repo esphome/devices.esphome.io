@@ -2,12 +2,6 @@ esphome:
   name: dongle-mp10
   friendly_name: "Dongle Max CC2674P10"
 
-  on_boot:
-    - priority: -100
-      then:
-        - text_sensor.template.publish:
-            id: uart_tcp_connection_status
-            state: "Disconnected"
 
 esp32:
   variant: esp32s3
@@ -26,14 +20,6 @@ psram:
   speed: 80MHz
 
 logger:
-
-api:
-  encryption:
-    key: # Specify the encryption key. Leave empty to let ESPHome generate one
-ota:
-  - platform: esphome
-    allow_partition_access: true
-
 
 external_components:
   - source: github://SONOFF-Technologies/esphome-stream-server
@@ -70,21 +56,7 @@ binary_sensor:
     connected:
       id: radio_tcp_connected
       internal: true
-      on_press:
-        - text_sensor.template.publish:
-            id: uart_tcp_connection_status
-            state: "Connected"
-      on_release:
-        - text_sensor.template.publish:
-            id: uart_tcp_connection_status
-            state: "Disconnected"
 
-text_sensor:
-  - platform: template
-    id: uart_tcp_connection_status
-    name: "UART over TCP"
-    icon: mdi:lan-connect
-    update_interval: never
 
 sensor:
   - platform: uptime
