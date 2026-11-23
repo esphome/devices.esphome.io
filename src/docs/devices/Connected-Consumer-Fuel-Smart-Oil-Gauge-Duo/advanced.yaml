@@ -263,6 +263,7 @@ sensor:
     update_interval: never
     device_class: pressure
     unit_of_measurement: kPa
+    state_class: measurement
     entity_category: "diagnostic"
     accuracy_decimals: 8
     lambda: |-
@@ -290,6 +291,7 @@ sensor:
     name: "Speed of Sound"
     unit_of_measurement: 'm/s'
     device_class: speed
+    state_class: measurement
     update_interval: never
     entity_category: "diagnostic"
     lambda: |-
@@ -427,6 +429,22 @@ sensor:
     entity_category: "diagnostic"
     filters:
       - offset: ${oil_depth_offset}
+
+      - lambda: |-
+          if (id(Tank_Orientation) == 1){ // Vertical
+            if (x > id(Tank_Height)){
+              return id(Tank_Height);
+            }
+          }
+          if (id(Tank_Orientation) == 2){ // Horizontal
+            if (x > id(Tank_Width)){
+              return id(Tank_Width);
+            }
+          }
+          if (x < 0){
+            return 0;
+          }
+          return x;
     on_value:
       then:
         - if:
@@ -507,8 +525,6 @@ sensor:
       - lambda: |-
           // Calculate the Oil Area
 
-          double Oil_Depth_in = x;  // inches
-
           // Calculate Rectangle and Arc Heights
 
           double Oil_Height = x;  // Inches
@@ -516,12 +532,24 @@ sensor:
           double Rectangle_Height = 0.0;
           double Arc_Height = 0.0;
 
+          if (Oil_Height < 0){
+            Oil_Height = 0;
+          }
+
           if (id(Tank_Orientation) == 2){  // Horizontal
+
+            if (Oil_Height > id(Tank_Width)) {
+              Oil_Height = id(Tank_Width);
+            }
 
             Rectangle_Height = Oil_Height;
             Arc_Height = Oil_Height;
 
           } else {  // Vertical
+
+            if (Oil_Height > id(Tank_Height)) {
+              Oil_Height = id(Tank_Height);
+            }
 
             if (Oil_Height >= (id(Tank_Height) - id(Tank_Radius))) {
               Rectangle_Height = id(Tank_Height) - id(Tank_Width);
@@ -1240,6 +1268,14 @@ sensor:
     device_class: volume_storage
     state_class: measurement
     accuracy_decimals: 4
+    filters: 
+      - lambda: |-
+          if (isnan(id(Raw_Oil_Depth).state)){
+            return NAN;
+          } else {
+            return x;
+          }
+
     on_value:
       then:
         - lambda: |-
@@ -1266,6 +1302,11 @@ sensor:
     filters:
       - lambda: |-
           // x = Oil Volume in Tank gallons
+          
+          if (x > id(Max_Fill)) {
+            x = id(Max_Fill);
+          }
+
           double Max_Refill = id(Max_Fill) - x;
           return Max_Refill;
 
