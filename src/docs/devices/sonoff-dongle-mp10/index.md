@@ -70,7 +70,7 @@ The basic configuration provides Ethernet connectivity, UART over TCP, and essen
 ## Advanced Configuration
 
 The advanced configuration adds Wi-Fi, Bluetooth Proxy, RGB LED effects,
-button events, access point controls, and MG24 radio management.
+button events, access point controls, and CC2674P10 radio management.
 
 ```yaml file=extras.yaml
 ```
