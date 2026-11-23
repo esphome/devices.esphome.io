@@ -1,0 +1,12 @@
+# PlusPlugIT stock partition table (read from the official 2.0.1 package, partition-table.bin at 0x8000).
+# Only used so ESPHome builds against the same layout the device really has; the table in flash stays Shelly's.
+# The table is at ESP-IDF's default 0x8000: leave CONFIG_PARTITION_TABLE_OFFSET unset.
+# Name,    Type, SubType, Offset,   Size,     Flags
+nvs, data, nvs, 0x9000, 0x4000,
+otadata, data, ota, 0xd000, 0x2000,
+app_0, app, ota_0, 0x10000, 0x190000,
+fs_0, data, spiffs, 0x1a0000, 0x60000,
+app_1, app, ota_1, 0x200000, 0x190000,
+fs_1, data, spiffs, 0x390000, 0x60000,
+aux, 0x55, 0x0, 0x3f0000, 0xc000,
+shelly, data, 0x88, 0x3fc000, 0x4000,

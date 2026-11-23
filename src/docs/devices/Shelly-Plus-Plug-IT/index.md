@@ -1,0 +1,114 @@
+---
+title: Shelly Plus Plug IT
+date-published: 2026-10-22
+type: plug
+standard: eu
+board: esp32
+difficulty: 2
+---
+
+Italian version of the Shelly Plus Plug (Italian/Schuko 10 A socket), model **SNPL-00110IT**.
+ESP32-U4WDH (single core) with 4 MB flash, BL0937 power meter.
+
+![Shelly Plus Plug IT](shelly-plus-plug-it.jpg "Shelly Plus Plug IT")
+
+The pinout is **not** the same as the [Shelly Plus Plug S](/devices/Shelly-Plus-Plug-S).
+The pins below were read from the stock 2.0.1 firmware and checked on the hardware.
+
+## GPIO Pinout
+
+| Pin    | Function                       |
+| ------ | ------------------------------ |
+| GPIO4  | Relay (active high)            |
+| GPIO26 | Button (active low)            |
+| GPIO32 | LED 1 (active low)             |
+| GPIO33 | LED 2 (active low)             |
+| GPIO27 | BL0937 CF                      |
+| GPIO14 | BL0937 CF1                     |
+| GPIO12 | BL0937 SEL (inverted)          |
+| GPIO34 | NTC (10k at 25 °C, B 3950)     |
+
+GPIO16 and GPIO17 are used by the internal flash: do not use them.
+
+## Flashing
+
+Whichever route you use, add your own `wifi:` credentials, `api:` and an `ota:` entry to the config before you
+build it: `config.yaml` alone only starts the fallback hotspot, and without `ota:` later updates need UART.
+
+### Over the air with free-shelly-ota (no UART)
+
+Tested on a unit with stock firmware 2.0.1, with
+[free-shelly-ota](https://github.com/oxynatOr/free-shelly-ota) 0.4.0:
+
+1. Create the profile from the official 2.0.1 package:
+   `python ota.py add-device <official.zip>` and
+   `python ota.py partition-csv PlusPlugIT --official <official.zip> -o PlusPlugIT-stock.csv`.
+2. Build the config with the stock partition table, so the image matches the layout in flash: add the
+   settings from [Stock partition layout](#stock-partition-layout) to your yaml and put `PlusPlugIT-stock.csv`
+   next to it.
+3. Download both the factory and the OTA image from ESPHome, then
+   `python ota.py build PlusPlugIT <ota.bin> --esphome-factory <factory.bin> --boot-min-version 1.0.9`,
+   `python ota.py send PlusPlugIT <zip> --ip <plug IP> --dry-run` (must report target slot 0) and the same
+   command without `--dry-run`.
+
+The stock 2.0.1 partition table produced by `partition-csv` (the same as `PlusPlugIT-stock.csv` in this folder):
+
+```text
+nvs, data, nvs, 0x9000, 0x4000,
+otadata, data, ota, 0xd000, 0x2000,
+app_0, app, ota_0, 0x10000, 0x190000,
+fs_0, data, spiffs, 0x1a0000, 0x60000,
+app_1, app, ota_1, 0x200000, 0x190000,
+fs_1, data, spiffs, 0x390000, 0x60000,
+aux, 0x55, 0x0, 0x3f0000, 0xc000,
+shelly, data, 0x88, 0x3fc000, 0x4000,
+```
+
+The package replaces Shelly's bootloader with ESPHome's, so later ESPHome OTA updates work normally.
+During the update the Shelly installer burns an eFuse (`FW signatures: want 07 got 00`, `BURN BLOCK3`):
+the plug may not accept Shelly firmware again. If something goes wrong, only UART can recover it.
+
+### Via Tasmota (old stock firmware)
+
+Tested on one unit with factory firmware 0.11.99. This route does not work from stock firmware 1.5 or newer.
+
+1. Install `mgos32-to-tasmota32-PlusPlugIT.zip` from release
+   [v14.1.1](https://github.com/tasmota/mgos32-to-tasmota32/releases/tag/v14.1.1) of mgos32-to-tasmota32
+   (Tasmota 12.5.0 solo1). The 0.11.99 page has no file upload: serve the zip over HTTP from your PC and put its
+   URL in the firmware update field.
+2. In Tasmota, run **Configuration → Auto-configuration → Shelly_PlugIT** right away, before the plug restarts:
+   this step replaces Shelly's bootloader, and the converter's instructions warn that skipping it bricks the
+   device. Here the template it loads did not apply (it is the old ESP8266 plug), which does not matter: only the
+   bootloader is needed.
+3. Do **not** run Tasmota's Partition Wizard: keep Shelly's partition table, which on 0.11.99 is
+
+   ```text
+   nvs, data, nvs, 0x9000, 0x4000,
+   otadata, data, ota, 0xd000, 0x2000,
+   app0, app, ota_0, 0x10000, 0x180000,
+   fs_0, data, spiffs, 0x190000, 0x70000,
+   app1, app, ota_1, 0x200000, 0x180000,
+   fs_1, data, spiffs, 0x380000, 0x70000,
+   ```
+
+4. Save it as a CSV next to your yaml, set `partitions:` under `esp32:` to that file, build, and upload the
+   ESPHome OTA image from Tasmota's **Firmware Upgrade** page.
+
+## Calibration
+
+With `current_resistor: 0.001 ohm` and `voltage_divider: 770` the raw readings are far off, so the config uses
+multipliers. They were measured on one unit against a reference meter; a second unit differed by about 3-4 %, so
+check yours with a known load.
+
+## Configuration
+
+```yaml file=config.yaml
+```
+
+### Stock partition layout
+
+Only for the free-shelly-ota route above: merge this onto the config (for example as a local package) and put
+`PlusPlugIT-stock.csv` next to your yaml.
+
+```yaml file=stock-partitions.yaml
+```
