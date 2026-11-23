@@ -9,7 +9,7 @@ substitutions:
   min_scoops: "0"
   max_scoops: "6"
   # Where the feeder_motor component (the motor controller) comes from.
-  feeder_component_source: github://Triskae/esphome-petkit-element-solo@v1.0.0
+  feeder_component_source: github://Triskae/esphome-petkit-element-solo@v1.0.1
   # Stock tones: 2 kHz buzzer, b6 is about 1976 Hz.
   beep_short: "short:d=16,o=6,b=75:b"  # 200 ms (stock beep type 3)
   beep_food_low: "foodlow:d=8,o=6,b=60:b,p,b,p,b,p,b,p,b"  # 5 x 500 ms on / 500 ms off
@@ -30,9 +30,6 @@ esphome:
       - delay: 1s
       - pcf8563.read_time:
           id: rtc_time
-      - light.turn_on:
-          id: led
-          effect: pairing_blink
 
 wifi:
   reboot_timeout: 0s  # keep feeding offline instead of rebooting every 15 min
@@ -206,6 +203,7 @@ script:
 
 interval:
   # LED like stock: on while Home Assistant is connected, slow blink otherwise.
+  # This interval is the only thing driving the LED.
   - interval: 1s
     then:
       - lambda: |-
@@ -256,12 +254,12 @@ interval:
       - lambda: |-
           if (!id(food_low).state || !id(food_low_alarm).state) return;
           if (id(on_battery).state) return;  // stock: no food alarm on battery
+          // Only beep when the time is known, so the hour window always applies.
           auto now = id(sntp_time).now();
-          if (now.is_valid()) {
-            int h = now.hour, from = (int) id(food_alarm_from).state, to = (int) id(food_alarm_to).state;
-            bool inside = from <= to ? (h >= from && h < to) : (h >= from || h < to);
-            if (!inside) return;
-          }
+          if (!now.is_valid() || !id(time_trusted)) return;
+          int h = now.hour, from = (int) id(food_alarm_from).state, to = (int) id(food_alarm_to).state;
+          bool inside = from <= to ? (h >= from && h < to) : (h >= from || h < to);
+          if (!inside) return;
           id(play_rtttl)->execute("${beep_food_low}");
 
 number:
