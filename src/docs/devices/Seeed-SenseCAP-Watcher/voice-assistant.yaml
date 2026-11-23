@@ -372,7 +372,12 @@ voice_assistant:
   auto_gain: 0 dbfs
   volume_multiplier: 1
   on_client_connected:
-    - micro_wake_word.start:
+    # Stay stopped while muted. Unmuting starts it, as va_phase is no longer not_ready.
+    - if:
+        condition:
+          switch.is_off: mic_mute
+        then:
+          - micro_wake_word.start:
     - lambda: id(va_phase) = ${phase_idle};
   on_client_disconnected:
     - voice_assistant.stop:
