@@ -47,7 +47,6 @@ Flashing ESPHome firmware onto Dongle-MP10 will not affect the functionality of 
 | Ethernet CLK | GPIO42 | Output | SPI clock for CH390 |
 | Ethernet Interrupt | GPIO38 | Input | Interrupt signal from CH390 Ethernet controller |
 
-
 ## Key Features
 
 The following features are based on the advanced YAML configuration provided in this document.
