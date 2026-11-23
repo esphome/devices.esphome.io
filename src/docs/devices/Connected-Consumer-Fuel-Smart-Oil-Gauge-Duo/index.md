@@ -49,7 +49,7 @@ that powers the ESP8266. As such, on the Duo, GPIO14 has no connection beyond be
    ![alt text](Flashing-Front.jpg "Front Flashing Connection")
    ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
 7. Follow the directions as outlined by ESPHome for physically connecting to your device:
-  
+
 [https://esphome.io/guides/physical_device_connection/](https://esphome.io/guides/physical_device_connection/)
 
 ## Considerations
