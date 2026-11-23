@@ -3,22 +3,22 @@ title: SONOFF Dongle Max CC2674P10 (Dongle-MP10)
 date-published: 2026-11-23
 type: misc
 standard: global
-board: esp32-s3
+board: esp32
 difficulty: 2
 ---
 
 ## Description
 
-Dongle-MP10 uses a dual-chip architecture consisting of an ESP32-S3 (Wi-Fi SoC) and an CC2674P10 (Zigbee/Thread SoC).
-The ESP32-S8 handles functions such as Wi-Fi and Ethernet,
+Dongle-MP10 uses a dual-chip architecture consisting of an ESP32-S3 (Wi-Fi SoC) and a CC2674P10 (Zigbee/Thread SoC).
+The ESP32-S3 handles functions such as Wi-Fi and Ethernet,
 and provides a TCP port for transmitting and receiving serial data from the CC2674P10.
 The CC2674P10 serves as a Zigbee NCP (Zigbee Coordinator), Zigbee Router, OpenThread RCP.
 
 **Note:** ESPHome firmware runs exclusively on Dongle-MP10's ESP32-S3 Wi-Fi SoC.
 Flashing ESPHome firmware onto Dongle-MP10 will not affect the functionality of the firmware on the CC2674P10 SoC.
 
-![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-device.png)
-![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-in-the-box.png)
+ ![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-device.png "SONOFF Dongle Max CC2674P10 (Dongle-MP10)")
+ ![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-mp10-in-the-box.png "SONOFF Dongle Max CC2674P10 (Dongle-MP10 in the box)")
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ Flashing ESPHome firmware onto Dongle-MP10 will not affect the functionality of 
 
 ## GPIO Pinout
 
-![SONOFF Dongle Max CC2674P10 (Dongle-MP10](dongle-max-cc2674p10-pcb.jpg)
+ ![SONOFF Dongle Max CC2674P10 (Dongle-MP10)](dongle-max-cc2674p10-pcb.jpg "SONOFF Dongle Max CC2674P10 PCB")
 
 | Function | ESP32-S3 GPIO | Direction | Notes |
 | :--- | :--- | :--- | :--- |
@@ -58,7 +58,7 @@ All parameters can be modified in ESPHome to suit your needs.
 - **UART over TCP:** Exposes the CC2674P10 UART interface over TCP port 6638
 for compatible Zigbee or Thread open-source platform.
 - **Bluetooth Proxy:** Enables Home Assistant to discover and control nearby BLE devices.
-- **MG24 Firmware Management:** Supports entering CC2674P10 bootloader mode and updating radio firmware.
+- **CC2674P10 Firmware Management:** Supports entering CC2674P10 bootloader mode and updating radio firmware.
 - **Status and Controls:** Provides RGB status indication, button events.
 
 ## Basic Configuration
