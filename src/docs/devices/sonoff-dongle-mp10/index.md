@@ -1,3 +1,4 @@
+---
 title: SONOFF Dongle Max CC2674P10 (Dongle-MP10)
 date-published: 2026-11-23
 type: misc
