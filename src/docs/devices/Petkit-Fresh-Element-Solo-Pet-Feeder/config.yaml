@@ -1,0 +1,185 @@
+# PETKIT Fresh Element Solo (D4): hardware only.
+# Pins and peripherals as used by the stock firmware (see docs/hardware.md).
+# Add feeder.yaml on top for the feeding logic, and your own wifi / api / ota.
+# Source: https://github.com/Triskae/esphome-petkit-element-solo
+
+substitutions:
+  name: petkit-element-solo
+  friendly_name: Petkit Fresh Element Solo
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  comment: Petkit Fresh Element Solo Pet Feeder
+
+esp32:
+  variant: esp32
+  framework:
+    type: arduino
+  flash_size: 4MB
+
+wifi:
+  ap: {}
+
+i2c:
+  sda:
+    number: GPIO15
+    ignore_strapping_warning: true
+  scl: GPIO4
+  frequency: 200kHz # stock: I2C port 1, 200 kHz
+  scan: true
+
+time:
+  # PCF8563 / BM8563 RTC
+  - platform: pcf8563
+    id: rtc_time
+    address: 0x51
+
+output:
+  - id: led_output
+    platform: gpio
+    pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+  # Buzzer. The stock firmware drives it at 2 kHz / 50 %.
+  - id: rtttl_output
+    platform: ledc
+    pin: GPIO16
+  # Motor H-bridge: forward 1/0/1, reverse 1/1/0, brake 1/1/1, asleep 0/x/x (GPIO19/17/18).
+  - id: motor_enable
+    platform: gpio
+    pin: GPIO19
+  - id: motor_in_a
+    platform: gpio
+    pin: GPIO17
+  - id: motor_in_b
+    platform: gpio
+    pin: GPIO18
+
+rtttl:
+  output: rtttl_output
+
+light:
+  - platform: binary
+    id: led
+    name: Status LED
+    output: led_output
+    internal: true
+    effects:
+      # Stock LED styles: 80 ms blink (pairing), 500 ms blink (offline), on (online).
+      - strobe:
+          name: pairing_blink
+          colors:
+            - state: true
+              duration: 80ms
+            - state: false
+              duration: 80ms
+      - strobe:
+          name: offline_blink
+          colors:
+            - state: true
+              duration: 500ms
+            - state: false
+              duration: 500ms
+
+switch:
+  # Power for the IR sensors and the grate switch.
+  - id: enable_sensors
+    platform: gpio
+    pin: GPIO33
+    restore_mode: ALWAYS_ON
+    internal: true
+  # Hopper (kibble) IR emitter, kept on as the stock firmware does on DC power.
+  - id: kibble_ir_emitter
+    platform: gpio
+    pin:
+      number: GPIO2
+      ignore_strapping_warning: true
+    restore_mode: ALWAYS_ON
+    internal: true
+
+binary_sensor:
+  # FUNC button (feed / cancel).
+  - id: manual_feed_button
+    platform: gpio
+    internal: true
+    pin:
+      number: GPIO34
+      inverted: true
+    filters:
+      - delayed_on_off: 20ms # stock: 2 ticks of 10 ms
+  # SET button (stock: network pairing).
+  - id: set_button
+    platform: gpio
+    internal: true
+    pin:
+      number: GPIO0
+      inverted: true
+      ignore_strapping_warning: true
+    filters:
+      - delayed_on_off: 20ms
+  # Grate switch: low when the grate closes the outlet, once per loop.
+  - id: motor_sensor
+    platform: gpio
+    internal: true
+    pin:
+      number: GPIO27
+      inverted: true
+  # Outlet IR: high when something covers the beam (food falling, or a full bowl).
+  - id: feed_sensor
+    platform: gpio
+    internal: true
+    pin:
+      number: GPIO14
+  # Hopper IR receiver: high = food low (a full hopper reads low).
+  - id: food_low
+    platform: gpio
+    name: Food low
+    device_class: problem
+    icon: mdi:food-drumstick-off
+    pin:
+      number: GPIO13
+    filters:
+      - delayed_on_off: 30ms # stock: 3 identical reads
+  # High = running on batteries.
+  - id: on_battery
+    platform: gpio
+    name: On battery
+    entity_category: diagnostic
+    icon: mdi:battery
+    pin:
+      number: GPIO21
+
+sensor:
+  # Motor current shunt: ADC1 channel 4, 0 dB. Read on demand by the motor loop.
+  - id: motor_current_adc
+    platform: adc
+    internal: true
+    pin: GPIO32
+    attenuation: 0db
+    samples: 32
+    update_interval: never
+  # DC input: ADC1 channel 3, 11 dB, divider 147/47.
+  - id: dc_voltage
+    platform: adc
+    name: DC input voltage
+    pin: GPIO39
+    attenuation: 12db
+    entity_category: diagnostic
+    update_interval: 2s
+    filters:
+      - multiply: 3.12766
+      - delta: 0.05
+  # Batteries: ADC1 channel 0, 11 dB, divider 147/47. Stock keeps the 30 min peak.
+  - id: battery_voltage
+    platform: adc
+    name: Battery voltage
+    pin: GPIO36
+    attenuation: 12db
+    entity_category: diagnostic
+    update_interval: 60s
+    filters:
+      - multiply: 3.12766
+      - max:
+          window_size: 30
+          send_every: 1

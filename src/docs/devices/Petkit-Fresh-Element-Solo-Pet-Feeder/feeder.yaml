@@ -1,0 +1,819 @@
+# PETKIT Fresh Element Solo (D4): feeding logic, on top of config.yaml.
+# Follows the stock firmware: loop counting, jam handling, outlet and hopper IR,
+# button gestures, LED, beeps and power checks (see docs/).
+
+substitutions:
+  timezone: Europe/Paris
+  ntp_server: pool.ntp.org
+  default_scoops: "1"
+  min_scoops: "0"
+  max_scoops: "6"
+  # Where the feeder_motor component (the motor controller) comes from.
+  feeder_component_source: github://Triskae/esphome-petkit-element-solo@v1.0.0
+  # Stock tones: 2 kHz buzzer, b6 is about 1976 Hz.
+  beep_short: "short:d=16,o=6,b=75:b" # 200 ms (stock beep type 3)
+  beep_food_low: "foodlow:d=8,o=6,b=60:b,p,b,p,b,p,b,p,b" # 5 x 500 ms on / 500 ms off
+
+external_components:
+  - source: ${feeder_component_source}
+    components: [feeder_motor]
+
+feeder_motor:
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - delay: 1s
+      - pcf8563.read_time:
+          id: rtc_time
+      - light.turn_on:
+          id: led
+          effect: pairing_blink
+
+wifi:
+  reboot_timeout: 0s # keep feeding offline instead of rebooting every 15 min
+
+api:
+  reboot_timeout: 0s
+
+globals:
+  - id: food_sensor_count
+    type: int
+  - id: last_food_sensor_count
+    type: int
+    initial_value: "0"
+    restore_value: true
+  - id: last_food_scoops_count
+    type: int
+    initial_value: "0"
+    restore_value: true
+  - id: last_feed_timestamp
+    type: int
+    restore_value: true
+    initial_value: "0"
+  - id: outlet_blocked_latched # stock BLOCK_DOOR flag
+    type: bool
+    initial_value: "false"
+
+script:
+  - id: play_rtttl
+    parameters:
+      song_str: string
+    then:
+      - if:
+          condition:
+            lambda: return !(id(mute_sounds).state);
+          then:
+            - rtttl.play:
+                rtttl: !lambda "return song_str;"
+  - id: actuate_feeder
+    parameters:
+      scoops: int
+    then:
+      - lambda: |-
+          if (scoops <= 0) return;
+          // Stock start checks: refuse on DC fault or low battery.
+          if (id(dc_fault).state) {
+            ESP_LOGW("feeder", "Feed refused: DC_ERR");
+            id(feeder_state).publish_state("Refused: power fault");
+            return;
+          }
+          if (id(low_battery).state) {
+            ESP_LOGW("feeder", "Feed refused: low battery");
+            id(feeder_state).publish_state("Refused: low battery");
+            return;
+          }
+          if (!feeder::motor().start((uint8_t) scoops, millis())) {
+            ESP_LOGW("feeder", "Feed of %d scoops refused: motor busy", scoops);
+            return;
+          }
+          ESP_LOGI("feeder", "Serving %d scoops (%d loops)", scoops, feeder::motor().target());
+          id(play_rtttl)->execute("${beep_short}");
+          id(food_sensor_count) = 0;
+          id(last_feed_timestamp) = id(sntp_time).now().timestamp;
+          id(feeder_state).publish_state("Feeding");
+  # Button held about 1.5 s: stock "mid long" press, feeds while held.
+  - id: button_hold
+    mode: restart
+    then:
+      - delay: 1500ms
+      - lambda: |-
+          if (!id(manual_feed_button).state) return;
+          if (id(child_lock).state) {
+            ESP_LOGI("feeder", "Hold feed ignored: child lock");
+            return;
+          }
+          if (id(dc_fault).state || id(low_battery).state) return;
+          if (feeder::motor().start_hold(millis())) {
+            ESP_LOGI("feeder", "Hold feed started");
+            id(food_sensor_count) = 0;
+            id(last_feed_timestamp) = id(sntp_time).now().timestamp;
+            id(feeder_state).publish_state("Feeding (button)");
+          }
+  - id: dispatch_feeder_food_dispensed_event
+    parameters:
+      event_message: string
+    then:
+      - homeassistant.event:
+          event: esphome.feeder_food_dispensed
+          data:
+            message: !lambda return event_message;
+  - id: dispatch_feeder_food_low_event
+    parameters:
+      event_message: string
+    then:
+      - homeassistant.event:
+          event: esphome.feeder_food_low
+          data:
+            message: !lambda return event_message;
+  - id: dispatch_feeder_fault_event
+    parameters:
+      fault: string
+      event_message: string
+    then:
+      - homeassistant.event:
+          event: esphome.feeder_fault
+          data:
+            fault: !lambda return fault;
+            message: !lambda return event_message;
+  # Applies a feed result coming from the motor controller.
+  - id: handle_feed_result
+    parameters:
+      result: int
+    then:
+      - lambda: |-
+          auto &m = feeder::motor();
+          id(last_food_sensor_count) = id(food_sensor_count);
+          id(last_food_scoops_count) = m.valid_loops();
+          id(feed_max_current).publish_state(m.max_current_mv());
+          id(feed_unjam_attempts).publish_state(m.attempts());
+          if (m.outlet_blocked()) {
+            id(outlet_blocked_latched) = true;
+            id(dispatch_feeder_fault_event)->execute("BLOCK_DOOR",
+                "${friendly_name}: the outlet stayed covered, check the bowl.");
+          }
+          id(outlet_blocked).publish_state(id(outlet_blocked_latched));
+          switch ((feeder::Result) result) {
+            case feeder::Result::OK: {
+              id(motor_fault).publish_state("None");
+              id(feeder_state).publish_state("Food dispensed");
+              int n = m.valid_loops();
+              id(dispatch_feeder_food_dispensed_event)->execute(n == 1
+                  ? std::string("${friendly_name} dispensed 1 scoop of food.")
+                  : "${friendly_name} dispensed " + to_string(n) + " scoops of food.");
+              break;
+            }
+            case feeder::Result::CANCELLED:
+              id(feeder_state).publish_state("Feed cancelled");
+              break;
+            case feeder::Result::GRATE_ERROR:
+              id(motor_fault).publish_state("GRAT_ERR");
+              id(feeder_state).publish_state("Grate error");
+              id(dispatch_feeder_fault_event)->execute("GRAT_ERR",
+                  "${friendly_name}: the motor turned but no scoop was counted.");
+              break;
+            case feeder::Result::BLOCKED:
+              id(motor_fault).publish_state("BLOCK_FOOD");
+              id(feeder_state).publish_state("Food blocked");
+              id(dispatch_feeder_fault_event)->execute("BLOCK_FOOD",
+                  "${friendly_name}: food is jammed, check the dispenser.");
+              break;
+            default:
+              break;
+          }
+          ESP_LOGI("feeder", "Feed done: result=%d, %d/%d loops, %d with food, max %.0f mV, %d un-jam attempts",
+                   result, m.loops_done(), m.target(), m.valid_loops(), m.max_current_mv(), m.attempts());
+
+interval:
+  # LED like stock: on while Home Assistant is connected, slow blink otherwise.
+  - interval: 1s
+    then:
+      - lambda: |-
+          static int last = -1;
+          int style = (api::global_api_server != nullptr && api::global_api_server->is_connected()) ? 1 : 3;
+          if (style == last) return;
+          last = style;
+          auto call = id(led).turn_on();
+          call.set_effect(style == 1 ? "None" : "offline_blink");
+          call.perform();
+  # Motor control loop (10 ms, like the stock app task).
+  - interval: 10ms
+    then:
+      - lambda: |-
+          static feeder::Drive last = feeder::Drive::SLEEP;
+          auto &m = feeder::motor();
+          float mv = 0.0f;
+          if (m.needs_current()) {
+            // Stock scaling: calibrated ADC mV x 16 / 11.
+            mv = id(motor_current_adc).sample() * 1000.0f * 16.0f / 11.0f;
+          }
+          feeder::Drive d = m.tick(millis(), mv, id(motor_sensor).state, id(feed_sensor).state);
+          if (d != last) {
+            last = d;
+            // GPIO19 / GPIO17 / GPIO18
+            switch (d) {
+              case feeder::Drive::FORWARD:
+                id(motor_in_a).turn_off(); id(motor_in_b).turn_on(); id(motor_enable).turn_on();
+                break;
+              case feeder::Drive::REVERSE:
+                id(motor_in_a).turn_on(); id(motor_in_b).turn_off(); id(motor_enable).turn_on();
+                break;
+              case feeder::Drive::BRAKE:
+                id(motor_in_a).turn_on(); id(motor_in_b).turn_on(); id(motor_enable).turn_on();
+                break;
+              case feeder::Drive::SLEEP:
+                id(motor_enable).turn_off(); id(motor_in_a).turn_off(); id(motor_in_b).turn_off();
+                break;
+            }
+          }
+          feeder::Result r = m.take_result();
+          if (r != feeder::Result::NONE) {
+            id(handle_feed_result)->execute((int) r);
+          }
+  # Stock food alarm: 5 beeps every 30 s while the hopper is low.
+  - interval: 30s
+    then:
+      - lambda: |-
+          if (!id(food_low).state || !id(food_low_alarm).state) return;
+          if (id(on_battery).state) return;  // stock: no food alarm on battery
+          auto now = id(sntp_time).now();
+          if (now.is_valid()) {
+            int h = now.hour, from = (int) id(food_alarm_from).state, to = (int) id(food_alarm_to).state;
+            bool inside = from <= to ? (h >= from && h < to) : (h >= from || h < to);
+            if (!inside) return;
+          }
+          id(play_rtttl)->execute("${beep_food_low}");
+
+number:
+  - platform: template
+    id: default_scoops
+    name: "Manual dispense scoops"
+    icon: mdi:cup
+    entity_category: config
+    min_value: 1
+    max_value: ${max_scoops}
+    initial_value: ${default_scoops}
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: food_alarm_from
+    name: "Food alarm from hour"
+    icon: mdi:clock-start
+    entity_category: config
+    min_value: 0
+    max_value: 23
+    initial_value: 7
+    optimistic: true
+    step: 1
+    restore_value: true
+    mode: box
+  - platform: template
+    id: food_alarm_to
+    name: "Food alarm to hour"
+    icon: mdi:clock-end
+    entity_category: config
+    min_value: 0
+    max_value: 24
+    initial_value: 22
+    optimistic: true
+    step: 1
+    restore_value: true
+    mode: box
+  - platform: template
+    id: schedule_cups_0000
+    name: "00:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0100
+    name: "01:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0200
+    name: "02:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0300
+    name: "03:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0400
+    name: "04:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0500
+    name: "05:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0600
+    name: "06:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0700
+    name: "07:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0800
+    name: "08:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_0900
+    name: "09:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1000
+    name: "10:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1100
+    name: "11:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1200
+    name: "12:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1300
+    name: "13:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1400
+    name: "14:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1500
+    name: "15:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1600
+    name: "16:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1700
+    name: "17:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1800
+    name: "18:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_1900
+    name: "19:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_2000
+    name: "20:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_2100
+    name: "21:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_2200
+    name: "22:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+  - platform: template
+    id: schedule_cups_2300
+    name: "23:00 cups"
+    icon: mdi:cup
+    entity_category: config
+    min_value: ${min_scoops}
+    max_value: ${max_scoops}
+    initial_value: 0
+    optimistic: true
+    step: 1
+    restore_value: true
+    unit_of_measurement: scoops
+    mode: slider
+
+time:
+  - id: !extend rtc_time
+    timezone: ${timezone}
+  # Home Assistant time over the API: works even when the network blocks NTP.
+  - platform: homeassistant
+    id: ha_time
+    timezone: ${timezone}
+    on_time_sync:
+      then:
+        - pcf8563.write_time:
+            id: rtc_time
+  - id: sntp_time
+    platform: sntp
+    timezone: ${timezone}
+    servers:
+      - ${ntp_server}
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+    on_time_sync:
+      then:
+        - pcf8563.write_time:
+            id: rtc_time
+    on_time:
+      - hours: "*"
+        minutes: 0
+        seconds: 0
+        then:
+          - lambda: |-
+              number::Number *slots[24] = {id(schedule_cups_0000), id(schedule_cups_0100), id(schedule_cups_0200), id(schedule_cups_0300), id(schedule_cups_0400), id(schedule_cups_0500), id(schedule_cups_0600), id(schedule_cups_0700), id(schedule_cups_0800), id(schedule_cups_0900), id(schedule_cups_1000), id(schedule_cups_1100), id(schedule_cups_1200), id(schedule_cups_1300), id(schedule_cups_1400), id(schedule_cups_1500), id(schedule_cups_1600), id(schedule_cups_1700), id(schedule_cups_1800), id(schedule_cups_1900), id(schedule_cups_2000), id(schedule_cups_2100), id(schedule_cups_2200), id(schedule_cups_2300)};
+              int hour = id(sntp_time).now().hour;
+              if (hour >= 0 && hour < 24) {
+                id(actuate_feeder)->execute((int) slots[hour]->state);
+              }
+
+binary_sensor:
+  # FUNC button: press = key beep, click = cancel the feed, hold ~1.5 s = feed while held.
+  - id: !extend manual_feed_button
+    on_press:
+      then:
+        - lambda: id(play_rtttl)->execute("${beep_short}");
+        - script.execute: button_hold
+    on_release:
+      then:
+        - script.stop: button_hold
+        - lambda: feeder::motor().release(millis());
+    on_click:
+      - min_length: 20ms
+        max_length: 1000ms
+        then:
+          - lambda: |-
+              auto &m = feeder::motor();
+              if (m.busy() && !m.hold_mode()) {
+                ESP_LOGI("feeder", "Feed cancelled by button");
+                m.cancel(millis());
+              }
+  # SET button: key beep (stock long press = network pairing, not implemented).
+  - id: !extend set_button
+    on_press:
+      then:
+        - lambda: id(play_rtttl)->execute("${beep_short}");
+  # One loop per grate closure.
+  - id: !extend motor_sensor
+    on_press:
+      then:
+        - lambda: |-
+            auto &m = feeder::motor();
+            m.on_grate_edge(millis());
+            if (m.busy()) ESP_LOGD("feeder", "%d/%d loops", m.loops_done(), m.target());
+  # Food crossing the outlet beam.
+  - id: !extend feed_sensor
+    on_press:
+      then:
+        - lambda: |-
+            feeder::motor().on_outlet_rise();
+            id(food_sensor_count) += 1;
+  - id: !extend food_low
+    on_press:
+      then:
+        - lambda: |-
+            id(feeder_state).publish_state("Food level is low");
+            id(dispatch_feeder_food_low_event)->execute("${friendly_name} food level is low. Check the hopper.");
+  # Stock idle filter on the outlet IR: covered 2 s sets BLOCK_DOOR, free 1 s clears it.
+  - id: outlet_covered_idle
+    platform: template
+    internal: true
+    lambda: return id(feed_sensor).state;
+    filters:
+      - delayed_on: 2s
+      - delayed_off: 1s
+    on_state:
+      then:
+        - lambda: |-
+            if (feeder::motor().busy()) return;
+            id(outlet_blocked_latched) = x;
+            id(outlet_blocked).publish_state(x);
+  - platform: template
+    id: outlet_blocked
+    name: "Outlet blocked"
+    device_class: problem
+    icon: mdi:tray-alert
+  # Stock DC_ERR: on DC, input outside 4.5-7.0 V; on battery, input above 7.0 V; for > 4 s.
+  - platform: template
+    id: dc_fault
+    name: "Power fault"
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      float dc = id(dc_voltage).state;
+      if (isnan(dc)) return false;
+      return id(on_battery).state ? dc > 7.0f : (dc < 4.5f || dc > 7.0f);
+    filters:
+      - delayed_on: 4s
+  # Stock "low energy": on battery and battery at or below 5.499 V refuses feeding.
+  - platform: template
+    id: low_battery
+    name: "Low battery"
+    device_class: battery
+    lambda: |-
+      float bat = id(battery_voltage).state;
+      return id(on_battery).state && !isnan(bat) && bat <= 5.499f;
+
+text_sensor:
+  - platform: template
+    name: "State"
+    id: feeder_state
+    entity_category: diagnostic
+  - platform: template
+    name: "Motor fault"
+    id: motor_fault
+    icon: mdi:alert-circle-outline
+    entity_category: diagnostic
+  - platform: template
+    name: "Last Feed Time"
+    id: last_feed_time
+    lambda: |-
+      if (id(last_feed_timestamp) == 0) {
+        return {"Never"};
+      }
+      auto time = ESPTime::from_epoch_local(id(last_feed_timestamp));
+      char str[20];
+      auto c_tm = time.to_c_tm();
+      strftime(str, sizeof(str), "%Y-%m-%d %H:%M", &c_tm);
+      return {str};
+    update_interval: 60s
+
+switch:
+  - id: mute_sounds
+    name: Mute sounds
+    icon: mdi:volume-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    platform: template
+  # Stock "manual lock": the button no longer starts a feed.
+  - id: child_lock
+    name: Child lock
+    icon: mdi:lock
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    platform: template
+  - id: food_low_alarm
+    name: Food low alarm
+    icon: mdi:bell-alert
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    platform: template
+
+sensor:
+  - platform: wifi_signal
+    name: "Signal"
+    update_interval: 60s
+  - platform: template
+    id: feed_max_current
+    name: "Last feed max motor current"
+    icon: mdi:current-dc
+    entity_category: diagnostic
+    unit_of_measurement: mV
+    accuracy_decimals: 0
+    update_interval: never
+  - platform: template
+    id: feed_unjam_attempts
+    name: "Last feed un-jam attempts"
+    icon: mdi:rotate-left
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    update_interval: never
+  - platform: template
+    id: dispensed_food_quantity
+    name: "Dispensed food quantity"
+    icon: mdi:cup
+    entity_category: diagnostic
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: |-
+      return id(last_food_sensor_count);
+  - platform: template
+    id: dispensed_food_scoops
+    name: "Dispensed food scoops"
+    icon: mdi:cup
+    entity_category: diagnostic
+    state_class: "measurement"
+    accuracy_decimals: 0
+    lambda: |-
+      return id(last_food_scoops_count);
+
+button:
+  - name: "Dispense food"
+    id: dispense_food
+    icon: mdi:food-turkey
+    platform: template
+    on_press:
+      - lambda: id(actuate_feeder)->execute((int) id(default_scoops).state);
+  - name: "Cancel feed"
+    id: cancel_feed
+    icon: mdi:stop
+    platform: template
+    on_press:
+      - lambda: feeder::motor().cancel(millis());
+  - platform: restart
+    name: "Restart"
+    disabled_by_default: true
