@@ -1273,7 +1273,7 @@ sensor:
           if (isnan(id(Raw_Oil_Depth).state)){
             return NAN;
           } else {
-            return x;
+            return (id(Volume_Calc_Method) == 2 && x > id(Tank_Size)) ? id(Tank_Size) : x;
           }
 
     on_value:
