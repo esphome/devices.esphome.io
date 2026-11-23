@@ -20,6 +20,9 @@ external_components:
 
 feeder_motor:
 
+logger:
+  level: DEBUG
+
 esphome:
   on_boot:
     priority: -100
