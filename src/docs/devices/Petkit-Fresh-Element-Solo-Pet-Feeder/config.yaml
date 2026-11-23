@@ -4,7 +4,7 @@
 # Source: https://github.com/Triskae/esphome-petkit-element-solo
 
 substitutions:
-  name: petkit-element-solo
+  name: fresh-element-solo
   friendly_name: Petkit Fresh Element Solo
 
 esphome:
@@ -169,7 +169,6 @@ sensor:
     update_interval: 2s
     filters:
       - multiply: 3.12766
-      - delta: 0.05
   # Batteries: ADC1 channel 0, 11 dB, divider 147/47. Stock keeps the 30 min peak.
   - id: battery_voltage
     platform: adc

@@ -72,7 +72,7 @@ These roles were confirmed against the stock firmware.
 | GPIO18 | Motor H-bridge input B                                                      |
 | GPIO32 | Motor current shunt (ADC1 channel 4, 0 dB)                                  |
 | GPIO27 | Grate switch: low when the grate closes the outlet, once per turn           |
-| GPIO14 | Outlet IR: high when something covers the beam (falling food, or a full bowl) |
+| GPIO14 | Outlet IR: high when the beam is covered (falling food, full bowl)          |
 | GPIO2  | Hopper IR emitter                                                           |
 | GPIO13 | Hopper IR receiver: high = food low                                         |
 | GPIO33 | Power for the IR sensors and the grate switch                               |
@@ -110,7 +110,9 @@ schedule runs from the RTC, which is set from Home Assistant or SNTP. The motor 
 component from the [project repository](https://github.com/Triskae/esphome-petkit-element-solo), which also documents
 how each behaviour was matched to the stock firmware.
 
-- **Schedule:** 24 hourly slots (`00:00 cups` … `23:00 cups`), stored on the device.
+- **Schedule:** 24 hourly slots (`00:00 cups` … `23:00 cups`), stored on the device. Set the `timezone`
+  substitution to your own time zone (the default is UTC). Scheduled feeds wait for a first time sync from Home
+  Assistant or SNTP, because the RTC may still hold the stock firmware's local time.
 - **Manual feeding:** `Dispense food` uses the `Manual dispense scoops` amount; `Cancel feed` stops a feed.
 - **Counting:** one portion per grate turn, counted once per closure, plus one extra turn when the outlet is open at
   start.
@@ -126,7 +128,8 @@ how each behaviour was matched to the stock firmware.
 - **Power:** `On battery`, `DC input voltage`, `Battery voltage`. Feeding is refused on `Power fault` (DC outside
   4.5–7.0 V) or `Low battery` (batteries at 5.5 V or less).
 - **Diagnostics:** `Motor fault`, `Last feed max motor current`, `Last feed un-jam attempts`, `Dispensed food scoops`
-  (portions where food was actually seen at the outlet).
+  (portions where food was actually seen at the outlet; when the outlet is blocked, every turn counts, as on stock,
+  so the number is not confirmed and no "dispensed" event is sent).
 
 Home Assistant events, for automations and notifications:
 

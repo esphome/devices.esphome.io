@@ -3,7 +3,7 @@
 # button gestures, LED, beeps and power checks (see docs/).
 
 substitutions:
-  timezone: Europe/Paris
+  timezone: UTC  # set your own time zone, e.g. Europe/Paris: the schedule uses it
   ntp_server: pool.ntp.org
   default_scoops: "1"
   min_scoops: "0"
@@ -55,6 +55,12 @@ globals:
   - id: outlet_blocked_latched  # stock BLOCK_DOOR flag
     type: bool
     initial_value: "false"
+  # Set by the first Home Assistant or SNTP sync. Until then the RTC may hold the stock
+  # firmware's local time, so scheduled feeds wait.
+  - id: time_trusted
+    type: bool
+    initial_value: "false"
+    restore_value: true
 
 script:
   - id: play_rtttl
@@ -157,8 +163,18 @@ script:
           switch ((feeder::Result) result) {
             case feeder::Result::OK: {
               id(motor_fault).publish_state("None");
-              id(feeder_state).publish_state("Food dispensed");
               int n = m.valid_loops();
+              if (m.outlet_blocked()) {
+                id(feeder_state).publish_state("Outlet blocked");
+                break;  // BLOCK_DOOR event already sent; the count is not confirmed
+              }
+              if (n == 0) {
+                id(feeder_state).publish_state("No food detected");
+                id(dispatch_feeder_food_low_event)->execute(
+                    "${friendly_name}: the motor turned but no food was seen at the outlet.");
+                break;
+              }
+              id(feeder_state).publish_state("Food dispensed");
               id(dispatch_feeder_food_dispensed_event)->execute(n == 1
                   ? std::string("${friendly_name} dispensed 1 scoop of food.")
                   : "${friendly_name} dispensed " + to_string(n) + " scoops of food.");
@@ -607,6 +623,7 @@ time:
       then:
         - pcf8563.write_time:
             id: rtc_time
+        - lambda: id(time_trusted) = true;
   - id: sntp_time
     platform: sntp
     timezone: ${timezone}
@@ -618,6 +635,7 @@ time:
       then:
         - pcf8563.write_time:
             id: rtc_time
+        - lambda: id(time_trusted) = true;
     on_time:
       - hours: "*"
         minutes: 0
@@ -632,6 +650,10 @@ time:
                   id(schedule_cups_1600), id(schedule_cups_1700), id(schedule_cups_1800), id(schedule_cups_1900),
                   id(schedule_cups_2000), id(schedule_cups_2100), id(schedule_cups_2200), id(schedule_cups_2300),
               };
+              if (!id(time_trusted)) {
+                ESP_LOGW("feeder", "Scheduled feed skipped: waiting for a first time sync");
+                return;
+              }
               int hour = id(sntp_time).now().hour;
               if (hour >= 0 && hour < 24) {
                 id(actuate_feeder)->execute((int) slots[hour]->state);
@@ -695,7 +717,7 @@ binary_sensor:
     on_state:
       then:
         - lambda: |-
-            if (feeder::motor().busy()) return;
+            if (x && feeder::motor().busy()) return;  // a clear is always applied
             id(outlet_blocked_latched) = x;
             id(outlet_blocked).publish_state(x);
   - platform: template
@@ -722,7 +744,7 @@ binary_sensor:
     device_class: battery
     lambda: |-
       float bat = id(battery_voltage).state;
-      return id(on_battery).state && !isnan(bat) && bat <= 5.499f;
+      return id(on_battery).state && (isnan(bat) || bat <= 5.499f);  // unknown counts as low
 
 text_sensor:
   - platform: template
