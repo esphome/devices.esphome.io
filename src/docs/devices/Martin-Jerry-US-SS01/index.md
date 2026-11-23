@@ -3,7 +3,7 @@ title: Martin Jerry US-SS01
 date-published: 2023-09-27
 type: switch
 standard: us
-board: esp8266
+board: esp8266, esp32
 ---
 
 [Amazon Link](https://www.amazon.com/dp/B09C1R7PDK)
@@ -38,7 +38,7 @@ before flashing. The stock Tasmota web UI shows the chip on its **Information** 
 
 ## ESP32-C3 version
 
-![Martin Jerry US-SS01, ESP32-C3 version, installed](us-ss01-esp32c3.jpg)
+![Martin Jerry US-SS01, ESP32-C3 version, installed](us-ss01-esp32c3.jpg "Martin Jerry US-SS01 (ESP32-C3 version)")
 
 ### ESP32-C3 GPIO Pinout
 
