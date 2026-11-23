@@ -30,6 +30,7 @@ Flashing ESPHome firmware onto Dongle-MP10 will not affect the functionality of 
 ## GPIO Pinout
 
 ![SONOFF Dongle Max CC2674P10 (Dongle-MP10](dongle-max-cc2674p10-pcb.jpg)
+
 | Function | ESP32-S3 GPIO | Direction | Notes |
 | :--- | :--- | :--- | :--- |
 | CC2674P10 UART RX | GPIO18 | Input | Data from CC2674P10 to ESP32-S3 |
@@ -54,7 +55,8 @@ All parameters can be modified in ESPHome to suit your needs.
 
 - **Ethernet:** Provides a wired network connection through the onboard CH390.
 - **Wi-Fi:** Supports wireless connectivity and a fallback access point for setup and recovery.
-- **UART over TCP:** Exposes the CC2674P10 UART interface over TCP port 6638 for compatible Zigbee or Thread open-source platform.
+- **UART over TCP:** Exposes the CC2674P10 UART interface over TCP port 6638
+for compatible Zigbee or Thread open-source platform.
 - **Bluetooth Proxy:** Enables Home Assistant to discover and control nearby BLE devices.
 - **MG24 Firmware Management:** Supports entering CC2674P10 bootloader mode and updating radio firmware.
 - **Status and Controls:** Provides RGB status indication, button events.
