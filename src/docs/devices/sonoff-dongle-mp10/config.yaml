@@ -60,3 +60,4 @@ sensor:
   - platform: uptime
     name: "Uptime"
     entity_category: diagnostic
+
