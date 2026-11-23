@@ -78,5 +78,5 @@ button events, access point controls, and MG24 radio management.
 ## Links
 
 - [**Shop:** Purchase Dongle-MP10 from the official SONOFF store.](https://sonoff.tech/products/sonoff-dongle-max-cc2674p10-zigbee-thread-poe-dongle-dongle-mp10)
-- [**Guide:** Follow Running ESPHome Firmware on Dongle-M.](https://dongle.sonoff.tech/guide/dongle-mp10/running-esphome-firmware-on-dongle-mp10/)
+- [**Guide:** Follow Running ESPHome Firmware on Dongle-MP10.](https://dongle.sonoff.tech/guide/dongle-mp10/running-esphome-firmware-on-dongle-mp10/)
 - [**Forum:** Post questions on the eWeLink Community Forum for discussion and assistance.](https://forum.ewelink.cc/t/esphome-on-sonoff-dongle-max/209243)
