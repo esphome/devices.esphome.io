@@ -54,7 +54,8 @@ Revision B appears to otherwise have the same pinout as Revision A.
 
 ### Back up the stock firmware
 
-Before flashing, read the whole flash so you can go back to the stock firmware. Some boards have 4 MB of flash, others 8 MB; `ALL` reads the whole chip either way:
+Before flashing, read the whole flash so you can go back to the stock firmware. Some boards have 4 MB of flash, others 8
+MB; `ALL` reads the whole chip either way:
 
 ```bash
 esptool.py --baud 115200 read_flash 0 ALL petkit-stock-backup.bin
@@ -104,20 +105,28 @@ The hardware: pins, motor outputs, sensors, ADCs and the RTC. Add your own `wifi
 
 ## Feeding logic
 
-`feeder.yaml` goes on top of `config.yaml` and makes the feeder behave like the stock firmware. It works offline: the schedule runs from the RTC, which is set from Home Assistant or SNTP. The motor controller is pulled as an external component from the [project repository](https://github.com/Triskae/esphome-petkit-element-solo), which also documents how each behaviour was matched to the stock firmware.
+`feeder.yaml` goes on top of `config.yaml` and makes the feeder behave like the stock firmware. It works offline: the
+schedule runs from the RTC, which is set from Home Assistant or SNTP. The motor controller is pulled as an external
+component from the [project repository](https://github.com/Triskae/esphome-petkit-element-solo), which also documents
+how each behaviour was matched to the stock firmware.
 
 - **Schedule:** 24 hourly slots (`00:00 cups` … `23:00 cups`), stored on the device.
 - **Manual feeding:** `Dispense food` uses the `Manual dispense scoops` amount; `Cancel feed` stops a feed.
-- **Counting:** one portion per grate turn, counted once per closure, plus one extra turn when the outlet is open at start.
-- **Jam handling:** each run has a timeout of (turns + 1) × 10 s + 5 s. The motor current detects stalls. On a stall, the motor reverses 1 or 2 turns, up to 5 times, then finishes the missing portions.
+- **Counting:** one portion per grate turn, counted once per closure, plus one extra turn when the outlet is open at
+  start.
+- **Jam handling:** each run has a timeout of (turns + 1) × 10 s + 5 s. The motor current detects stalls. On a stall,
+  the motor reverses 1 or 2 turns, up to 5 times, then finishes the missing portions.
   - A timeout is reported as `GRAT_ERR` (the motor turned but nothing was counted) or `BLOCK_FOOD` (food jammed).
   - A covered outlet (full bowl) is reported as `BLOCK_DOOR` (`Outlet blocked`).
-- **Food level:** `Food low` comes from the hopper IR. While it is on, there are 5 beeps every 30 s, within the `Food alarm from hour` / `to hour` window. `Food low alarm` turns this off.
+- **Food level:** `Food low` comes from the hopper IR. While it is on, there are 5 beeps every 30 s, within the `Food
+  alarm from hour` / `to hour` window. `Food low alarm` turns this off.
 - **Buttons, as stock:**
   - FUNC: a click cancels a feed; hold it for about 1.5 s to feed while held. `Child lock` disables holding.
   - SET: only beeps.
-- **Power:** `On battery`, `DC input voltage`, `Battery voltage`. Feeding is refused on `Power fault` (DC outside 4.5–7.0 V) or `Low battery` (batteries at 5.5 V or less).
-- **Diagnostics:** `Motor fault`, `Last feed max motor current`, `Last feed un-jam attempts`, `Dispensed food scoops` (portions where food was actually seen at the outlet).
+- **Power:** `On battery`, `DC input voltage`, `Battery voltage`. Feeding is refused on `Power fault` (DC outside
+  4.5–7.0 V) or `Low battery` (batteries at 5.5 V or less).
+- **Diagnostics:** `Motor fault`, `Last feed max motor current`, `Last feed un-jam attempts`, `Dispensed food scoops`
+  (portions where food was actually seen at the outlet).
 
 Home Assistant events, for automations and notifications:
 
@@ -128,8 +137,11 @@ Home Assistant events, for automations and notifications:
 ```yaml file=feeder.yaml
 ```
 
-A ready-to-use config that pulls both files and only needs your secrets is in the [project repository](https://github.com/Triskae/esphome-petkit-element-solo#quick-start).
+A ready-to-use config that pulls both files and only needs your secrets is in the [project
+repository](https://github.com/Triskae/esphome-petkit-element-solo#quick-start).
 
 ## Disclaimer
 
-This is an independent community project, not affiliated with or endorsed by PETKIT. PETKIT and Fresh Element are trademarks of their respective owners, used here only to identify the hardware. Flashing a custom firmware may void your warranty. Keep a backup of the stock firmware, and always check that your pet is fed.
+This is an independent community project, not affiliated with or endorsed by PETKIT. PETKIT and Fresh Element are
+trademarks of their respective owners, used here only to identify the hardware. Flashing a custom firmware may void your
+warranty. Keep a backup of the stock firmware, and always check that your pet is fed.

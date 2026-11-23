@@ -11,8 +11,8 @@ substitutions:
   # Where the feeder_motor component (the motor controller) comes from.
   feeder_component_source: github://Triskae/esphome-petkit-element-solo@v1.0.0
   # Stock tones: 2 kHz buzzer, b6 is about 1976 Hz.
-  beep_short: "short:d=16,o=6,b=75:b" # 200 ms (stock beep type 3)
-  beep_food_low: "foodlow:d=8,o=6,b=60:b,p,b,p,b,p,b,p,b" # 5 x 500 ms on / 500 ms off
+  beep_short: "short:d=16,o=6,b=75:b"  # 200 ms (stock beep type 3)
+  beep_food_low: "foodlow:d=8,o=6,b=60:b,p,b,p,b,p,b,p,b"  # 5 x 500 ms on / 500 ms off
 
 external_components:
   - source: ${feeder_component_source}
@@ -32,7 +32,7 @@ esphome:
           effect: pairing_blink
 
 wifi:
-  reboot_timeout: 0s # keep feeding offline instead of rebooting every 15 min
+  reboot_timeout: 0s  # keep feeding offline instead of rebooting every 15 min
 
 api:
   reboot_timeout: 0s
@@ -52,7 +52,7 @@ globals:
     type: int
     restore_value: true
     initial_value: "0"
-  - id: outlet_blocked_latched # stock BLOCK_DOOR flag
+  - id: outlet_blocked_latched  # stock BLOCK_DOOR flag
     type: bool
     initial_value: "false"
 
@@ -624,7 +624,14 @@ time:
         seconds: 0
         then:
           - lambda: |-
-              number::Number *slots[24] = {id(schedule_cups_0000), id(schedule_cups_0100), id(schedule_cups_0200), id(schedule_cups_0300), id(schedule_cups_0400), id(schedule_cups_0500), id(schedule_cups_0600), id(schedule_cups_0700), id(schedule_cups_0800), id(schedule_cups_0900), id(schedule_cups_1000), id(schedule_cups_1100), id(schedule_cups_1200), id(schedule_cups_1300), id(schedule_cups_1400), id(schedule_cups_1500), id(schedule_cups_1600), id(schedule_cups_1700), id(schedule_cups_1800), id(schedule_cups_1900), id(schedule_cups_2000), id(schedule_cups_2100), id(schedule_cups_2200), id(schedule_cups_2300)};
+              number::Number *slots[24] = {
+                  id(schedule_cups_0000), id(schedule_cups_0100), id(schedule_cups_0200), id(schedule_cups_0300),
+                  id(schedule_cups_0400), id(schedule_cups_0500), id(schedule_cups_0600), id(schedule_cups_0700),
+                  id(schedule_cups_0800), id(schedule_cups_0900), id(schedule_cups_1000), id(schedule_cups_1100),
+                  id(schedule_cups_1200), id(schedule_cups_1300), id(schedule_cups_1400), id(schedule_cups_1500),
+                  id(schedule_cups_1600), id(schedule_cups_1700), id(schedule_cups_1800), id(schedule_cups_1900),
+                  id(schedule_cups_2000), id(schedule_cups_2100), id(schedule_cups_2200), id(schedule_cups_2300),
+              };
               int hour = id(sntp_time).now().hour;
               if (hour >= 0 && hour < 24) {
                 id(actuate_feeder)->execute((int) slots[hour]->state);
