@@ -48,8 +48,7 @@ that powers the ESP8266. As such, on the Duo, GPIO14 has no connection beyond be
    2. Rear Connection Points:
    ![alt text](Connections-Back.jpg "Back Flashing Contact Points")
 
-
-7. Solderless connections to the edge contact points can be made using hook test leads such as these:
+6. Solderless connections to the edge contact points can be made using hook test leads such as these:  
    [https://www.sparkfun.com/hook-test-lead-set.html](https://www.sparkfun.com/hook-test-lead-set.html)
 
    1. Flashing Connections - Front View:
@@ -58,8 +57,7 @@ that powers the ESP8266. As such, on the Duo, GPIO14 has no connection beyond be
    2. Flashing Connections - Edge View:
    ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
 
-
-9. Follow the directions as outlined by ESPHome for physically connecting to your device:
+7. Follow the directions as outlined by ESPHome for physically connecting to your device:
 
 [https://esphome.io/guides/physical_device_connection/](https://esphome.io/guides/physical_device_connection/)
 
