@@ -1,0 +1,121 @@
+esphome:
+  name: shelly-plus-rgbw-pm
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+
+light:
+  - platform: rgbw
+    name: "Shelly Plus RGBW PM LED Strip"
+    red: pwm_r
+    green: pwm_g
+    blue: pwm_b
+    white: pwm_w
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+
+status_led:
+  pin: GPIO14
+
+output:
+  - platform: ledc
+    pin: GPIO25
+    id: pwm_r
+    frequency: 19531
+
+  - platform: ledc
+    pin: GPIO26
+    id: pwm_g
+    frequency: 19531
+
+  - platform: ledc
+    pin: GPIO27
+    id: pwm_b
+    frequency: 19531
+
+  - platform: ledc
+    pin: GPIO4
+    id: pwm_w
+    frequency: 19531
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO36
+      inverted: true
+    name: "Shelly Plus RGBW PM Input 1"
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO37
+      inverted: true
+    name: "Shelly Plus RGBW PM Input 2"
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO38
+      inverted: true
+    name: "Shelly Plus RGBW PM Input 3"
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO39
+      inverted: true
+    name: "Shelly Plus RGBW PM Input 4"
+    filters:
+      - delayed_on_off: 10ms
+
+  - platform: gpio
+    pin:
+      number: GPIO22
+    name: "Shelly Plus RGBW PM Onboard Button"
+    filters:
+      - delayed_on_off: 10ms
+
+sensor:
+  - platform: adc
+    pin: GPIO33
+    id: temp_analog_reading
+    attenuation: 12db
+
+  - platform: resistance
+    sensor: temp_analog_reading
+    id: temp_resistance_reading
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: "Shelly Plus RGBW PM Temperature"
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+
+  - platform: adc
+    pin: GPIO34
+    attenuation: 12db
+    name: "Shelly Plus RGBW PM Voltage"
+    accuracy_decimals: 1
+    filters:
+      - multiply: 10.85
+
+  - platform: adc
+    pin: GPIO35
+    attenuation: 12db
+    name: "Shelly Plus RGBW PM Current"
+    accuracy_decimals: 2
+    filters:
+      - offset: -0.794
+      - multiply: 16.13
+    unit_of_measurement: "A"
