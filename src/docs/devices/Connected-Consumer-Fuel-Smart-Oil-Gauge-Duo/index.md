@@ -43,12 +43,20 @@ that powers the ESP8266. As such, on the Duo, GPIO14 has no connection beyond be
 4. Remove the control board
 5. Locate the contact points required for physically connecting to your device. Use the following photos for reference:
    ![alt text](Connections-Front.jpg "Front Flashing Contact Points")
+   Front Connection Points
+
    ![alt text](Connections-Back.jpg "Back Flashing Contact Points")
-6. Solderless connections to the edge contact points can be made using hook test leads such as these:
+   Rear Connection Points
+
+7. Solderless connections to the edge contact points can be made using hook test leads such as these:
    [https://www.sparkfun.com/hook-test-lead-set.html](https://www.sparkfun.com/hook-test-lead-set.html)
    ![alt text](Flashing-Front.jpg "Front Flashing Connection")
+   Flashing Connections - Front View
+
    ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
-7. Follow the directions as outlined by ESPHome for physically connecting to your device:
+   Flashing Connections - Edge View
+
+8. Follow the directions as outlined by ESPHome for physically connecting to your device:
 
 [https://esphome.io/guides/physical_device_connection/](https://esphome.io/guides/physical_device_connection/)
 
