@@ -1,0 +1,90 @@
+esphome:
+  name: crowpanel-7inch
+  friendly_name: CrowPanel 7 Inch
+  includes:
+    - <soc/usb_serial_jtag_reg.h>
+  on_boot:
+    priority: 1001
+    then:
+      - lambda: CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_DP_PULLUP);
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 4MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    advanced:
+      execute_from_psram: true
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+
+wifi:
+  power_save_mode: none
+  ap:
+
+i2c:
+  - id: touch_i2c
+    sda: 19
+    scl: 20
+    scan: false
+    frequency: 400000
+
+touchscreen:
+  - platform: gt911
+    id: my_touchscreen
+    i2c_id: touch_i2c
+    address: 0x5D
+    display: my_display
+    update_interval: 50ms
+
+output:
+  - platform: ledc
+    pin: 2
+    id: backlight_pwm
+    frequency: 1220
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+
+display:
+  - platform: mipi_rgb
+    model: RPI
+    id: my_display
+    invert_colors: true
+    dimensions:
+      width: 800
+      height: 480
+    de_pin: 41
+    hsync_pin: 39
+    vsync_pin: 40
+    pclk_pin: 0
+    pclk_frequency: 15MHz
+    pclk_inverted: true
+    hsync_front_porch: 40
+    hsync_pulse_width: 48
+    hsync_back_porch: 13
+    vsync_front_porch: 1
+    vsync_pulse_width: 31
+    vsync_back_porch: 13
+    data_pins:
+      red: [14, 21, 47, 48, 45]
+      green: [9, 46, 3, 8, 16, 1]
+      blue: [15, 7, 6, 5, 4]
+    color_order: RGB
+    auto_clear_enabled: false
+    update_interval: never
