@@ -13,6 +13,9 @@ or generic 16A/20A EU smart plugs on AliExpress) is a Wi-Fi smart plug with real
 It features a Tuya **CB2S** module powered by the Beken **BK7231N** microcontroller and a Shanghai Belling
 **BL0937** energy metering IC with a 1 mΩ (`R001`) shunt resistor.
 
+For a hardware reference, see the [Ledlux BSD34 smart socket thread](https://www.elektroda.com/rtvforum/topic3963164.html),
+which documents a BSD34 with the same CB2S module and BL0937 meter.
+
 ![Tuya BSD34 Smart Plug](the-unit.webp "Tuya BSD34 Smart Plug exterior")
 
 ## Warnings & Mains Safety
