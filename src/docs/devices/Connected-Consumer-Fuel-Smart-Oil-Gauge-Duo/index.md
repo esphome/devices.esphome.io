@@ -46,15 +46,15 @@ that powers the ESP8266. As such, on the Duo, GPIO14 has no connection beyond be
    Front Connection Points
 
    ![alt text](Connections-Back.jpg "Back Flashing Contact Points")
-   Rear Connection Points
-
+      Rear Connection Points
+   
 7. Solderless connections to the edge contact points can be made using hook test leads such as these:
    [https://www.sparkfun.com/hook-test-lead-set.html](https://www.sparkfun.com/hook-test-lead-set.html)
    ![alt text](Flashing-Front.jpg "Front Flashing Connection")
-   Flashing Connections - Front View
+      Flashing Connections - Front View
 
    ![alt text](Flashing-Edge.jpg "Edge Flashing Connection")
-   Flashing Connections - Edge View
+      Flashing Connections - Edge View
 
 8. Follow the directions as outlined by ESPHome for physically connecting to your device:
 
