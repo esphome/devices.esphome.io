@@ -43,14 +43,13 @@ resistor located near the relay and load path.
 
 ## Flashing
 
-The stock Tuya firmware cannot be flashed over-the-air via tuya-convert (patched firmware). Flashing ESPHome
-requires a 3.3V USB-to-UART serial connection to the CB2S module pads.
+Tuya-Convert does not support the BK7231N. [Tuya Cloudcutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter)
+may work over the air if it supports your stock firmware version. Otherwise, use the 3.3V USB-to-UART serial
+method below.
 
-For the CB2S module pinout and pad diagram, refer to the [LibreTiny CB2S documentation](https://docs.libretiny.eu/boards/cb2s/):
+![CB2S Pinout](cb2s-pinout.png "CB2S pinout diagram from LibreTiny")
 
-![CB2S Pinout](https://docs.libretiny.eu/boards/cb2s/cb2s.svg "CB2S Pinout diagram (Source: LibreTiny)")
-
-*(Source: [LibreTiny](https://docs.libretiny.eu/boards/cb2s/))*
+*(Source: [LibreTiny CB2S documentation](https://docs.libretiny.eu/boards/cb2s/))*
 
 ### Flashing Steps
 
