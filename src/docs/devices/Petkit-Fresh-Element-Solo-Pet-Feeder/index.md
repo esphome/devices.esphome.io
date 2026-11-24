@@ -5,7 +5,7 @@ type: misc
 standard: global
 board: esp32
 difficulty: 4
-project-url: https://github.com/n6ham/esphome-configs/blob/master/petkit-fresh-element-solo.yaml
+project-url: https://github.com/Triskae/esphome-petkit-element-solo
 ---
 
 ![Product Image](./Petkit-Fresh-Element-Solo-Pet-Feeder-Product.jpg)
@@ -52,747 +52,99 @@ enter boot mode.
 
 Revision B appears to otherwise have the same pinout as Revision A.
 
+### Back up the stock firmware
+
+Before flashing, read the whole flash so you can go back to the stock firmware. Some boards have 4 MB of flash, others 8
+MB; `ALL` reads the whole chip either way:
+
+```bash
+esptool.py --baud 115200 read_flash 0 ALL petkit-stock-backup.bin
+```
+
 ### Internal pinout
 
-| Pin    | Function                 |
-| ------ | ------------------------ |
-| GPIO5  | Status LED               |
-| GPIO16 | RTTTL Buzzer             |
-| GPIO34 | Feed button              |
-| GPIO27 | Feeder motor sensor      |
-| GPIO14 | Food optical sensor      |
-| GPIO19 | Feeder motor control\*   |
-| GPIO33 | Feeder sensors control\* |
-| GPIO18 | Feed forward control\*   |
-| GPIO17 | Reverse feed control\*   |
+These roles were confirmed against the stock firmware.
 
-\* _purpose of some of these pins is unclear_
+| Pin    | Function                                                                    |
+| ------ | --------------------------------------------------------------------------- |
+| GPIO19 | Motor driver awake (low = driver asleep)                                    |
+| GPIO17 | Motor H-bridge input A                                                      |
+| GPIO18 | Motor H-bridge input B                                                      |
+| GPIO32 | Motor current shunt (ADC1 channel 4, 0 dB)                                  |
+| GPIO27 | Grate switch: low when the grate closes the outlet, once per turn           |
+| GPIO14 | Outlet IR: high when the beam is covered (falling food, full bowl)          |
+| GPIO2  | Hopper IR emitter                                                           |
+| GPIO13 | Hopper IR receiver: high = food low                                         |
+| GPIO33 | Power for the IR sensors and the grate switch                               |
+| GPIO16 | Buzzer (the stock firmware uses 2 kHz)                                      |
+| GPIO5  | Status LED                                                                  |
+| GPIO34 | Feed button (FUNC)                                                          |
+| GPIO0  | Wi-Fi / SET button (also the boot-mode button)                              |
+| GPIO21 | High when running on batteries                                              |
+| GPIO39 | DC input voltage (147/47 divider)                                           |
+| GPIO36 | Battery voltage (147/47 divider)                                            |
+| GPIO15 | I2C SDA (PCF8563 RTC at 0x51)                                               |
+| GPIO4  | I2C SCL                                                                     |
+| GPIO23 | Motor driver fault line, not used by the stock firmware                     |
 
-## Config
+Motor H-bridge states (GPIO19 / GPIO17 / GPIO18):
 
-The config below is intended to make the feeder tolerant to the Home Assistant failures, by supporting HA-offline
-schduling capabaility (but it still requires WiFi and Internet connection to synchronize time with SNTP servers, or the
-schdule won't work).
+| Command       | GPIO19 | GPIO17 | GPIO18 |
+| ------------- | ------ | ------ | ------ |
+| Forward       | 1      | 0      | 1      |
+| Reverse       | 1      | 1      | 0      |
+| Brake         | 1      | 1      | 1      |
+| Driver asleep | 0      | x      | x      |
 
-It exposes multiple entites that can be used to configure the feeding schedule for every hour of the day.\
-User can set a number of scoops to be dispensed at particular hour of a day (if set to 0 - no food will be dispensed).
+## Hardware configuration
 
-Food can be also dispensed manually either via hardware button on the right side of the feeder, or via the switch
-entity.\
-The portion size of the manual dispense is configured separately using a slider.
+The hardware: pins, motor outputs, sensors, ADCs and the RTC. Add your own `wifi:`, `api:` and `ota:`.
 
-Low food level threshold value allows the feeder to dispatch an `esphome.feeder_food_low` event with the message
-containing the firendly feeder name (handy if multiple feeders are in use), when a food sensor counts per scoop gets
-below the threshold.\
-Feeder will also play a siren sound hourly between 7am and 10pm (7 and 22) inclusively, unless sounds are muted via
-dedicated switch.\
-An automation can be configured to listen to the event and notify users about low food level (example is at the end).
-
-```yaml
-substitutions:
-  name: fresh-element-solo
-  friendly_name: Petkit Fresh Element Solo
-  device_description: "Petkit Fresh Element Solo Pet Feeder"
-  default_scoops: "1"
-  min_scoops: "0"
-  max_scoops: "6"
-  name_add_mac_suffix: "false"
-
-esphome:
-  name: $name
-  friendly_name: $friendly_name
-  name_add_mac_suffix: $name_add_mac_suffix
-  comment: $device_description
-  on_boot:
-    - light.turn_on:
-        id: led
-        effect: fast_blink
-
-esp32:
-  variant: esp32
-  framework:
-    type: arduino
-
-logger:
-  level: INFO
-  baud_rate: 0
-
-web_server:
-  port: 80
-
-globals:
-  - id: scoops_count
-    type: int
-  - id: max_scoops
-    type: int
-  - id: food_sensor_count
-    type: int
-  - id: last_food_sensor_count
-    type: int
-    initial_value: "0"
-    restore_value: True
-  - id: last_food_scoops_count
-    type: int
-    initial_value: "0"
-    restore_value: True
-
-script:
-  - id: play_rtttl
-    parameters:
-      song_str: string
-    then:
-      - if:
-          condition:
-            lambda: return !(id(mute_sounds).state);
-          then:
-            - rtttl.play:
-                rtttl: !lambda "return song_str;"
-  - id: actuate_feeder
-    parameters:
-      scoops: int
-    then:
-      - if:
-          condition:
-            lambda: return scoops > 0;
-          then:
-            - logger.log:
-                level: INFO
-                format: "Serving %d scoops"
-                args: [scoops]
-            - lambda: |-
-                id(play_rtttl)->execute("two_shorts:d=4,o=5,b=100:16e6,16e6");
-                id(scoops_count) = 0;
-                id(food_sensor_count) = 0;
-                id(max_scoops) = scoops;
-            - switch.turn_on: feed_forward
-  - id: dispatch_feeder_food_dispensed_event
-    parameters:
-      event_message: string
-    then:
-      - homeassistant.event:
-          event: esphome.feeder_food_dispensed
-          data:
-            message: !lambda return event_message;
-  - id: dispatch_feeder_food_low_event
-    parameters:
-      event_message: string
-    then:
-      - homeassistant.event:
-          event: esphome.feeder_food_low
-          data:
-            message: !lambda return event_message;
-  - id: check_food_level
-    parameters:
-      food_dispensed: bool
-      play_sound: bool
-      send_event: bool
-    then:
-      lambda: |-
-        if (id(last_food_scoops_count) > 0 && id(last_food_sensor_count) / id(last_food_scoops_count) < id(low_food_threshold).state) {
-          if (play_sound) {
-            id(play_rtttl)->execute("siren:d=8,o=5,b=100:d,e,d,e,d,e,d,e");  
-          }
-          if (send_event) {
-            id(dispatch_feeder_food_low_event)->execute("${friendly_name} food level is low. Check the hopper.");
-          }
-          id(feeder_state).publish_state("Food level is low");
-          ESP_LOGI("main", "Food level is low");
-        } else if (food_dispensed) {
-          id(feeder_state).publish_state("Food dispensed");
-          id(play_rtttl)->execute("one_short:d=4,o=5,b=100:16e6");
-          if (id(last_food_scoops_count) == 1) {
-            id(dispatch_feeder_food_dispensed_event)->execute("${friendly_name} dispensed 1 scoop of food.");
-          } else {
-            id(dispatch_feeder_food_dispensed_event)->execute("${friendly_name} dispensed " + to_string(id(scoops_count)) + " scoops of food.");
-          }
-        }
-
-light:
-  - platform: binary
-    id: led
-    output: led_output
-    effects:
-      - strobe:
-          name: fast_blink
-          colors:
-            - state: True
-              duration: 125ms
-            - state: False
-              duration: 125ms
-    internal: True
-
-output:
-  - id: led_output
-    platform: gpio
-    pin: GPIO5
-  - platform: ledc
-    pin: GPIO16
-    id: rtttl_output
-
-rtttl:
-  output: rtttl_output
-
-interval:
-  - interval: 1s
-    then:
-      if:
-        condition:
-          wifi.connected:
-        then:
-          - light.turn_on:
-              id: led
-              effect: None
-        else:
-          - light.turn_on:
-              id: led
-              effect: fast_blink
-
-uart:
-  tx_pin: GPIO1
-  rx_pin: GPIO3
-  baud_rate: 9600
-
-number:
-  - platform: template
-    id: default_scoops
-    name: "Manual dispense scoops"
-    icon: mdi:cup
-    entity_category: config
-    min_value: 1
-    max_value: $max_scoops
-    initial_value: 1
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: low_food_threshold
-    # Minimum food quantity per scoop (specific to a particular dry food).
-    name: "Low food threshold"
-    icon: mdi:cup-outline
-    entity_category: config
-    min_value: 1
-    max_value: 10
-    initial_value: 5
-    optimistic: true
-    step: 1
-    restore_value: true
-    mode: slider
-  - platform: template
-    id: schedule_cups_0000
-    name: "00:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0100
-    name: "01:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0200
-    name: "02:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0300
-    name: "03:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0400
-    name: "04:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0500
-    name: "05:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0600
-    name: "06:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0700
-    name: "07:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0800
-    name: "08:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_0900
-    name: "09:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1000
-    name: "10:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1100
-    name: "11:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1200
-    name: "12:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1300
-    name: "13:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1400
-    name: "14:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1500
-    name: "15:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1600
-    name: "16:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1700
-    name: "17:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1800
-    name: "18:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_1900
-    name: "19:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_2000
-    name: "20:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_2100
-    name: "21:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_2200
-    name: "22:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-  - platform: template
-    id: schedule_cups_2300
-    name: "23:00 cups"
-    icon: mdi:cup
-    entity_category: config
-    min_value: $min_scoops
-    max_value: $max_scoops
-    initial_value: 0
-    optimistic: true
-    step: 1
-    restore_value: true
-    unit_of_measurement: scoops
-    mode: slider
-
-time:
-  - id: sntp_time
-    platform: sntp
-    on_time:
-      # Hourly
-      - hours: 7-22
-        minutes: 0
-        seconds: 0
-        then:
-          - lambda: |-
-              id(check_food_level)->execute(/* food_dispensed = */ false, /* play_sound = */ true, /* send_event = */ false);
-      - hours: "*"
-        minutes: 0
-        seconds: 0
-        then:
-          - lambda: |-
-              auto hour = id(sntp_time).now().hour;
-              switch (hour) {
-                case 0: id(actuate_feeder)->execute((int) id(schedule_cups_0000).state); break;
-                case 1: id(actuate_feeder)->execute((int) id(schedule_cups_0100).state); break;
-                case 2: id(actuate_feeder)->execute((int) id(schedule_cups_0200).state); break;
-                case 3: id(actuate_feeder)->execute((int) id(schedule_cups_0300).state); break;
-                case 4: id(actuate_feeder)->execute((int) id(schedule_cups_0400).state); break;
-                case 5: id(actuate_feeder)->execute((int) id(schedule_cups_0500).state); break;
-                case 6: id(actuate_feeder)->execute((int) id(schedule_cups_0600).state); break;
-                case 7: id(actuate_feeder)->execute((int) id(schedule_cups_0700).state); break;
-                case 8: id(actuate_feeder)->execute((int) id(schedule_cups_0800).state); break;
-                case 9: id(actuate_feeder)->execute((int) id(schedule_cups_0900).state); break;
-                case 10: id(actuate_feeder)->execute((int) id(schedule_cups_1000).state); break;
-                case 11: id(actuate_feeder)->execute((int) id(schedule_cups_1100).state); break;
-                case 12: id(actuate_feeder)->execute((int) id(schedule_cups_1200).state); break;
-                case 13: id(actuate_feeder)->execute((int) id(schedule_cups_1300).state); break;
-                case 14: id(actuate_feeder)->execute((int) id(schedule_cups_1400).state); break;
-                case 15: id(actuate_feeder)->execute((int) id(schedule_cups_1500).state); break;
-                case 16: id(actuate_feeder)->execute((int) id(schedule_cups_1600).state); break;
-                case 17: id(actuate_feeder)->execute((int) id(schedule_cups_1700).state); break;
-                case 18: id(actuate_feeder)->execute((int) id(schedule_cups_1800).state); break;
-                case 19: id(actuate_feeder)->execute((int) id(schedule_cups_1900).state); break;
-                case 20: id(actuate_feeder)->execute((int) id(schedule_cups_2000).state); break;
-                case 21: id(actuate_feeder)->execute((int) id(schedule_cups_2100).state); break;
-                case 22: id(actuate_feeder)->execute((int) id(schedule_cups_2200).state); break;
-                case 23: id(actuate_feeder)->execute((int) id(schedule_cups_2300).state); break;
-              }
-
-binary_sensor:
-  - id: manual_feed_button
-    internal: true
-    platform: gpio
-    pin:
-      number: GPIO34
-      inverted: true
-    on_press:
-      then:
-        - lambda: id(actuate_feeder)->execute((int) id(default_scoops).state);
-  - id: motor_sensor
-    internal: true
-    platform: gpio
-    pin:
-      number: GPIO27
-      inverted: true
-    on_press:
-      then:
-        - lambda: |-
-            id(scoops_count) += 1;
-            if (id(scoops_count) >= id(max_scoops)) {
-              id(feed_forward).turn_off();
-              id(last_food_sensor_count) = id(food_sensor_count);
-              id(last_food_scoops_count) = id(scoops_count);
-              id(check_food_level)->execute(/* food_dispensed = */ true, /* play_sound = */ true, /* send_event = */ true);
-            }
-        - logger.log:
-            level: INFO
-            format: "%d/%d scoops served"
-            args: [id(scoops_count), id(max_scoops)]
-
-  - id: feed_sensor
-    internal: true
-    platform: gpio
-    pin:
-      number: GPIO14
-    on_press:
-      then:
-        - lambda: |-
-            id(food_sensor_count) += 1;
-
-text_sensor:
-  - platform: template
-    name: "State"
-    id: feeder_state
-    entity_category: diagnostic
-
-switch:
-  - id: enable_sensors
-    internal: true
-    platform: gpio
-    pin:
-      number: GPIO33
-    restore_mode: ALWAYS_ON
-    disabled_by_default: true
-
-  - id: enable_feeder_motor
-    internal: true
-    platform: gpio
-    pin:
-      number: GPIO19
-    restore_mode: ALWAYS_OFF
-    disabled_by_default: true
-
-  - id: feed_forward
-    internal: true
-    interlock: &interlock_group [feed_forward, feed_reverse]
-    platform: gpio
-    pin:
-      number: GPIO18
-    restore_mode: ALWAYS_OFF
-    on_turn_on:
-      then:
-        - switch.turn_on: enable_feeder_motor
-    on_turn_off:
-      then:
-        - switch.turn_off: enable_feeder_motor
-
-  - id: feed_reverse
-    internal: true
-    interlock: *interlock_group
-    platform: gpio
-    pin:
-      number: GPIO17
-    restore_mode: ALWAYS_OFF
-
-  - id: mute_sounds
-    name: Mute sounds
-    icon: mdi:volume-off
-    optimistic: true
-    platform: template
-
-sensor:
-  - platform: wifi_signal
-    name: "Signal"
-    update_interval: 60s
-  - platform: template
-    id: dispensed_food_quantity
-    name: "Dispensed food quantity"
-    icon: mdi:cup
-    entity_category: diagnostic
-    state_class: "measurement"
-    accuracy_decimals: 0
-    lambda: |-
-      return id(last_food_sensor_count);
-  - platform: template
-    id: dispensed_food_scoops
-    name: "Dispensed food scoops"
-    icon: mdi:cup
-    entity_category: diagnostic
-    state_class: "measurement"
-    accuracy_decimals: 0
-    lambda: |-
-      return id(last_food_scoops_count);
-
-button:
-  - name: "Dispense food"
-    id: dispense_food
-    icon: mdi:food-turkey
-    platform: template
-    on_press:
-      - lambda: id(actuate_feeder)->execute((int) id(default_scoops).state);
-  - platform: restart
-    name: "Restart"
-    disabled_by_default: true
+```yaml file=config.yaml
 ```
 
-## Automation example
+## Feeding logic
 
-```yaml
-alias: Pet feeder notifications
-description: ""
-trigger:
-  - platform: event
-    event_type: esphome.feeder_food_low
-    id: food_low
-  - platform: event
-    event_type: esphome.feeder_food_dispensed
-    id: food_dispensed
-condition: []
-action:
-  - if:
-      - condition: trigger
-        id:
-          - food_low
-    then:
-      - service: notify.notify
-        metadata: {}
-        data:
-          message: "{{ trigger.event.data.message }}"
-      - service: notify.persistent_notification
-        metadata: {}
-        data:
-          message: "{{ trigger.event.data.message }}"
-mode: single
+`feeder.yaml` goes on top of `config.yaml` and makes the feeder behave like the stock firmware. It works offline: the
+schedule runs from the RTC, which is set from Home Assistant or SNTP. The motor controller is pulled as an external
+component from the [project repository](https://github.com/Triskae/esphome-petkit-element-solo), which also documents
+how each behaviour was matched to the stock firmware.
+
+- **Schedule:** 24 hourly slots (`00:00 cups` … `23:00 cups`), stored on the device. Set the `timezone`
+  substitution to your own time zone (the default is UTC). Scheduled feeds wait for a first time sync from Home
+  Assistant or SNTP, because the RTC may still hold the stock firmware's local time.
+- **Manual feeding:** `Dispense food` uses the `Manual dispense scoops` amount; `Cancel feed` stops a feed.
+- **Counting:** one portion per grate turn, counted once per closure, plus one extra turn when the outlet is open at
+  start.
+- **Jam handling:** each run has a timeout of (turns + 1) × 10 s + 5 s. The motor current detects stalls. On a stall,
+  the motor reverses 1 or 2 turns, up to 5 times, then finishes the missing portions.
+  - A timeout is reported as `GRAT_ERR` (the motor turned but nothing was counted) or `BLOCK_FOOD` (food jammed).
+  - A covered outlet (full bowl) is reported as `BLOCK_DOOR` (`Outlet blocked`).
+- **Food level:** `Food low` comes from the hopper IR. While it is on, there are 5 beeps every 30 s, within the `Food
+  alarm from hour` / `to hour` window. `Food low alarm` turns this off.
+- **Buttons, as stock:**
+  - FUNC: a click cancels a feed; hold it for about 1.5 s to feed while held. `Child lock` disables holding.
+  - SET: only beeps.
+- **Power:** `On battery`, `DC input voltage`, `Battery voltage`. Feeding is refused on `Power fault` (DC outside
+  4.5–7.0 V) or `Low battery` (batteries at 5.5 V or less).
+- **Diagnostics:** `Motor fault`, `Last feed max motor current`, `Last feed un-jam attempts`, `Dispensed food scoops`
+  (portions where food was actually seen at the outlet; when the outlet is blocked, every turn counts, as on stock,
+  so the number is not confirmed and no "dispensed" event is sent).
+
+Home Assistant events, for automations and notifications:
+
+- `esphome.feeder_food_dispensed`, with `message`;
+- `esphome.feeder_food_low`, with `message`;
+- `esphome.feeder_fault`, with `fault` (`GRAT_ERR`, `BLOCK_FOOD` or `BLOCK_DOOR`) and `message`.
+
+```yaml file=feeder.yaml
 ```
 
-_Note: currently, `esphome.feeder_food_dispensed event` is ignored to not spam the users with multiple notifications
-about food being dispensed multiple times a day. Only `esphome.feeder_food_low` will result in persistent notification
-in Home Assistant and mobile app notifications._
+A ready-to-use config that pulls both files and only needs your secrets is in the [project
+repository](https://github.com/Triskae/esphome-petkit-element-solo#quick-start).
+
+## Disclaimer
+
+This is an independent community project, not affiliated with or endorsed by PETKIT. PETKIT and Fresh Element are
+trademarks of their respective owners, used here only to identify the hardware. Flashing a custom firmware may void your
+warranty. Keep a backup of the stock firmware, and always check that your pet is fed.
