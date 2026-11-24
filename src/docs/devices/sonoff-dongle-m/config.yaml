@@ -1,0 +1,57 @@
+esphome:
+  name: dongle-m
+  friendly_name: "Dongle Max"
+
+esp32:
+  variant: esp32
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+
+psram:
+  mode: quad
+  speed: 80MHz
+
+logger:
+
+external_components:
+  - source: github://SONOFF-Technologies/esphome-stream-server
+
+ethernet:
+  id: ethernet_network
+  type: IP101
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    pin: GPIO0
+    mode: CLK_EXT_IN
+  phy_addr: 1
+  power_pin:
+    number: GPIO5
+
+preferences:
+  flash_write_interval: 1s
+
+uart:
+  id: radio_uart
+  rx_pin: GPIO13
+  tx_pin: GPIO17
+  baud_rate: 115200
+
+stream_server:
+  - id: radio_stream_server
+    uart_id: radio_uart
+    port: 6638
+
+binary_sensor:
+  - platform: stream_server
+    stream_server: radio_stream_server
+    connected:
+      id: radio_tcp_connected
+      internal: true
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    entity_category: diagnostic
