@@ -1,0 +1,204 @@
+# Hardware of the Petkit Pura Max (T4), main board T4-MAIN-V1.3 / V2.3.
+# The motors, weight sensor and hall sensors sit behind a separate motor MCU, reached over UART0
+# with the pkt4_mcu component. The full firmware (cleaning cycles, menu, safety checks) is linked
+# on the device page.
+
+esphome:
+  name: petkit-pura-max
+  friendly_name: Petkit Pura Max
+  platformio_options:
+    board_upload.maximum_size: 0x800000
+  on_boot:
+    priority: 200  # once the I2C bus and the RTC are set up
+    then:
+      - bm8563.read_time: rtc
+
+esp32:
+  variant: esp32
+  flash_size: 8MB
+
+external_components:
+  - source: github://Triskae/esphome-petkit-t4@81cef79becea7a00e9fe2c717e0f9c9b734be774
+    components: [pkt4_mcu]
+  - source: github://egormanga/esphome-bm8563
+
+# UART0 (GPIO1/GPIO3) is the motor MCU link: keep the logger off it.
+logger:
+  hardware_uart: UART1
+  baud_rate: 0
+
+wifi:
+  ap: {}
+
+uart:
+  id: mcu_uart
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  baud_rate: 115200
+  rx_buffer_size: 2048
+  # pkt4_mcu logs its packets through the UART debugger, so it needs this block.
+  debug:
+    direction: RX
+
+pkt4_mcu:
+  id: mcu
+  uart_id: mcu_uart
+
+power_supply:
+  - id: vreg_display
+    pin:
+      number: GPIO2
+      ignore_strapping_warning: true
+    enable_on_boot: true
+  - id: vreg_bus
+    pin: GPIO26
+    enable_on_boot: true
+  - id: vreg_bus_rev2
+    pin: GPIO27
+    enable_on_boot: true
+
+output:
+  - platform: ledc
+    id: beeper
+    pin: GPIO16
+
+rtttl:
+  id: buzzer
+  output: beeper
+  gain: 50%
+
+i2c:
+  id: i2c_bus
+  sda:
+    number: GPIO15
+    ignore_strapping_warning: true
+  scl: GPIO4
+  scan: false
+
+time:
+  # Read once at boot (see on_boot), so the system clock starts from the RTC.
+  - platform: bm8563
+    id: rtc
+    update_interval: never
+
+spi:
+  id: spi_bus
+  mosi_pin: GPIO23
+  clk_pin: GPIO18
+
+display:
+  - platform: ssd1306_spi
+    id: oled
+    model: SH1107 128x128
+    cs_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    dc_pin: GPIO19
+    reset_pin: GPIO17
+    data_rate: 40MHz
+    external_vcc: true
+    rotation: 180°
+    lambda: |-
+      it.rectangle(0, 0, it.get_width(), it.get_height());
+
+binary_sensor:
+  - platform: gpio
+    id: menu_button
+    name: Menu Button
+    pin:
+      number: GPIO34
+      inverted: true
+  - platform: gpio
+    id: ok_button
+    name: OK Button
+    pin:
+      number: GPIO0
+      inverted: true
+      ignore_strapping_warning: true
+  # High when the motor MCU is ready, low while it resets.
+  - platform: gpio
+    id: mcu_ready
+    name: MCU Ready
+    entity_category: diagnostic
+    pin: GPIO22
+    trigger_on_initial_state: true
+    on_press:
+      - pkt4_mcu.init:
+    on_release:
+      - pkt4_mcu.deinit:
+  - platform: pkt4_mcu
+    approach:
+      id: approach
+      name: Approach
+    bin:
+      id: bin
+      name: Bin
+    cover:
+      id: cover
+      name: Cover
+    drum_up:
+      id: drum_up
+      name: Drum Up
+    drum_down:
+      id: drum_down
+      name: Drum Down
+    drum_level:
+      id: drum_level
+      name: Drum Level
+    tray:
+      id: tray
+      name: Tray
+    tray_close_failed:
+      id: tray_close_failed
+      name: Tray Close Failed
+    link_lost:
+      id: link_lost
+      name: MCU Link Lost
+    handshake:
+      id: handshake
+      name: MCU Handshake
+
+sensor:
+  - platform: pkt4_mcu
+    # Raw MCU readings: the load cell and the proximity sensor need a per-unit calibration
+    # (filters in the full firmware), so they carry no unit here.
+    weight:
+      id: weight_raw
+      name: Weight Raw
+      unit_of_measurement: ""
+      device_class: ""
+      accuracy_decimals: 0
+    distance:
+      id: distance_raw
+      name: Distance Raw
+      unit_of_measurement: ""
+      device_class: ""
+      accuracy_decimals: 0
+    drum_position:
+      id: drum_position
+      name: Drum Position
+    drum_stop_code:
+      id: drum_stop_code
+      name: Drum Stop Code
+    drum_current:
+      id: drum_current
+      name: Drum Current
+    tray_position:
+      id: tray_position
+      name: Tray Position
+    tray_stop_code:
+      id: tray_stop_code
+      name: Tray Stop Code
+    tray_current:
+      id: tray_current
+      name: Tray Current
+  - platform: adc
+    id: supply_3v3
+    name: 3V3
+    pin: GPIO32
+    attenuation: 12dB
+    filters:
+      - multiply: 16
+  - platform: internal_temperature
+    id: esp_temperature
+    name: ESP32 Temperature
