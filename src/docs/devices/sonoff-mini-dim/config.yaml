@@ -1,0 +1,106 @@
+# Sonoff MINI-DIM (Matter) with a replaced ESP32-C3 - hardware configuration.
+# Component and protocol: https://github.com/PrawilnyAlo/esphome-sonoff-minidim
+# Full example (switch modes, calibration and dimming settings, original button / LED behaviour):
+# https://github.com/PrawilnyAlo/esphome-sonoff-minidim/blob/main/example/sonoff-mini-dim.yaml
+
+substitutions:
+  name: sonoff-mini-dim
+  friendly_name: Sonoff MINI-DIM
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+external_components:
+  - source: github://PrawilnyAlo/esphome-sonoff-minidim
+    components: [sonoff_minidim]
+
+# GPIO18/19 (USB D-/D+) are used for the HC32 UART, so log to UART0 (TX / RX service pads)
+logger:
+  hardware_uart: UART0
+
+uart:
+  id: hc32_uart
+  tx_pin: GPIO18   # CLK_HC
+  rx_pin: GPIO19   # DIO_HC
+  baud_rate: 115200
+
+sonoff_minidim:
+  id: minidim
+  uart_id: hc32_uart
+  reset_pin: GPIO10   # RST_HC
+  update_interval: 60s
+  power:
+    name: Power
+  voltage:
+    name: Voltage
+  current:
+    name: Current
+  calibration_min:
+    name: Calibration Min
+  calibration_max:
+    name: Calibration Max
+
+light:
+  - platform: sonoff_minidim
+    id: dimmer
+    name: Light
+    default_transition_length: 0s   # fades are done by the HC32
+    gamma_correct: 1.0
+    restore_mode: RESTORE_DEFAULT_OFF
+
+status_led:
+  pin:
+    number: GPIO3
+    inverted: true
+
+binary_sensor:
+  - platform: gpio
+    id: device_button
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
+    internal: true
+    on_click:
+      - min_length: 50ms
+        max_length: 1s
+        then:
+          - light.toggle: dimmer
+
+  # S1 / S2 are 230 V inputs through a divider - invert + delayed_off smooth out the 50 Hz pulses.
+  # S1 below is set up for a rocker switch: every change toggles the light.
+  - platform: gpio
+    id: s1
+    name: S1
+    internal: true
+    pin:
+      number: GPIO4
+      mode: INPUT
+    filters:
+      - invert:
+      - delayed_off: 50ms
+      - delayed_on: 20ms
+    on_state:
+      - if:
+          condition:
+            lambda: return millis() > 5000;   # ignore the initial state at boot
+          then:
+            - light.toggle: dimmer
+
+  - platform: gpio
+    id: s2
+    name: S2
+    internal: true
+    pin:
+      number: GPIO5
+      mode: INPUT
+    filters:
+      - invert:
+      - delayed_off: 50ms
+      - delayed_on: 20ms
