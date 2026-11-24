@@ -35,3 +35,9 @@ Use it for flashing. Connect EN pin to the RESET pin of your USB-UART converter.
 ## Configuration for RGBW
 
 ```yaml file=config.yaml
+```
+
+## Configuration for 4 monochromatic channel
+
+```yaml file=configuration-for-4-monochromatic-channel.yaml
+```
