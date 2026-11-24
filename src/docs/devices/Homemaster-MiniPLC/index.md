@@ -79,6 +79,9 @@ Wi-Fi Configuration with Improv
 1. Power on your HomeMaster MiniPLC.
 2. Go to [improv-wifi.com](https://improv-wifi.com) (works in Chrome/Edge on desktop or mobile).
 3. Connect via USB (Serial) or Bluetooth LE.
+
+   > **Known issue (Nov 2026):** improv-wifi.com may not open the Wi-Fi setup dialog over USB Serial — a bug in the site's Improv SDK, not in the device. If it doesn't work, use https://web.esphome.io in Chrome or Edge: connect the device with a USB-C cable → **Connect** → select "CP2102N USB to UART Bridge Controller" → **Configure Wi-Fi**. Do not click Install.
+
 4. Enter your Wi-Fi SSID and password, then press Connect.
 5. The device joins your Wi-Fi and is now ready.
 
