@@ -1,0 +1,61 @@
+substitutions:
+  name: emporia-vue-3
+  friendly_name: Emporia Vue 3
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/rosenrot00/emporiavue.git
+      ref: 2026.11.1
+    components: [emporiavue]
+
+packages:
+  emporiavue:
+    url: https://github.com/rosenrot00/emporiavue.git
+    ref: 2026.11.1
+    files:
+      - packages/vue3-i2c.yaml
+      - packages/vue3-1phase.yaml
+
+logger:
+  logs:
+    sensor: INFO
+
+# Ethernet (RTL8201F) preferred, Wi-Fi when the cable has no link.
+network:
+  priority:
+    - ethernet
+    - wifi
+
+ethernet:
+  type: RTL8201
+  mdc_pin: GPIO32
+  mdio_pin: GPIO33
+  clk:
+    pin: GPIO0
+    mode: CLK_EXT_IN
+
+wifi:
+  ap: {}
+
+emporiavue:
+  mains:
+    line_1:
+      # The driver default (0.022) read about 14 % high on the first unit;
+      # calibrate against a meter.
+      voltage_calibration: 0.0193
+  circuits:
+    cir1:
+      name: "Circuit 1"
+      line: 1
+      power:
