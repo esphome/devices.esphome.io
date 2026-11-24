@@ -1,0 +1,22 @@
+sensor:
+  - platform: template
+    name: Power Factor
+    device_class: power_factor
+    id: power_factor
+    icon: mdi:angle-acute
+    lambda: return id(w_sensor).state / id(v_sensor).state / id(a_sensor).state;
+
+binary_sensor:
+  - platform: template
+    name: Subordinate Device
+    id: subordinate_device_on
+    lambda: |-
+      if (isnan(id(w_sensor).state)) {
+        return {};
+      } else if (id(w_sensor).state > 4) {
+        // Running
+        return true;
+      } else {
+        // Not running
+        return false;
+      }
