@@ -1,9 +1,11 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import starlight from "@astrojs/starlight";
 import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "url";
 import path from "path";
 import deviceAssets from "./src/integrations/device-assets";
+import deviceAliases from "./src/integrations/device-aliases";
 import remarkYamlInclude from "./src/integrations/remark-yaml-include";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,12 +18,20 @@ export default defineConfig({
         "@components": path.resolve(__dirname, "./src/components"),
       },
     },
+    // Starlight's bundled source imports js-yaml 4. Left external, the
+    // prerender chunks resolve it from the project root, which holds the
+    // js-yaml 5 our scripts use. Bundling it resolves Starlight's own copy.
+    environments: {
+      prerender: {
+        resolve: { noExternal: ["js-yaml"] },
+      },
+    },
   },
   image: {
     responsiveStyles: true,
   },
   markdown: {
-    remarkPlugins: [remarkYamlInclude],
+    processor: unified({ remarkPlugins: [remarkYamlInclude] }),
   },
   integrations: [
     starlight({
@@ -146,5 +156,6 @@ export default defineConfig({
     }),
     sitemap(),
     deviceAssets(),
+    deviceAliases(),
   ],
 });

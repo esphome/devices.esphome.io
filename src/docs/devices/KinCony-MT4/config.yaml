@@ -1,0 +1,76 @@
+esphome:
+  name: mt4
+  friendly_name: MT4
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+ethernet:
+  type: W5500
+  clk_pin: GPIO42
+  mosi_pin: GPIO43
+  miso_pin: GPIO44
+  cs_pin: GPIO41
+  interrupt_pin: GPIO2
+  reset_pin: GPIO1
+
+output:
+  # Motor 1
+  - platform: gpio
+    id: motor1_in1
+    pin: GPIO39
+
+  - platform: gpio
+    id: motor1_in2
+    pin: GPIO46
+
+  - platform: ledc
+    id: motor1_pwm
+    pin: GPIO9
+    frequency: 1000Hz
+
+  # Motor 2
+  - platform: gpio
+    id: motor2_in1
+    pin: GPIO11
+
+  - platform: gpio
+    id: motor2_in2
+    pin: GPIO10
+
+  - platform: ledc
+    id: motor2_pwm
+    pin: GPIO12
+    frequency: 1000Hz
+
+  # Motor 3
+  - platform: gpio
+    id: motor3_in1
+    pin: GPIO13
+
+  - platform: gpio
+    id: motor3_in2
+    pin: GPIO47
+
+  - platform: ledc
+    id: motor3_pwm
+    pin: GPIO14
+    frequency: 1000Hz
+
+  # Motor 4
+  - platform: gpio
+    id: motor4_in1
+    pin: GPIO48
+
+  - platform: gpio
+    id: motor4_in2
+    pin: GPIO45
+
+  - platform: ledc
+    id: motor4_pwm
+    pin: GPIO21
+    frequency: 1000Hz

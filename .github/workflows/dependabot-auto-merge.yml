@@ -1,0 +1,35 @@
+name: Dependabot auto-merge
+
+# Turns on auto-merge (squash) for Dependabot pull requests, so a bump
+# merges once the branch's required checks pass. Semver-major bumps are
+# left for a human. Based on aiohttp's workflow.
+#
+# GITHUB_TOKEN on purpose: Dependabot secrets reach every workflow a
+# Dependabot PR triggers, including CI that installs the bumped package, so
+# no app key is exposed to them. The cost is that a Dependabot merge doesn't
+# trigger `push` workflows; the release drafter catches up on the next push.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]'
+      && github.repository == github.event.pull_request.head.repo.full_name
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

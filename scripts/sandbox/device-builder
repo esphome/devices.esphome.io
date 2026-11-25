@@ -1,0 +1,5 @@
+#!/bin/sh
+# The Device Builder importer for validate-esphome-configs.ts, with the
+# checkout mounted read-only.
+SANDBOX_DOCKER_ARGS="-v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE:ro" exec "$(dirname "$0")/run.sh" 900 \
+  python /opt/device-builder/script/sync_esphome_devices.py "$@"

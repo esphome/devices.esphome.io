@@ -5,11 +5,12 @@ import {
   getAllDevices,
   matchesFilter,
   sortDevices,
+  withAliasEntries,
 } from "../utils/getDevices";
 
 const all = await getAllDevices();
 const filtered = sortDevices(
-  all.filter((d) => matchesFilter(d.data, "made-for-esphome", "true"))
+  withAliasEntries(all.filter((d) => matchesFilter(d.data, "made-for-esphome", "true")))
 );
 ---
 

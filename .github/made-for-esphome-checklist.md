@@ -5,15 +5,25 @@
 - [ ] Project name cannot contain **ESPHome** except in the case of _ending with_ **for ESPHome**
 - [ ] ESPHome configuration is open source and available for end users to modify/update
 - If the device uses Wi-Fi:
-  - [ ] Configuration contains `esp32_improv:` ([documentation](https://esphome.io/components/esp32_improv))
+  - [ ] Configuration contains `improv_ble:` ([documentation](https://esphome.io/components/improv_ble/))
   - [ ] Configuration contains `improv_serial:` if there is a USB port ([documentation](https://esphome.io/components/improv_serial))
 - Users should be able to apply updates to your device:
   - [ ] Device can be "taken control" of by the user using the ESPHome Builder
     - [ ] Configuration includes `dashboard_import:` to facilitate this ([documentation](https://esphome.io/components/esphome.html#adding-the-mac-address-as-a-suffix-to-the-device-name))
+      - [ ] The `package_import_url` resolves to the config file (paths are case-sensitive)
     - [ ] Configuration contains the `ota`.`esphome` component ([documentation](https://esphome.io/components/ota/esphome))
+      - Exception for devices with signed firmware and no network OTA endpoint (no `ota`.`web_server` either): the
+        configuration enables `esp32`.`framework`.`advanced`.`signed_ota_verification` and contains
+        `improv_serial:`, and the device can be flashed over USB with no keys and no disassembly. The package that
+        "taking control" imports must still contain `ota`.`esphome` (the automated review checks this)
     - [ ] Serial flashing is not disabled
-    - [ ] There are no references to secrets in the configuration
-    - [ ] There are no passwords in the configuration
+    - [ ] There are no references to secrets in the configuration - not even
+          `!secret wifi_ssid` / `!secret wifi_password`. Users provision their
+          own Wi-Fi credentials, so anything baked in only leaves dummy values
+          in the device's storage; secrets belong in the configuration a user
+          ends up with **after** taking control
+    - [ ] There are no passwords in the configuration - neither literal values
+          nor `!secret` references on any `password:` / `psk:` key
     - [ ] There are no static IP addresses in the configuration
     - [ ] The configuration **must** be valid, compile and run successfully _without any user changes_ after taking control
     - [ ] Every entity/component (sensor, switch, etc.) **must** have an `id` defined
