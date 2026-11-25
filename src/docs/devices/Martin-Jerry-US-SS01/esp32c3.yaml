@@ -1,0 +1,61 @@
+substitutions:
+  device_name: martin-jerry-ss01-c3
+  friendly_name: Martin Jerry SS01
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  variant: esp32c3
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+logger:
+  # Keep this: on the tested unit the button (GPIO20, UART0 RX) did not work
+  # with the default logger settings, and baud_rate: 0 fixed it. Logs still
+  # work over the API.
+  baud_rate: 0
+
+wifi:
+  ap:
+
+output:
+  - platform: gpio
+    id: led
+    pin:
+      number: GPIO2
+      inverted: true
+      ignore_strapping_warning: true
+
+switch:
+  - platform: gpio
+    id: relay
+    name: Relay
+    pin: GPIO7
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - output.turn_on: led
+    on_turn_off:
+      - output.turn_off: led
+
+binary_sensor:
+  - platform: gpio
+    name: Main Button
+    pin:
+      number: GPIO20
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_on: 20ms
+    on_press:
+      - switch.toggle: relay
+
+button:
+  - platform: restart
+    id: restart_button
+    name: Restart
+    entity_category: diagnostic
