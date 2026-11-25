@@ -1,21 +1,23 @@
 ---
-title: "GeekMagic Ultra"
+title: "GeekMagic SmallTV / SmallTV Ultra"
 date-published: 2026-05-27
 type: misc
 standard: global
 board: esp8266
-project-url: https://www.aliexpress.com//item/1005011742070248.html
 made-for-esphome: false
 difficulty: 2
 ---
 
 ## Product Description
 
-The GeekMagic Ultra is an LCD display designed to look like a mini computer.
+The GeekMagic SmallTV / SmallTV Ultra is a LCD display designed to look like a mini computer.
 
-It is USB-C powered and has an ESP8266 inside.
+It is USB-C powered and has an ESP-12F/ESP8266 inside.
 
 The LCD panel has a 28x28mm size resulting in a 240x240 pixel resolution.
+
+Available on [AliExpress](https://www.aliexpress.com/item/1005004679769445.html) at various vendors.
+The “SmallTV” and “SmallTV Ultra” models differ only in their firmware; the hardware is identical.
 
 ## Product Images
 

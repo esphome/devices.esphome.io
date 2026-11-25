@@ -1,0 +1,593 @@
+#!/usr/bin/env tsx
+/**
+ * Validate changed device pages with `esphome config` and the ESPHome Device
+ * Builder's importer. The rules are in AGENTS.md, "ESPHome and Device Builder
+ * checks".
+ *
+ *   npm run validate-esphome                  # folders changed since merge-base(origin/main, HEAD)
+ *   npm run validate-esphome -- <base> [head] # explicit refs
+ *   npm run validate-esphome -- <Device-Dir>  # one or more device folders
+ *   npm run validate-esphome -- --all         # every device folder
+ *   --annotations                             # also emit GitHub Actions annotations
+ *
+ * A page whose configs could pull in outside code (see external-code-scan.ts)
+ * gets a notice and is not run through either check.
+ *
+ * Environment: ESPHOME_BIN (default "esphome"); DEVICE_BUILDER_CMD (the
+ * importer command), or DEVICE_BUILDER_DIR and DEVICE_BUILDER_PYTHON, for the
+ * import check (skipped when unset); CONFIG_TIMEOUT_MS; JOBS; BASE_SHA /
+ * HEAD_SHA (CI diff range).
+ */
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { execFile, execFileSync } from "node:child_process";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
+import * as yaml from "js-yaml";
+import { changedPaths } from "./changed-paths.ts";
+import { componentsOf, scanExternalCode } from "./external-code-scan.ts";
+import { stripAnsi } from "./review-made-for-esphome.ts";
+import { ESPHOME_SCHEMA } from "../src/lib/esphome-yaml-schema.ts";
+import { findYamlFences, type Issue } from "./validate-yaml-configs.ts";
+
+const execFileAsync = promisify(execFile);
+
+export type Check = "esphome" | "import" | "scan";
+
+export interface Finding extends Issue {
+  check: Check;
+  level: "error" | "warning" | "notice";
+}
+
+export interface Target {
+  file: string; // yaml file in the device folder
+  mergeOnto: string | null; // base file for an add-on fragment
+}
+
+export interface Page {
+  dir: string; // absolute device folder
+  rel: string; // repo-relative index.md
+  files: string[]; // every file= target, including ones that failed to load
+  targets: Target[];
+  findings: Finding[];
+}
+
+const NETWORK_COMPONENTS = ["wifi", "ethernet", "openthread"];
+// Download failures: CI runs ESPHome without network access. Each phrase is
+// network-specific, so an ordinary validation message can't match.
+const DOWNLOAD_FAILURE_RE =
+  /Could not download|Unable to download|Max retries exceeded|NameResolutionError|ConnectionError|Failed to resolve '?[\w-]+(\.[\w-]+)+|Temporary failure in name resolution|Network is unreachable|Could not resolve host/i;
+const SECRETS_FILES = new Set(["secrets.yaml", "secrets.yml"]);
+
+type Mapping = Record<string, unknown>;
+
+const isMapping = (v: unknown): v is Mapping =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
+
+function parseYaml(text: string): unknown {
+  try {
+    return yaml.load(text, { schema: ESPHOME_SCHEMA });
+  } catch {
+    return undefined; // validate-yaml reports parse errors
+  }
+}
+
+/** A file with its own `esphome: name:` validates alone; anything else is an add-on fragment. */
+export function isStandalone(parsed: unknown): boolean {
+  return isMapping(parsed) && isMapping(parsed.esphome) && "name" in parsed.esphome;
+}
+
+/** The page's `file=` targets, each parsed once, or null when it has none. */
+export function loadPage(deviceDir: string, repoRoot: string): Page | null {
+  const indexPath = path.join(deviceDir, "index.md");
+  let md: string;
+  try {
+    md = fs.readFileSync(indexPath, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw new FatalError(`could not read ${indexPath}: ${String(err)}`);
+  }
+  const refs = [
+    ...new Set(
+      findYamlFences(md)
+        .map((f) => f.fileAttr?.replace(/^\.\//, ""))
+        .filter((f): f is string => !!f)
+    ),
+  ];
+  if (refs.length === 0) return null;
+  const rel = path.relative(repoRoot, indexPath);
+  const files = refs.filter((f) => !/[/\\]|\.\./.test(f));
+  const page: Page = { dir: deviceDir, rel, files, targets: [], findings: [] };
+  for (const ref of refs.filter((f) => !files.includes(f))) {
+    page.findings.push({
+      check: "esphome",
+      level: "notice",
+      file: rel,
+      message: `not validated: \`${ref}\` is not beside index.md, and only files there are checked`,
+    });
+  }
+  const parsed = new Map<string, unknown>();
+  for (const file of files) {
+    try {
+      parsed.set(file, parseYaml(fs.readFileSync(path.join(deviceDir, file), "utf8")));
+    } catch {
+      // The external-code scan reports any unreadable file= target as an error.
+    }
+  }
+  for (const [file, tree] of parsed) {
+    if (file === "config.yaml") {
+      page.targets.unshift({ file, mergeOnto: null });
+    } else if (isStandalone(tree)) {
+      page.targets.push({ file, mergeOnto: null });
+    } else if (parsed.has("config.yaml")) {
+      page.targets.push({ file, mergeOnto: "config.yaml" });
+    } else {
+      page.findings.push({
+        check: "esphome",
+        level: "error",
+        file: path.join(path.dirname(rel), file),
+        message: "this file has no `esphome: name:` and the page has no `config.yaml` to merge it onto",
+      });
+    }
+  }
+  return page;
+}
+
+/** The `logger:`, `api:`, `ota:` and Wi-Fi a user's config adds, minus what *components* has; "" if nothing. */
+export function userScaffold(components: ReadonlySet<string>): string {
+  const lines: string[] = [];
+  if (!components.has("logger")) lines.push("logger:");
+  if (!components.has("api")) lines.push("api:");
+  if (!components.has("ota")) lines.push("ota:", "  - platform: esphome");
+  if (!NETWORK_COMPONENTS.some((c) => components.has(c))) lines.push("wifi:", "  ap: {}");
+  return lines.length > 0 ? lines.join("\n") + "\n" : "";
+}
+
+/** How a failure message names the scaffold's top-level components: "`logger:`, `api:` and `wifi:`". */
+export function scaffoldParts(scaffold: string): string {
+  const keys = (scaffold.match(/^\w+(?=:)/gm) ?? []).map((k) => `\`${k}:\``);
+  return keys.length <= 1 ? keys.join("") : `${keys.slice(0, -1).join(", ")} and ${keys[keys.length - 1]}`;
+}
+
+/** The `Failed config` block of `esphome config` output, else its error lines, uncapped. */
+export function esphomeErrorLines(stdout: string, stderr: string, workDir: string): string[] {
+  const clean = (s: string): string[] =>
+    stripAnsi(s).split(workDir + path.sep).join("").split("\n");
+  const out = clean(stdout);
+  const failed = out.findIndex((l) => /^Failed config/.test(l));
+  let picked =
+    failed >= 0
+      ? out.slice(failed)
+      : [...out, ...clean(stderr)].filter((l) => /\b(ERROR|Error)\b/.test(l));
+  if (picked.length === 0) picked = clean(stderr).slice(-10);
+  return picked.filter((l) => l.trim() !== "");
+}
+
+/** The error lines of `esphome config` output, capped for display. */
+export function trimEsphomeError(stdout: string, stderr: string, workDir: string): string {
+  const picked = esphomeErrorLines(stdout, stderr, workDir);
+  const capped = picked.slice(0, 30);
+  if (picked.length > capped.length) capped.push("...");
+  return capped.join("\n");
+}
+
+/** True when every failing component, or every error line without a `Failed config` block, is a download. */
+export function isDownloadOnlyFailure(lines: string[]): boolean {
+  const isDownload = (text: string): boolean => DOWNLOAD_FAILURE_RE.test(text);
+  const errors = lines.filter((l) => !/\b(INFO|WARNING|DEBUG|VERBOSE)\b/.test(l));
+  if (errors.length === 0) return false;
+  if (!/^Failed config/.test(errors[0])) return errors.every(isDownload);
+  const sections: string[][] = [];
+  for (const line of errors.slice(1)) {
+    if (!/^\s/.test(line) || sections.length === 0) sections.push([]);
+    sections[sections.length - 1].push(line);
+  }
+  return sections.length > 0 && sections.every((sec) => isDownload(sec.join("\n")));
+}
+
+/** Line of the first `[source <file>:<line>]` marker for *file* in ESPHome's output. */
+export function sourceLine(output: string, file: string): number | undefined {
+  for (const m of output.matchAll(/\[source ([^\]]+):(\d+)\]/g)) {
+    if (m[1] === file) return Number(m[2]);
+  }
+  return undefined;
+}
+
+/** Device folder names with a path changed directly or below them. */
+export function deviceDirsOf(paths: string[]): string[] {
+  const dirs = new Set<string>();
+  for (const p of paths) {
+    const m = /^src\/docs\/devices\/([^/]+)\/.+/.exec(p);
+    if (m) dirs.add(m[1]);
+  }
+  return [...dirs].sort();
+}
+
+// ---------------------------------------------------------------------------
+// Running ESPHome
+// ---------------------------------------------------------------------------
+
+class FatalError extends Error {}
+
+function limiter(jobs: number): <T>(fn: () => Promise<T>) => Promise<T> {
+  let active = 0;
+  const queue: (() => void)[] = [];
+  return async (fn) => {
+    if (active >= jobs) await new Promise<void>((resolve) => queue.push(resolve));
+    active++;
+    try {
+      return await fn();
+    } finally {
+      active--;
+      queue.shift()?.();
+    }
+  };
+}
+
+export interface Runner {
+  bin: string;
+  timeoutMs: number;
+  limit: <T>(fn: () => Promise<T>) => Promise<T>;
+}
+
+async function esphomeConfig(
+  runner: Runner,
+  cwd: string,
+  entry: string
+): Promise<
+  { ok: true } | { ok: false; stdout: string; stderr: string; timedOut: boolean; limited: boolean }
+> {
+  try {
+    await runner.limit(() =>
+      execFileAsync(runner.bin, ["config", entry], {
+        cwd,
+        timeout: runner.timeoutMs,
+        maxBuffer: 64 * 1024 * 1024,
+        env: { ...process.env, NO_COLOR: "1" },
+      })
+    );
+    return { ok: true };
+  } catch (err) {
+    // `code` is the errno string for a spawn failure, else the exit status.
+    const e = err as {
+      code?: string | number;
+      killed?: boolean;
+      signal?: string;
+      stdout?: string;
+      stderr?: string;
+    };
+    if (e.code === "ENOENT") {
+      throw new FatalError(`esphome not found (${runner.bin}); install it with \`pip install esphome\``);
+    }
+    if (e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+      return {
+        ok: false,
+        stdout: "",
+        stderr: "`esphome config` printed more than 64 MiB of output",
+        timedOut: false,
+        limited: false,
+      };
+    }
+    if (typeof e.code === "string") {
+      throw new FatalError(`esphome could not be run (${runner.bin}, ${e.code}): ${String(err)}`);
+    }
+    // Exit statuses from scripts/sandbox/run.sh: 125-127 are docker or the shell
+    // failing to run anything, 137 is a kill at the memory or process cap.
+    if (e.code === 125 || e.code === 126 || e.code === 127) {
+      throw new FatalError(`the sandbox could not run esphome (${runner.bin}, exit ${e.code}):\n${e.stderr ?? ""}`);
+    }
+    // 124 is the sandbox's own `timeout`; SIGTERM after a kill is Node's own limit.
+    const timedOut = e.code === 124 || (e.killed === true && e.signal === "SIGTERM");
+    const limited = e.code === 137;
+    return { ok: false, stdout: e.stdout ?? "", stderr: e.stderr ?? "", timedOut, limited };
+  }
+}
+
+type TargetResult = "ok" | "error" | "inconclusive";
+
+async function checkTarget(page: Page, work: string, target: Target, runner: Runner): Promise<TargetResult> {
+  // Every target runs with what a user's config adds, as a hardware-only
+  // config.yaml needs a network for components like the status sensor.
+  // Count what local packages bring in, so an included `ethernet:` gets no Wi-Fi.
+  const components = componentsOf(page.dir, target.file);
+  if (target.mergeOnto !== null) for (const c of componentsOf(page.dir, target.mergeOnto)) components.add(c);
+  const scaffold = userScaffold(components);
+  let entry = target.file;
+  if (target.mergeOnto !== null || scaffold !== "") {
+    entry = `__merged-${target.file}`;
+    const packages = [`  example: !include ${target.file}`];
+    if (target.mergeOnto !== null) packages.unshift(`  base: !include ${target.mergeOnto}`);
+    if (scaffold !== "") {
+      fs.writeFileSync(path.join(work, `__user-${target.file}`), scaffold);
+      packages.push(`  user: !include __user-${target.file}`);
+    }
+    fs.writeFileSync(path.join(work, entry), `packages:\n${packages.join("\n")}\n`);
+  }
+  const result = await esphomeConfig(runner, work, entry);
+  if (result.ok) return "ok";
+  const file = path.join(path.dirname(page.rel), target.file);
+  const added = scaffold === "" ? "" : ` (plus the ${scaffoldParts(scaffold)} a user's config would add)`;
+  const how =
+    target.mergeOnto === null
+      ? `\`esphome config\` fails${added}`
+      : `\`esphome config\` fails with this file merged onto \`${target.mergeOnto}\`${added}`;
+  if (result.timedOut || result.limited) {
+    page.findings.push({
+      check: "esphome",
+      level: "warning",
+      file,
+      message: `\`esphome config\` hit the CI ${result.timedOut ? "time" : "memory or process"} limit; inconclusive`,
+    });
+    return "inconclusive";
+  }
+  const error = trimEsphomeError(result.stdout, result.stderr, work);
+  // A download failure next to a real error in another component stays an error.
+  const network = isDownloadOnlyFailure(esphomeErrorLines(result.stdout, result.stderr, work));
+  page.findings.push({
+    check: "esphome",
+    level: network ? "warning" : "error",
+    file,
+    line: sourceLine(error, target.file),
+    message: network
+      ? `needs to download a remote file (font, image, model, package), and CI runs ESPHome ` +
+        `without network access; not validated:\n${error}`
+      : `${how}:\n${error}`,
+  });
+  return network ? "inconclusive" : "error";
+}
+
+/** Validate every target of *page* in one work copy: standalone files first, then fragments. */
+export async function checkEsphome(page: Page, runner: Runner): Promise<void> {
+  if (page.targets.length === 0) return;
+  const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "esphome-config-")));
+  const work = path.join(tmp, path.basename(page.dir));
+  try {
+    fs.cpSync(page.dir, work, {
+      recursive: true,
+      filter: (src) => !SECRETS_FILES.has(path.basename(src)),
+    });
+    const [first, ...rest] = page.targets;
+    // The first target fetches the page's packages and components once; the
+    // rest reuse them from the shared work copy.
+    const bases = new Map([[first.file, await checkTarget(page, work, first, runner)]]);
+    const standalone = rest.filter((t) => t.mergeOnto === null);
+    const results = await Promise.all(standalone.map((t) => checkTarget(page, work, t, runner)));
+    standalone.forEach((t, i) => bases.set(t.file, results[i]));
+    const runnable: Target[] = [];
+    for (const t of rest.filter((f) => f.mergeOnto !== null)) {
+      const base = bases.get(t.mergeOnto as string);
+      if (base === "ok") {
+        runnable.push(t);
+        continue;
+      }
+      // An inconclusive base leaves the page unchecked; a base error already fails it.
+      const inconclusive = base === "inconclusive";
+      page.findings.push({
+        check: "esphome",
+        level: inconclusive ? "warning" : "notice",
+        file: path.join(path.dirname(page.rel), t.file),
+        message:
+          `not validated: \`${t.mergeOnto}\` ${inconclusive ? "could not be validated" : "did not validate"}, ` +
+          "so this file wasn't merged onto it",
+      });
+    }
+    await Promise.all(runnable.map((t) => checkTarget(page, work, t, runner)));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Device Builder import
+// ---------------------------------------------------------------------------
+
+interface ImportRow {
+  device: string;
+  imported: boolean;
+  reason: string | null;
+}
+
+const isImportRow = (r: unknown): r is ImportRow =>
+  isMapping(r) &&
+  typeof r.device === "string" &&
+  typeof r.imported === "boolean" &&
+  (r.reason === null || typeof r.reason === "string");
+
+export async function checkImport(pages: Page[], repoRoot: string): Promise<boolean> {
+  if (pages.length === 0) return false;
+  const dbDir = process.env.DEVICE_BUILDER_DIR;
+  const cmd = process.env.DEVICE_BUILDER_CMD;
+  if (!cmd && !dbDir) {
+    console.error(
+      "Device Builder import check skipped: set DEVICE_BUILDER_DIR to an esphome/device-builder " +
+        "checkout and DEVICE_BUILDER_PYTHON to a Python with it installed"
+    );
+    return false;
+  }
+  const [bin, ...prefix] = cmd
+    ? [cmd]
+    : [
+        process.env.DEVICE_BUILDER_PYTHON || "python3",
+        path.join(dbDir as string, "script", "sync_esphome_devices.py"),
+      ];
+  const args = [
+    ...prefix,
+    "--repo",
+    repoRoot,
+    "--check",
+    "--json",
+    ...pages.flatMap((p) => ["--device", path.basename(p.dir)]),
+  ];
+  let stdout: string;
+  try {
+    ({ stdout } = await execFileAsync(bin, args, { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (err) {
+    const e = err as { code?: number | string; stdout?: string; stderr?: string };
+    if (e.code !== 1 || !e.stdout) {
+      throw new FatalError(`Device Builder importer failed:\n${e.stderr ?? String(err)}`);
+    }
+    stdout = e.stdout;
+  }
+  const rows: unknown = JSON.parse(stdout);
+  if (!Array.isArray(rows)) {
+    throw new FatalError(`Device Builder importer returned no result list:\n${stdout}`);
+  }
+  const byDevice = new Map(pages.map((p) => [path.basename(p.dir), p]));
+  const answered = new Set<string>();
+  for (const row of rows) {
+    if (!isImportRow(row) || !byDevice.has(row.device)) {
+      throw new FatalError(`Device Builder importer returned an unexpected row: ${JSON.stringify(row)}`);
+    }
+    answered.add(row.device);
+    const page = byDevice.get(row.device) as Page;
+    if (row.imported) continue;
+    page.findings.push({
+      check: "import",
+      level: "error",
+      file: page.rel,
+      message: `the ESPHome Device Builder would not import this page: ${row.reason ?? "no reason given"}`,
+    });
+  }
+  for (const [device, page] of byDevice) {
+    if (answered.has(device)) continue;
+    page.findings.push({
+      check: "import",
+      level: "error",
+      file: page.rel,
+      message: "the ESPHome Device Builder importer returned no result for this page",
+    });
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function git(...args: string[]): string {
+  return execFileSync("git", args, { encoding: "utf8" }).trimEnd();
+}
+
+function isCommit(ref: string): boolean {
+  try {
+    git("rev-parse", "--verify", "--quiet", `${ref}^{commit}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function selectDirs(flags: Set<string>, positional: string[], devicesRoot: string): string[] {
+  if (flags.has("--all")) {
+    return fs
+      .readdirSync(devicesRoot, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .sort();
+  }
+  const named = positional.filter((p) => fs.existsSync(path.join(devicesRoot, p)));
+  if (named.length > 0 || positional.some((p) => !isCommit(p))) {
+    const unknown = positional.filter((p) => !named.includes(p));
+    if (unknown.length > 0) throw new FatalError(`unknown device folder or git ref: ${unknown.join(", ")}`);
+    return named;
+  }
+  const { BASE_SHA, HEAD_SHA } = process.env;
+  const [base, head] = BASE_SHA
+    ? [BASE_SHA, HEAD_SHA || "HEAD"]
+    : [positional[0] ?? "origin/main", positional[1] ?? "HEAD"];
+  const mergeBase = git("merge-base", base, head);
+  console.error(`Diffing ${mergeBase}..${head}`);
+  return deviceDirsOf(changedPaths(mergeBase, head, "src/docs/devices").map((c) => c.path));
+}
+
+const escData = (s: string): string =>
+  String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+const escProp = (s: string): string => escData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+const TITLES: Record<Check, string> = {
+  esphome: "ESPHome config",
+  import: "Device Builder import",
+  scan: "Not validated",
+};
+
+async function main(): Promise<number> {
+  const argv = process.argv.slice(2);
+  const flags = new Set(argv.filter((a) => a.startsWith("--")));
+  const positional = argv.filter((a) => !a.startsWith("--"));
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const devicesRoot = path.join(repoRoot, "src", "docs", "devices");
+
+  const pages: Page[] = [];
+  for (const d of selectDirs(flags, positional, devicesRoot)) {
+    const page = loadPage(path.join(devicesRoot, d), repoRoot);
+    if (page) pages.push(page);
+    else if (!flags.has("--all")) console.log(`skip ${d}: no index.md with file= configs`);
+  }
+  if (pages.length === 0) {
+    console.log("No device pages with file= configs to check.");
+    return 0;
+  }
+
+  const runner: Runner = {
+    bin: process.env.ESPHOME_BIN || "esphome",
+    timeoutMs: Number(process.env.CONFIG_TIMEOUT_MS || 180000),
+    limit: limiter(Number(process.env.JOBS || Math.min(8, os.cpus().length))),
+  };
+  const runnable: Page[] = [];
+  for (const page of pages) {
+    const { external, broken } = scanExternalCode(page.dir, page.files);
+    for (const reason of broken) {
+      page.findings.push({ check: "scan", level: "error", file: page.rel, message: reason });
+    }
+    if (broken.length > 0) continue;
+    if (external.length === 0) {
+      runnable.push(page);
+      continue;
+    }
+    page.findings.push({
+      check: "scan",
+      level: "notice",
+      file: page.rel,
+      message:
+        "not validated with ESPHome or the Device Builder: this page's config could pull in code " +
+        `from outside the device folder, which CI does not run (${external.join("; ")})`,
+    });
+  }
+  await Promise.all([
+    checkImport(runnable, repoRoot),
+    ...runnable.map((p) => checkEsphome(p, runner)),
+  ]);
+
+  const findings = pages.flatMap((p) => p.findings);
+  const errors = findings.filter((f) => f.level === "error");
+  for (const page of pages) {
+    const name = path.basename(page.dir);
+    const failed = page.findings.some((f) => f.level === "error");
+    console.log(`${failed ? "FAIL" : "ok  "} ${name}`);
+    for (const f of page.findings) {
+      const loc = f.line !== undefined ? `${f.file}:${f.line}` : f.file;
+      console.log(`  ${f.level} [${TITLES[f.check]}] ${loc}\n    ${f.message.replace(/\n/g, "\n    ")}`);
+    }
+  }
+  if (flags.has("--annotations")) {
+    for (const f of findings) {
+      const line = f.line !== undefined ? `,line=${f.line}` : "";
+      console.log(
+        `::${f.level} file=${escProp(f.file)}${line},title=${escProp(TITLES[f.check])}::${escData(f.message)}`
+      );
+    }
+  }
+  const failedPages = pages.filter((p) => p.findings.some((f) => f.level === "error")).length;
+  console.log(`\n${pages.length - failedPages}/${pages.length} device page(s) passed`);
+  return failedPages > 0 ? 1 : 0;
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err instanceof FatalError ? err.message : err);
+      process.exit(2);
+    }
+  );
+}
