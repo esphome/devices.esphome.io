@@ -15,8 +15,7 @@ Hardware is availabe at [embinotec.de/produktseite/wetterstation](https://www.em
 
 ![embinotec-weatherstation](./weatherStation-clean-nologo.png "embinotec weatherstation")
 
-
-# Function range
+## Function range
 
 | Measurand | Sensor / Pricipal | Unit |
 |---|---|---|
@@ -32,10 +31,8 @@ Hardware is availabe at [embinotec.de/produktseite/wetterstation](https://www.em
 | Charge indication | GPIO (Binary Sensor) | – |
 | Barrometrical pressure | BMP580 (i2c) | Pa|
 
+## Configuration
 
-
-# Configuration
-
-```yaml 
+```yaml
 url=https://github.com/embinotec/embinotec-esphome-weatherstation/blob/master/embinotec-weatherstation.yaml
 ```
