@@ -107,14 +107,14 @@ connected to the hotspot.
 For a fully networked install with Home Assistant, IR protocol selection, servo, and FPP support,
 import the complete configuration:
 
-```yaml url=https://github.com/CodeMakesItGo/NeatoFx_Public/blob/main/Targets/NeatoTargetIR/main.yaml
+```yaml url=https://github.com/CodeMakesItGo/NeatoFx_Public/blob/main/Targets/NeatoTargetIR/main_ir.yaml
 ```
 
 ### Firmware builds
 
 | Build | IR protocol | Networking |
 |-------|-------------|-----------|
-| Standard (`main.yaml`, networked mode) | NEC + laser tag | Joins WiFi, Home Assistant API |
+| Standard (`main_ir.yaml`, networked mode) | NEC + laser tag | Joins WiFi, Home Assistant API |
 | Standalone (`configs/standalone.yaml`) | NEC + laser tag | AP hotspot only, no hub required |
 
 ### IR protocols (selectable)
