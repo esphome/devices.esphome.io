@@ -78,7 +78,7 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 
 When a device has `made-for-esphome: true` in its frontmatter, it must meet ALL of the following requirements:
 
-The upstream config a Made for ESPHome page links with `url=` is the firmware the device ships with, so review it only against this checklist. The example-yaml rules for files in the repo (hardware-only `config.yaml`, no `web_server:`) do not apply to it: `web_server:`, `captive_portal:`, `api:`, `external_components:`, remote `packages:` and similar are fine there. Don't flag them.
+The upstream config a Made for ESPHome page links with `url=` is the firmware the device ships with, so review it only against this checklist. The example-yaml rules for files in the repo (hardware-only `config.yaml`, no `web_server:`) do not apply to it: `web_server:` (with its `ota` `platform: web_server`), `captive_portal:`, `api:`, `external_components:`, remote `packages:` and similar are fine there. Don't flag them.
 
 #### Hardware Requirements
 

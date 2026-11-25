@@ -138,8 +138,9 @@ Automations, Home Assistant integration and extra components go in separate, des
 - Do not include `web_server:` in any config on a device page.
 
 These rules cover the yaml files in the repo. The upstream config a Made for ESPHome page links with `url=` is the
-firmware the device ships with and is held to the Made for ESPHome checklist instead (below): `web_server:`,
-`captive_portal:`, `api:`, `external_components:` and remote `packages:` are fine there.
+firmware the device ships with and is held to the Made for ESPHome checklist instead (below): `web_server:` (with
+its `ota` `platform: web_server`), `captive_portal:`, `api:`, `external_components:` and remote `packages:` are
+fine there.
 
 ### ESPHome and Device Builder checks (`npm run validate-esphome`)
 

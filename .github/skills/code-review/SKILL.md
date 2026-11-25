@@ -93,8 +93,8 @@ These represent the ESPHome quality standard. When the frontmatter has `made-for
 check **every** item in [`.github/made-for-esphome-checklist.md`](../../made-for-esphome-checklist.md).
 The upstream config the page links with `url=` is the firmware the device ships with: review it only
 against that checklist. The rules for yaml files in the repo (hardware-only `config.yaml`, no
-`web_server:`) do not apply to it, so `web_server:`, `captive_portal:`, `api:`,
-`external_components:` and remote `packages:` there are fine. Don't flag them.
+`web_server:`) do not apply to it, so `web_server:` (with its `ota` `platform: web_server`),
+`captive_portal:`, `api:`, `external_components:` and remote `packages:` there are fine. Don't flag them.
 Key points:
 
 - Powered by an ESP32 or a supported variant (C3, C6, S2, S3, and similar), running ESPHome
