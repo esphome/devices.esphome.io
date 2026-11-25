@@ -34,18 +34,19 @@ carriers: [MTH-for-ESPHome](https://github.com/makethingshappy/MTH-for-ESPHome).
 
 | Relay2 version | Carrier | ESPHome configuration |
 | --- | --- | --- |
-| 3.02 | IoTsmart XIAO 1.02 + XIAO ESP32-S3 | [iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml) |
-| 3.02 | IoTsmart ESP32-S3 1.02 | [iotextra-relay2-v3-02-iotsmart-esp32s3-v1-02-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-relay2-v3-02-iotsmart-esp32s3-v1-02-gpio.yaml) |
-| 3.02 | IoTsmart ESP32-S3 2.01 | [iotextra-relay2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-relay2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml) |
-| 3.02 | IoTbase NANO 3.06 + Waveshare ESP32-S3-Nano | [iotextra-relay2-v3-02-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTbase_NANO_Waveshare-ESP32-S3-NANO/iotextra-relay2-v3-02-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml) |
-| 3.02 | IoTbase PICO 3.05 + Raspberry Pi Pico W | [iotextra-relay2-v3-02-iotbase-pico-v3-05-pico-w-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTbase_PICO_Raspberry-Pi-Pico-W/iotextra-relay2-v3-02-iotbase-pico-v3-05-pico-w-gpio.yaml) |
+| 3.02 | IoTsmart XIAO 1.02 + XIAO ESP32-S3 | [iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml) |
+| 3.02 | IoTsmart XIAO 2.01 + XIAO ESP32-S3 | [iotextra-relay2-v3-02-iotsmart-xiao-v2-01-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v2-01-xiao-esp32s3-gpio.yaml) |
+| 3.02 | IoTsmart ESP32-S3 1.02 | [iotextra-relay2-v3-02-iotsmart-esp32s3-v1-02-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-relay2-v3-02-iotsmart-esp32s3-v1-02-gpio.yaml) |
+| 3.02 | IoTsmart ESP32-S3 2.01 | [iotextra-relay2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-relay2-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml) |
+| 3.02 | IoTbase NANO 3.06 + Waveshare ESP32-S3-Nano | [iotextra-relay2-v3-02-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTbase_NANO_Waveshare-ESP32-S3-NANO/iotextra-relay2-v3-02-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml) |
+| 3.02 | IoTbase PICO 3.05 + Raspberry Pi Pico W | [iotextra-relay2-v3-02-iotbase-pico-v3-05-pico-w-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTbase_PICO_Raspberry-Pi-Pico-W/iotextra-relay2-v3-02-iotbase-pico-v3-05-pico-w-gpio.yaml) |
 
 ## GPIO
 
 HOST connector lines AP0..AP3 drive relays RL1..RL4 (K1..K4). AP4..AP7 are not used by the module in GPIO mode.
 GPIO numbers by carrier:
 
-| Channel | HOST line | IoTsmart XIAO + XIAO ESP32-S3 | IoTsmart ESP32-S3 (1.02 and 2.01) | IoTbase NANO + Waveshare ESP32-S3-Nano | IoTbase PICO + Raspberry Pi Pico W |
+| Channel | HOST line | IoTsmart XIAO (1.02 and 2.01) + XIAO ESP32-S3 | IoTsmart ESP32-S3 (1.02 and 2.01) | IoTbase NANO + Waveshare ESP32-S3-Nano | IoTbase PICO + Raspberry Pi Pico W |
 | --- | --- | --- | --- | --- | --- |
 | RL1 | AP0 | GPIO8 | GPIO8 | GPIO9 | GPIO10 |
 | RL2 | AP1 | GPIO9 | GPIO9 | GPIO10 | GPIO11 |
@@ -65,7 +66,7 @@ board, I2C and the channel pins. Add your own `wifi`, `api` and `ota` settings.
 ```
 
 The full ready-to-flash configuration (Wi-Fi, API, OTA, web server) is [on
-GitHub](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml).
+GitHub](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-relay2-v3-02-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml).
 The other carriers have their own files, linked in the table above.
 
 ![IoTextra Relay2, bottom view](iotextra-relay2-bottom.png "IoTextra Relay2, bottom view")
@@ -79,8 +80,8 @@ The other carriers have their own files, linked in the table above.
 - For the XIAO ESP32-S3 use `variant: esp32s3` and `flash_size: 8MB`, as in the configuration above. First flash over
   USB; if the port does not appear, use the boot and reset buttons of the XIAO board.
 - On IoTsmart XIAO, RL4 uses GPIO44 (UART0 RX).
-- With IoTbase carriers or horizontally mounted IoTsmart versions (V-HOST connector), Relay2 needs a height extender or a
-  riser adapter.
+- With IoTbase carriers or horizontally mounted IoTsmart versions (V-HOST connector; IoTsmart XIAO 2.01 has only this
+  connector), Relay2 needs a height extender or a riser adapter.
 - Do not use `board: esp32-s3-devkitc-1` for IoTsmart ESP32-S3. Use `variant: esp32s3`, `flash_size: 4MB` and `psram:
   mode: quad`.
 - IoTbase PICO with Raspberry Pi Pico W uses the RP2 platform (`rp2:`, `board: rpipicow`). First flash: hold BOOTSEL
