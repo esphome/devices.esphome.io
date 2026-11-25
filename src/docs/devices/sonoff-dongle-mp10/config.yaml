@@ -1,0 +1,62 @@
+esphome:
+  name: dongle-mp10
+  friendly_name: "Dongle Max CC2674P10"
+
+esp32:
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+    components:
+      - name: espressif/ch390
+        source: https://github.com/LWPkmmt/esp-eth-drivers.git
+        ref: master
+        path: ch390
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+external_components:
+  - source: github://SONOFF-Technologies/esphome-stream-server
+
+ethernet:
+  id: ethernet_network
+  type: CH390
+  clk_pin: GPIO42
+  mosi_pin: GPIO41
+  miso_pin: GPIO39
+  cs_pin: GPIO2
+  interrupt_pin: GPIO38
+  clock_speed: 40MHz
+
+preferences:
+  flash_write_interval: 1s
+
+uart:
+  id: radio_uart
+  rx_pin:
+    number: GPIO18
+    mode: INPUT_PULLUP
+  tx_pin: GPIO17
+  baud_rate: 115200
+
+stream_server:
+  - id: radio_stream_server
+    uart_id: radio_uart
+    port: 6638
+
+binary_sensor:
+  - platform: stream_server
+    stream_server: radio_stream_server
+    connected:
+      id: radio_tcp_connected
+      internal: true
+
+sensor:
+  - platform: uptime
+    name: "Uptime"
+    entity_category: diagnostic
