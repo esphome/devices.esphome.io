@@ -1,0 +1,22 @@
+text_sensor:
+  - platform: template
+    name: Status
+    icon: mdi:alert-circle-check-outline
+    update_interval: 15s
+    lambda: |-
+      static const char *const names[] = {
+          "No comms with CO2 module", "CO2 measurement error",
+          "Temperature measurement error", "No comms with RH/T module",
+          "RH measurement error", "Using CO2 sensor temperature", "Bit 6",
+          "Bit 7", "Output configuration error", "Settings memory corrupt"};
+      float raw = id(tsense_error_bits).state;
+      if (isnan(raw)) return {};
+      uint16_t bits = (uint16_t) raw;
+      if (bits == 0) return std::string("OK");
+      std::string out;
+      for (int b = 0; b < 16; b++) {
+        if (!(bits & (1 << b))) continue;
+        if (!out.empty()) out += ", ";
+        out += b < 10 ? std::string(names[b]) : "Bit " + to_string(b);
+      }
+      return out;

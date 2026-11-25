@@ -1,0 +1,51 @@
+# The D1 Mini inside the tSENSE case warms its sensor by a few degrees.
+# Tune the offset against a nearby reference thermometer. Uses ${temp_unit}
+# from config.yaml, so it works with the display in °F or °C.
+number:
+  - platform: template
+    id: temp_offset
+    name: Temperature Offset
+    icon: mdi:thermometer-minus
+    entity_category: config
+    unit_of_measurement: ${temp_unit}
+    mode: box
+    min_value: -8
+    max_value: 2
+    step: 0.1
+    # Start at 0 and set it from a reference reading (about -2.4 °F was typical).
+    initial_value: 0
+    restore_value: true
+    optimistic: true
+
+sensor:
+  - platform: template
+    name: Corrected Temperature
+    unit_of_measurement: ${temp_unit}
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 15s
+    lambda: |-
+      float t = id(tsense_temp_raw).state, off = id(temp_offset).state;
+      if (isnan(t) || isnan(off)) return {};
+      return t + off;
+
+  # Re-expresses the measured relative humidity at the corrected temperature
+  # (Magnus formula), since a warmed sensor reads RH low.
+  - platform: template
+    name: Corrected Humidity
+    unit_of_measurement: "%"
+    device_class: humidity
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 15s
+    lambda: |-
+      float t = id(tsense_temp_raw).state, rh = id(tsense_rh_raw).state;
+      float off = id(temp_offset).state;
+      if (isnan(t) || isnan(rh) || isnan(off)) return {};
+      const bool fahrenheit = std::string("${temp_unit}") == "°F";
+      auto es = [fahrenheit](float v) {
+        float c = fahrenheit ? (v - 32.0f) * 5.0f / 9.0f : v;
+        return 6.112f * expf(17.62f * c / (243.12f + c));
+      };
+      return clamp(rh * es(t) / es(t + off), 0.0f, 100.0f);

@@ -1,0 +1,215 @@
+substitutions:
+  # Must match the unit shown on the tSENSE display ("°F" or "°C").
+  temp_unit: "°F"
+
+esphome:
+  name: tsense-k70
+  friendly_name: tSENSE K70
+
+esp8266:
+  board: d1_mini
+  # Keep restore_value settings (e.g. the temperature offset) across power cuts.
+  restore_from_flash: true
+
+wifi:
+  ap: {}
+
+# GPIO13/GPIO15 are UART0 swapped, so keep serial logging off.
+logger:
+  baud_rate: 0
+
+# tSENSE 3.5 mm service-jack pads: tSENSE TX -> GPIO13 (D7), tSENSE RX <- GPIO15 (D8).
+uart:
+  id: tsense_uart
+  tx_pin: GPIO15
+  rx_pin: GPIO13
+  baud_rate: 9600
+
+# Relay threshold registers as last read or written (-1 = not read yet), and
+# the settle window after a write. The flag retires the deadline once it has
+# passed, so the wrapping millis() comparison is only ever made while active.
+globals:
+  - id: threshold_low
+    type: int
+    initial_value: "-1"
+  - id: threshold_span
+    type: int
+    initial_value: "-1"
+  - id: threshold_busy_until
+    type: uint32_t
+    initial_value: "0"
+  - id: threshold_settling
+    type: bool
+    initial_value: "false"
+
+modbus:
+  id: tsense_modbus
+  uart_id: tsense_uart
+
+# 0xFE is the Senseair "any address" slave id on the service port.
+modbus_controller:
+  - id: tsense
+    modbus_id: tsense_modbus
+    address: 0xFE
+    update_interval: 15s
+    command_throttle: 100ms
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: CO2
+    register_type: read
+    address: 3
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    device_class: carbon_dioxide
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Hundredths of a degree, in whatever unit the tSENSE display is set to.
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_temp_raw
+    name: Temperature
+    register_type: read
+    address: 4
+    value_type: S_WORD
+    unit_of_measurement: ${temp_unit}
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_rh_raw
+    name: Humidity
+    register_type: read
+    address: 5
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: humidity
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: tsense_error_bits
+    name: Error Bits
+    entity_category: diagnostic
+    register_type: read
+    address: 0
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+binary_sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: Relay
+    register_type: read
+    address: 28
+    bitmask: 0x100
+
+number:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: relay_low
+    name: Relay Off Below
+    icon: mdi:molecule-co2
+    register_type: holding
+    address: 35
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    mode: box
+    min_value: 400
+    max_value: 1950
+    step: 50
+    # While paired writes are in flight, show what was written instead of a
+    # possibly stale register, so low and span never mix old and new values.
+    lambda: |-
+      if (id(threshold_settling) && (int32_t) (millis() - id(threshold_busy_until)) < 0)
+        return (float) id(threshold_low);
+      id(threshold_settling) = false;
+      id(threshold_low) = (int) x;
+      return x;
+    # The relay band is stored as low + span; keep the upper threshold put.
+    write_lambda: |-
+      if ((id(threshold_settling) && (int32_t) (millis() - id(threshold_busy_until)) < 0) ||
+          id(threshold_low) < 0 || id(threshold_span) < 0) {
+        ESP_LOGW("tsense", "Thresholds not settled yet; try again shortly");
+        return {};
+      }
+      int low = id(threshold_low), high = low + id(threshold_span), new_low = (int) x;
+      if (new_low >= high) {
+        ESP_LOGW("tsense", "Lower threshold %d must be below upper threshold %d", new_low, high);
+        return {};
+      }
+      uint16_t span = (uint16_t) (high - new_low);
+      // Order the writes so the switch-on level (low + span) never dips below
+      // its target in between, which could switch the relay on.
+      if (new_low > low) {
+        item->write_single_register(35, (uint16_t) new_low);
+        item->write_single_register(43, span);
+      } else {
+        item->write_single_register(43, span);
+        item->write_single_register(35, (uint16_t) new_low);
+      }
+      id(threshold_low) = new_low;
+      id(threshold_span) = span;
+      id(threshold_busy_until) = millis() + 35000;
+      id(threshold_settling) = true;
+      return {};
+
+  # The tSENSE stores the upper threshold as a span above the lower one.
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    id: relay_high
+    name: Relay On Above
+    icon: mdi:molecule-co2
+    register_type: holding
+    address: 43
+    value_type: U_WORD
+    unit_of_measurement: ppm
+    mode: box
+    min_value: 450
+    max_value: 2000
+    step: 50
+    lambda: |-
+      if (id(threshold_settling) && (int32_t) (millis() - id(threshold_busy_until)) < 0)
+        return (float) (id(threshold_low) + id(threshold_span));
+      id(threshold_settling) = false;
+      id(threshold_span) = (int) x;
+      // An empty result would publish the raw span, so stay unknown instead.
+      if (id(threshold_low) < 0) return NAN;
+      return (float) (id(threshold_low) + (int) x);
+    write_lambda: |-
+      if ((id(threshold_settling) && (int32_t) (millis() - id(threshold_busy_until)) < 0) ||
+          id(threshold_low) < 0) {
+        ESP_LOGW("tsense", "Thresholds not settled yet; try again shortly");
+        return {};
+      }
+      int low = id(threshold_low), new_high = (int) x;
+      if (new_high <= low) {
+        ESP_LOGW("tsense", "Upper threshold %d must be above lower threshold %d", new_high, low);
+        return {};
+      }
+      item->write_single_register(43, (uint16_t) (new_high - low));
+      id(threshold_span) = new_high - low;
+      id(threshold_busy_until) = millis() + 35000;
+      id(threshold_settling) = true;
+      return {};
+
+select:
+  - platform: modbus_controller
+    modbus_controller_id: tsense
+    name: Relay Mode
+    icon: mdi:electric-switch
+    address: 24
+    value_type: U_WORD
+    optionsmap:
+      "Auto (tSENSE)": 32767
+      "Force On": 16383
+      "Force Off": 0
