@@ -1,9 +1,9 @@
 ---
 title: embinotec weatherstation
 date-published: 2026-06-10
-type: sensor
+type: sensor    ##dimmer, light, misc, plug, relay, sensor, switch
 board: esp32
-standard: eu
+standard: global
 project-url: https://github.com/embinotec/embinotec-esphome-weatherstation
 made-for-esphome: true
 difficulty: 1
