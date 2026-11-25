@@ -365,6 +365,10 @@ allowlist. The programme requires the firmware config to be open and reachable; 
 is how we surface that on the device page. `npm run validate-yaml` enforces this on every PR that adds or modifies
 a made-for-esphome page.
 
+That upstream config is the firmware the device ships with, so it is checked against the Made for ESPHome
+checklist rather than the example-config rules above. `web_server:`, `captive_portal:`, `api:`,
+`external_components:` and remote `packages:` are fine in it.
+
 ## Images
 
 To add images to your files do the following:

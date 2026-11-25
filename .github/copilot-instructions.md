@@ -54,7 +54,7 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
    - ❌ No top-level `api:`, `ota:`, `mqtt:`, `web_server:`, `web_server_idf:`, `improv_serial:`, `captive_portal:`, `bluetooth_proxy:` or `dashboard_import:` in `config.yaml`
    - ❌ No `platform: homeassistant`, `platform: mqtt` or `platform: template` anywhere in `config.yaml`
    - ✅ `wifi:` in `config.yaml` may hold only radio tunables (`country`, `power_save_mode`, `output_power`, ...) and an empty `ap:`; no `ssid`, `password`, `networks`, `manual_ip`, `eap` or `use_address`
-   - ❌ `web_server:` component should NOT be included in any configurations on device pages
+   - ❌ `web_server:` component should NOT be included in any yaml file in the repo on device pages
    - ✅ More complex examples go in separate yaml files referenced by later `file=` fences
    - ✅ Each `file=` yaml passes `esphome config` (an add-on file without `esphome: name:` is checked merged onto `config.yaml`), and the page must import into the ESPHome Device Builder; the check prints why not. (`npm run validate-esphome`)
    - ✅ Proper YAML formatting and indentation
@@ -77,6 +77,8 @@ This repository contains device documentation for ESPHome-compatible devices. Wh
 ### Made for ESPHome Devices (made-for-esphome: true)
 
 When a device has `made-for-esphome: true` in its frontmatter, it must meet ALL of the following requirements:
+
+The upstream config a Made for ESPHome page links with `url=` is the firmware the device ships with, so review it only against this checklist. The example-yaml rules for files in the repo (hardware-only `config.yaml`, no `web_server:`) do not apply to it: `web_server:`, `captive_portal:`, `api:`, `external_components:`, remote `packages:` and similar are fine there. Don't flag them.
 
 #### Hardware Requirements
 
