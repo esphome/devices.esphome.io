@@ -36,17 +36,18 @@ carriers: [MTH-for-ESPHome](https://github.com/makethingshappy/MTH-for-ESPHome).
 
 | Octal version | Carrier | ESPHome configuration |
 | --- | --- | --- |
-| 3.04 | IoTsmart ESP32-S3 1.02 | [iotextra-octal-v3-04-iotsmart-esp32s3-v1-02-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v1-02-gpio.yaml) |
-| 3.04 | IoTsmart ESP32-S3 2.01 | [iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml) |
-| 3.04 | IoTsmart XIAO 1.02 + XIAO ESP32-S3 | [iotextra-octal-v3-04-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-octal-v3-04-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml) |
-| 3.04 | IoTbase NANO 3.06 + Waveshare ESP32-S3-Nano | [iotextra-octal-v3-04-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTbase_NANO_Waveshare-ESP32-S3-NANO/iotextra-octal-v3-04-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml) |
-| 3.04 | IoTbase PICO 3.05 + Raspberry Pi Pico W | [iotextra-octal-v3-04-iotbase-pico-v3-05-pico-w-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTbase_PICO_Raspberry-Pi-Pico-W/iotextra-octal-v3-04-iotbase-pico-v3-05-pico-w-gpio.yaml) |
+| 3.04 | IoTsmart ESP32-S3 1.02 | [iotextra-octal-v3-04-iotsmart-esp32s3-v1-02-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v1-02-gpio.yaml) |
+| 3.04 | IoTsmart ESP32-S3 2.01 | [iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml) |
+| 3.04 | IoTsmart XIAO 1.02 + XIAO ESP32-S3 | [iotextra-octal-v3-04-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-octal-v3-04-iotsmart-xiao-v1-02-xiao-esp32s3-gpio.yaml) |
+| 3.04 | IoTsmart XIAO 2.01 + XIAO ESP32-S3 | [iotextra-octal-v3-04-iotsmart-xiao-v2-01-xiao-esp32s3-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_XIAO_XIAO-ESP32-S3/iotextra-octal-v3-04-iotsmart-xiao-v2-01-xiao-esp32s3-gpio.yaml) |
+| 3.04 | IoTbase NANO 3.06 + Waveshare ESP32-S3-Nano | [iotextra-octal-v3-04-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTbase_NANO_Waveshare-ESP32-S3-NANO/iotextra-octal-v3-04-iotbase-nano-v3-06-ws-esp32s3-nano-gpio.yaml) |
+| 3.04 | IoTbase PICO 3.05 + Raspberry Pi Pico W | [iotextra-octal-v3-04-iotbase-pico-v3-05-pico-w-gpio.yaml](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTbase_PICO_Raspberry-Pi-Pico-W/iotextra-octal-v3-04-iotbase-pico-v3-05-pico-w-gpio.yaml) |
 
 ## GPIO
 
 HOST connector lines AP0..AP7 carry inputs IN1..IN4, relays RL1..RL2 and NPN outputs DO1..DO2. GPIO numbers by carrier:
 
-| Channel | HOST line | IoTsmart ESP32-S3 (1.02 and 2.01) | IoTsmart XIAO + XIAO ESP32-S3 | IoTbase NANO + Waveshare ESP32-S3-Nano | IoTbase PICO + Raspberry Pi Pico W |
+| Channel | HOST line | IoTsmart ESP32-S3 (1.02 and 2.01) | IoTsmart XIAO (1.02 and 2.01) + XIAO ESP32-S3 | IoTbase NANO + Waveshare ESP32-S3-Nano | IoTbase PICO + Raspberry Pi Pico W |
 | --- | --- | --- | --- | --- | --- |
 | IN1 | AP0 | GPIO8 | GPIO8 | GPIO9 | GPIO10 |
 | IN2 | AP1 | GPIO9 | GPIO9 | GPIO10 | GPIO11 |
@@ -70,7 +71,7 @@ the channel pins. Add your own `wifi`, `api` and `ota` settings.
 ```
 
 The full ready-to-flash configuration (Wi-Fi, API, OTA, web server) is [on
-GitHub](https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml).
+GitHub](https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-octal-v3-04-iotsmart-esp32s3-v2-01-gpio.yaml).
 The other carriers have their own files, linked in the table above.
 
 ![IoTextra Octal, bottom view](iotextra-octal-bottom.png "IoTextra Octal, bottom view")
