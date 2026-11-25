@@ -1,0 +1,186 @@
+esphome:
+  name: shelly-powerstrip4-gen4
+  friendly_name: "Shelly Power Strip 4 Gen4"
+
+esp32:
+  variant: ESP32C6
+  board: esp32-c6-devkitc-1
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+
+logger:
+
+spi:
+  - id: spi_bus
+    clk_pin: GPIO13
+    mosi_pin: GPIO11
+    miso_pin: GPIO12
+
+sensor:
+  - platform: ade7953_spi
+    id: ade7953_0
+    cs_pin: GPIO15    # Outlets 4+3
+    irq_pin: GPIO5
+    update_interval: 10s
+    voltage:
+      name: "Voltage"
+    frequency:
+      name: "AC Frequency"
+    current_a:
+      name: "Outlet 4 Current"
+      filters:
+        - multiply: 4.0
+    current_b:
+      name: "Outlet 3 Current"
+      filters:
+        - multiply: 4.0
+    active_power_a:
+      name: "Outlet 4 Power"
+      filters:
+        - multiply: 4.0
+    active_power_b:
+      name: "Outlet 3 Power"
+      filters:
+        - multiply: -4.0
+
+  - platform: ade7953_spi
+    id: ade7953_1
+    cs_pin: GPIO10    # Outlets 2+1
+    irq_pin: GPIO6
+    update_interval: 10s
+    voltage:
+      name: "Voltage 2"
+      internal: true
+    frequency:
+      name: "AC Frequency 2"
+      internal: true
+    current_a:
+      name: "Outlet 2 Current"
+      filters:
+        - multiply: 4.0
+    current_b:
+      name: "Outlet 1 Current"
+      filters:
+        - multiply: 4.0
+    active_power_a:
+      name: "Outlet 2 Power"
+      filters:
+        - multiply: 4.0
+    active_power_b:
+      name: "Outlet 1 Power"
+      filters:
+        - multiply: -4.0
+
+switch:
+  - platform: gpio
+    id: relay_0
+    name: "Outlet 1"
+    pin: GPIO4
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    id: relay_1
+    name: "Outlet 2"
+    pin: GPIO2
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    id: relay_2
+    name: "Outlet 3"
+    pin: GPIO3
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    id: relay_3
+    name: "Outlet 4"
+    pin: GPIO1
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:power-socket-eu
+
+binary_sensor:
+  - platform: gpio
+    id: button_0
+    name: "Button 1"
+    pin:
+      number: GPIO20
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay_0
+
+  - platform: gpio
+    id: button_1
+    name: "Button 2"
+    pin:
+      number: GPIO22
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay_1
+
+  - platform: gpio
+    id: button_2
+    name: "Button 3"
+    pin:
+      number: GPIO23
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay_2
+
+  - platform: gpio
+    id: button_3
+    name: "Button 4"
+    pin:
+      number: GPIO21
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay_3
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: led_strip
+    name: "LED Strip"
+    pin: GPIO18
+    num_leds: 12
+    chipset: WS2812
+    rgb_order: GRB
+    default_transition_length: 0s
+    internal: true
+
+  - platform: partition
+    id: led_outlet_0
+    name: "Outlet 1 LED"
+    segments:
+      - id: led_strip
+        from: 0
+        to: 2
+
+  - platform: partition
+    id: led_outlet_1
+    name: "Outlet 2 LED"
+    segments:
+      - id: led_strip
+        from: 3
+        to: 5
+
+  - platform: partition
+    id: led_outlet_2
+    name: "Outlet 3 LED"
+    segments:
+      - id: led_strip
+        from: 6
+        to: 8
+
+  - platform: partition
+    id: led_outlet_3
+    name: "Outlet 4 LED"
+    segments:
+      - id: led_strip
+        from: 9
+        to: 11
