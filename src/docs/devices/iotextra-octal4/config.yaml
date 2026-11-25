@@ -1,5 +1,5 @@
 # Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
-# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-octal4-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-octal4-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
 # IoTextra Octal4 3.02 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
 # Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/Octal4/v.3.02/host-map.yaml
 # Inputs DI1..DI4: ISO1211, active-high on the HOST line (input active = 1)
