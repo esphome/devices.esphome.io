@@ -2,7 +2,8 @@
  * Remark plugin: handle two attribute forms on yaml/yml fenced code blocks:
  *
  *   ```yaml file="path.yaml"        ->  inline contents at build time
- *   ```yaml url="https://github..."  ->  fetch in the browser at visit time
+ *   ```yaml url="https://github... or https://codeberg... or https://gitlab..."
+ *                                    ->  fetch in the browser at visit time
  *
  * `file=` resolves a path relative to the markdown file (with traversal
  * guarded), reads it from disk, and rewrites the code node so the rest of
@@ -24,6 +25,7 @@ import * as path from "path";
 import type { Plugin } from "unified";
 import type { Root, Code, Html } from "mdast";
 import type { VFile } from "vfile";
+import { parseUpstreamUrl, URL_HOST_ALLOWLIST, type UpstreamRef } from "../lib/upstream-url.ts";
 
 const FILE_ATTR = /(^|\s)file=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
 const URL_ATTR = /(^|\s)url=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
@@ -32,11 +34,11 @@ const URL_ATTR = /(^|\s)url=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
 const INLINE_ATTR = /(^|\s)inline(?=\s|$)/;
 const YAML_LANGS = new Set(["yaml", "yml"]);
 
-// Hosts a `url=` fence may point at. We don't want a device page to be able
-// to make a reader's browser fetch arbitrary origins (tracking, mixed-
-// content failures, surprise content), so the allowlist is GitHub only —
-// which is also the only host the `Copy !include` directive can target.
-const URL_HOST_ALLOWLIST = new Set(["github.com", "raw.githubusercontent.com"]);
+// Hosts a `url=` fence may point at (see src/lib/upstream-url.ts for the
+// full grammar). The host check gives a targeted warning; the full path
+// shape is then validated by parseUpstreamUrl, since only the canonical
+// shapes can be rewritten to a CORS-enabled raw endpoint by the client
+// script.
 
 // Used to build a one-click `!include github://…@<branch>` directive that
 // users can paste into their own ESPHome config to pull this device's yaml
@@ -70,72 +72,16 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-// Build an `!include github://owner/repo/path@ref` directive from any
-// github.com / raw.githubusercontent.com URL. Returns null for everything
-// else (gitlab, raw HTTP, malformed input) so the caller can skip rendering
-// the button rather than emit a broken directive.
-//
-// Branch names that contain `/` are inherently ambiguous from a github.com
-// blob URL (`/blob/feature/foo/path/file.yaml` could be branch `feature`
-// + path `foo/path/...` OR branch `feature/foo` + path `path/...`); we
-// only handle the explicit `/blob/refs/{heads,tags}/<ref>/` form for those
-// and return null otherwise so the user can paste the raw URL directly.
-function githubIncludeDirective(url: string): string | null {
-  let u: URL;
-  try {
-    u = new URL(url);
-  } catch (_) {
-    return null;
-  }
-  // Decode each segment so `%2F` in a branch name, `%20` in a path, etc.
-  // round-trip back to their literal form in the directive.
-  const decode = (s: string) => {
-    try {
-      return decodeURIComponent(s);
-    } catch (_) {
-      return null;
-    }
-  };
-  const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/").map(decode);
-  if (segments.some((s) => s === null)) return null;
-  const p = segments as string[];
-
-  let owner: string | undefined;
-  let repo: string | undefined;
-  let ref: string | undefined;
-  let rest: string | undefined;
-  if (u.hostname === "raw.githubusercontent.com") {
-    if (p.length < 4) return null;
-    owner = p[0];
-    repo = p[1];
-    if (p[2] === "refs" && (p[3] === "heads" || p[3] === "tags") && p.length >= 6) {
-      ref = p[4];
-      rest = p.slice(5).join("/");
-    } else {
-      ref = p[2];
-      rest = p.slice(3).join("/");
-    }
-  } else if (u.hostname === "github.com") {
-    if (p.length < 5) return null;
-    owner = p[0];
-    repo = p[1];
-    if (p[2] !== "blob" && p[2] !== "raw") return null;
-    if (
-      p[3] === "refs" &&
-      (p[4] === "heads" || p[4] === "tags") &&
-      p.length >= 7
-    ) {
-      ref = p[5];
-      rest = p.slice(6).join("/");
-    } else {
-      ref = p[3];
-      rest = p.slice(4).join("/");
-    }
-  } else {
-    return null;
-  }
-  if (!owner || !repo || !ref || !rest) return null;
-  return `!include github://${owner}/${repo}/${rest}@${ref}`;
+// Build an `!include github://owner/repo/path@ref` (or `codeberg://...` /
+// `gitlab://...`) directive from a canonical upstream URL. Returns null for
+// anything parseUpstreamUrl rejects, and for a GitLab namespace with more
+// than one segment (ESPHome's shorthand grammar takes a single-segment
+// `owner`), so the caller can skip rendering the button rather than emit a
+// broken directive.
+function includeDirective(url: string): string | null {
+  const ref: UpstreamRef | null = parseUpstreamUrl(url);
+  if (!ref || ref.owner.includes("/")) return null;
+  return `!include ${ref.scheme}://${ref.owner}/${ref.repo}/${ref.filePath}@${ref.ref}`;
 }
 
 const remarkYamlInclude: Plugin<[], Root> = () => {
@@ -210,7 +156,7 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
             type: "html",
             value:
               `<div class="yaml-source-header">` +
-              `<a class="yaml-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener" title="Open the source on GitHub">${escapeHtml(sourceUrl)}</a>` +
+              `<a class="yaml-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener" title="Open the upstream source">${escapeHtml(sourceUrl)}</a>` +
               `</div>`,
           } as Html;
           parent.children.splice(
@@ -248,6 +194,14 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
           );
           return;
         }
+        if (parseUpstreamUrl(url) === null) {
+          warn(
+            file,
+            node,
+            `url="${url}" is not a recognised upstream yaml file URL; expected a github.com blob/raw, raw.githubusercontent.com, codeberg.org src/raw (branch|tag|commit), or gitlab.com /-/blob|raw URL ending in .yaml`,
+          );
+          return;
+        }
 
         // Replace the code node with raw HTML for the custom element, plus
         // a leading explanatory paragraph (so individual device pages don't
@@ -279,7 +233,7 @@ const remarkYamlInclude: Plugin<[], Root> = () => {
           );
           htmlIndex = index + 1; // intro now at `index`, html at `index + 1`
         }
-        const directive = githubIncludeDirective(url);
+        const directive = includeDirective(url);
         if (directive) insertActionAfter(parent, htmlIndex, directive);
 
         // Force Expressive Code's CSS to load on this page so the markup the
@@ -355,4 +309,5 @@ function visitCodeNodes(
   walk(tree as unknown as { type: string; children?: unknown[] }, null, null);
 }
 
+export { includeDirective };
 export default remarkYamlInclude;
