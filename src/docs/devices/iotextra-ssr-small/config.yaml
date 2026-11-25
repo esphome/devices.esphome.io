@@ -1,5 +1,5 @@
 # Hardware-only copy. Full configuration (Wi-Fi, API, OTA, web server):
-# https://github.com/makethingshappy/MTH-for-ESPHome/blob/a9598457c831f702040e549e6b084459b9cce84a/Configs/IoTsmart_ESP32-S3/iotextra-ssr-small-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
+# https://github.com/makethingshappy/MTH-for-ESPHome/blob/2a1bbbee6ce45a71503cf444f15409c3794c2bf3/Configs/IoTsmart_ESP32-S3/iotextra-ssr-small-v3-02-iotsmart-esp32s3-v2-01-gpio.yaml
 # IoTextra SSR Small 3.02 + IoTsmart ESP32-S3 2.01 — GPIO mode (HOST AP0..AP7)
 # Source: IoTsmart/ESP32-S3/v.2.01/host-map.yaml + IoTextra-Digital/SSR Small/v.3.02/host-map.yaml
 # Outputs RL1..RL8: SSR, active-low on the HOST line (output on = 0)
