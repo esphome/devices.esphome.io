@@ -1,23 +1,23 @@
 ---
 title: embinotec weatherstation
 date-published: 2026-06-10
-type: weatherstation
-board: esp32c6-custom
-standard: de
+type: sensor
+board: esp32
+standard: eu
 project-url: https://github.com/embinotec/embinotec-esphome-weatherstation
 made-for-esphome: true
 difficulty: 1
 ---
 
-Typical weather station packed with loads of sensors, delivered with preinstalled esphome and based on esp32c6 module.  
+Typical weather station packed with loads of sensors, delivered with preinstalled esphome and based on esp32c6 module.
 
-Hardware is availabe at [embinotec.de/produktseite/wetterstation](https://www.embinotec.de/produktseite/wetterstation)
+Hardware is available at [embinotec.de/produktseite/wetterstation](https://www.embinotec.de/produktseite/wetterstation)
 
 ![embinotec-weatherstation](./weatherStation-clean-nologo.png "embinotec weatherstation")
 
 ## Function range
 
-| Measurand | Sensor / Pricipal | Unit |
+| Measurand | Sensor / Principal | Unit |
 |---|---|---|
 | Windspeed | hall (Pulse Counter, 2 pulses/round) | m/s |
 | Winddirection | 2× ADC (hall pair), angle via `atan2` | ° |
@@ -29,10 +29,9 @@ Hardware is availabe at [embinotec.de/produktseite/wetterstation](https://www.em
 | Solar voltage | ADC over divider | V |
 | Wifi signal strength | ESPHome internal | dBm |
 | Charge indication | GPIO (Binary Sensor) | – |
-| Barrometrical pressure | BMP580 (i2c) | Pa|
+| Barometrical pressure | BMP580 (i2c) | Pa|
 
 ## Configuration
 
-```yaml
-url=https://github.com/embinotec/embinotec-esphome-weatherstation/blob/master/embinotec-weatherstation.yaml
+```yaml url=https://github.com/embinotec/embinotec-esphome-weatherstation/blob/master/embinotec-weatherstation.yaml
 ```
