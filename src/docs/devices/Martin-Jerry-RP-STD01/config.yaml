@@ -1,0 +1,43 @@
+substitutions:
+  name: rp-std01-dimmer
+  friendly_name: RP-STD01 Dimmer
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# DOIT ESP-C3-12F module, 4 MB flash, DIO as the factory firmware uses.
+esp32:
+  board: esp32-c3-devkitm-1
+  flash_mode: dio
+  framework:
+    type: esp-idf
+
+# GPIO20/21 (UART0) go to the MCU, so the log goes to the USB port.
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+
+wifi:
+  ap: {}
+
+uart:
+  id: mcu_uart
+  rx_pin: GPIO20
+  tx_pin: GPIO21
+  baud_rate: 115200
+
+tuya:
+  id: mcu
+  uart_id: mcu_uart
+
+light:
+  - platform: tuya
+    id: dimmer_light
+    name: None
+    tuya_id: mcu
+    switch_datapoint: 1
+    dimmer_datapoint: 2
+    # 1 and 2 make the lamp sweep up and down instead of dimming.
+    min_value: 3
+    max_value: 100
+    restore_mode: RESTORE_DEFAULT_OFF
