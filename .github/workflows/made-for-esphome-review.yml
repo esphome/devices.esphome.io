@@ -65,7 +65,7 @@ jobs:
       # one-device-per-PR review and never compiles.
       - name: Setup Python
         if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
-        uses: actions/setup-python@v7.0.0
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
 
@@ -80,6 +80,9 @@ jobs:
           restore-keys: |
             mfe-review-${{ runner.os }}-platformio-
 
+      # Latest stable. The review script upgrades it (to the stable release, or
+      # the newest beta while that is not out) when the linked config declares a
+      # newer `esphome: min_version`.
       - name: Install ESPHome
         if: steps.detect.outputs.run == 'true' && steps.detect.outputs.multi != 'true'
         run: pip install esphome
