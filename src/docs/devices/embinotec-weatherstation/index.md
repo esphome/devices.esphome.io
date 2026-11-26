@@ -33,4 +33,5 @@ Hardware is available at [embinotec.de/produktseite/wetterstation](https://www.e
 
 ## Configuration
 
-```yaml url=https://github.com/embinotec/embinotec-esphome-weatherstation/blob/master/sanitized/esphome/embinotec-weatherstation.yaml```
+```yaml url=https://github.com/embinotec/embinotec-esphome-weatherstation/blob/master/sanitized/esphome/embinotec-weatherstation.yaml
+```
