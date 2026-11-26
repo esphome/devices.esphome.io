@@ -1,0 +1,48 @@
+i2s_audio:
+  - id: audio_bus
+    i2s_bclk_pin: GPIO1
+    i2s_lrclk_pin: GPIO2
+
+speaker:
+  - platform: i2s_audio
+    id: output_speaker
+    i2s_audio_id: audio_bus
+    dac_type: external
+    i2s_dout_pin: GPIO40
+    channel: mono
+    sample_rate: 48000
+    bits_per_sample: 16bit
+
+  - platform: mixer
+    id: audio_mixer
+    output_speaker: output_speaker
+    source_speakers:
+      - id: announcement_mixer_input
+      - id: media_mixer_input
+
+  - platform: resampler
+    id: announcement_speaker
+    output_speaker: announcement_mixer_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+  - platform: resampler
+    id: media_speaker
+    output_speaker: media_mixer_input
+    sample_rate: 48000
+    bits_per_sample: 16
+
+media_player:
+  - platform: speaker
+    id: smart_screen_player
+    name: Media Player
+    announcement_pipeline:
+      speaker: announcement_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
+    media_pipeline:
+      speaker: media_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1

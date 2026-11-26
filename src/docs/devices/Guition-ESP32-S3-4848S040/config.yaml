@@ -1,0 +1,85 @@
+esphome:
+  name: guition-esp32-s3-4848s040
+  friendly_name: 4848s040
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+output:
+  - platform: ledc
+    id: backlight_output
+    pin: GPIO38
+    frequency: 150Hz
+    min_power: 0.01
+    zero_means_zero: true
+
+light:
+  - platform: monochromatic
+    name: Backlight
+    id: display_backlight
+    output: backlight_output
+    restore_mode: ALWAYS_ON
+    default_transition_length: 1s
+
+spi:
+  - id: lcd_spi
+    clk_pin: GPIO48
+    mosi_pin: GPIO47
+
+i2c:
+  id: touchscreen_bus
+  sda: GPIO19
+  scl:
+    number: GPIO45
+    ignore_strapping_warning: true
+
+display:
+  - platform: st7701s
+    id: tft_display
+    dimensions:
+      width: 480
+      height: 480
+    # Uncomment for placement with down-facing USB socket.
+    # rotation: 270
+    spi_mode: MODE3
+    data_rate: 2MHz
+    color_order: RGB
+    invert_colors: false
+    cs_pin: GPIO39
+    de_pin: GPIO18
+    hsync_pin: GPIO16
+    vsync_pin: GPIO17
+    pclk_pin: GPIO21
+    pclk_frequency: 12MHz
+    pclk_inverted: false
+    hsync_pulse_width: 8
+    hsync_front_porch: 10
+    hsync_back_porch: 20
+    vsync_pulse_width: 8
+    vsync_front_porch: 10
+    vsync_back_porch: 10
+    update_interval: never
+    auto_clear_enabled: false
+    init_sequence:
+      - 1
+      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x10] # CMD2_BKSEL_BK0
+      - [0xCD, 0x00] # Disable MDT flag
+    data_pins:
+      red: [GPIO11, GPIO12, GPIO13, GPIO14, GPIO0]
+      green: [GPIO8, GPIO20, GPIO3, GPIO46, GPIO9, GPIO10]
+      blue: [GPIO4, GPIO5, GPIO6, GPIO7, GPIO15]
+
+touchscreen:
+  - platform: gt911
+    id: tft_touch
+    display: tft_display
+    # Uncomment for placement with down-facing USB socket.
+    # transform:
+    #   swap_xy: true
+    #   mirror_x: true
