@@ -375,7 +375,7 @@ async function downloadRepo(
   try {
     res = await fetch(url, { redirect: "follow" });
   } catch (err) {
-    throw new Error(`network error fetching ${url}: ${(err as Error).message}`);
+    throw new Error(`network error fetching ${url}: ${describeFetchError(err)}`);
   }
   if (!res.ok) {
     throw new Error(
@@ -1346,6 +1346,27 @@ async function readFirstByte(res: Response): Promise<number | null> {
   }
 }
 
+// Describe a failed fetch. Node's fetch throws a bare `TypeError: fetch failed`
+// and keeps the real reason (ECONNRESET, ENOTFOUND, a TLS error, ...) on
+// `err.cause`, so include the cause chain or the CI log says nothing useful.
+// A dual-stack connect failure is an AggregateError with an empty message and
+// the per-address errors in `.errors`, so those are listed too.
+function describeFetchError(err: unknown, depth = 0): string {
+  if (depth >= 5) return "";
+  if (!(err instanceof Error)) return err == null ? "" : String(err);
+  const code = (err as { code?: unknown }).code;
+  const codeText = typeof code === "string" ? code : "";
+  let part = err.message !== "" && codeText !== "" ? `${err.message} (${codeText})` : err.message || codeText;
+  if (err instanceof AggregateError) {
+    const nested = err.errors
+      .map((e) => describeFetchError(e, depth + 1))
+      .filter((t) => t !== "")
+      .join(", ");
+    if (nested !== "") part = part !== "" ? `${part} [${nested}]` : nested;
+  }
+  return [part, describeFetchError(err.cause, depth + 1)].filter((t) => t !== "").join(": ");
+}
+
 // Collect the source URLs of every http_request update entry.
 function updateSources(cfg: Record<string, unknown>): string[] {
   const update = cfg.update;
@@ -1377,7 +1398,7 @@ async function checkOneManifest(
     res = await fetchWithTimeout(source, manifestTimeout);
   } catch (err) {
     return [
-      inconclusive(`OTA manifest (${label})`, `could not fetch: ${(err as Error).message}`),
+      inconclusive(`OTA manifest (${label})`, `could not fetch: ${describeFetchError(err)}`),
     ];
   }
   if (!res.ok) {
@@ -1483,7 +1504,7 @@ async function checkOneManifest(
     }
   } catch (err) {
     rows.push(
-      inconclusive(`OTA binary (${chipLabel})`, `could not fetch: ${(err as Error).message}`)
+      inconclusive(`OTA binary (${chipLabel})`, `could not fetch: ${describeFetchError(err)}`)
     );
   }
   return rows;
@@ -1635,7 +1656,7 @@ async function checkDashboardImport(
     return {
       item,
       status: "NEEDS-HUMAN-CHECK",
-      detail: `could not fetch ${url}: ${(err as Error).message}`,
+      detail: `could not fetch ${url}: ${describeFetchError(err)}`,
     };
   }
   // Only the status matters; don't buffer the body.
@@ -1746,7 +1767,7 @@ async function checkAdoptedOta(
     return {
       item,
       status: "NEEDS-HUMAN-CHECK",
-      detail: `could not fetch ${url}: ${(err as Error).message}`,
+      detail: `could not fetch ${url}: ${describeFetchError(err)}`,
     };
   } finally {
     clearTimeout(timer);
@@ -1953,7 +1974,7 @@ async function ensureEsphomeVersion(
   } catch (err) {
     return {
       ok: false,
-      message: `could not look up ESPHome releases on PyPI to satisfy \`min_version: ${minVersion}\`: ${(err as Error).message}`,
+      message: `could not look up ESPHome releases on PyPI to satisfy \`min_version: ${minVersion}\`: ${describeFetchError(err)}`,
     };
   }
   if (!release) {
@@ -2493,8 +2514,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
+  downloadRepo,
   runStreaming,
   stamp,
+  describeFetchError,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,

@@ -21,6 +21,8 @@ import type { AddressInfo } from "node:net";
 import { execFileSync } from "node:child_process";
 
 import {
+  describeFetchError,
+  downloadRepo,
   archiveUrl,
   nameViolatesEsphomeRule,
   collectMissingIds,
@@ -550,9 +552,9 @@ test("checkAdoptedOta reads the imported package", async () => {
   r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => new Response("", { status: 404 }));
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
   assert.ok(r?.detail.includes("HTTP 404"));
-  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw new Error("boom"); });
+  r = await checkAdoptedOta(SIGNED_IMPORT_CFG, UPSTREAM, async () => { throw fetchFailure("ECONNRESET", "boom"); });
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
-  assert.ok(r?.detail.includes("boom"));
+  assert.ok(r?.detail.includes("fetch failed: boom (ECONNRESET)"));
 });
 
 test("checkAdoptedOta stops waiting when the body read stalls", async () => {
@@ -894,6 +896,91 @@ test("updateSources extracts http_request sources only", () => {
   assert.deepEqual(updateSources({ update: "not-a-list" }), []);
 });
 
+function fetchFailure(code: string, msg: string): TypeError {
+  return new TypeError("fetch failed", {
+    cause: Object.assign(new Error(msg), { code }),
+  });
+}
+
+test("describeFetchError walks the cause chain and includes error codes", () => {
+  assert.equal(describeFetchError(fetchFailure("ECONNRESET", "read reset")), "fetch failed: read reset (ECONNRESET)");
+  assert.equal(describeFetchError(Object.assign(new Error("top"), { code: "E1" })), "top (E1)");
+  assert.equal(describeFetchError(new Error("plain")), "plain");
+  // Empty message: the code alone is shown, and a message-less, code-less error adds nothing.
+  assert.equal(describeFetchError(Object.assign(new Error(""), { code: "ETIMEDOUT" })), "ETIMEDOUT");
+  assert.equal(describeFetchError(new Error("outer", { cause: new Error("") })), "outer");
+  // Non-Errors are stringified; null and undefined are empty.
+  assert.equal(describeFetchError("not an error"), "not an error");
+  assert.equal(describeFetchError(undefined), "");
+  assert.equal(describeFetchError(null), "");
+  // A cause loop must not hang.
+  const a = new Error("a");
+  a.cause = a;
+  assert.equal(describeFetchError(a), "a: a: a: a: a");
+});
+
+test("describeFetchError lists the per-address errors of an AggregateError", () => {
+  const agg = Object.assign(
+    new AggregateError([
+      Object.assign(new Error("connect ETIMEDOUT 1.2.3.4:443"), { code: "ETIMEDOUT" }),
+      Object.assign(new Error("connect ENETUNREACH ::1:443"), { code: "ENETUNREACH" }),
+    ]),
+    { code: "ETIMEDOUT" }
+  );
+  assert.equal(
+    describeFetchError(new TypeError("fetch failed", { cause: agg })),
+    "fetch failed: ETIMEDOUT [connect ETIMEDOUT 1.2.3.4:443 (ETIMEDOUT), connect ENETUNREACH ::1:443 (ENETUNREACH)]"
+  );
+  // No code or message of its own: only the nested errors show. Empty nested entries are dropped.
+  assert.equal(describeFetchError(new AggregateError([new Error("x"), new Error("")])), "[x]".slice(1, -1));
+  // Aggregate with a message keeps it in front of the nested list.
+  assert.equal(describeFetchError(new AggregateError([new Error("y")], "many")), "many [y]");
+  // Nothing nested: just the aggregate itself.
+  assert.equal(describeFetchError(new AggregateError([], "none")), "none");
+});
+
+test("downloadRepo reports the fetch failure cause", async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => {
+      throw fetchFailure("ECONNRESET", "read reset");
+    }) as typeof fetch;
+    await assert.rejects(
+      downloadRepo({ host: "github.com", scheme: "github", owner: "o", repo: "r", ref: "main", filePath: "c.yaml" }, "/nonexistent"),
+      /network error fetching .*: fetch failed: read reset \(ECONNRESET\)/
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("checkOneManifest reports the fetch failure cause for the manifest and the binary", async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => {
+      throw fetchFailure("ECONNRESET", "read reset");
+    }) as typeof fetch;
+    let rows = await checkOneManifest("https://example.com/latest/manifest.json", "ESP32");
+    assert.equal(rows[0].status, "NEEDS-HUMAN-CHECK");
+    assert.match(rows[0].detail, /could not fetch: fetch failed: read reset \(ECONNRESET\)/);
+
+    const manifest = {
+      name: "n", version: "1",
+      builds: [{ chipFamily: "ESP32", ota: { path: "fw.bin" } }],
+    };
+    globalThis.fetch = (async (url: string | URL | Request) => {
+      if (String(url).endsWith("manifest.json")) return new Response(JSON.stringify(manifest));
+      throw fetchFailure("ENOTFOUND", "getaddrinfo");
+    }) as typeof fetch;
+    rows = await checkOneManifest("https://example.com/latest/manifest.json", "ESP32");
+    const bin = rows.find((r) => r.item.startsWith("OTA binary"));
+    assert.equal(bin?.status, "NEEDS-HUMAN-CHECK");
+    assert.match(bin?.detail ?? "", /fetch failed: getaddrinfo \(ENOTFOUND\)/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 // Live end-to-end checks against the fixtures cited by the scope request
 // (CodeMakesItGo/NeatoFx_Public@main). Opt-in via MFE_LIVE_TESTS=1 so the
 // default suite stays offline and deterministic.
@@ -1048,10 +1135,10 @@ test("checkDashboardImport is inconclusive on other statuses and network errors"
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
   assert.ok(r?.detail.includes("HTTP 500"));
   r = await checkDashboardImport(cfgWith(url), UP, "/nonexistent", async () => {
-    throw new Error("boom");
+    throw fetchFailure("ECONNRESET", "boom");
   });
   assert.equal(r?.status, "NEEDS-HUMAN-CHECK");
-  assert.ok(r?.detail.includes("boom"));
+  assert.ok(r?.detail.includes("fetch failed: boom (ECONNRESET)"));
 });
 
 test("a FAIL dashboard_import row blocks the page", () => {
@@ -1300,8 +1387,8 @@ test("ensureEsphomeVersion reports failures instead of throwing", async () => {
   r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => new Response("", { status: 503 }), install });
   assert.ok(!r.ok && r.message.includes("HTTP 503"));
   // PyPI unreachable.
-  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => { throw new Error("offline"); }, install });
-  assert.ok(!r.ok && r.message.includes("offline"));
+  r = await ensureEsphomeVersion(bin, "2026.11.0", { fetcher: async () => { throw fetchFailure("ENOTFOUND", "offline"); }, install });
+  assert.ok(!r.ok && r.message.includes("fetch failed: offline (ENOTFOUND)"));
   // pip fails.
   r = await ensureEsphomeVersion(bin, "2026.11.0", {
     fetcher: async () => pypiResponse({ "2026.11.0": false }),
