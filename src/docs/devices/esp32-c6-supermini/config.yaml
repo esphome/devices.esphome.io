@@ -1,0 +1,36 @@
+esphome:
+  name: esp32-c6-super-mini
+
+esp32:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+wifi:
+  ap: {}
+
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: status_led_output
+
+light:
+  - platform: binary
+    name: "Status LED"
+    output: status_led_output
+
+  - platform: esp32_rmt_led_strip
+    name: "Onboard RGB LED"
+    chipset: WS2812
+    pin: GPIO8
+    num_leds: 1
+    rgb_order: GRB
+
+binary_sensor:
+  - platform: gpio
+    name: "BOOT Button"
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: true
