@@ -7,7 +7,7 @@ board: esp32
 difficulty: 2
 ---
 
-![ESP32-C6 SuperMini](esp32-c6-super-mini.jpg "ESP32-C6 SuperMini")
+![ESP32-C6 SuperMini](esp32c6sm.jpg "ESP32-C6 SuperMini")
 
 ## Overview
 
