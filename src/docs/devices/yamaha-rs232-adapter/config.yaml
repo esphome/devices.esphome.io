@@ -9,7 +9,7 @@ esp32:
     type: esp-idf
 
 external_components:
-  - source: github://memphi2/ESPHome-Yamaha-Serial@v0.4.1
+  - source: github://memphi2/ESPHome-Yamaha-Serial@v0.4.2
     components: [yamaha_serial]
     refresh: never
 
