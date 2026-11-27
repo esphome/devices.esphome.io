@@ -1,0 +1,64 @@
+substitutions:
+  name: calex-plug
+  friendly_name: "Calex Smart Plug"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+bk72xx:
+  board: generic-bk7231t-qfn32-tuya
+
+logger:
+  baud_rate: 0
+
+wifi:
+  ap:
+
+status_led:
+  pin: P26
+
+output:
+  - platform: gpio
+    id: red_led_out
+    pin: P6
+
+switch:
+  - platform: gpio
+    id: relay_1
+    name: "Socket"
+    pin: P8
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - output.turn_on: red_led_out
+    on_turn_off:
+      - output.turn_off: red_led_out
+
+binary_sensor:
+  - platform: gpio
+    id: button_1
+    name: "Button"
+    internal: true
+    pin:
+      number: P7
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_press:
+      - switch.toggle: relay_1
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: diagnostic
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
